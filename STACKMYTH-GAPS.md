@@ -25,20 +25,22 @@ correct borders, correct badge variants… and **every single gap, padding and
 margin at zero**. Text ran edge to edge. `Stack gap="lg"` did nothing.
 `px="4"` did nothing. The `Spinner size="sm"` rendered ~300px tall.
 
-It looks exactly like *"I am using the layout API wrong"*, so that is what I
+It looks exactly like _"I am using the layout API wrong"_, so that is what I
 debugged first. The classes were all present and correct in the DOM
 (`sm-stack--gap-lg sm-u-px-4`); `getComputedStyle` said `gap: normal`. The CSS
 was in the served bundle. Only after diffing the rule against the token did I
 find it:
 
 ```css
-.sm-stack--gap-lg { gap: var(--sm-space-5); }   /* in layout.css       */
---sm-space-5: 20px;                             /* in layout.vars.css  ← not imported */
+.sm-stack--gap-lg {
+  gap: var(--sm-space-5);
+} /* in layout.css       */
+--sm-space-5: 20px; /* in layout.vars.css  ← not imported */
 ```
 
 Every package ships **two** stylesheets and you need **both**. An undefined
 custom property makes the whole declaration invalid at computed-value time, so
-it fails to *nothing* — no console warning, no visual error, no clue.
+it fails to _nothing_ — no console warning, no visual error, no clue.
 
 **What I did instead.** Imported all 20 `*.vars.css` files before all 20 `*.css`
 files in `src/app/layout.tsx`, with a long comment so the next person doesn't
@@ -76,9 +78,9 @@ consumer trusting it is reading a previous version's API.
 reason to reach for a manifest:
 
 ```js
-getManifest("button").props     // → {}
-getManifest("badge").props      // → {}
-getComponentProps("Button")     // → {}
+getManifest("button").props; // → {}
+getManifest("badge").props; // → {}
+getComponentProps("Button"); // → {}
 ```
 
 The `PropEntry` type is beautifully specified — `type`, `default`, `required`,
@@ -89,7 +91,7 @@ components.
 **c. The `import` field is malformed** — the scope is missing:
 
 ```js
-getManifest("field").import
+getManifest("field").import;
 // → "import { Field, FieldLabel, … } from '/field';"
 //                                          ^ should be '@stackmyth/field'
 ```
@@ -111,7 +113,7 @@ rather than shipping empty objects that read as "this component has no props".
 An unpopulated field is worse than an absent one — I wrote code against `{}`
 before realising it was a data bug, not a propless component.
 
-The *structural* data (`inventory.categories`, `compositionGraph`,
+The _structural_ data (`inventory.categories`, `compositionGraph`,
 `canContain`, `getValidChildren`) is accurate and useful. That part earned its
 keep for finding which package a component lives in.
 
@@ -120,10 +122,12 @@ keep for finding which package a component lives in.
 ## 3. `Badge dot` silently discards its children
 
 **What I was building.** A "Pagó" / "Pendiente" indicator per person on the
-roster. I wanted the little status dot *and* the label:
+roster. I wanted the little status dot _and_ the label:
 
 ```tsx
-<Badge variant="info" dot>Pagó</Badge>
+<Badge variant="info" dot>
+  Pagó
+</Badge>
 ```
 
 **What happened.** Renders `<span class="sm-badge sm-badge--info sm-badge--dot"></span>`
@@ -138,7 +142,7 @@ status distinction. Cost: minutes, not hours — but I only caught it because I
 happened to be reading the a11y tree of the smoke page. On a real roster this
 would have shipped as "the badges are mysteriously blank".
 
-**What I would have wanted.** Either render the dot *as a prefix to* the
+**What I would have wanted.** Either render the dot _as a prefix to_ the
 children (which is what `dot` means in every other design system I have used),
 or make the types express the exclusion — `dot` and `children` as a discriminated
 union — so it fails at compile time instead of at runtime. Silently discarding
@@ -186,7 +190,7 @@ and `SelectContent` renders through a **portal to `document.body`**. There is no
 hidden `<input>` anywhere:
 
 ```js
-document.querySelectorAll('input[type=hidden]')  // → []
+document.querySelectorAll("input[type=hidden]"); // → []
 ```
 
 So the selected value is invisible to `FormData` — the field simply doesn't
@@ -275,7 +279,54 @@ reason for it.
 
 ---
 
-## 9. Small things, no workaround needed
+## 9. `--sm-<status>-text` is an on-fill color, and nothing says so
+
+**What I was building.** A static notice ("this event is closed", "10 spots
+left") with a small tone-coloured icon on the normal page surface.
+
+**What happened.** Two failures in a row, both from the same misunderstanding.
+
+First I used `<Card tone="info">`. That sets a _saturated fill_
+(`--sm-card-bg: var(--sm-info)`) plus a matching text color via
+`--sm-card-text`. But `--sm-card-text` loses to any nested `<Text color="…">`,
+so my perfectly ordinary `<Text color="muted">` body copy landed as grey on
+saturated blue — unreadable. The card and the text component each did something
+reasonable; together they produced a contrast failure.
+
+So I dropped the fill and painted just the icon with
+`color: var(--sm-info-text)` — the obvious token name for "the info color". The
+icon vanished. `--sm-info-text` is `#fff` in the default theme, because it is
+the color to use **on top of** the `--sm-info` fill, not an accent for the page
+surface. White icon, white background, no error.
+
+The naming gives no hint of this. `--sm-info` / `--sm-info-text` reads like
+"the info color" / "the info text color", not "background" / "foreground for
+that background". `--sm-info-soft` / `--sm-info-soft-text` are the same pairing
+one shade down; there is no token in the set that means "the info hue, safe on
+the default surface".
+
+**What I did instead.** Neutral `Card surface="outlined"`, with the tone carried
+entirely by the icon using **Text's own** semantic colors (`color="error"` /
+`color="muted"`), which are defined against the page surface and therefore
+safe. Cost: two wrong attempts and a screenshot diff to notice the second one,
+because an invisible icon looks a lot like a layout bug.
+
+**What I would have wanted:**
+
+1. Name the pairs so the relationship is legible — `--sm-info-bg` /
+   `--sm-info-on-bg` rather than `--sm-info` / `--sm-info-text`. The current
+   names actively suggest the wrong usage.
+2. Ship an on-surface accent per status (`--sm-info-accent`) for exactly this
+   case: icons, borders and small emphasis on the default background. Every
+   design system needs one and this set doesn't have it.
+3. Make `tone` on Card set the text color in a way that composes with `Text`,
+   or document that `Text color` must be omitted inside a toned Card. As it
+   stands the two components silently disagree and the user finds out by
+   looking.
+
+---
+
+## 10. Small things, no workaround needed
 
 - **`Stack direction` is `"vertical" | "horizontal"`, `Flex direction` is
   `"row" | "column"`.** Two sibling components, two vocabularies for the same
@@ -307,7 +358,7 @@ Stating this because a gaps file that is only complaints is not honest feedback.
   tokens, and `colorScheme="dark"` to flip an entire subtree — I never once
   needed a raw style attribute for layout.
 - **The token system is coherent.** 278 well-named custom properties, and a
-  default palette that ships working light *and* dark with zero configuration.
+  default palette that ships working light _and_ dark with zero configuration.
   This app has no theme file and no dark-mode code, and dark mode works.
 - **The compound-component APIs** (`Card`, `Dialog`, `Field`, `List`, `Select`)
   are consistent with each other and with prevailing convention, so the second

@@ -47,10 +47,7 @@ interface Ctx {
 
 export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
   const action = addParticipant.bind(null, publicToken, organizerToken);
-  const [state, formAction, pending] = useActionState<ManageState, FormData>(
-    action,
-    EMPTY_STATE,
-  );
+  const [state, formAction, pending] = useActionState<ManageState, FormData>(action, EMPTY_STATE);
   const nameId = useId();
 
   return (
@@ -110,16 +107,9 @@ export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
   );
 }
 
-export function EditEventForm({
-  publicToken,
-  organizerToken,
-  event,
-}: Ctx & { event: EventView }) {
+export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { event: EventView }) {
   const action = editEvent.bind(null, publicToken, organizerToken);
-  const [state, formAction, pending] = useActionState<ManageState, FormData>(
-    action,
-    EMPTY_STATE,
-  );
+  const [state, formAction, pending] = useActionState<ManageState, FormData>(action, EMPTY_STATE);
 
   const ids = {
     title: useId(),

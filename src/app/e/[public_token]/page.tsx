@@ -29,11 +29,7 @@ import { RsvpForm } from "./rsvp-form";
 
 type Params = { public_token: string };
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<Params>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { public_token: publicToken } = await params;
   const event = await findEventByPublicToken(publicToken);
 
@@ -64,9 +60,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             attendance: participants.attendance,
           })
           .from(participants)
-          .where(
-            and(eq(participants.eventId, eventRow.id), eq(participants.editToken, editToken)),
-          )
+          .where(and(eq(participants.eventId, eventRow.id), eq(participants.editToken, editToken)))
           .limit(1)
       )[0] ?? null)
     : null;

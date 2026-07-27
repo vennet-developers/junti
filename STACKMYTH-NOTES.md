@@ -35,10 +35,10 @@ under "Prerequisites".
 
 **Every package ships two stylesheets and you need both:**
 
-| File | Contains |
-|---|---|
+| File                    | Contains                                      |
+| ----------------------- | --------------------------------------------- |
 | `<pkg>/<name>.vars.css` | the CSS custom properties (`--sm-space-5`, …) |
-| `<pkg>/<name>.css` | the rules that consume them |
+| `<pkg>/<name>.css`      | the rules that consume them                   |
 
 Importing only `<name>.css` produces a page where colors and borders look right
 but **every gap, padding and margin silently collapses to zero** — because the
@@ -48,11 +48,11 @@ is no console warning. This cost real debugging time; see STACKMYTH-GAPS.md.
 Required import order, all in `src/app/layout.tsx`:
 
 ```ts
-import "@stackmyth/core/core.vars.css";   // 1. base tokens + reset + dark mode
+import "@stackmyth/core/core.vars.css"; // 1. base tokens + reset + dark mode
 import "@stackmyth/core/fonts/geist.css"; // 2. self-hosted font, sets --sm-font-family
-import "@stackmyth/layout/layout.vars.css";  // 3. every package's *.vars.css
+import "@stackmyth/layout/layout.vars.css"; // 3. every package's *.vars.css
 // … one per package …
-import "@stackmyth/layout/layout.css";      // 4. every package's *.css
+import "@stackmyth/layout/layout.css"; // 4. every package's *.css
 // … one per package …
 ```
 
@@ -67,7 +67,7 @@ Subpath exports that exist on every UI package:
 
 ## 3. Theming
 
-`core.vars.css` defines a complete **neutral** palette on `:root` *and* a
+`core.vars.css` defines a complete **neutral** palette on `:root` _and_ a
 `@media (prefers-color-scheme: dark)` block. Light and dark therefore both work
 with **no theme file and no network requests**.
 
@@ -147,17 +147,17 @@ set (~90 props): `p px py pt pr pb pl`, `m mx my mt mr mb ml` (scale `"0"`–`"9
 Any of them accept a **responsive object** `{ base, sm, md, lg, xl }`
 (min-width 640/768/1024/1280).
 
-| Component | Own props |
-|---|---|
-| `Box` | `as` (default `div`), `ref` + LayoutProps |
-| `Flex` | `direction` `row\|column\|row-reverse\|column-reverse`, `align` `start\|center\|end\|baseline\|stretch`, `justify` `start\|center\|end\|between\|around`, `wrap` `nowrap\|wrap\|wrap-reverse`, `gap`, `as` |
-| `Stack` | `direction` `vertical\|horizontal` (**not** `row`/`column`), `align`, `justify` (adds `evenly`), `gap`, `wrap`, `dividers`, `inline`, `as` |
-| `Grid` | `columns` `"1".."12" \| "auto-fit" \| "auto-fill" \| string`, `rows`, `autoRows`, `minChildWidth`, `gap`, `columnGap`, `rowGap`, `align`, `justify`, `autoFlow` |
-| `GridItem` | `colSpan` (`number \| "full"`), `rowSpan`, `colStart`, `colEnd`, `rowStart`, `rowEnd` |
-| `Container` | `size` `"1" \| "2" \| "3" \| "4"` only. **No LayoutProps** — wrap it or use the child for padding. |
-| `Section` | `size` `"1" \| "2" \| "3"`, `as`. **No LayoutProps.** |
-| `Divider` | `orientation` `horizontal \| vertical` |
-| `Center`, `Spacer` | LayoutProps |
+| Component          | Own props                                                                                                                                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Box`              | `as` (default `div`), `ref` + LayoutProps                                                                                                                                                                  |
+| `Flex`             | `direction` `row\|column\|row-reverse\|column-reverse`, `align` `start\|center\|end\|baseline\|stretch`, `justify` `start\|center\|end\|between\|around`, `wrap` `nowrap\|wrap\|wrap-reverse`, `gap`, `as` |
+| `Stack`            | `direction` `vertical\|horizontal` (**not** `row`/`column`), `align`, `justify` (adds `evenly`), `gap`, `wrap`, `dividers`, `inline`, `as`                                                                 |
+| `Grid`             | `columns` `"1".."12" \| "auto-fit" \| "auto-fill" \| string`, `rows`, `autoRows`, `minChildWidth`, `gap`, `columnGap`, `rowGap`, `align`, `justify`, `autoFlow`                                            |
+| `GridItem`         | `colSpan` (`number \| "full"`), `rowSpan`, `colStart`, `colEnd`, `rowStart`, `rowEnd`                                                                                                                      |
+| `Container`        | `size` `"1" \| "2" \| "3" \| "4"` only. **No LayoutProps** — wrap it or use the child for padding.                                                                                                         |
+| `Section`          | `size` `"1" \| "2" \| "3"`, `as`. **No LayoutProps.**                                                                                                                                                      |
+| `Divider`          | `orientation` `horizontal \| vertical`                                                                                                                                                                     |
+| `Center`, `Spacer` | LayoutProps                                                                                                                                                                                                |
 
 Also exported: `useBreakpoint`, `useBreakpointMin`, `useMediaQuery`,
 `BREAKPOINTS`, `getLayoutStyles`, `getLayoutClasses`.
@@ -165,7 +165,9 @@ Also exported: `useBreakpoint`, `useBreakpointMin`, `useMediaQuery`,
 ```tsx
 <Container size="1">
   <Stack gap="lg" py="6" px="4">
-    <Flex gap="2" wrap="wrap" align="center">…</Flex>
+    <Flex gap="2" wrap="wrap" align="center">
+      …
+    </Flex>
   </Stack>
 </Container>
 ```

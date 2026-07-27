@@ -83,9 +83,7 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
             <Text variant="small" color="muted">
               {copy.money.perPersonLabel}
             </Text>
-            <Text variant="small">
-              {formatMoney(event.costAmountMinor ?? 0, event.currency)}
-            </Text>
+            <Text variant="small">{formatMoney(event.costAmountMinor ?? 0, event.currency)}</Text>
           </Flex>
         )}
 

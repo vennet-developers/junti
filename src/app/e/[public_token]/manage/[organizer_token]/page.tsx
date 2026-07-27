@@ -248,11 +248,7 @@ export default async function ManagePage({
 
         <Divider />
 
-        <EditEventForm
-          publicToken={publicToken}
-          organizerToken={organizerToken}
-          event={event}
-        />
+        <EditEventForm publicToken={publicToken} organizerToken={organizerToken} event={event} />
       </Stack>
     </Container>
   );

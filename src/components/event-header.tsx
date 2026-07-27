@@ -49,7 +49,7 @@ export function EventHeader({ event, attendingCount }: EventHeaderProps) {
           </Badge>
           {event.isClosed ? (
             <Badge variant="error" size="sm" soft>
-              {copy.manage.closeEvent}
+              {copy.event.closedBadge}
             </Badge>
           ) : null}
         </Flex>

@@ -474,8 +474,7 @@ describe("computeSplit — the definition-of-done scenario", () => {
       participants: ["p1", "p2", "p3", "p4", "p5", "p6"].map((id, index) =>
         participant(id, {
           minutesAfter: index,
-          payment:
-            index < 3 ? { status: "confirmed", amountMinor: shares[index] ?? 0 } : null,
+          payment: index < 3 ? { status: "confirmed", amountMinor: shares[index] ?? 0 } : null,
         }),
       ),
     });

@@ -106,7 +106,11 @@ function parseCostAmount(
 
 /** Shared shape of the create and edit forms. */
 const eventFieldsSchema = z.object({
-  title: z.string().trim().min(1, copy.errors.titleRequired).max(TITLE_MAX, copy.errors.titleTooLong),
+  title: z
+    .string()
+    .trim()
+    .min(1, copy.errors.titleRequired)
+    .max(TITLE_MAX, copy.errors.titleTooLong),
   kind: eventKindSchema,
   startsAt: startsAtSchema,
   location: optionalText(LOCATION_MAX),

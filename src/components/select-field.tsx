@@ -2,13 +2,7 @@
 
 import { useId, useState } from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@stackmyth/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@stackmyth/select";
 
 // STACKMYTH-GAP: @stackmyth/select cannot participate in native form
 // submission. SelectTrigger renders <button type="button"> and SelectContent

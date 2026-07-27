@@ -102,7 +102,10 @@ export const participants = pgTable(
      * Case-insensitive uniqueness per event. Stops the same person appearing
      * twice when they RSVP again from a different device.
      */
-    uniqueIndex("participants_event_name_unique").on(table.eventId, sql`lower(${table.displayName})`),
+    uniqueIndex("participants_event_name_unique").on(
+      table.eventId,
+      sql`lower(${table.displayName})`,
+    ),
     index("participants_event_created_idx").on(table.eventId, table.createdAt),
   ],
 );

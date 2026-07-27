@@ -1,0 +1,73 @@
+# Keeps the Supabase free project from being paused.
+#
+# Supabase pauses a free project after ~7 days of inactivity. A paused project
+# is unreachable until somebody restores it by hand from the dashboard, so for
+# an app used every couple of weeks that is a guaranteed outage. This workflow
+# pokes /api/keep-alive every two days, which is well inside the window.
+#
+# GitHub Actions rather than Vercel Cron: Hobby cron is limited in both
+# frequency and count, and Actions is free and more flexible.
+#
+# ⚠️ THE FAILURE MODE BEHIND THE FAILURE MODE
+# GitHub disables scheduled workflows automatically after ~60 days of
+# repository inactivity, and emails the repo owner when it does. If this app is
+# running happily and nobody commits for two months, this workflow stops, and
+# ~7 days later the database pauses. To resume: push any commit, or re-enable
+# the workflow from the Actions tab. See README.md → "Keeping it alive".
+
+name: Keep database awake
+
+on:
+  schedule:
+    # 07:17 UTC every second day. The odd minute avoids the top-of-hour rush
+    # when GitHub's scheduler is most heavily contended and most likely to
+    # delay or drop a run.
+    - cron: "17 7 */2 * *"
+  # Lets you verify the setup without waiting two days.
+  workflow_dispatch:
+
+# No repository access needed — this only makes an outbound HTTP request.
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping the keep-alive endpoint
+        env:
+          # Repository variable (Settings → Secrets and variables → Actions →
+          # Variables), e.g. https://your-app.vercel.app
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${APP_URL:-}" ]; then
+            echo "::error::APP_URL repository variable is not set."
+            echo "Set it under Settings → Secrets and variables → Actions → Variables."
+            exit 1
+          fi
+
+          # A cold Vercel function plus a waking database can be slow, so retry
+          # a few times before calling it a failure.
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt…"
+            code=$(curl --silent --show-error --location \
+                        --max-time 30 \
+                        --output response.json \
+                        --write-out '%{http_code}' \
+                        "${APP_URL%/}/api/keep-alive" || echo "000")
+
+            if [ "$code" = "200" ]; then
+              echo "OK:"
+              cat response.json
+              exit 0
+            fi
+
+            echo "Got HTTP $code"
+            [ -s response.json ] && cat response.json
+            sleep 15
+          done
+
+          echo "::error::keep-alive did not return 200 after 3 attempts."
+          exit 1

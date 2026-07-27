@@ -14,7 +14,9 @@ config({ path: ".env", quiet: true });
 const migrationUrl = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
 
 if (!migrationUrl) {
-  throw new Error("Set DIRECT_DATABASE_URL (preferred) or DATABASE_URL before running drizzle-kit.");
+  throw new Error(
+    "Set DIRECT_DATABASE_URL (preferred) or DATABASE_URL before running drizzle-kit.",
+  );
 }
 
 export default defineConfig({

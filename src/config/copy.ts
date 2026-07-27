@@ -65,7 +65,8 @@ export const copy = {
       locationPlaceholder: "Cancha La 90, Medellín",
       capacity: "Cupo máximo",
       capacityPlaceholder: "10",
-      capacityHelp: "Déjalo vacío si no hay límite. Al llenarse, los demás entran en lista de espera.",
+      capacityHelp:
+        "Déjalo vacío si no hay límite. Al llenarse, los demás entran en lista de espera.",
       notes: "Notas",
       notesPlaceholder: "Llevar camiseta blanca y guayos.",
       costMode: "¿Tiene costo?",
@@ -93,7 +94,8 @@ export const copy = {
     heading: "¡Listo! Tu evento está creado",
     subheading: "Guarda estos dos links. Son la única forma de volver a entrar.",
     participantLinkLabel: "Link para invitados",
-    participantLinkHelp: "Este es el que compartes. Deja confirmar asistencia y ver quién debe cuánto.",
+    participantLinkHelp:
+      "Este es el que compartes. Deja confirmar asistencia y ver quién debe cuánto.",
     organizerLinkLabel: "Tu link de organizador",
     organizerLinkHelp:
       "Guárdalo bien y no lo compartas. Con él marcas pagos, agregas gente y cierras el evento.",
@@ -104,6 +106,7 @@ export const copy = {
   },
 
   event: {
+    closedBadge: "Cerrado",
     closedNotice: "Este evento está cerrado. Ya no se puede confirmar ni cambiar asistencia.",
     notFoundTitle: "No encontramos este evento",
     notFoundBody: "El link puede estar incompleto o el evento pudo haber sido eliminado.",
@@ -166,7 +169,8 @@ export const copy = {
     pending: "Pendiente",
     waived: "Exonerado",
     noCost: "Este evento no tiene costo.",
-    splitAmong: (n: number) => (n === 1 ? "Repartido entre 1 persona" : `Repartido entre ${n} personas`),
+    splitAmong: (n: number) =>
+      n === 1 ? "Repartido entre 1 persona" : `Repartido entre ${n} personas`,
     nobodyIn: "Nadie ha confirmado todavía, así que aún no hay nada que repartir.",
     progressLabel: (collected: string, total: string) => `${collected} de ${total}`,
   },

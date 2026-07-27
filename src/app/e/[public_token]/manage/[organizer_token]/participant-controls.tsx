@@ -92,12 +92,7 @@ export function PromoteControl({ publicToken, organizerToken, participantId }: C
 }
 
 /** Removes a participant, behind a confirmation. */
-export function RemoveControl({
-  publicToken,
-  organizerToken,
-  participantId,
-  displayName,
-}: Ctx) {
+export function RemoveControl({ publicToken, organizerToken, participantId, displayName }: Ctx) {
   const action = removeParticipant.bind(null, publicToken, organizerToken);
   const [, formAction, pending] = useActionState<ManageState, FormData>(action, EMPTY_STATE);
   const [open, setOpen] = useState(false);

@@ -37,7 +37,15 @@ async function main() {
 
   // --no-owner / --no-privileges keep the dump restorable into a different
   // project, where the Supabase-managed roles do not exist.
-  const args = ["--no-owner", "--no-privileges", "--clean", "--if-exists", "--file", outputPath, url];
+  const args = [
+    "--no-owner",
+    "--no-privileges",
+    "--clean",
+    "--if-exists",
+    "--file",
+    outputPath,
+    url,
+  ];
 
   const exitCode = await new Promise<number>((resolve, reject) => {
     const child = spawn("pg_dump", args, { stdio: ["ignore", "inherit", "inherit"] });

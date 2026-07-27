@@ -163,7 +163,12 @@ export function SmokeClient() {
 
               <Field>
                 <FieldLabel htmlFor="smoke-notes">Notas</FieldLabel>
-                <Textarea id="smoke-notes" fullWidth rows={3} placeholder="Llevar camiseta blanca." />
+                <Textarea
+                  id="smoke-notes"
+                  fullWidth
+                  rows={3}
+                  placeholder="Llevar camiseta blanca."
+                />
               </Field>
             </Stack>
           </CardContent>

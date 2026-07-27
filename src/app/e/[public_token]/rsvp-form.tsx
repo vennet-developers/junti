@@ -35,11 +35,7 @@ function SubmitButton({ editing }: { editing: boolean }) {
   return (
     <Button type="submit" size="lg" fullWidth disabled={pending}>
       {pending ? <Spinner size="sm" label={copy.rsvp.submitting} /> : null}
-      {pending
-        ? copy.rsvp.submitting
-        : editing
-          ? copy.rsvp.submitEditing
-          : copy.rsvp.submit}
+      {pending ? copy.rsvp.submitting : editing ? copy.rsvp.submitEditing : copy.rsvp.submit}
     </Button>
   );
 }
@@ -117,11 +113,7 @@ export function RsvpForm({ publicToken, mine }: RsvpFormProps) {
                 RadioGroup renders real <input type="radio" name>, so unlike
                 Select it submits natively and needs no hidden mirror.
               */}
-              <RadioGroup
-                name="attendance"
-                defaultValue={defaultAttendance}
-                orientation="vertical"
-              >
+              <RadioGroup name="attendance" defaultValue={defaultAttendance} orientation="vertical">
                 <Stack gap="3">
                   {ATTENDANCE_OPTIONS.map((option) => (
                     <Flex key={option.value} as="label" gap="3" align="center">
