@@ -203,6 +203,65 @@ Per the spec. The generated SQL is plain Postgres with no Supabase-specific
 extensions, so the schema moves to Neon, RDS, or a local container unchanged —
 which is the point of not coupling to the provider.
 
+### 23. pnpm, with exactly one lockfile
+
+The project was scaffolded with npm and later installed with pnpm, which left
+`package-lock.json` and `pnpm-lock.yaml` side by side. That is not a cosmetic
+problem: **Turbopack infers the workspace root by walking up the tree looking
+for a lockfile, and two reachable lockfiles make the inference ambiguous.** The
+dev server died with
+
+```
+Next.js inferred your workspace root, but it may not be correct.
+We couldn't find the Next.js package (next/package.json) from the project
+directory: …/src/app
+```
+
+which reads like a broken import and is actually a package-manager problem.
+
+Resolved by committing to pnpm: `package-lock.json` deleted, `packageManager`
+pinned in `package.json`, and `turbopack.root` set explicitly in
+`next.config.ts` so the root is never inferred again — that last part also
+makes the project immune to a sibling monorepo's lockfile, which matters here
+because Stackmyth's own repo sits next door.
+
+Switching back to npm is a two-line revert; the point is that exactly one
+lockfile may exist at a time.
+
+### 24. Dependency build scripts are approved individually, not in bulk
+
+pnpm blocks `postinstall` scripts by default and reports
+`ERR_PNPM_IGNORED_BUILDS`. The obvious fix, `pnpm approve-builds`, approves
+whatever happens to be in the tree — which defeats the point of the block.
+
+`pnpm-workspace.yaml` records a decision per package instead:
+
+- **`esbuild` — allowed.** drizzle-kit and vitest both invoke it; its install
+  step places the platform binary.
+- **`unrs-resolver` — allowed.** Native module behind the ESLint import
+  resolver that `eslint-config-next` pulls in.
+- **`sharp` — refused.** It exists only to serve Next.js Image Optimization,
+  which this project explicitly does not use (COSTS.md). Compiling a large
+  native dependency for a switched-off feature is pure cost.
+
+If that warning reappears, a dependency has added a new build script and it
+deserves the same one-line judgement rather than a blanket approval.
+
+### 25. The registry token is not in the committed `.npmrc`
+
+The project `.npmrc` originally carried
+`//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}`. npm expands that;
+**pnpm deliberately does not**, because the file is committed and a leaked
+token would be sent to whatever registry the file names. pnpm warns and ignores
+the line.
+
+That asymmetry is the worst possible outcome — it works under one installer and
+silently fails under the other. The committed file now carries only the
+scope→registry mapping (safe, and required on a fresh clone), and the
+credential goes to `~/.npmrc`, `pnpm config set`, or Vercel's `NPM_RC`
+environment variable. Documented in the README rather than left to be
+rediscovered.
+
 ---
 
 ## Things I chose not to build

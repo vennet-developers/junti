@@ -40,22 +40,57 @@ the link is first shown.
 ## Prerequisites
 
 - **Node.js 20.9+** (Next.js 16 minimum).
+- **pnpm 10+.** This project uses pnpm — `packageManager` in `package.json`
+  pins it, so `corepack enable` is enough. There is deliberately only one
+  lockfile; see the note below.
 - **A Supabase project** on the free tier — used purely as managed Postgres.
 - **`psql` / `pg_dump`** for backups (`brew install libpq` on macOS). The
   `pg_dump` major version must be **>= your database's** or it refuses to run.
-- **Access to the private `@stackmyth/*` packages.** The UI layer is published to
-  GitHub Packages, not npmjs, so `npm install` fails without it. Create a
-  classic GitHub token with the `read:packages` scope, then:
+- **Access to the private `@stackmyth/*` packages** — see next section.
 
-  ```ini
-  # ~/.npmrc  (or a project-local .npmrc)
-  @stackmyth:registry=https://npm.pkg.github.com/
-  //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
-  ```
+### Authenticating to GitHub Packages
 
-  ```bash
-  export NODE_AUTH_TOKEN=ghp_your_token_here   # never commit the literal value
-  ```
+The UI layer is published privately to GitHub Packages, not npmjs, so a fresh
+`pnpm install` cannot fetch it without a credential.
+
+The committed `.npmrc` carries only the scope→registry mapping, which is safe.
+**The token is not in it, and must not be**: pnpm refuses to expand environment
+variables in auth lines coming from a project-level `.npmrc`, precisely because
+that file is committed. npm _would_ expand it — so keeping it there would work
+under npm and silently fail under pnpm, which is worse than not having it.
+
+Create a classic GitHub token with the `read:packages` scope, then put it
+somewhere the installer trusts:
+
+```bash
+pnpm config set "//npm.pkg.github.com/:_authToken" ghp_your_token_here
+```
+
+or add it to your user-level `~/.npmrc` by hand:
+
+```ini
+@stackmyth:registry=https://npm.pkg.github.com/
+//npm.pkg.github.com/:_authToken=ghp_your_token_here
+```
+
+Verify with `pnpm install`. It should finish without warnings.
+
+### Why `pnpm install` warns about ignored builds — and why it no longer does
+
+pnpm blocks dependency build scripts by default, because a `postinstall` runs
+arbitrary code on your machine. Out of the box it reports:
+
+```
+ERR_PNPM_IGNORED_BUILDS: esbuild, sharp, unrs-resolver
+```
+
+Despite the `ERR_` prefix this is a notice, not a failure — but the packages
+are installed _unbuilt_, which breaks them later and confusingly. The decisions
+are recorded in `pnpm-workspace.yaml`: `esbuild` and `unrs-resolver` are
+allowed (drizzle-kit/vitest and the ESLint resolver need them), `sharp` is
+not — it exists only for Next.js Image Optimization, which this project does
+not use. If you ever see that message again, a dependency added a new build
+script and it wants an explicit decision, not a blanket `pnpm approve-builds`.
 
 ---
 
@@ -64,7 +99,7 @@ the link is first shown.
 **1. Install dependencies**
 
 ```bash
-npm install
+pnpm install
 ```
 
 **2. Create the Supabase project**
@@ -101,7 +136,7 @@ Neither variable may ever be prefixed `NEXT_PUBLIC_`. They are credentials.
 **4. Run the migrations**
 
 ```bash
-npm run db:migrate
+pnpm db:migrate
 ```
 
 Migrations live in `./drizzle` and are checked into the repo — never run DDL
@@ -110,7 +145,7 @@ from the Supabase SQL editor, or the schema history stops matching the code.
 **5. Start the app**
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open <http://localhost:3000>.
@@ -128,7 +163,7 @@ docker run -d --name event-roster-pg \
 
 Then point both URLs at `postgresql://postgres:devpassword@127.0.0.1:55432/event_roster`.
 There is no pooler locally, so they are the same string. Match the Postgres
-major version to your local `pg_dump` so `npm run db:export` works.
+major version to your local `pg_dump` so `pnpm db:export` works.
 
 ---
 
@@ -139,21 +174,31 @@ major version to your local `pg_dump` so `npm run db:export` works.
    automatically; no build settings to change.
 3. Under **Settings → Environment Variables**, add:
    - `DATABASE_URL` — the **pooled** string (port 6543)
-   - `NODE_AUTH_TOKEN` — your `read:packages` token, so the build can install
-     the private `@stackmyth/*` packages
-   - Also commit an `.npmrc` with the `@stackmyth` scope line (the token line
-     can stay as `${NODE_AUTH_TOKEN}`), or the install step won't know where to
-     look.
+   - `NPM_RC` — the registry credential for the private `@stackmyth/*`
+     packages. Vercel writes this variable's contents to `~/.npmrc` before
+     installing, which is a location pnpm trusts. Two lines:
+
+     ```ini
+     @stackmyth:registry=https://npm.pkg.github.com/
+     //npm.pkg.github.com/:_authToken=ghp_your_read_packages_token
+     ```
+
+     A bare `NODE_AUTH_TOKEN` is **not** enough on its own: pnpm will not
+     expand it from the committed project `.npmrc`, so the install fails to
+     authenticate.
 
    `DIRECT_DATABASE_URL` is **not** needed in Vercel — the app never opens that
    connection. Keep it local.
+
+   Vercel detects pnpm from `pnpm-lock.yaml` and honours the `packageManager`
+   field, so the install command needs no override.
 
 4. Deploy.
 5. Run migrations against production from your machine, with
    `DIRECT_DATABASE_URL` pointing at the production database:
 
    ```bash
-   npm run db:migrate
+   pnpm db:migrate
    ```
 
 6. Set up the keep-alive — see the next section. **Do not skip this**, or the
@@ -228,7 +273,7 @@ point-in-time recovery, and no support ticket that will get your data back.
 Nobody else is backing this up. If you drop the database, it is gone.
 
 ```bash
-npm run db:export
+pnpm db:export
 ```
 
 Writes a timestamped `.sql` dump to `./backups/` (git-ignored) using `pg_dump`
@@ -247,17 +292,17 @@ brew install postgresql@17 && brew link --overwrite --force postgresql@17
 
 ## Commands
 
-| Command               | What it does                         |
-| --------------------- | ------------------------------------ |
-| `npm run dev`         | Development server                   |
-| `npm run build`       | Production build                     |
-| `npm run lint`        | ESLint                               |
-| `npm run typecheck`   | `tsc --noEmit`                       |
-| `npm test`            | Vitest — the domain logic            |
-| `npm run format`      | Prettier                             |
-| `npm run db:generate` | Generate a migration from the schema |
-| `npm run db:migrate`  | Apply migrations (direct connection) |
-| `npm run db:export`   | `pg_dump` to `./backups/`            |
+| Command            | What it does                         |
+| ------------------ | ------------------------------------ |
+| `pnpm dev`         | Development server                   |
+| `pnpm build`       | Production build                     |
+| `pnpm lint`        | ESLint                               |
+| `pnpm typecheck`   | `tsc --noEmit`                       |
+| `pnpm test`        | Vitest — the domain logic            |
+| `pnpm format`      | Prettier                             |
+| `pnpm db:generate` | Generate a migration from the schema |
+| `pnpm db:migrate`  | Apply migrations (direct connection) |
+| `pnpm db:export`   | `pg_dump` to `./backups/`            |
 
 ---
 
@@ -297,7 +342,7 @@ gets a spot when one opens up.
 
 ## The rules that matter
 
-These are implemented precisely and unit-tested (59 tests, `npm test`).
+These are implemented precisely and unit-tested (59 tests, `pnpm test`).
 
 **Splitting**
 

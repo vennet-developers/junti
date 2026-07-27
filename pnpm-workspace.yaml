@@ -1,0 +1,21 @@
+# pnpm blocks dependency build scripts by default — a supply-chain precaution,
+# since a postinstall script runs arbitrary code on your machine. Each entry
+# below is an explicit decision rather than a blanket approval.
+#
+# Without this file `pnpm install` reports ERR_PNPM_IGNORED_BUILDS: the packages
+# are installed but never built, which breaks them silently later.
+
+allowBuilds:
+  # Needed. drizzle-kit and vitest both run esbuild, whose install step places
+  # the correct platform binary. Without it, `db:generate` and `test` fail.
+  esbuild: true
+
+  # Needed. Native (napi) module behind the ESLint import resolver that
+  # eslint-config-next pulls in. Without it, `lint` cannot resolve imports.
+  unrs-resolver: true
+
+  # Deliberately NOT built. sharp exists only to serve Next.js Image
+  # Optimization, which this project does not use — see COSTS.md, "What would
+  # break the zero-cost constraint". Skipping it avoids compiling a large native
+  # dependency for a feature that is switched off.
+  sharp: false
