@@ -157,6 +157,8 @@ export const copy = {
     changeMine: "Cambiar mi respuesta",
     waitlistedNotice:
       "El cupo está lleno, así que quedaste en lista de espera. Si alguien cancela, el organizador te avisa y te sube.",
+    willBeWaitlisted:
+      "El cupo está lleno. Si eliges «Voy», quedas en lista de espera y el organizador te sube si alguien cancela.",
     duplicateName:
       "Ya hay alguien con ese nombre en este evento. Usa otro (por ejemplo, agrega tu apellido).",
     closed: "El evento está cerrado y ya no acepta cambios.",

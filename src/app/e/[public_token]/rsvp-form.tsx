@@ -16,6 +16,7 @@ import {
   SubmitButton,
   createZodResolver,
 } from "@/components/form-shell";
+import { Notice } from "@/components/notice";
 import { RadioField } from "@/components/radio-field";
 import { copy } from "@/config/copy";
 import { rsvpSchema } from "@/lib/validation";
@@ -34,9 +35,11 @@ export interface RsvpFormProps {
   publicToken: string;
   /** The RSVP this device already owns, if it has one. */
   mine: { displayName: string; attendance: string } | null;
+  /** Event is at capacity, so "Voy" will land on the waitlist. */
+  isFull: boolean;
 }
 
-export function RsvpForm({ publicToken, mine }: RsvpFormProps) {
+export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<RsvpState>({ errors: {} });
 
@@ -81,6 +84,15 @@ export function RsvpForm({ publicToken, mine }: RsvpFormProps) {
                     <AlertTitle>{copy.event.full}</AlertTitle>
                     <AlertDescription>{copy.rsvp.waitlistedNotice}</AlertDescription>
                   </Alert>
+                ) : null}
+
+                {/* Say what will happen BEFORE they submit. Showing "Cupo
+                    lleno" elsewhere on the page and only revealing the
+                    consequence after submitting is the kind of surprise that
+                    makes people distrust a form. Not shown to someone who
+                    already holds a spot — they are not going anywhere. */}
+                {isFull && mine?.attendance !== "in" && !serverState.waitlisted ? (
+                  <Notice tone="warning" title={copy.rsvp.willBeWaitlisted} />
                 ) : null}
 
                 <FormError message={serverState.errors._form} />

@@ -333,6 +333,83 @@ normalising is the honest fix.
 
 ---
 
+## Mobile
+
+The brief said mobile-first and I had been designing at 390px — or so I
+thought. The audit below found otherwise, and found real bugs.
+
+### 30. My earlier "verified at 390px" was actually 500px
+
+Chrome's window has a ~500px floor and the devtools viewport override kept
+failing to apply, so every screenshot I called a 390px check was really 500px.
+Not a huge gap in absolute terms, but it hid the worst bug in this file (#31).
+
+Since no CSS in this app or in Stackmyth distinguishes 390 from 500 —
+Stackmyth's breakpoints start at 640px and nothing uses `vw` — clamping
+`html`/`body` to 390px reproduces the real layout faithfully. That is how the
+current numbers were measured.
+
+### 31. The organizer's roster rows collapsed to one character per line
+
+At 390px the row was `ListItemContent` + `ListItemAction` side by side with
+`flex-wrap: nowrap`. The controls needed ~347px of a 358px row, which squeezed
+the name column to **literally zero width** — and because the page shell
+carried `wordBreak="break-word"`, a zero-width column renders one letter per
+line. Names came out as vertical ticker tape.
+
+Two fixes, both needed:
+
+- The row is now a vertical `Stack`: identity on one line, controls on the
+  next, each full width, with `minWidth="0"` on the name so it wraps normally
+  instead of forcing the row wider than the screen.
+- `wordBreak="break-word"` is gone from the page shells. It was there for long
+  URLs, which is a job for the one component that actually shows a URL —
+  `LinkPanel` already scopes `wordBreak="break-all"` to itself.
+
+### 32. Tap targets come from `--sm-density-factor`, not hardcoded heights
+
+33 of 37 buttons were under the 44px guideline; the roster row controls were
+**26px**. Rather than pin heights, the app raises Stackmyth's own density knob
+to `1.4` in `globals.css` — every control's padding is
+`calc(<base> * var(--sm-density-factor))`, so one token widens every target in
+the app. Smallest control is now 41px, from 26px, with no magic numbers.
+
+### 33. The organizer panel collapses what you don't need every visit
+
+It was 5,273px — **6.2 phone screens** — because the share links and the entire
+edit form were always expanded. Both are occasional; the roster and the money
+are why you opened the page.
+
+Now: event details, then a collapsed **Links** section (expanded only on
+`?created=1`, when the links genuinely _are_ the task), money, roster, then
+collapsed **Agregar** and **Editar**, and finally **Cerrar evento** — last and
+low-key, because it ends the event's life. **2.5 screens**, down 60%.
+
+### 34. The RSVP box moved above the roster
+
+Everyone arrives from a WhatsApp link with one thing to do. The roster came
+first, so answering meant scrolling past four groups of names — a screen and a
+half before you could act. Who else is coming is interesting; answering is the
+point. The form now sits right under the event details.
+
+### 35. A full event says so _inside_ the form, before you submit
+
+The page showed "Cupo lleno" near the top and the RSVP box said nothing; you
+only learned you were on the waitlist _after_ submitting. That is the kind of
+surprise that makes people distrust a form. The warning now lives in the form,
+naming the consequence ("si eliges «Voy», quedas en lista de espera"), and the
+separate top-of-page notice is gone so it is not said twice on one screen.
+
+### 36. Smaller headings and money figures
+
+Stackmyth's `h1` is sized for a desktop hero: "Fútbol de los jueves" wrapped to
+two lines and ate a third of the first screen. The title is now `as="h1"`
+(correct outline) with `variant="h2"` (mobile size). `Stat` renders its value at
+32px — the same size as the page title — so two of them side by side shouted
+louder than the event name; they take a `Text` node at `h4` instead.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

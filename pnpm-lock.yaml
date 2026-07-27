@@ -7,6 +7,9 @@ settings:
 importers:
   .:
     dependencies:
+      "@stackmyth/accordion":
+        specifier: ^0.19.1
+        version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
       "@stackmyth/alert":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
@@ -1635,6 +1638,17 @@ packages:
       {
         integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==,
       }
+
+  "@stackmyth/accordion@0.19.1":
+    resolution:
+      {
+        integrity: sha512-r609PdVlXHmNax4I6RDnEk7OcovSJlQ+jHHAuRNTmuDXrRuljJh0pxq/o1ft6A/EpkO3wVeUkEJKhe/tiXWlAg==,
+        tarball: https://npm.pkg.github.com/download/@stackmyth/accordion/0.19.1/4094c67dcc34b68124c2054b355317045e5cea1e,
+      }
+    peerDependencies:
+      "@stackmyth/core": ">=0.0.0"
+      "@stackmyth/icons": ">=0.0.0"
+      react: ">=18.0.0"
 
   "@stackmyth/alert@0.19.1":
     resolution:
@@ -5479,6 +5493,14 @@ snapshots:
   "@rolldown/pluginutils@1.0.1": {}
 
   "@rtsao/scc@1.1.0": {}
+
+  "@stackmyth/accordion@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@stackmyth/classnames": 0.1.0
+      "@stackmyth/core": 0.19.1(react@19.2.4)
+      "@stackmyth/event-bus": 0.1.0(react@19.2.4)
+      "@stackmyth/icons": 0.1.0(react@19.2.4)
+      react: 19.2.4
 
   "@stackmyth/alert@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)":
     dependencies:

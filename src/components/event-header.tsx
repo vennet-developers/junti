@@ -53,7 +53,16 @@ export function EventHeader({ event, attendingCount }: EventHeaderProps) {
             </Badge>
           ) : null}
         </Flex>
-        <Text variant="h1">{event.title}</Text>
+        {/*
+          h2, not h1. Stackmyth's h1 is sized for a desktop hero; at 390px an
+          ordinary event name like "Fútbol de los jueves" wrapped to two lines
+          and ate a third of the first screen. This is still the page's main
+          heading semantically — `as="h1"` keeps the document outline correct
+          while `variant` carries only the size.
+        */}
+        <Text as="h1" variant="h2">
+          {event.title}
+        </Text>
       </Stack>
 
       <Stack gap="3">

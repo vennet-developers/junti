@@ -17,6 +17,7 @@
     "db:export": "tsx scripts/export.ts"
   },
   "dependencies": {
+    "@stackmyth/accordion": "^0.19.1",
     "@stackmyth/alert": "^0.19.1",
     "@stackmyth/badge": "^0.19.1",
     "@stackmyth/button": "^0.19.1",

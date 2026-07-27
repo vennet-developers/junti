@@ -70,19 +70,34 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
 
   return (
     <Container size="1">
-      <Stack gap="6" py="6" px="4" wordBreak="break-word">
+      <Stack gap="6" py="6" px="4">
         <EventHeader event={event} attendingCount={roster.attending.length} />
 
-        {/* Capacity is only actionable while the event is open. Once it is
-            closed the notice at the bottom, where the RSVP box used to be, is
-            the one that matters. */}
-        {!event.isClosed && roster.openSlots !== null ? (
-          roster.openSlots === 0 ? (
-            <Notice tone="warning" title={copy.event.full} />
-          ) : (
-            <Notice tone="info" title={copy.event.spotsLeft(roster.openSlots)} />
-          )
+        {/* Only the "spots left" nudge lives here. When the event is FULL the
+            RSVP box says so itself, right where the consequence applies —
+            saying it twice on one screen is noise. */}
+        {!event.isClosed && roster.openSlots !== null && roster.openSlots > 0 ? (
+          <Notice tone="info" title={copy.event.spotsLeft(roster.openSlots)} />
         ) : null}
+
+        {/*
+          The RSVP box comes BEFORE the roster.
+
+          Everyone arrives here from a WhatsApp link with one thing to do: say
+          whether they are coming. Putting the roster first meant scrolling past
+          four groups of names to reach the only control on the page — on a
+          phone that is most of a screen and a half of scrolling before you can
+          act. Who else is coming is interesting; answering is the point.
+        */}
+        {event.isClosed ? (
+          <Notice tone="warning" title={copy.event.closedNotice} />
+        ) : (
+          <RsvpForm
+            publicToken={publicToken}
+            mine={mine}
+            isFull={roster.openSlots !== null && roster.openSlots === 0}
+          />
+        )}
 
         <Divider />
 
@@ -91,7 +106,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
         {showMoney ? <Divider /> : null}
 
         <Stack gap="5">
-          <Text variant="h2">{copy.roster.heading}</Text>
+          <Text variant="h3">{copy.roster.heading}</Text>
 
           {roster.members.length === 0 ? (
             <Text color="muted">{copy.roster.empty}</Text>
@@ -131,14 +146,6 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             </>
           )}
         </Stack>
-
-        <Divider />
-
-        {event.isClosed ? (
-          <Notice tone="warning" title={copy.event.closedNotice} />
-        ) : (
-          <RsvpForm publicToken={publicToken} mine={mine} />
-        )}
       </Stack>
     </Container>
   );

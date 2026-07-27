@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <Container size="1">
-      <Stack gap="6" py="7" px="4" wordBreak="break-word">
+      <Stack gap="6" py="7" px="4">
         <Stack gap="2">
           <Text variant="h1">{BRAND_NAME}</Text>
           <Text variant="lead" color="muted">

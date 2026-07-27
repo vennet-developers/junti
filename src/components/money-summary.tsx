@@ -34,14 +34,28 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
     <Stack gap="4">
       <Text variant="h3">{copy.money.heading}</Text>
 
+      {/*
+        Stat renders its value at 32px — the same size as the page title. Two of
+        those side by side at 390px shout louder than the event name and barely
+        fit. Passing a Text node scales it down while keeping Stat's label /
+        value structure and spacing.
+      */}
       <Flex gap="5" wrap="wrap">
         <Stat
           label={copy.money.collectedLabel}
-          value={formatMoney(collectedMinor, event.currency)}
+          value={
+            <Text as="span" variant="h4" weight="bold" whiteSpace="nowrap">
+              {formatMoney(collectedMinor, event.currency)}
+            </Text>
+          }
         />
         <Stat
           label={copy.money.outstandingLabel}
-          value={formatMoney(outstandingMinor, event.currency)}
+          value={
+            <Text as="span" variant="h4" weight="bold" whiteSpace="nowrap">
+              {formatMoney(outstandingMinor, event.currency)}
+            </Text>
+          }
         />
       </Flex>
 

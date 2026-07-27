@@ -8,6 +8,7 @@ import { Text } from "@stackmyth/text";
 import { EventHeader } from "@/components/event-header";
 import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
+import { Disclosure } from "@/components/disclosure";
 import { Notice } from "@/components/notice";
 import { RosterGroup } from "@/components/roster-list";
 import { copy } from "@/config/copy";
@@ -68,13 +69,10 @@ export default async function ManagePage({
 
   return (
     <Container size="1">
-      <Stack gap="6" py="6" px="4" wordBreak="break-word">
-        <Stack gap="1">
-          <Text variant="h2">{copy.manage.heading}</Text>
-          <Text variant="small" color="muted">
-            {copy.manage.subheading}
-          </Text>
-        </Stack>
+      <Stack gap="6" py="6" px="4">
+        {/* The event itself comes first. On a return visit that is what the
+            organizer opened the page for; the links are one tap away below. */}
+        <EventHeader event={event} attendingCount={roster.attending.length} />
 
         {justCreated ? (
           <Stack gap="2">
@@ -83,16 +81,18 @@ export default async function ManagePage({
           </Stack>
         ) : null}
 
-        {/* Links first: right after creation this is the only thing that matters. */}
-        <Stack gap="5">
-          <LinkPanel
-            label={copy.eventCreated.participantLinkLabel}
-            help={copy.eventCreated.participantLinkHelp}
-            url={participantUrl}
-            copyLabel={copy.share.copyParticipantLink}
-          />
+        {/* Expanded only right after creation, when the links ARE the task.
+            Collapsed on every later visit. */}
+        <Disclosure id="share" label={copy.manage.shareSection} defaultOpen={justCreated}>
+          <Stack gap="5">
+            <LinkPanel
+              label={copy.eventCreated.participantLinkLabel}
+              help={copy.eventCreated.participantLinkHelp}
+              url={participantUrl}
+              copyLabel={copy.share.copyParticipantLink}
+            />
 
-          {/*
+            {/*
             Box(as="a"), so the element Button clones is still a Stackmyth
             primitive — `asChild` needs a single child element, which is the
             only reason there is a wrapper here.
@@ -102,36 +102,27 @@ export default async function ManagePage({
             artifact — a production build renders the merged classes identically
             on both sides and logs nothing. See STACKMYTH-GAPS.md #13.
           */}
-          <Button asChild fullWidth size="lg">
-            <Box
-              as="a"
-              href={whatsAppShareUrl(shareMessage)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {copy.eventCreated.shareWhatsApp}
-            </Box>
-          </Button>
+            <Button asChild fullWidth size="lg">
+              <Box
+                as="a"
+                href={whatsAppShareUrl(shareMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {copy.eventCreated.shareWhatsApp}
+              </Box>
+            </Button>
 
-          <LinkPanel
-            label={copy.eventCreated.organizerLinkLabel}
-            help={copy.eventCreated.organizerLinkHelp}
-            url={manageUrl}
-            copyLabel={copy.share.copyOrganizerLink}
-          />
+            <LinkPanel
+              label={copy.eventCreated.organizerLinkLabel}
+              help={copy.eventCreated.organizerLinkHelp}
+              url={manageUrl}
+              copyLabel={copy.share.copyOrganizerLink}
+            />
 
-          <Notice tone="warning" title={copy.eventCreated.warning} />
-        </Stack>
-
-        <Divider />
-
-        <EventHeader event={event} attendingCount={roster.attending.length} />
-
-        <CloseEventControl
-          publicToken={publicToken}
-          organizerToken={organizerToken}
-          isClosed={event.isClosed}
-        />
+            <Notice tone="warning" title={copy.eventCreated.warning} />
+          </Stack>
+        </Disclosure>
 
         {roster.promotable > 0 ? (
           <Notice tone="info" title={copy.manage.slotOpenedTitle}>
@@ -162,8 +153,6 @@ export default async function ManagePage({
         {showMoney ? <Divider /> : null}
 
         <Stack gap="5">
-          <Text variant="h2">{copy.manage.participantsSection}</Text>
-
           {roster.members.length === 0 ? (
             <Notice tone="info" title={copy.manage.noParticipants}>
               {copy.manage.noParticipantsHelp}
@@ -258,12 +247,22 @@ export default async function ManagePage({
             </>
           )}
 
-          <AddParticipantForm publicToken={publicToken} organizerToken={organizerToken} />
+          <Disclosure id="add" label={copy.manage.addParticipant}>
+            <AddParticipantForm publicToken={publicToken} organizerToken={organizerToken} />
+          </Disclosure>
         </Stack>
 
-        <Divider />
+        <Disclosure id="edit" label={copy.manage.editEvent}>
+          <EditEventForm publicToken={publicToken} organizerToken={organizerToken} event={event} />
+        </Disclosure>
 
-        <EditEventForm publicToken={publicToken} organizerToken={organizerToken} event={event} />
+        {/* Closing is deliberately last and low-key: it is the end of the
+            event's life, not something to reach for by accident. */}
+        <CloseEventControl
+          publicToken={publicToken}
+          organizerToken={organizerToken}
+          isClosed={event.isClosed}
+        />
       </Stack>
     </Container>
   );

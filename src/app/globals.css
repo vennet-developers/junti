@@ -18,6 +18,18 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+:root {
+  /*
+   * Stackmyth's own density knob, turned up for touch.
+   *
+   * Every control's padding is `calc(<base> * var(--sm-density-factor))`, so
+   * raising it here widens every tap target in the app at once without a single
+   * hardcoded height. The default of 1 is tuned for a mouse; this app is used
+   * one-handed on a phone, where a 26px button is a miss waiting to happen.
+   */
+  --sm-density-factor: 1.4;
+}
+
 body {
   margin: 0;
   min-height: 100dvh;

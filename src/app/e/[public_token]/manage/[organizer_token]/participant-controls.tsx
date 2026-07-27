@@ -59,7 +59,7 @@ export function PaymentControls({
     <Flex gap="2" align="center" wrap="wrap" justify="end">
       <Button
         type="button"
-        size="xs"
+        size="md"
         variant={status === "confirmed" ? "outline" : "success"}
         soft={status !== "confirmed"}
         disabled={pending}
@@ -71,7 +71,7 @@ export function PaymentControls({
       {status !== "waived" ? (
         <Button
           type="button"
-          size="xs"
+          size="md"
           variant="ghost"
           disabled={pending}
           onClick={() => set("waived")}
@@ -94,7 +94,7 @@ export function PromoteControl({ publicToken, organizerToken, participantId }: C
   }
 
   return (
-    <Button type="button" size="xs" variant="primary" soft disabled={pending} onClick={promote}>
+    <Button type="button" size="md" variant="primary" soft disabled={pending} onClick={promote}>
       {copy.manage.promote}
     </Button>
   );
@@ -116,7 +116,7 @@ export function RemoveControl({ publicToken, organizerToken, participantId, disp
     <Dialog open={open} onOpenChange={setOpen}>
       <Button
         type="button"
-        size="xs"
+        size="md"
         variant="destructive"
         soft
         onClick={() => setOpen(true)}
