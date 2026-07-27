@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 
+import Link from "next/link";
+
 import { Button } from "@stackmyth/button";
 import { EmptyState } from "@stackmyth/empty-state";
 import { TriangleAlertIcon } from "@stackmyth/icons";
-import { Box, Container, Flex, Stack } from "@stackmyth/layout";
+import { Container, Flex, Stack } from "@stackmyth/layout";
 
 import { copy } from "@/config/copy";
 
@@ -45,12 +47,11 @@ export default function Error({
                 {copy.errorBoundary.retry}
               </Button>
               <Button asChild size="md" variant="secondary">
-                {/* Box(as="a") keeps the cloned child a Stackmyth primitive.
-                    A full page load, not a client transition — if the router
-                    itself is unhappy, next/link would fail the same way. */}
-                <Box as="a" href="/">
-                  {copy.errorBoundary.home}
-                </Box>
+                {/* next/link because this is an internal route — a bare <a>
+                    to a page is an ESLint error in Next. A full page load, not
+                    a client transition: if the router itself is unhappy,
+                    next/link would fail the same way. */}
+                <Link href="/">{copy.errorBoundary.home}</Link>
               </Button>
             </Flex>
           }

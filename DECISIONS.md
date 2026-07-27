@@ -81,8 +81,8 @@ Separators are stripped before parsing.
 The schema supports any ISO-4217 code and the formatter handles minor-unit
 exponents properly (COP/CLP/JPY = 0 decimals, most others = 2). But exposing a
 currency picker is a feature nobody in the target group needs, and section 7
-says don't build what isn't in section 6. The field is a hidden input; changing
-the default is a one-line edit.
+says don't build what isn't in section 6. It is a `defaultValues` entry on the
+form controller with no control rendered; adding one is a one-line edit.
 
 ---
 
@@ -261,6 +261,75 @@ scope→registry mapping (safe, and required on a fresh clone), and the
 credential goes to `~/.npmrc`, `pnpm config set`, or Vercel's `NPM_RC`
 environment variable. Documented in the README rather than left to be
 rediscovered.
+
+### 26. Client validation with `@stackmyth/form`, server action still the authority
+
+I originally dismissed `@stackmyth/form` as incompatible with server actions.
+That was wrong, and worth recording as a misjudgement rather than quietly
+fixing: `FormController` is a _validation and state_ layer, not a submission
+layer. `handleSubmit(onValid)` hands you the validated values and you decide
+what to do with them — including calling a server action.
+
+The split now:
+
+- **Browser** — `FormController` + `createZodResolver(eventClientSchema)`
+  validates on blur and shows per-field messages with no round trip.
+- **Server** — the action re-parses everything with `eventSchema` before
+  touching the database. A client that skips, spoofs or disables validation
+  changes nothing.
+
+Both schemas are built from the same field definitions in `validation.ts`, so a
+rule cannot be tightened in one and forgotten in the other. The client one adds
+no transforms; the server one does the parsing.
+
+**What this cost.** Progressive enhancement — the forms no longer submit
+without JavaScript. That is not a real loss here: `Select`, `Calendar` and
+`TimePicker` are popover-based and cannot be operated without JS at all, so
+these forms were never usable in a no-JS browser.
+
+**What this bought.** Instant feedback, and the deletion of every hidden input
+in the app (see #27).
+
+### 27. Zero hidden inputs, because submission stopped going through `FormData`
+
+An earlier pass had seven `<input type="hidden">`: mirrors for `Select` (which
+has no `name`), for the date and time, for the currency, and for the
+participant id and target status on each organizer row button.
+
+All gone. Values now reach `FormController`'s store via `store.setValue()`, and
+the organizer's row buttons call their server actions with **bound arguments**
+instead of submitting a form — there is nothing to type in those controls, so a
+form plus hidden fields was only a way to smuggle values the caller already
+knew. Those actions take plain parameters now and still validate them
+server-side, because a bound argument is client-supplied data like any other.
+
+### 28. The date field is composed from `Popover` + `Calendar`, not `DatePicker`
+
+`DatePicker` looks like the right component and is not, for two independent
+reasons — both verified, both logged (STACKMYTH-GAPS.md #11 and #12):
+
+1. Its `locale` prop only formats the trigger label. The `Calendar` inside is
+   hardcoded to `"en-US"`, so a Spanish app gets an English calendar with no
+   way to reach it.
+2. Its hidden value is `value.toISOString()`. For a date-only field that is
+   lossy: the calendar builds local midnight, so a user east of Bogota would
+   submit the previous calendar day and the event would silently move.
+
+So the field is `Popover` + `Calendar` + `Button`, which is the documented
+escape hatch and gives access to `locale`, `weekStartsOn={1}` (Colombia starts
+on Monday), `timezone` and `fromDate`. It submits `YYYY-MM-DD` built from local
+getters, and `TimePicker` contributes `HH:mm` — two wall-clock strings that the
+server joins and resolves against Bogota's real offset, reusing the timezone
+logic that was already there.
+
+### 29. `capacity` validates as `string | number`
+
+The same schema runs on both sides of the wire and the two sides disagree about
+the type. `FormData` always yields strings; `@stackmyth/form`'s store reads an
+`<input type="number">` as an actual `number`. A `z.string()` passes on the
+server and fails in the browser with _"expected string, received number"_ — a
+baffling message for a field the user filled in correctly. Accepting both and
+normalising is the honest fix.
 
 ---
 

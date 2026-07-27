@@ -44,7 +44,8 @@ export async function createEvent(
   const parsed = eventSchema.safeParse({
     title: field(formData, "title"),
     kind: field(formData, "kind"),
-    startsAt: field(formData, "startsAt"),
+    startsAtDate: field(formData, "startsAtDate"),
+    startsAtTime: field(formData, "startsAtTime"),
     location: field(formData, "location"),
     capacity: field(formData, "capacity"),
     notes: field(formData, "notes"),

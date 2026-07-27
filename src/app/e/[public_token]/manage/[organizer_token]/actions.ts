@@ -53,24 +53,32 @@ function refresh(publicToken: string, organizerToken: string): void {
 
 const forbidden: ManageState = { errors: { _form: copy.errors.forbidden } };
 
-/** Toggles a participant's payment between pending, confirmed and waived. */
+/**
+ * Toggles a participant's payment between pending, confirmed and waived.
+ *
+ * Takes plain arguments rather than FormData: it is invoked straight from a
+ * button, so there is no form to serialise and therefore no hidden inputs to
+ * carry the ids. The arguments are still validated here — a bound argument is
+ * client-supplied data like any other.
+ */
 export async function setPaymentStatus(
   publicToken: string,
   organizerToken: string,
-  _previous: ManageState,
-  formData: FormData,
+  rawParticipantId: string,
+  rawStatus: string,
+  rawMethod?: string,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
   if (!event) return forbidden;
 
-  const participantId = participantIdSchema.safeParse(field(formData, "participantId"));
-  const status = paymentStatusSchema.safeParse(field(formData, "status"));
+  const participantId = participantIdSchema.safeParse(rawParticipantId);
+  const status = paymentStatusSchema.safeParse(rawStatus);
 
   if (!participantId.success || !status.success) {
     return { errors: { _form: copy.errors.notFound } };
   }
 
-  const method = field(formData, "method").trim() || null;
+  const method = rawMethod?.trim() || null;
 
   // Scoped by event id so an organizer of one event cannot touch another's rows
   // by passing a foreign participant id.
@@ -169,13 +177,12 @@ export async function addParticipant(
 export async function removeParticipant(
   publicToken: string,
   organizerToken: string,
-  _previous: ManageState,
-  formData: FormData,
+  rawParticipantId: string,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
   if (!event) return forbidden;
 
-  const participantId = participantIdSchema.safeParse(field(formData, "participantId"));
+  const participantId = participantIdSchema.safeParse(rawParticipantId);
   if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
 
   await db
@@ -199,13 +206,12 @@ export async function removeParticipant(
 export async function promoteParticipant(
   publicToken: string,
   organizerToken: string,
-  _previous: ManageState,
-  formData: FormData,
+  rawParticipantId: string,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
   if (!event) return forbidden;
 
-  const participantId = participantIdSchema.safeParse(field(formData, "participantId"));
+  const participantId = participantIdSchema.safeParse(rawParticipantId);
   if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
 
   await db
@@ -258,7 +264,8 @@ export async function editEvent(
   const parsed = eventSchema.safeParse({
     title: field(formData, "title"),
     kind: field(formData, "kind"),
-    startsAt: field(formData, "startsAt"),
+    startsAtDate: field(formData, "startsAtDate"),
+    startsAtTime: field(formData, "startsAtTime"),
     location: field(formData, "location"),
     capacity: field(formData, "capacity"),
     notes: field(formData, "notes"),

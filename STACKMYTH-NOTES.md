@@ -15,6 +15,12 @@ Ground truth, in order of authority:
 Verified against: `@stackmyth/*` **0.19.1** (`icons` and `classnames` are on
 `0.1.0`, `manifests` on `0.1.0`), React 19.2.4, Next.js 16.2.12.
 
+**26 packages installed.** UI: `core` `layout` `text` `button` `input`
+`textarea` `label` `field` `select` `radio-group` `switch` `card` `badge`
+`alert` `dialog` `popover` `list-item` `empty-state` `stat` `progress`
+`spinner` `skeleton` `calendar` `time-picker`. Plus `form` (validation) and
+`icons`. `manifests` is a devDependency only.
+
 ---
 
 ## 1. Installation and registry
@@ -330,6 +336,51 @@ Also ~88 country flags in `@stackmyth/flags` (not installed).
 
 ---
 
+### Forms — `@stackmyth/form`
+
+The validation layer, used by all four data-entry forms. It does **not** submit
+anything; it validates and holds state, and you decide what to do with the
+result. That makes it compatible with server actions.
+
+- `FormController` — `resolver`, `defaultValues`, `mode`
+  (`"onChange" | "onBlur" | "onSubmit"`), `onSubmit`, `onInvalid`. Children may
+  be a render prop receiving `{ register, handleSubmit, formId }`.
+  `handleSubmit(onValid?, onInvalid?)` returns a `FormEventHandler` — attach it
+  to a `<form onSubmit>`. `onValid` receives the validated values.
+- `FormField` — `name`, `label`, `description`, `rules`, plus a render prop
+  giving `{ fieldProps, error, errors, isDirty, isTouched }`. `fieldProps`
+  carries `id`, `name`, `onChange`, `onBlur`, `aria-invalid`,
+  `aria-describedby` — spread it straight onto a Stackmyth `Input`/`Textarea`.
+- `createZodResolver(schema)` — exported from the package root as well as
+  `@stackmyth/form/resolvers/zod`. Structural typing, so Zod 3 or 4.
+- `useFormContext()` → `{ formId, store }`. **This is the hook for controls
+  that are not plain inputs.** `store.register(name)` (idempotent, safe during
+  render) and `store.setValue(name, value)` are how `Select`, `RadioGroup` and
+  the calendar get their values into the form.
+- `useFieldErrors(name)` → `string[]`, for rendering a message next to a
+  control that has no `FormField` wrapper.
+
+⚠️ `store` reads an `<input type="number">` as a **number**, not a string. A
+schema shared with the server (where `FormData` yields strings) must accept
+both. See DECISIONS.md #29.
+
+### Date and time — `@stackmyth/calendar`, `@stackmyth/time-picker`
+
+`Calendar`: `mode` `single|range|multiple`, `selected`, `onSelect`, `locale`,
+`weekStartsOn` (0–6), `timezone`, `fromDate`, `toDate`, `showOutsideDays`,
+`markedDates`, `showMonthYearDropdown`, `numberOfMonths`, `disabled`.
+
+`TimePicker`: `name` (renders its own hidden input — it _does_ submit
+natively), `value`, `onValueChange`, `hourCycle` `12h|24h`, `minuteStep`,
+`withSeconds`, `size`, `clearable`, `placeholder`. Its internal ARIA labels are
+hardcoded English — see STACKMYTH-GAPS.md #12.
+
+⚠️ **`DatePicker` is installed by neither this app nor this file's advice.** Its
+`locale` only formats the trigger label — the `Calendar` inside stays `en-US` —
+and its hidden value is `toISOString()`, which shifts the calendar day for
+users east of Bogota. Compose `Popover` + `Calendar` instead; see
+`src/components/date-time-field.tsx` and gaps #11 and #12.
+
 ### Feedback — `@stackmyth/skeleton`
 
 `Skeleton`: `height`, `width`, `borderRadius` (all CSS strings) + div attributes.
@@ -362,30 +413,26 @@ grep -rnE 'className="[^{]' --include='*.tsx' src/
 
 ### The irreducible remainder
 
-Three things are still raw HTML. None of them renders anything a user sees, and
-none has a Stackmyth equivalent:
+**One element type**, in four places: `<form onSubmit={handleSubmit(...)}>`.
 
-**1. `<form action={serverAction}>`** — 6 occurrences. This is the React/Next
-server-action binding, not a visual element. Notably **Stackmyth does not offer
-an alternative**: `@stackmyth/form` is a _client-side form-state_ library
-(`useForm`, `createZodResolver`, `FormField` render-props), and its own tests
-and JSDoc examples use a plain `<form onSubmit={handleSubmit()}>`. Adopting it
-would mean abandoning server actions, which the brief mandates and which is what
-makes these forms work without JavaScript. So this is not a workaround — a
-`<form>` element is what Stackmyth itself expects you to write.
+`@stackmyth/form`'s `handleSubmit` returns a `FormEventHandler<HTMLFormElement>`,
+which can only be attached to a `<form>`. Stackmyth deliberately does not wrap
+it — the library's own tests and JSDoc write the element by hand — so this is
+what the stack expects you to supply, not a workaround. `<Box as="form">` is not
+an option either: `BoxProps` carries anchor and button attributes but not
+`action`/`method`/`noValidate`. Logged as gap #10.
 
-**2. `<input type="hidden">`** — 7 occurrences. Invisible data carriers: the
-value mirrored out of `SelectField` (because `Select` has no `name` prop — gap
-#5), the participant id and target status on the organizer's action buttons, and
-the currency. Rendering nothing, styled by nothing.
+Plus `<html>` / `<body>` in `layout.tsx`, which the framework requires.
 
-**3. `<html>` / `<body>`** in `layout.tsx` — required by the framework.
+**There are no hidden inputs.** An earlier pass had seven, mirroring values out
+of `Select` and the date field so they would appear in `FormData`. Adopting
+`FormController` deleted all of them: submission goes through the form store, so
+a value only has to reach `store.setValue()`. The organizer's per-row buttons
+call their server actions with bound arguments for the same reason.
 
 Everything else — every button, badge, card, field, list row, stat, divider,
-progress bar, dialog, empty state, skeleton, icon and piece of text — is a
-Stackmyth component. Where `Button asChild` needs a single child element, the
-child is `Box as="a"` rather than a bare anchor, so even the cloned element is a
-Stackmyth primitive.
+progress bar, dialog, calendar, time picker, popover, empty state, skeleton,
+icon and piece of text — is a Stackmyth component.
 
 ---
 

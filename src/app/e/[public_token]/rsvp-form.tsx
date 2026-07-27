@@ -1,24 +1,26 @@
 "use client";
 
-import { useActionState, useId } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, useTransition } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@stackmyth/alert";
-import { Button } from "@stackmyth/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Input } from "@stackmyth/input";
-import { Flex, Stack } from "@stackmyth/layout";
-import { RadioGroup, RadioGroupItem } from "@stackmyth/radio-group";
-import { Spinner } from "@stackmyth/spinner";
+import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import {
+  ControlledField,
+  FormController,
+  FormError,
+  FormField,
+  SubmitButton,
+  createZodResolver,
+} from "@/components/form-shell";
+import { RadioField } from "@/components/radio-field";
 import { copy } from "@/config/copy";
+import { rsvpSchema } from "@/lib/validation";
 
 import { submitRsvp, type RsvpState } from "./actions";
-
-/** Declared here, not in actions.ts: a "use server" module exports only async functions. */
-const EMPTY_STATE: RsvpState = { errors: {} };
 
 const ATTENDANCE_OPTIONS = [
   { value: "in", label: copy.attendance.in },
@@ -26,19 +28,7 @@ const ATTENDANCE_OPTIONS = [
   { value: "maybe", label: copy.attendance.maybe },
 ] as const;
 
-function SubmitButton({ editing }: { editing: boolean }) {
-  const { pending } = useFormStatus();
-
-  // STACKMYTH-GAP: Button `loading` hardcodes an English SR string with no
-  // override. Composed from a disabled Button + labelled Spinner instead.
-  // See STACKMYTH-GAPS.md #4.
-  return (
-    <Button type="submit" size="lg" fullWidth disabled={pending}>
-      {pending ? <Spinner size="sm" label={copy.rsvp.submitting} /> : null}
-      {pending ? copy.rsvp.submitting : editing ? copy.rsvp.submitEditing : copy.rsvp.submit}
-    </Button>
-  );
-}
+const resolver = createZodResolver(rsvpSchema);
 
 export interface RsvpFormProps {
   publicToken: string;
@@ -47,15 +37,25 @@ export interface RsvpFormProps {
 }
 
 export function RsvpForm({ publicToken, mine }: RsvpFormProps) {
-  const action = submitRsvp.bind(null, publicToken);
-  const [state, formAction] = useActionState<RsvpState, FormData>(action, EMPTY_STATE);
+  const [pending, startTransition] = useTransition();
+  const [serverState, setServerState] = useState<RsvpState>({ errors: {} });
 
-  const nameId = useId();
   const editing = mine !== null;
 
-  // `waitlisted` is only ever set by a successful submission.
   const defaultAttendance =
     mine?.attendance === "out" || mine?.attendance === "maybe" ? mine.attendance : "in";
+
+  function submit(data: Record<string, unknown>) {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+      formData.set(key, value == null ? "" : String(value));
+    }
+
+    startTransition(async () => {
+      const result = await submitRsvp(publicToken, { errors: {} }, formData);
+      setServerState(result);
+    });
+  }
 
   return (
     <Card surface="outlined">
@@ -63,71 +63,72 @@ export function RsvpForm({ publicToken, mine }: RsvpFormProps) {
         <CardTitle>{editing ? copy.rsvp.headingEditing : copy.rsvp.heading}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={formAction} noValidate>
-          <Stack gap="4">
-            {state.waitlisted ? (
-              // A response to the user's own action, so an assertive live
-              // region is the right behaviour here.
-              <Alert variant="warning" soft>
-                <AlertTitle>{copy.event.full}</AlertTitle>
-                <AlertDescription>{copy.rsvp.waitlistedNotice}</AlertDescription>
-              </Alert>
-            ) : null}
+        <FormController
+          resolver={resolver}
+          defaultValues={{
+            displayName: mine?.displayName ?? "",
+            attendance: defaultAttendance,
+          }}
+          mode="onBlur"
+        >
+          {({ handleSubmit }) => (
+            <form onSubmit={handleSubmit(submit)} noValidate>
+              <Stack gap="4">
+                {serverState.waitlisted ? (
+                  // A response to the user's own action, so an assertive live
+                  // region is the right behaviour here.
+                  <Alert variant="warning" soft>
+                    <AlertTitle>{copy.event.full}</AlertTitle>
+                    <AlertDescription>{copy.rsvp.waitlistedNotice}</AlertDescription>
+                  </Alert>
+                ) : null}
 
-            {state.errors._form ? (
-              <Text color="error" role="alert">
-                {state.errors._form}
-              </Text>
-            ) : null}
+                <FormError message={serverState.errors._form} />
 
-            {editing ? (
-              <Text variant="small" color="muted">
-                {copy.rsvp.yourRsvp(mine.displayName)}
-              </Text>
-            ) : null}
+                {editing ? (
+                  <Text variant="small" color="muted">
+                    {copy.rsvp.yourRsvp(mine.displayName)}
+                  </Text>
+                ) : null}
 
-            <Field invalid={Boolean(state.errors.displayName)}>
-              <FieldLabel htmlFor={nameId}>{copy.rsvp.nameLabel}</FieldLabel>
-              <Input
-                id={nameId}
-                name="displayName"
-                fullWidth
-                size="lg"
-                required
-                maxLength={40}
-                autoComplete="name"
-                defaultValue={mine?.displayName ?? ""}
-                placeholder={copy.rsvp.namePlaceholder}
-                status={state.errors.displayName ? "error" : "default"}
-              />
-              {state.errors.displayName ? (
-                <FieldError>{state.errors.displayName}</FieldError>
-              ) : (
-                <FieldDescription>{copy.rsvp.nameHelp}</FieldDescription>
-              )}
-            </Field>
+                <FormField name="displayName">
+                  {({ fieldProps, error }) => (
+                    <ControlledField
+                      label={copy.rsvp.nameLabel}
+                      description={copy.rsvp.nameHelp}
+                      error={error ?? serverState.errors.displayName}
+                      htmlFor={fieldProps.id}
+                    >
+                      <Input
+                        {...fieldProps}
+                        fullWidth
+                        size="lg"
+                        maxLength={40}
+                        autoComplete="name"
+                        placeholder={copy.rsvp.namePlaceholder}
+                        status={error ? "error" : "default"}
+                      />
+                    </ControlledField>
+                  )}
+                </FormField>
 
-            <Field>
-              <FieldLabel>{copy.rsvp.attendanceLabel}</FieldLabel>
-              {/*
-                RadioGroup renders real <input type="radio" name>, so unlike
-                Select it submits natively and needs no hidden mirror.
-              */}
-              <RadioGroup name="attendance" defaultValue={defaultAttendance} orientation="vertical">
-                <Stack gap="3">
-                  {ATTENDANCE_OPTIONS.map((option) => (
-                    <Flex key={option.value} as="label" gap="3" align="center">
-                      <RadioGroupItem value={option.value} />
-                      <Text as="span">{option.label}</Text>
-                    </Flex>
-                  ))}
-                </Stack>
-              </RadioGroup>
-            </Field>
+                <ControlledField label={copy.rsvp.attendanceLabel}>
+                  <RadioField
+                    name="attendance"
+                    options={ATTENDANCE_OPTIONS}
+                    defaultValue={defaultAttendance}
+                  />
+                </ControlledField>
 
-            <SubmitButton editing={editing} />
-          </Stack>
-        </form>
+                <SubmitButton
+                  pending={pending}
+                  idleLabel={editing ? copy.rsvp.submitEditing : copy.rsvp.submit}
+                  pendingLabel={copy.rsvp.submitting}
+                />
+              </Stack>
+            </form>
+          )}
+        </FormController>
       </CardContent>
     </Card>
   );

@@ -201,11 +201,16 @@ Notably **`RadioGroup` gets this right**: it renders real
 `<input type="radio" name={name}>` elements and submits natively. So the stack
 clearly knows the pattern; `Select` just doesn't do it.
 
-**What I did instead.** Wrote a small wrapper that composes `Select` with a
-sibling `<input type="hidden">` — `src/components/select-field.tsx`. It is
-about 25 lines and forces every form containing a Select to be a client
-component with state. Not a disaster, but I wrote it three times before
-extracting it, and every consumer of this stack will write the same file.
+**What I did instead.** First a wrapper that composed `Select` with a sibling
+`<input type="hidden">`. Later, once the forms adopted `FormController`, the
+hidden input disappeared: submission no longer goes through native `FormData`,
+so the value only has to reach the form store, which `store.setValue(name, …)`
+does directly. `src/components/select-field.tsx` is now ~20 lines with no
+hidden field at all.
+
+Worth stating plainly: **adopting `@stackmyth/form` is what made this gap
+survivable.** A consumer who wants a Select in a plain server-action form,
+without the form library, still has to hand-roll the mirror.
 
 **What I would have wanted.** A `name` prop on `Select` that renders the hidden
 input for you — exactly what Radix, React Aria and every headless select does.
@@ -326,35 +331,113 @@ because an invisible icon looks a lot like a layout bug.
 
 ---
 
-## 10. No primitive for a `<form>` or a hidden field
+## 10. No primitive for a `<form>` element
 
-Not a complaint so much as the one honest boundary of "build everything from
-Stackmyth". After replacing every visible raw element in the app, exactly two
-kinds remain, and neither has a Stackmyth counterpart:
+The one honest boundary of "build everything from Stackmyth" — and it is
+narrower than I first wrote.
 
-**`<form action={serverAction}>`.** `@stackmyth/form` exists, but it solves a
-different problem — client-side form state (`useForm`, resolvers, `FormField`
-render-props). Its own tests and JSDoc write `<form onSubmit={handleSubmit()}>`,
-so the raw element is what the stack expects. That is a defensible design, but
-it does mean a consumer aiming for "no raw HTML" cannot get there, and a
-one-line `<Form>` passthrough (rendering `<form>` with `LayoutProps` and no
-state opinion at all) would close the gap for anyone using server actions or
-plain progressive-enhancement forms.
+**`<form>`.** `@stackmyth/form` is a client-side form-state library (`useForm`,
+resolvers, `FormField` render-props); its own tests and JSDoc write
+`<form onSubmit={handleSubmit()}>`, so the raw element is what the stack
+expects you to supply. `handleSubmit` returns a `FormEventHandler` that has to
+be attached to something, and that something can only be a `<form>`.
 
-**`<input type="hidden">`.** Needed here mostly _because_ of gap #5 — `Select`
-has no `name`, so its value has to be mirrored into a hidden field by hand. A
-`name` prop on `Select` would delete most of these; a tiny `HiddenField`
-primitive would delete the rest.
+**`<input type="hidden">` — no longer needed.** My first pass had seven of
+them, all mirroring values out of components that could not submit natively.
+Adopting `FormController` removed every one: submission goes through the form
+store rather than native `FormData`, so a value only has to reach
+`store.setValue()`. The app now has **zero** hidden inputs.
 
-**What I would have wanted.** Either would do:
-`<Box as="form" action={…}>` working (it doesn't — `BoxProps` carries anchor and
-button attributes but not `action`/`method`/`noValidate`), or a documented
-statement in the README that `<form>` and hidden inputs are expected to stay
-native. The current situation is neither, so every consumer rediscovers it.
+**What I would have wanted.** `<Box as="form">` working would be enough, but
+`BoxProps` carries anchor and button attributes and not
+`action`/`method`/`noValidate` — the one element type a form library needs is
+the one `Box` cannot render. Failing that, a sentence in the README saying
+`<form>` is expected to stay native, so consumers stop looking for a component
+that was never intended to exist.
 
 ---
 
-## 11. Small things, no workaround needed
+## 11. `DatePicker`'s hidden value is a UTC instant, which is lossy for a date
+
+`DatePicker` and `TimePicker` both accept `name` and — unlike `Select`, gap #5 —
+render their own hidden input, so they submit natively. Good. But the date one
+submits `value.toISOString()`.
+
+The `Calendar` inside builds **local midnight** for the day you tap. Converting
+that to UTC is fine for a Colombian user (midnight −05:00 → 05:00Z, same day)
+and wrong for anyone east of UTC: a user in Tokyo tapping 13 August submits
+`2026-08-12T15:00:00Z`, and a server reading that instant in America/Bogota
+gets **12 August**. The event silently moves a day for travellers.
+
+**What I did instead.** Kept the wall-clock day: the field emits `YYYY-MM-DD`
+built from `getFullYear/getMonth/getDate`, and the server joins it with the
+`HH:mm` from `TimePicker` and resolves the real Bogota offset. `TimePicker`'s
+own `name` is safe to use as-is, because it submits the raw `"HH:mm"` string
+with no timezone to get wrong.
+
+**What I would have wanted.** A date-only serialisation (`YYYY-MM-DD`) for a
+date-only picker, or a `valueFormat` prop. `toISOString()` on a value that has
+no time component is a category error — it invents a time and then reinterprets
+the date through it.
+
+---
+
+## 12. `DatePicker`'s `locale` never reaches the `Calendar` inside it
+
+**What I was building.** The event date field, in a Spanish (es-CO) app.
+
+**What happened.** I passed `locale="es-CO"` to `DatePicker`, which has exactly
+that prop. The trigger label localised correctly. The calendar that opens did
+not: **"July 2026", "Su Mo Tu We Th Fr Sa"**, week starting Sunday.
+
+The prop is documented as _"Locale for the formatted label"_ and is used in one
+place — the `Intl.DateTimeFormat` for the trigger text. `Calendar` has its own
+`locale` prop, defaulted to `"en-US"`, and `DatePicker` never forwards to it.
+There is no `calendarProps`, no children, no other way through.
+
+So a `DatePicker` in any non-English app shows an English calendar, and the prop
+that looks like it should fix that only fixes half the component.
+
+**What I did instead.** Dropped `DatePicker` and composed the same thing from
+`Popover` + `Calendar` + `Button` — about 30 lines, and `Calendar` accepts
+everything needed: `locale`, `weekStartsOn={1}` (Colombia starts on Monday),
+`timezone`, `fromDate`. Composing from primitives is the documented escape
+hatch, so this is a fine outcome; it just should not have been necessary.
+
+**What I would have wanted.** `DatePicker` forwarding `locale` (and
+`weekStartsOn`, `timezone`) to its `Calendar`, or accepting a
+`calendarProps` passthrough. One line either way.
+
+**Related, same family:** `TimePicker`'s internal ARIA labels are hardcoded
+English — `"Hour"`, `"Minute"`, `"Period"`, `"Clear time"`, `"Select time"` —
+with no props to override them, exactly like `Button loading` in gap #4.
+`placeholder` is overridable; the labels a screen-reader user actually hears are
+not.
+
+---
+
+## 13. `Button asChild` reports a hydration mismatch under `next dev`
+
+Minor, and **not** a production problem — recorded because it cost time to
+chase and the next person will hit it too.
+
+After a hot reload, `next dev` logs a hydration mismatch for any
+`<Button asChild>` subtree: the server renders the Slot-merged
+`className="sm-button …"` and the client renders `className={null}`.
+
+I initially assumed my `Box as="a"` child was to blame and swapped it for a
+plain `<a>`. **That was wrong** — the warning appears for both. A production
+build (`pnpm build && pnpm start`) renders the merged classes identically on
+both sides, applies the styles, and logs nothing at all. So it is an HMR
+artifact in `Slot`'s clone path, not a real mismatch.
+
+**What I would have wanted.** Nothing in the API. Just awareness that this
+warning is noise, because the obvious reading — "my composition is wrong" —
+sends you rewriting perfectly good code.
+
+---
+
+## 14. Small things, no workaround needed
 
 - **`Stack direction` is `"vertical" | "horizontal"`, `Flex direction` is
   `"row" | "column"`.** Two sibling components, two vocabularies for the same

@@ -1,25 +1,30 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { useState, useTransition } from "react";
 
-import { Button } from "@stackmyth/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Input } from "@stackmyth/input";
-import { Flex, Stack } from "@stackmyth/layout";
-import { RadioGroup, RadioGroupItem } from "@stackmyth/radio-group";
+import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
+import { DateTimeField } from "@/components/date-time-field";
+import {
+  ControlledField,
+  FormController,
+  FormError,
+  FormField,
+  SubmitButton,
+  createZodResolver,
+} from "@/components/form-shell";
+import { RadioField } from "@/components/radio-field";
 import { SelectField } from "@/components/select-field";
 import { copy } from "@/config/copy";
-import { toDateTimeLocalValue, toMajorUnits } from "@/lib/format";
+import { toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
 import type { EventView } from "@/lib/roster";
+import { addParticipantSchema, eventClientSchema } from "@/lib/validation";
 
 import { addParticipant, editEvent, type ManageState } from "./actions";
-
-/** Declared here, not in actions.ts: a "use server" module exports only async functions. */
-const EMPTY_STATE: ManageState = { errors: {} };
 
 const KIND_OPTIONS = [
   { value: "match", label: copy.createEvent.kinds.match },
@@ -40,15 +45,41 @@ const ATTENDANCE_OPTIONS = [
   { value: "maybe", label: copy.attendance.maybe },
 ] as const;
 
+const eventResolver = createZodResolver(eventClientSchema);
+const participantResolver = createZodResolver(addParticipantSchema);
+
 interface Ctx {
   publicToken: string;
   organizerToken: string;
 }
 
+/** Turns the validated store values into the FormData a server action expects. */
+function toFormData(data: Record<string, unknown>): FormData {
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(data)) {
+    formData.set(key, value == null ? "" : String(value));
+  }
+  return formData;
+}
+
 export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
-  const action = addParticipant.bind(null, publicToken, organizerToken);
-  const [state, formAction, pending] = useActionState<ManageState, FormData>(action, EMPTY_STATE);
-  const nameId = useId();
+  const [pending, startTransition] = useTransition();
+  const [serverState, setServerState] = useState<ManageState>({ errors: {} });
+  const [formKey, setFormKey] = useState(0);
+
+  function submit(data: Record<string, unknown>) {
+    startTransition(async () => {
+      const result = await addParticipant(
+        publicToken,
+        organizerToken,
+        { errors: {} },
+        toFormData(data),
+      );
+      setServerState(result);
+      // Remount on success so the name field clears, ready for the next person.
+      if (result.ok) setFormKey((key) => key + 1);
+    });
+  }
 
   return (
     <Card surface="outlined">
@@ -56,71 +87,89 @@ export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
         <CardTitle>{copy.manage.addParticipant}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={formAction} noValidate>
-          <Stack gap="4">
-            {state.errors._form ? (
-              <Text color="error" role="alert">
-                {state.errors._form}
-              </Text>
-            ) : null}
+        <FormController
+          key={formKey}
+          resolver={participantResolver}
+          defaultValues={{ displayName: "", attendance: "in" }}
+          mode="onBlur"
+        >
+          {({ handleSubmit }) => (
+            <form onSubmit={handleSubmit(submit)} noValidate>
+              <Stack gap="4">
+                <FormError message={serverState.errors._form} />
 
-            <Field invalid={Boolean(state.errors.displayName)}>
-              <FieldLabel htmlFor={nameId}>{copy.rsvp.nameLabel}</FieldLabel>
-              <Input
-                id={nameId}
-                name="displayName"
-                fullWidth
-                size="lg"
-                required
-                maxLength={40}
-                autoComplete="off"
-                status={state.errors.displayName ? "error" : "default"}
-              />
-              {state.errors.displayName ? (
-                <FieldError>{state.errors.displayName}</FieldError>
-              ) : (
-                <FieldDescription>{copy.manage.addParticipantHelp}</FieldDescription>
-              )}
-            </Field>
+                <FormField name="displayName">
+                  {({ fieldProps, error }) => (
+                    <ControlledField
+                      label={copy.rsvp.nameLabel}
+                      description={copy.manage.addParticipantHelp}
+                      error={error ?? serverState.errors.displayName}
+                      htmlFor={fieldProps.id}
+                    >
+                      <Input
+                        {...fieldProps}
+                        fullWidth
+                        size="lg"
+                        maxLength={40}
+                        autoComplete="off"
+                        status={error ? "error" : "default"}
+                      />
+                    </ControlledField>
+                  )}
+                </FormField>
 
-            <Field>
-              <FieldLabel>{copy.rsvp.attendanceLabel}</FieldLabel>
-              <RadioGroup name="attendance" defaultValue="in" orientation="horizontal">
-                <Flex gap="4" wrap="wrap">
-                  {ATTENDANCE_OPTIONS.map((option) => (
-                    <Flex key={option.value} as="label" gap="2" align="center">
-                      <RadioGroupItem value={option.value} />
-                      <Text as="span">{option.label}</Text>
-                    </Flex>
-                  ))}
-                </Flex>
-              </RadioGroup>
-            </Field>
+                <ControlledField label={copy.rsvp.attendanceLabel}>
+                  <RadioField
+                    name="attendance"
+                    options={ATTENDANCE_OPTIONS}
+                    defaultValue="in"
+                    orientation="horizontal"
+                  />
+                </ControlledField>
 
-            <Button type="submit" size="md" fullWidth variant="secondary" disabled={pending}>
-              {copy.manage.addParticipantSubmit}
-            </Button>
-          </Stack>
-        </form>
+                <SubmitButton
+                  pending={pending}
+                  idleLabel={copy.manage.addParticipantSubmit}
+                  pendingLabel={copy.common.loading}
+                  variant="secondary"
+                  size="md"
+                />
+              </Stack>
+            </form>
+          )}
+        </FormController>
       </CardContent>
     </Card>
   );
 }
 
 export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { event: EventView }) {
-  const action = editEvent.bind(null, publicToken, organizerToken);
-  const [state, formAction, pending] = useActionState<ManageState, FormData>(action, EMPTY_STATE);
+  const [pending, startTransition] = useTransition();
+  const [serverState, setServerState] = useState<ManageState>({ errors: {} });
+  const [costMode, setCostMode] = useState<string>(event.costMode);
 
-  const ids = {
-    title: useId(),
-    kind: useId(),
-    startsAt: useId(),
-    location: useId(),
-    capacity: useId(),
-    notes: useId(),
-    costMode: useId(),
-    costAmount: useId(),
+  const defaults = {
+    title: event.title,
+    kind: event.kind,
+    startsAtDate: toDatePartValue(event.startsAt),
+    startsAtTime: toTimePartValue(event.startsAt),
+    location: event.location ?? "",
+    capacity: event.capacity === null ? "" : String(event.capacity),
+    notes: event.notes ?? "",
+    costMode: event.costMode,
+    costAmount:
+      event.costAmountMinor === null
+        ? ""
+        : String(toMajorUnits(event.costAmountMinor, event.currency)),
+    currency: event.currency,
   };
+
+  function submit(data: Record<string, unknown>) {
+    startTransition(async () => {
+      const result = await editEvent(publicToken, organizerToken, { errors: {} }, toFormData(data));
+      setServerState(result);
+    });
+  }
 
   return (
     <Card surface="outlined">
@@ -128,148 +177,141 @@ export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { ev
         <CardTitle>{copy.manage.editEvent}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={formAction} noValidate>
-          <Stack gap="4">
-            {state.ok ? (
-              <Text color="primary" role="status">
-                {copy.manage.editEventSaved}
-              </Text>
-            ) : null}
-            {state.errors._form ? (
-              <Text color="error" role="alert">
-                {state.errors._form}
-              </Text>
-            ) : null}
+        <FormController resolver={eventResolver} defaultValues={defaults} mode="onBlur">
+          {({ handleSubmit }) => (
+            <form onSubmit={handleSubmit(submit)} noValidate>
+              <Stack gap="4">
+                {serverState.ok ? (
+                  <Text color="primary" role="status">
+                    {copy.manage.editEventSaved}
+                  </Text>
+                ) : null}
+                <FormError message={serverState.errors._form} />
 
-            <Field invalid={Boolean(state.errors.title)}>
-              <FieldLabel htmlFor={ids.title}>{copy.createEvent.fields.title}</FieldLabel>
-              <Input
-                id={ids.title}
-                name="title"
-                fullWidth
-                size="lg"
-                required
-                maxLength={120}
-                defaultValue={event.title}
-                status={state.errors.title ? "error" : "default"}
-              />
-              {state.errors.title ? <FieldError>{state.errors.title}</FieldError> : null}
-            </Field>
+                <FormField name="title">
+                  {({ fieldProps, error }) => (
+                    <ControlledField
+                      label={copy.createEvent.fields.title}
+                      error={error ?? serverState.errors.title}
+                      htmlFor={fieldProps.id}
+                    >
+                      <Input
+                        {...fieldProps}
+                        fullWidth
+                        size="lg"
+                        maxLength={120}
+                        status={error ? "error" : "default"}
+                      />
+                    </ControlledField>
+                  )}
+                </FormField>
 
-            <Field>
-              <FieldLabel htmlFor={ids.kind}>{copy.createEvent.fields.kind}</FieldLabel>
-              <SelectField
-                id={ids.kind}
-                name="kind"
-                options={KIND_OPTIONS}
-                defaultValue={event.kind}
-              />
-            </Field>
+                <ControlledField label={copy.createEvent.fields.kind}>
+                  <SelectField name="kind" options={KIND_OPTIONS} defaultValue={event.kind} />
+                </ControlledField>
 
-            <Field invalid={Boolean(state.errors.startsAt)}>
-              <FieldLabel htmlFor={ids.startsAt}>{copy.createEvent.fields.startsAt}</FieldLabel>
-              <Input
-                id={ids.startsAt}
-                name="startsAt"
-                type="datetime-local"
-                fullWidth
-                size="lg"
-                required
-                defaultValue={toDateTimeLocalValue(event.startsAt)}
-                status={state.errors.startsAt ? "error" : "default"}
-              />
-              {state.errors.startsAt ? (
-                <FieldError>{state.errors.startsAt}</FieldError>
-              ) : (
-                <FieldDescription>{copy.createEvent.fields.startsAtHelp}</FieldDescription>
-              )}
-            </Field>
+                <ControlledField
+                  label={copy.createEvent.fields.startsAt}
+                  description={copy.createEvent.fields.startsAtHelp}
+                  error={serverState.errors.startsAtDate ?? serverState.errors.startsAtTime}
+                >
+                  {/* allowPast: an event already under way must stay editable. */}
+                  <DateTimeField
+                    dateName="startsAtDate"
+                    timeName="startsAtTime"
+                    defaultDate={defaults.startsAtDate}
+                    defaultTime={defaults.startsAtTime}
+                    allowPast
+                  />
+                </ControlledField>
 
-            <Field>
-              <FieldLabel htmlFor={ids.location}>{copy.createEvent.fields.location}</FieldLabel>
-              <Input
-                id={ids.location}
-                name="location"
-                fullWidth
-                size="lg"
-                maxLength={200}
-                defaultValue={event.location ?? ""}
-              />
-            </Field>
+                <FormField name="location">
+                  {({ fieldProps }) => (
+                    <ControlledField
+                      label={copy.createEvent.fields.location}
+                      htmlFor={fieldProps.id}
+                    >
+                      <Input {...fieldProps} fullWidth size="lg" maxLength={200} />
+                    </ControlledField>
+                  )}
+                </FormField>
 
-            <Field invalid={Boolean(state.errors.capacity)}>
-              <FieldLabel htmlFor={ids.capacity}>{copy.createEvent.fields.capacity}</FieldLabel>
-              <Input
-                id={ids.capacity}
-                name="capacity"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                step={1}
-                fullWidth
-                size="lg"
-                defaultValue={event.capacity ?? ""}
-                status={state.errors.capacity ? "error" : "default"}
-              />
-              {state.errors.capacity ? (
-                <FieldError>{state.errors.capacity}</FieldError>
-              ) : (
-                <FieldDescription>{copy.createEvent.fields.capacityHelp}</FieldDescription>
-              )}
-            </Field>
+                <FormField name="capacity">
+                  {({ fieldProps, error }) => (
+                    <ControlledField
+                      label={copy.createEvent.fields.capacity}
+                      description={copy.createEvent.fields.capacityHelp}
+                      error={error ?? serverState.errors.capacity}
+                      htmlFor={fieldProps.id}
+                    >
+                      <Input
+                        {...fieldProps}
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        step={1}
+                        fullWidth
+                        size="lg"
+                        status={error ? "error" : "default"}
+                      />
+                    </ControlledField>
+                  )}
+                </FormField>
 
-            <Field>
-              <FieldLabel htmlFor={ids.costMode}>{copy.createEvent.fields.costMode}</FieldLabel>
-              <SelectField
-                id={ids.costMode}
-                name="costMode"
-                options={COST_MODE_OPTIONS}
-                defaultValue={event.costMode}
-              />
-            </Field>
+                <ControlledField label={copy.createEvent.fields.costMode}>
+                  <SelectField
+                    name="costMode"
+                    options={COST_MODE_OPTIONS}
+                    defaultValue={event.costMode}
+                    onValueChange={setCostMode}
+                  />
+                </ControlledField>
 
-            <Field invalid={Boolean(state.errors.costAmount)}>
-              <FieldLabel htmlFor={ids.costAmount}>{copy.createEvent.fields.costAmount}</FieldLabel>
-              <Input
-                id={ids.costAmount}
-                name="costAmount"
-                inputMode="numeric"
-                fullWidth
-                size="lg"
-                prefix="$"
-                defaultValue={
-                  event.costAmountMinor === null
-                    ? ""
-                    : String(toMajorUnits(event.costAmountMinor, event.currency))
-                }
-                status={state.errors.costAmount ? "error" : "default"}
-              />
-              {state.errors.costAmount ? (
-                <FieldError>{state.errors.costAmount}</FieldError>
-              ) : (
-                <FieldDescription>{copy.createEvent.fields.costAmountHelpTotal}</FieldDescription>
-              )}
-            </Field>
+                {costMode !== "none" ? (
+                  <FormField name="costAmount">
+                    {({ fieldProps, error }) => (
+                      <ControlledField
+                        label={copy.createEvent.fields.costAmount}
+                        description={
+                          costMode === "total"
+                            ? copy.createEvent.fields.costAmountHelpTotal
+                            : copy.createEvent.fields.costAmountHelpPerPerson
+                        }
+                        error={error ?? serverState.errors.costAmount}
+                        htmlFor={fieldProps.id}
+                      >
+                        <Input
+                          {...fieldProps}
+                          inputMode="numeric"
+                          fullWidth
+                          size="lg"
+                          prefix="$"
+                          status={error ? "error" : "default"}
+                        />
+                      </ControlledField>
+                    )}
+                  </FormField>
+                ) : null}
 
-            <Field>
-              <FieldLabel htmlFor={ids.notes}>{copy.createEvent.fields.notes}</FieldLabel>
-              <Textarea
-                id={ids.notes}
-                name="notes"
-                fullWidth
-                rows={3}
-                maxLength={2000}
-                defaultValue={event.notes ?? ""}
-              />
-            </Field>
+                <FormField name="notes">
+                  {({ fieldProps }) => (
+                    <ControlledField label={copy.createEvent.fields.notes} htmlFor={fieldProps.id}>
+                      <Textarea {...fieldProps} fullWidth rows={3} maxLength={2000} />
+                    </ControlledField>
+                  )}
+                </FormField>
 
-            <input type="hidden" name="currency" value={event.currency} />
-
-            <Button type="submit" size="md" fullWidth variant="secondary" disabled={pending}>
-              {copy.common.save}
-            </Button>
-          </Stack>
-        </form>
+                <SubmitButton
+                  pending={pending}
+                  idleLabel={copy.common.save}
+                  pendingLabel={copy.common.loading}
+                  variant="secondary"
+                  size="md"
+                />
+              </Stack>
+            </form>
+          )}
+        </FormController>
       </CardContent>
     </Card>
   );

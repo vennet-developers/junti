@@ -1,23 +1,26 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useState, useTransition } from "react";
 
-import { Button } from "@stackmyth/button";
-import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
-import { Spinner } from "@stackmyth/spinner";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
+import { DateTimeField } from "@/components/date-time-field";
+import {
+  ControlledField,
+  FormController,
+  FormError,
+  FormField,
+  SubmitButton,
+  createZodResolver,
+} from "@/components/form-shell";
 import { SelectField } from "@/components/select-field";
 import { copy } from "@/config/copy";
+import { eventClientSchema } from "@/lib/validation";
 
 import { createEvent, type CreateEventState } from "./actions";
-
-/** Declared here, not in actions.ts: a "use server" module exports only async functions. */
-const EMPTY_STATE: CreateEventState = { errors: {} };
 
 const KIND_OPTIONS = [
   { value: "match", label: copy.createEvent.kinds.match },
@@ -32,193 +35,210 @@ const COST_MODE_OPTIONS = [
   { value: "per_person", label: copy.createEvent.costModes.per_person },
 ] as const;
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+const resolver = createZodResolver(eventClientSchema);
 
-  // STACKMYTH-GAP: Button's `loading` prop injects a hardcoded English
-  // "Loading…" for screen readers with no prop to override it, in an app whose
-  // every other string is Spanish. Spinner *does* expose `label`, so the
-  // pending state is composed from a disabled Button plus a labelled Spinner
-  // rather than using `loading`. See STACKMYTH-GAPS.md #4.
-  return (
-    <Button type="submit" size="lg" fullWidth disabled={pending}>
-      {pending ? <Spinner size="sm" label={copy.createEvent.submitting} /> : null}
-      {pending ? copy.createEvent.submitting : copy.createEvent.submit}
-    </Button>
-  );
-}
+const DEFAULT_VALUES = {
+  title: "",
+  kind: "match",
+  startsAtDate: "",
+  startsAtTime: "",
+  location: "",
+  capacity: "",
+  notes: "",
+  costMode: "none",
+  costAmount: "",
+  currency: "COP",
+};
 
 export function CreateEventForm() {
-  const [state, formAction] = useActionState(createEvent, EMPTY_STATE);
-  const [costMode, setCostMode] = useState<string>("none");
+  const [pending, startTransition] = useTransition();
+  const [serverState, setServerState] = useState<CreateEventState>({ errors: {} });
 
-  const ids = {
-    title: useId(),
-    kind: useId(),
-    startsAt: useId(),
-    location: useId(),
-    capacity: useId(),
-    notes: useId(),
-    costMode: useId(),
-    costAmount: useId(),
-  };
+  // Mirrors of the two controls that are not plain inputs, so the resolver can
+  // see their values and the cost field can appear conditionally.
+  const [costMode, setCostMode] = useState("none");
 
-  const showCost = costMode !== "none";
+  /**
+   * Client validation has passed. Hand the raw values to the server action,
+   * which re-validates them before touching the database.
+   */
+  function submit(data: Record<string, unknown>) {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+      formData.set(key, value == null ? "" : String(value));
+    }
+
+    startTransition(async () => {
+      const result = await createEvent({ errors: {} }, formData);
+      // A successful create redirects, so anything returned is a failure.
+      if (result) setServerState(result);
+    });
+  }
 
   return (
-    <form action={formAction} noValidate>
-      <Stack gap="5">
-        {state.errors._form ? (
-          <Text color="error" role="alert">
-            {state.errors._form}
-          </Text>
-        ) : null}
+    <FormController resolver={resolver} defaultValues={DEFAULT_VALUES} mode="onBlur">
+      {({ handleSubmit }) => (
+        <form onSubmit={handleSubmit(submit)} noValidate>
+          <Stack gap="5">
+            <FormError message={serverState.errors._form} />
 
-        <Field invalid={Boolean(state.errors.title)}>
-          <FieldLabel htmlFor={ids.title}>{copy.createEvent.fields.title}</FieldLabel>
-          <Input
-            id={ids.title}
-            name="title"
-            fullWidth
-            size="lg"
-            required
-            maxLength={120}
-            autoComplete="off"
-            placeholder={copy.createEvent.fields.titlePlaceholder}
-            status={state.errors.title ? "error" : "default"}
-          />
-          {state.errors.title ? (
-            <FieldError>{state.errors.title}</FieldError>
-          ) : (
-            <FieldDescription>{copy.createEvent.fields.titleHelp}</FieldDescription>
-          )}
-        </Field>
+            <FormField name="title">
+              {({ fieldProps, error }) => (
+                <ControlledField
+                  label={copy.createEvent.fields.title}
+                  description={copy.createEvent.fields.titleHelp}
+                  error={error ?? serverState.errors.title}
+                  htmlFor={fieldProps.id}
+                >
+                  <Input
+                    {...fieldProps}
+                    fullWidth
+                    size="lg"
+                    maxLength={120}
+                    autoComplete="off"
+                    placeholder={copy.createEvent.fields.titlePlaceholder}
+                    status={error ? "error" : "default"}
+                  />
+                </ControlledField>
+              )}
+            </FormField>
 
-        <Field>
-          <FieldLabel htmlFor={ids.kind}>{copy.createEvent.fields.kind}</FieldLabel>
-          <SelectField id={ids.kind} name="kind" options={KIND_OPTIONS} defaultValue="match" />
-        </Field>
+            <ControlledField label={copy.createEvent.fields.kind}>
+              <SelectField name="kind" options={KIND_OPTIONS} defaultValue="match" />
+            </ControlledField>
 
-        <Field invalid={Boolean(state.errors.startsAt)}>
-          <FieldLabel htmlFor={ids.startsAt}>{copy.createEvent.fields.startsAt}</FieldLabel>
-          <Input
-            id={ids.startsAt}
-            name="startsAt"
-            type="datetime-local"
-            fullWidth
-            size="lg"
-            required
-            status={state.errors.startsAt ? "error" : "default"}
-          />
-          {state.errors.startsAt ? (
-            <FieldError>{state.errors.startsAt}</FieldError>
-          ) : (
-            <FieldDescription>{copy.createEvent.fields.startsAtHelp}</FieldDescription>
-          )}
-        </Field>
+            <ControlledField
+              label={copy.createEvent.fields.startsAt}
+              description={copy.createEvent.fields.startsAtHelp}
+              error={serverState.errors.startsAtDate ?? serverState.errors.startsAtTime}
+            >
+              <DateTimeField dateName="startsAtDate" timeName="startsAtTime" />
+            </ControlledField>
 
-        <Field>
-          <FieldLabel htmlFor={ids.location}>
-            {copy.createEvent.fields.location}{" "}
-            <Text as="span" variant="small" color="muted">
-              ({copy.common.optional})
-            </Text>
-          </FieldLabel>
-          <Input
-            id={ids.location}
-            name="location"
-            fullWidth
-            size="lg"
-            maxLength={200}
-            autoComplete="off"
-            placeholder={copy.createEvent.fields.locationPlaceholder}
-          />
-        </Field>
+            <FormField name="location">
+              {({ fieldProps }) => (
+                <ControlledField
+                  label={
+                    <>
+                      {copy.createEvent.fields.location}{" "}
+                      <Text as="span" variant="small" color="muted">
+                        ({copy.common.optional})
+                      </Text>
+                    </>
+                  }
+                  htmlFor={fieldProps.id}
+                >
+                  <Input
+                    {...fieldProps}
+                    fullWidth
+                    size="lg"
+                    maxLength={200}
+                    autoComplete="off"
+                    placeholder={copy.createEvent.fields.locationPlaceholder}
+                  />
+                </ControlledField>
+              )}
+            </FormField>
 
-        <Field invalid={Boolean(state.errors.capacity)}>
-          <FieldLabel htmlFor={ids.capacity}>
-            {copy.createEvent.fields.capacity}{" "}
-            <Text as="span" variant="small" color="muted">
-              ({copy.common.optional})
-            </Text>
-          </FieldLabel>
-          <Input
-            id={ids.capacity}
-            name="capacity"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            step={1}
-            fullWidth
-            size="lg"
-            placeholder={copy.createEvent.fields.capacityPlaceholder}
-            status={state.errors.capacity ? "error" : "default"}
-          />
-          {state.errors.capacity ? (
-            <FieldError>{state.errors.capacity}</FieldError>
-          ) : (
-            <FieldDescription>{copy.createEvent.fields.capacityHelp}</FieldDescription>
-          )}
-        </Field>
+            <FormField name="capacity">
+              {({ fieldProps, error }) => (
+                <ControlledField
+                  label={
+                    <>
+                      {copy.createEvent.fields.capacity}{" "}
+                      <Text as="span" variant="small" color="muted">
+                        ({copy.common.optional})
+                      </Text>
+                    </>
+                  }
+                  description={copy.createEvent.fields.capacityHelp}
+                  error={error ?? serverState.errors.capacity}
+                  htmlFor={fieldProps.id}
+                >
+                  <Input
+                    {...fieldProps}
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    step={1}
+                    fullWidth
+                    size="lg"
+                    placeholder={copy.createEvent.fields.capacityPlaceholder}
+                    status={error ? "error" : "default"}
+                  />
+                </ControlledField>
+              )}
+            </FormField>
 
-        <Field>
-          <FieldLabel htmlFor={ids.costMode}>{copy.createEvent.fields.costMode}</FieldLabel>
-          <SelectField
-            id={ids.costMode}
-            name="costMode"
-            options={COST_MODE_OPTIONS}
-            defaultValue="none"
-            onValueChange={setCostMode}
-          />
-        </Field>
+            <ControlledField label={copy.createEvent.fields.costMode}>
+              <SelectField
+                name="costMode"
+                options={COST_MODE_OPTIONS}
+                defaultValue="none"
+                onValueChange={setCostMode}
+              />
+            </ControlledField>
 
-        {showCost ? (
-          <Field invalid={Boolean(state.errors.costAmount)}>
-            <FieldLabel htmlFor={ids.costAmount}>{copy.createEvent.fields.costAmount}</FieldLabel>
-            <Input
-              id={ids.costAmount}
-              name="costAmount"
-              inputMode="numeric"
-              fullWidth
-              size="lg"
-              autoComplete="off"
-              placeholder="120000"
-              prefix="$"
-              status={state.errors.costAmount ? "error" : "default"}
+            {costMode !== "none" ? (
+              <FormField name="costAmount">
+                {({ fieldProps, error }) => (
+                  <ControlledField
+                    label={copy.createEvent.fields.costAmount}
+                    description={
+                      costMode === "total"
+                        ? copy.createEvent.fields.costAmountHelpTotal
+                        : copy.createEvent.fields.costAmountHelpPerPerson
+                    }
+                    error={error ?? serverState.errors.costAmount}
+                    htmlFor={fieldProps.id}
+                  >
+                    <Input
+                      {...fieldProps}
+                      inputMode="numeric"
+                      fullWidth
+                      size="lg"
+                      autoComplete="off"
+                      placeholder="120000"
+                      prefix="$"
+                      status={error ? "error" : "default"}
+                    />
+                  </ControlledField>
+                )}
+              </FormField>
+            ) : null}
+
+            <FormField name="notes">
+              {({ fieldProps }) => (
+                <ControlledField
+                  label={
+                    <>
+                      {copy.createEvent.fields.notes}{" "}
+                      <Text as="span" variant="small" color="muted">
+                        ({copy.common.optional})
+                      </Text>
+                    </>
+                  }
+                  htmlFor={fieldProps.id}
+                >
+                  <Textarea
+                    {...fieldProps}
+                    fullWidth
+                    rows={3}
+                    maxLength={2000}
+                    placeholder={copy.createEvent.fields.notesPlaceholder}
+                  />
+                </ControlledField>
+              )}
+            </FormField>
+
+            <SubmitButton
+              pending={pending}
+              idleLabel={copy.createEvent.submit}
+              pendingLabel={copy.createEvent.submitting}
             />
-            {state.errors.costAmount ? (
-              <FieldError>{state.errors.costAmount}</FieldError>
-            ) : (
-              <FieldDescription>
-                {costMode === "total"
-                  ? copy.createEvent.fields.costAmountHelpTotal
-                  : copy.createEvent.fields.costAmountHelpPerPerson}
-              </FieldDescription>
-            )}
-          </Field>
-        ) : null}
-
-        <Field>
-          <FieldLabel htmlFor={ids.notes}>
-            {copy.createEvent.fields.notes}{" "}
-            <Text as="span" variant="small" color="muted">
-              ({copy.common.optional})
-            </Text>
-          </FieldLabel>
-          <Textarea
-            id={ids.notes}
-            name="notes"
-            fullWidth
-            rows={3}
-            maxLength={2000}
-            placeholder={copy.createEvent.fields.notesPlaceholder}
-          />
-        </Field>
-
-        <input type="hidden" name="currency" value="COP" />
-
-        <SubmitButton />
-      </Stack>
-    </form>
+          </Stack>
+        </form>
+      )}
+    </FormController>
   );
 }

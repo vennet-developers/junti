@@ -85,12 +85,23 @@ export function formatEventDateTimeShort(date: Date): string {
   }).format(date);
 }
 
+/** The Bogota calendar day of an instant, as `YYYY-MM-DD`, for `DateTimeField`. */
+export function toDatePartValue(date: Date): string {
+  return toDateTimeLocalValue(date).slice(0, 10);
+}
+
+/** The Bogota wall-clock time of an instant, as `HH:mm`, for `DateTimeField`. */
+export function toTimePartValue(date: Date): string {
+  return toDateTimeLocalValue(date).slice(11, 16);
+}
+
 /**
- * Renders a UTC instant as the `YYYY-MM-DDTHH:mm` string an
- * `<input type="datetime-local">` expects, expressed in Bogota time.
+ * Renders a UTC instant as a `YYYY-MM-DDTHH:mm` wall-clock string in Bogota
+ * time.
  *
- * The input has no timezone concept, so this is how a stored event survives a
- * round trip through the edit form without drifting by the UTC offset.
+ * Wall-clock strings have no timezone concept, so this is how a stored event
+ * survives a round trip through the edit form without drifting by the UTC
+ * offset. `fromDateTimeLocalValue` is the inverse.
  */
 export function toDateTimeLocalValue(date: Date): string {
   const parts = new Intl.DateTimeFormat("en-CA", {

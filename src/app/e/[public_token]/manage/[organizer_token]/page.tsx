@@ -92,10 +92,16 @@ export default async function ManagePage({
             copyLabel={copy.share.copyParticipantLink}
           />
 
-          {/* Box (as="a") rather than a raw anchor: BoxProps carries
-              href/target/rel, so the element Button clones stays a Stackmyth
-              primitive. `asChild` requires a single child element, which is why
-              there is a wrapper here at all. */}
+          {/*
+            Box(as="a"), so the element Button clones is still a Stackmyth
+            primitive — `asChild` needs a single child element, which is the
+            only reason there is a wrapper here.
+
+            Note: `next dev` reports a hydration mismatch on this subtree after
+            a hot reload, for any child type including a plain <a>. It is an HMR
+            artifact — a production build renders the merged classes identically
+            on both sides and logs nothing. See STACKMYTH-GAPS.md #13.
+          */}
           <Button asChild fullWidth size="lg">
             <Box
               as="a"
