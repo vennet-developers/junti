@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Button } from "@stackmyth/button";
-import { Container, Divider, Stack } from "@stackmyth/layout";
+import { Box, Container, Divider, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { EventHeader } from "@/components/event-header";
@@ -68,7 +68,7 @@ export default async function ManagePage({
 
   return (
     <Container size="1">
-      <Stack gap="6" py="6" px="4" className="app-wrap">
+      <Stack gap="6" py="6" px="4" wordBreak="break-word">
         <Stack gap="1">
           <Text variant="h2">{copy.manage.heading}</Text>
           <Text variant="small" color="muted">
@@ -92,10 +92,19 @@ export default async function ManagePage({
             copyLabel={copy.share.copyParticipantLink}
           />
 
+          {/* Box (as="a") rather than a raw anchor: BoxProps carries
+              href/target/rel, so the element Button clones stays a Stackmyth
+              primitive. `asChild` requires a single child element, which is why
+              there is a wrapper here at all. */}
           <Button asChild fullWidth size="lg">
-            <a href={whatsAppShareUrl(shareMessage)} target="_blank" rel="noopener noreferrer">
+            <Box
+              as="a"
+              href={whatsAppShareUrl(shareMessage)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {copy.eventCreated.shareWhatsApp}
-            </a>
+            </Box>
           </Button>
 
           <LinkPanel

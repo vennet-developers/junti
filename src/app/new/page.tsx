@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function NewEventPage() {
   return (
     <Container size="1">
-      <Stack gap="6" py="6" px="4" className="app-wrap">
+      <Stack gap="6" py="6" px="4" wordBreak="break-word">
         <Stack gap="2">
           <Text variant="small" color="muted">
             <Link href="/">{copy.common.back}</Link>

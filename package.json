@@ -34,6 +34,7 @@
     "@stackmyth/progress": "^0.19.1",
     "@stackmyth/radio-group": "^0.19.1",
     "@stackmyth/select": "^0.19.1",
+    "@stackmyth/skeleton": "^0.19.1",
     "@stackmyth/spinner": "^0.19.1",
     "@stackmyth/stat": "^0.19.1",
     "@stackmyth/switch": "^0.19.1",

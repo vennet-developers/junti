@@ -220,6 +220,13 @@ export const copy = {
     copyOrganizerLink: "Copiar mi link de organizador",
   },
 
+  errorBoundary: {
+    title: "Algo se rompió",
+    body: "No pudimos cargar esta pantalla. Puede ser una falla temporal de conexión con la base de datos.",
+    retry: "Intentar de nuevo",
+    home: "Ir al inicio",
+  },
+
   errors: {
     titleRequired: "Ponle un nombre al evento.",
     titleTooLong: "El nombre es muy largo (máximo 120 caracteres).",

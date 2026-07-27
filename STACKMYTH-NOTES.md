@@ -330,7 +330,66 @@ Also ~88 country flags in `@stackmyth/flags` (not installed).
 
 ---
 
-## 7. Verified integration
+### Feedback — `@stackmyth/skeleton`
+
+`Skeleton`: `height`, `width`, `borderRadius` (all CSS strings) + div attributes.
+Animates via `sm-skeleton-pulse`. Used by `src/components/roster-skeleton.tsx`,
+which both `loading.tsx` files render.
+
+---
+
+## 7. Coverage audit — what is and isn't Stackmyth
+
+Run against the whole of `src/`:
+
+| Check                                     | Result                                                          |
+| ----------------------------------------- | --------------------------------------------------------------- |
+| Visible UI rendered by a raw HTML element | **none**                                                        |
+| Hand-written CSS classes used in JSX      | **none**                                                        |
+| Selectors in `globals.css`                | `html`, `body`, `:focus-visible`, `prefers-reduced-motion` only |
+| Competing UI libraries installed          | none                                                            |
+
+Reproduce it:
+
+```bash
+# Visible raw HTML in JSX — expect no output.
+grep -rnE '<(div|span|p|a|ul|ol|li|table|section|h[1-6]|button|select|option|textarea|img|hr|label)\b' \
+  --include='*.tsx' src/ | grep -v layout.tsx
+
+# Hand-rolled classes — expect no output.
+grep -rnE 'className="[^{]' --include='*.tsx' src/
+```
+
+### The irreducible remainder
+
+Three things are still raw HTML. None of them renders anything a user sees, and
+none has a Stackmyth equivalent:
+
+**1. `<form action={serverAction}>`** — 6 occurrences. This is the React/Next
+server-action binding, not a visual element. Notably **Stackmyth does not offer
+an alternative**: `@stackmyth/form` is a _client-side form-state_ library
+(`useForm`, `createZodResolver`, `FormField` render-props), and its own tests
+and JSDoc examples use a plain `<form onSubmit={handleSubmit()}>`. Adopting it
+would mean abandoning server actions, which the brief mandates and which is what
+makes these forms work without JavaScript. So this is not a workaround — a
+`<form>` element is what Stackmyth itself expects you to write.
+
+**2. `<input type="hidden">`** — 7 occurrences. Invisible data carriers: the
+value mirrored out of `SelectField` (because `Select` has no `name` prop — gap
+#5), the participant id and target status on the organizer's action buttons, and
+the currency. Rendering nothing, styled by nothing.
+
+**3. `<html>` / `<body>`** in `layout.tsx` — required by the framework.
+
+Everything else — every button, badge, card, field, list row, stat, divider,
+progress bar, dialog, empty state, skeleton, icon and piece of text — is a
+Stackmyth component. Where `Button asChild` needs a single child element, the
+child is `Box as="a"` rather than a bare anchor, so even the cloned element is a
+Stackmyth primitive.
+
+---
+
+## 8. Verified integration
 
 `/stackmyth-smoke` renders one of each primitive above. Confirmed on a 390px
 viewport with **zero console messages**: spacing, dark-mode tokens, portal

@@ -1,10 +1,16 @@
 /*
- * App-level base styles.
+ * App-level base styles — the irreducible minimum.
  *
- * Everything here resolves against Stackmyth design tokens (--sm-*). No literal
- * colors, no one-off spacing, no font sizes that aren't on the scale. If a value
- * is needed that Stackmyth does not expose, that is a gap — log it in
- * STACKMYTH-GAPS.md rather than hardcoding it here.
+ * These rules target `html`, `body` and `:focus-visible`: elements and pseudo-
+ * classes that no component library can style, because they sit above the React
+ * tree. Everything a component *can* own is owned by a Stackmyth component
+ * instead — there are no utility classes here, and no element in the app is
+ * styled by a hand-written selector.
+ *
+ * Every value is a Stackmyth token (--sm-*). No literal colors, no one-off
+ * spacing, no font sizes off the scale. If a value is needed that Stackmyth
+ * does not expose, that is a gap — log it in STACKMYTH-GAPS.md rather than
+ * hardcoding it here.
  */
 
 html {
@@ -35,15 +41,6 @@ body {
 :focus-visible {
   outline: 2px solid var(--sm-border-focus);
   outline-offset: 2px;
-}
-
-/*
- * Long unguessable tokens and free-text names must never push the page wide.
- * Applied to the page shell so a 60-character URL wraps instead of introducing
- * a horizontal scrollbar at 390px.
- */
-.app-wrap {
-  overflow-wrap: anywhere;
 }
 
 @media (prefers-reduced-motion: reduce) {

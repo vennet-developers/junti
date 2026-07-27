@@ -326,7 +326,35 @@ because an invisible icon looks a lot like a layout bug.
 
 ---
 
-## 10. Small things, no workaround needed
+## 10. No primitive for a `<form>` or a hidden field
+
+Not a complaint so much as the one honest boundary of "build everything from
+Stackmyth". After replacing every visible raw element in the app, exactly two
+kinds remain, and neither has a Stackmyth counterpart:
+
+**`<form action={serverAction}>`.** `@stackmyth/form` exists, but it solves a
+different problem — client-side form state (`useForm`, resolvers, `FormField`
+render-props). Its own tests and JSDoc write `<form onSubmit={handleSubmit()}>`,
+so the raw element is what the stack expects. That is a defensible design, but
+it does mean a consumer aiming for "no raw HTML" cannot get there, and a
+one-line `<Form>` passthrough (rendering `<form>` with `LayoutProps` and no
+state opinion at all) would close the gap for anyone using server actions or
+plain progressive-enhancement forms.
+
+**`<input type="hidden">`.** Needed here mostly _because_ of gap #5 — `Select`
+has no `name`, so its value has to be mirrored into a hidden field by hand. A
+`name` prop on `Select` would delete most of these; a tiny `HiddenField`
+primitive would delete the rest.
+
+**What I would have wanted.** Either would do:
+`<Box as="form" action={…}>` working (it doesn't — `BoxProps` carries anchor and
+button attributes but not `action`/`method`/`noValidate`), or a documented
+statement in the README that `<form>` and hidden inputs are expected to stay
+native. The current situation is neither, so every consumer rediscovers it.
+
+---
+
+## 11. Small things, no workaround needed
 
 - **`Stack direction` is `"vertical" | "horizontal"`, `Flex direction` is
   `"row" | "column"`.** Two sibling components, two vocabularies for the same

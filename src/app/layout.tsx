@@ -41,6 +41,7 @@ import "@stackmyth/empty-state/empty-state.vars.css";
 import "@stackmyth/stat/stat.vars.css";
 import "@stackmyth/progress/progress.vars.css";
 import "@stackmyth/spinner/spinner.vars.css";
+import "@stackmyth/skeleton/skeleton.vars.css";
 
 import "@stackmyth/layout/layout.css";
 import "@stackmyth/text/text.css";
@@ -61,6 +62,7 @@ import "@stackmyth/empty-state/empty-state.css";
 import "@stackmyth/stat/stat.css";
 import "@stackmyth/progress/progress.css";
 import "@stackmyth/spinner/spinner.css";
+import "@stackmyth/skeleton/skeleton.css";
 
 import "./globals.css";
 

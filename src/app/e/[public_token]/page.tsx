@@ -70,7 +70,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
 
   return (
     <Container size="1">
-      <Stack gap="6" py="6" px="4" className="app-wrap">
+      <Stack gap="6" py="6" px="4" wordBreak="break-word">
         <EventHeader event={event} attendingCount={roster.attending.length} />
 
         {/* Capacity is only actionable while the event is open. Once it is

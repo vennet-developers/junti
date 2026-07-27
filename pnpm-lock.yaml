@@ -58,6 +58,9 @@ importers:
       "@stackmyth/select":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
+      "@stackmyth/skeleton":
+        specifier: ^0.19.1
+        version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
       "@stackmyth/spinner":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
@@ -1818,6 +1821,16 @@ packages:
     peerDependencies:
       "@stackmyth/core": ">=0.0.0"
       "@stackmyth/icons": ">=0.0.0"
+      react: ">=18.0.0"
+
+  "@stackmyth/skeleton@0.19.1":
+    resolution:
+      {
+        integrity: sha512-fFZR/cLc5D5fxvbFYTsQMYibTjz7HtF2K8myS0c6S+SIxM/Xtdp0Oji7buaHWmKwv9Echu3C9N8QgO1ZSaL4JA==,
+        tarball: https://npm.pkg.github.com/download/@stackmyth/skeleton/0.19.1/bf513ee12bf830d510f95c67d9ceca081ba99a7d,
+      }
+    peerDependencies:
+      "@stackmyth/core": ">=0.0.0"
       react: ">=18.0.0"
 
   "@stackmyth/spinner@0.19.1":
@@ -5532,6 +5545,12 @@ snapshots:
       "@stackmyth/event-bus": 0.1.0(react@19.2.4)
       "@stackmyth/icons": 0.1.0(react@19.2.4)
       "@stackmyth/primitives": 0.1.0(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+
+  "@stackmyth/skeleton@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@stackmyth/classnames": 0.1.0
+      "@stackmyth/core": 0.19.1(react@19.2.4)
       react: 19.2.4
 
   "@stackmyth/spinner@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)":

@@ -29,6 +29,7 @@ import {
   ListItemValue,
 } from "@stackmyth/list-item";
 import { Progress } from "@stackmyth/progress";
+import { Skeleton } from "@stackmyth/skeleton";
 import { RadioGroup, RadioGroupItem } from "@stackmyth/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@stackmyth/select";
 import { Spinner } from "@stackmyth/spinner";
@@ -239,6 +240,13 @@ export function SmokeClient() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Skeleton — the loading placeholder used by loading.tsx. */}
+        <Stack gap="2">
+          <Skeleton width="60%" height="24px" borderRadius="var(--sm-radius-md)" />
+          <Skeleton width="100%" height="16px" borderRadius="var(--sm-radius-sm)" />
+          <Skeleton width="40%" height="16px" borderRadius="var(--sm-radius-sm)" />
+        </Stack>
 
         <Flex gap="2" align="center">
           <Spinner size="sm" />
