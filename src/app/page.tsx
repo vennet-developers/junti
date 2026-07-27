@@ -1,66 +1,65 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-export default function Home() {
+import { Button } from "@stackmyth/button";
+import { Card, CardContent } from "@stackmyth/card";
+import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { List, ListItem, ListItemContent, ListItemTitle } from "@stackmyth/list-item";
+import { Text } from "@stackmyth/text";
+
+import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
+import { copy } from "@/config/copy";
+
+export const metadata: Metadata = {
+  title: { absolute: copy.home.title },
+  description: BRAND_DESCRIPTION,
+};
+
+export default function HomePage() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Container size="1">
+      <Stack gap="6" py="7" px="4" className="app-wrap">
+        <Stack gap="2">
+          <Text variant="h1">{BRAND_NAME}</Text>
+          <Text variant="lead" color="muted">
+            {copy.home.subheading}
+          </Text>
+        </Stack>
+
+        <Text>{copy.home.pitch}</Text>
+
+        <Button asChild fullWidth size="lg">
+          <Link href="/new">{copy.home.cta}</Link>
+        </Button>
+
+        <Divider />
+
+        <Stack gap="3">
+          <Text variant="h3">{copy.home.howItWorksTitle}</Text>
+          <List as="ol" divided>
+            {copy.home.steps.map((step, index) => (
+              <ListItem key={step}>
+                <ListItemContent>
+                  <Flex gap="3" align="baseline">
+                    <Text as="span" variant="small" color="muted" weight="semibold">
+                      {index + 1}
+                    </Text>
+                    <ListItemTitle>{step}</ListItemTitle>
+                  </Flex>
+                </ListItemContent>
+              </ListItem>
+            ))}
+          </List>
+        </Stack>
+
+        <Card surface="outlined">
+          <CardContent>
+            <Text variant="small" color="muted">
+              {copy.home.disclaimer}
+            </Text>
+          </CardContent>
+        </Card>
+      </Stack>
+    </Container>
   );
 }

@@ -30,8 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files — secrets stay local; the template is committed
 .env*
+!.env.example
+
+# database backups from `npm run db:export` — nobody else is backing this up,
+# but dumps do not belong in git
+/backups
 
 # vercel
 .vercel
