@@ -187,6 +187,22 @@ major version to your local `pg_dump` so `pnpm db:export` works.
      expand it from the committed project `.npmrc`, so the install fails to
      authenticate.
 
+     **Without this the build fails at install** with:
+
+     ```
+     ERR_PNPM_FETCH_401  GET https://npm.pkg.github.com/@stackmyth%2F...
+     No authorization header was set for the request.
+     ```
+
+     That message means the scope mapping from the committed `.npmrc` was found
+     but the token was not — i.e. `NPM_RC` is missing or has only the registry
+     line. Set it for **Production, Preview and Development**, or preview
+     deployments will keep failing after production starts working.
+
+     The token is a personal one, so deploys depend on that person's account
+     and stop the day it expires. For a team repo, a fine-grained token or a
+     machine user with `read:packages` ages better.
+
    `DIRECT_DATABASE_URL` is **not** needed in Vercel — the app never opens that
    connection. Keep it local.
 
