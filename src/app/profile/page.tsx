@@ -42,8 +42,8 @@ export default async function ProfilePage() {
   const stored = await loadStoredPreferences(organizer.id);
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="6" px="4">
+    <Container size="1" px="4" py="6">
+      <Stack gap="6">
         <Flex justify="between" align="center" gap="3" wrap="wrap">
           <OrganizerBadge organizer={organizer} />
           <Text variant="small" color="muted">

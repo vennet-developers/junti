@@ -25,8 +25,8 @@ export default async function HomePage() {
   const { copy } = await getViewerCopy();
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="7" px="4">
+    <Container size="1" px="4" py="7">
+      <Stack gap="6">
         <Flex justify="end">
           <LanguageSwitcher />
         </Flex>

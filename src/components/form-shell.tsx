@@ -3,7 +3,7 @@
 import { useId, type ReactNode } from "react";
 
 import { Button } from "@stackmyth/button";
-import { FormController, FormField } from "@stackmyth/form";
+import { Form, FormController, FormField } from "@stackmyth/form";
 import { createZodResolver } from "@stackmyth/form";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Box } from "@stackmyth/layout";
@@ -24,7 +24,7 @@ import { Text } from "@stackmyth/text";
  * operated without JavaScript at all.
  */
 
-export { FormController, FormField, createZodResolver };
+export { Form, FormController, FormField, createZodResolver };
 
 /**
  * Renders a Stackmyth `Field` around a control.

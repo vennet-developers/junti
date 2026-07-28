@@ -58,30 +58,30 @@ npmjs. Installing requires an `.npmrc` scope mapping plus a token with
 This is a hard prerequisite for a fresh clone. It is documented in README.md
 under "Prerequisites".
 
-## 2. CSS wiring — the part that will bite you
+## 2. CSS wiring
 
-**Every package ships two stylesheets and you need both:**
-
-| File                    | Contains                                      |
-| ----------------------- | --------------------------------------------- |
-| `<pkg>/<name>.vars.css` | the CSS custom properties (`--sm-space-5`, …) |
-| `<pkg>/<name>.css`      | the rules that consume them                   |
-
-Importing only `<name>.css` produces a page where colors and borders look right
-but **every gap, padding and margin silently collapses to zero** — because the
-rules are written `gap: var(--sm-space-5)` and the variable is undefined. There
-is no console warning. This cost real debugging time; see STACKMYTH-GAPS.md.
-
-Required import order, all in `src/app/layout.tsx`:
+**One import per package.** Since 0.22.0 each `<name>.css` inlines the custom
+properties it consumes, so a single import per package is all you need:
 
 ```ts
 import "@stackmyth/core/core.vars.css"; // 1. base tokens + reset + dark mode
 import "@stackmyth/core/fonts/geist.css"; // 2. self-hosted font, sets --sm-font-family
-import "@stackmyth/layout/layout.vars.css"; // 3. every package's *.vars.css
-// … one per package …
-import "@stackmyth/layout/layout.css"; // 4. every package's *.css
+import "@stackmyth/layout/layout.css"; // 3. one per package, any order
 // … one per package …
 ```
+
+`core` stays separate because it is a tokens-only package — it ships
+`core.vars.css` with the 278 global properties and no rules file of its own,
+so it must come first.
+
+**History worth knowing** (it explains the shape of older code and of
+STACKMYTH-GAPS.md #1): before 0.22.0 every package shipped its rules and its
+tokens as two files and you needed both. Importing only `<name>.css` produced
+a page where colors and borders looked right but **every gap, padding and
+margin silently collapsed to zero**, with no console warning — the rules are
+written `gap: var(--sm-space-5)` and an undefined custom property invalidates
+the whole declaration. The `<name>.vars.css` files still ship and still work;
+importing both is harmless, just redundant.
 
 Subpath exports that exist on every UI package:
 
@@ -142,15 +142,26 @@ aliases `"none" | "xs" | "sm" | "md" | "lg" | "xl"`.
 
 ## 5. Server vs client components
 
-**Every `@stackmyth/*` bundle begins with `"use client"`.** Verified across all
-20 installed packages. Consequences:
+**Since 0.22.0 the split is real.** Packages whose components are pure
+presentation ship without a `"use client"` directive, so a Server Component
+renders them with no hydration at all:
 
-- A Server Component **may** render them (Next.js inserts the boundary), so
-  pages stay server-rendered and only the component subtree hydrates.
+```
+aspect-ratio  button  empty-state  kbd     label     layout   mark
+progress      scroll-area  skeleton  spinner  stat    timeline
+```
+
+Everything else keeps the directive because it genuinely needs it — `Card`
+holds state, `Text` and `Badge` emit on the event bus, `Select`/`Dialog`/
+`Popover` are interactive by definition. Consequences either way:
+
+- A Server Component **may** render any of them; Next.js inserts the boundary
+  for the ones that carry the directive.
 - Props crossing that boundary must be serializable. Server action references
   are fine; closures are not.
-- Purely presentational primitives (`Text`, `Box`, `Card`) are client components
-  too, which is more JS than strictly needed. Logged in STACKMYTH-GAPS.md.
+- Verify rather than assume: `head -1 node_modules/@stackmyth/<pkg>/dist/index.mjs`.
+  The library guards this with a CI check that imports every directive-free
+  bundle under `--conditions=react-server`.
 
 ---
 
@@ -160,7 +171,7 @@ Props below are copied from the `.d.ts`. `*` marks required.
 
 ### Layout — `@stackmyth/layout`
 
-All of `Box`/`Flex`/`Stack`/`Grid`/`GridItem` accept the shared `LayoutProps`
+All of `Box`/`Flex`/`Stack`/`Grid`/`GridItem`/`Container`/`Section` accept the shared `LayoutProps`
 set (~90 props): `p px py pt pr pb pl`, `m mx my mt mr mb ml` (scale `"0"`–`"9"`,
 `mx` also `"auto"`), `width height minWidth minHeight maxWidth maxHeight`,
 `background` (`surface | raised | overlay | none | black`), `border`
@@ -181,8 +192,8 @@ Any of them accept a **responsive object** `{ base, sm, md, lg, xl }`
 | `Stack`            | `direction` `vertical\|horizontal` (**not** `row`/`column`), `align`, `justify` (adds `evenly`), `gap`, `wrap`, `dividers`, `inline`, `as`                                                                 |
 | `Grid`             | `columns` `"1".."12" \| "auto-fit" \| "auto-fill" \| string`, `rows`, `autoRows`, `minChildWidth`, `gap`, `columnGap`, `rowGap`, `align`, `justify`, `autoFlow`                                            |
 | `GridItem`         | `colSpan` (`number \| "full"`), `rowSpan`, `colStart`, `colEnd`, `rowStart`, `rowEnd`                                                                                                                      |
-| `Container`        | `size` `"1" \| "2" \| "3" \| "4"` only. **No LayoutProps** — wrap it or use the child for padding.                                                                                                         |
-| `Section`          | `size` `"1" \| "2" \| "3"`, `as`. **No LayoutProps.**                                                                                                                                                      |
+| `Container`        | `size` `"1" \| "2" \| "3" \| "4"` (max-width 448/688/880/1136px) + LayoutProps                                                                                                                            |
+| `Section`          | `size` `"1" \| "2" \| "3"`, `as` + LayoutProps                                                                                                                                                             |
 | `Divider`          | `orientation` `horizontal \| vertical`                                                                                                                                                                     |
 | `Center`, `Spacer` | LayoutProps                                                                                                                                                                                                |
 
@@ -190,14 +201,17 @@ Also exported: `useBreakpoint`, `useBreakpointMin`, `useMediaQuery`,
 `BREAKPOINTS`, `getLayoutStyles`, `getLayoutClasses`.
 
 ```tsx
-<Container size="1">
-  <Stack gap="lg" py="6" px="4">
+<Container size="1" px="4" py="6">
+  <Stack gap="lg">
     <Flex gap="2" wrap="wrap" align="center">
       …
     </Flex>
   </Stack>
 </Container>
 ```
+
+`Stack` also accepts `direction="column"`/`"row"` as aliases of its own
+`"vertical"`/`"horizontal"`, so the Flex vocabulary typed on reflex works.
 
 ### Typography — `@stackmyth/text`
 
@@ -364,10 +378,15 @@ anything; it validates and holds state, and you decide what to do with the
 result. That makes it compatible with server actions.
 
 - `FormController` — `resolver`, `defaultValues`, `mode`
-  (`"onChange" | "onBlur" | "onSubmit"`), `onSubmit`, `onInvalid`. Children may
-  be a render prop receiving `{ register, handleSubmit, formId }`.
-  `handleSubmit(onValid?, onInvalid?)` returns a `FormEventHandler` — attach it
-  to a `<form onSubmit>`. `onValid` receives the validated values.
+  (`"onChange" | "onBlur" | "onSubmit"`), `reValidateMode`, `onSubmit`,
+  `onInvalid`. Children may be a render prop receiving
+  `{ register, handleSubmit, formId }`; `handleSubmit(onValid?, onInvalid?)`
+  returns a `FormEventHandler`, which you only need for a hand-rolled `<form>`.
+- `Form` — the `<form>` element itself (0.22.0). Renders inside a
+  `FormController` and submits through the store, falling back to the
+  controller's `onSubmit`/`onInvalid`; `noValidate` defaults to true because
+  the resolver is the validator. All four forms here use
+  `<Form onValid={submit}>` instead of the render-prop shape.
 - `FormField` — `name`, `label`, `description`, `rules`, plus a render prop
   giving `{ fieldProps, error, errors, isDirty, isTouched }`. `fieldProps`
   carries `id`, `name`, `onChange`, `onBlur`, `aria-invalid`,

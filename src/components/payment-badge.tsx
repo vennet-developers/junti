@@ -3,10 +3,11 @@ import { Badge } from "@stackmyth/badge";
 import type { Copy } from "@/config/copy";
 import type { PaymentStatus } from "@/domain/types";
 
-// STACKMYTH-GAP: Badge's `dot` prop discards its children — <Badge dot>Pagó</Badge>
-// renders an empty span with no warning, even though BadgeProps accepts
-// children next to it. The status is carried by `variant` + `soft` instead.
-// See STACKMYTH-GAPS.md #3.
+// Badge's `dot` prop discards its children BY DESIGN — a dot is labeled with
+// `aria-label`, not text (a library test asserts this). This file once logged
+// that as a gap; the entry was withdrawn. `variant` + `soft` carry the status
+// because the roster wants the word visible, not a dot at all.
+// See STACKMYTH-GAPS.md #3 (withdrawn, kept with correction).
 
 const STATUS_VARIANT = {
   confirmed: { variant: "success", soft: false },

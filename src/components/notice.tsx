@@ -13,13 +13,12 @@ import { Text } from "@stackmyth/text";
 // instead. Alert is still used where a message really is a response.
 // See STACKMYTH-GAPS.md #6.
 
-// STACKMYTH-GAP: Card's `tone` prop is not usable here either. It sets a
-// saturated fill (--sm-card-bg: var(--sm-info)) plus a matching text color via
-// --sm-card-text, but that variable loses to any nested <Text color="…">, so
-// the standard muted body style lands unreadable on the tinted background.
-// There is no soft/tinted tone that composes safely with Text's own colors, so
-// the card stays neutral and the tone is carried by the icon alone.
-// See STACKMYTH-GAPS.md #9.
+// Card's `tone` prop is still avoided here: it sets a saturated fill whose
+// text color loses to any nested <Text color="…">, so the standard muted body
+// style lands unreadable on the tinted background. The card stays neutral and
+// the tone is carried by the icon alone — which since 0.22.0 has a token made
+// for exactly this: `--sm-<state>-accent`, the state hue safe on the default
+// surface. See STACKMYTH-GAPS.md #9.
 
 export interface NoticeProps {
   tone?: "info" | "warning";
@@ -35,19 +34,18 @@ export function Notice({ tone = "info", title, children }: NoticeProps) {
       <CardContent>
         <Flex gap="3" align="start">
           {/*
-            Box supplies flexShrink (Text has no LayoutProps) so the icon keeps
-            its width when the title wraps at 390px; Text supplies the color.
-
-            The color comes from Text's own semantic set rather than a --sm-*
-            token on purpose. `--sm-<status>-text` is the color to use ON TOP OF
-            the matching `--sm-<status>` fill, not an accent for the page
-            surface: in the default theme `--sm-info-text` is #fff, so an icon
-            painted with it is invisible here. See STACKMYTH-GAPS.md #9.
+            flexShrink keeps the icon's width when the title wraps at 390px.
+            The color is the on-surface state accent added in 0.22.0 — the
+            first token in the set that means "this state's hue, readable on
+            the default surface". Its on-fill sibling `--sm-<state>-text` is
+            what an earlier version of this file reached for, and it rendered
+            an invisible white icon; the history is in STACKMYTH-GAPS.md #9.
           */}
-          <Box flexShrink={0}>
-            <Text as="span" color={tone === "warning" ? "error" : "muted"}>
-              <Icon size={18} aria-hidden="true" />
-            </Text>
+          <Box
+            flexShrink={0}
+            color={tone === "warning" ? "var(--sm-warning-accent)" : "var(--sm-info-accent)"}
+          >
+            <Icon size={18} aria-hidden="true" />
           </Box>
           <Stack gap="1">
             <Text weight="semibold">{title}</Text>

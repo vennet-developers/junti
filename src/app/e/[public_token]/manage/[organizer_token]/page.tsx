@@ -156,8 +156,8 @@ export default async function ManagePage({
   );
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="6" px="4">
+    <Container size="1" px="4" py="6">
+      <Stack gap="6">
         {/* The event itself comes first. On a return visit that is what the
             organizer opened the page for; the links are one tap away below. */}
         <Flex justify="end">

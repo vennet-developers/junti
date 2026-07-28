@@ -1,43 +1,34 @@
 # Stackmyth — friction log
 
-> **Status, after being given access to the library.**
+> **Status: every entry in this log is now resolved at source.**
 >
-> Five of these are **fixed at source** and waiting on a release —
-> `1cdf35b5` in the Stackmyth repo, with changesets attached:
+> Fifteen gaps fixed across three releases, one entry withdrawn as intended
+> behaviour (#3). This app consumes `@stackmyth/*` **0.22.0** and
+> `@stackmyth/manifests` **0.2.0**, and every status below was verified
+> against the installed artifacts, not the repo.
 >
-> | Gap                                              | Fix                                                             | Package               |
-> | ------------------------------------------------ | --------------------------------------------------------------- | --------------------- |
-> | #4 `Button loading` hardcodes English            | `loadingLabel` prop                                             | `button` (minor)      |
-> | #5 `Select` cannot submit natively               | `name` / `required` / `form`                                    | `select` (minor)      |
-> | #6 `Alert` is always assertive                   | `live` prop                                                     | `alert` (minor)       |
-> | #12 `DatePicker` locale never reaches `Calendar` | forwarded, plus `weekStartsOn` / `timezone` / `showOutsideDays` | `date-picker` (patch) |
-> | #15 No `reValidateMode`                          | `reValidateMode` prop                                           | `form` (minor)        |
+> | Release | Gaps fixed |
+> | ------- | ---------- |
+> | 0.20.0  | #4 (`loadingLabel`), #5 (`Select name`), #6 (`Alert live`), #12 (`DatePicker locale`), #15 (`reValidateMode`) |
+> | 0.21.0  | #11 (`valueFormat="date"`) |
+> | 0.22.0  | #1 (css self-contained), #2+#16 (manifests populated + `require()` fixed), #7 (RSC-safe pure packages), #8 (`Container`/`Section` LayoutProps), #9 (state accent tokens), #10 (`<Form>` element), #13 (documented), #14 (Stack aliases + SelectValue devWarn) |
 >
-> All five are additive and default to the current behaviour. The library's
-> suite went from 2621 to 2634 tests, all passing, with type-check, lint, a11y
-> coverage and all 78 package builds green.
+> Workarounds retired in this app as each release landed: the composed
+> disabled-Button-plus-Spinner (#4), the Select hidden-input mirror (#5),
+> thirty `*.vars.css` imports in the root layout (#1), the
+> `<Container><Stack px>` wrapper on every page (#8), the
+> `{({ handleSubmit }) => <form …>}` render-prop dance in all four forms
+> (#10), and Notice's icon now uses `--sm-<state>-accent` (#9). Still
+> standing by choice, not necessity: `Notice` itself (static notices are a
+> different a11y animal than alerts even with `live` available) and the
+> composed date field (#12's fix works, but the two-field wall-clock model
+> is what the server stores).
 >
-> **Shipped in `0.20.0`**, which this app now consumes. Workarounds retired so
-> far: the composed disabled-Button-plus-Spinner in `SubmitButton` (now
-> `loading` + `loadingLabel`), and every form gained
-> `reValidateMode="onChange"`, so a corrected field clears its own error
-> without a second submit. Still standing by choice, not necessity:
-> `Notice` (it also works around the Card `tone` problem, gap #9) and the
-> composed `Popover` + `Calendar` date field (gap #11 — the ISO hidden value —
-> remains unfixed, and the two-field wall-clock model is what the server
-> stores).
->
-> **One entry was wrong and has been withdrawn:** #3 said `Badge dot` silently
-> discards its children. It does, but deliberately — a test asserts it, and the
-> supported way to label a dot is `<Badge dot aria-label="…" />`, which the
-> component already handles. The entry is kept below with a correction rather
-> than deleted, because a friction log that quietly edits out its mistakes is
-> not worth reading.
->
-> The rest were **re-verified against the installed 0.20.0 packages** —
-> each open entry below carries its status line and the evidence. Still
-> open: #1, #2, #7, #8, #9, #10, #13, #14, #16. #11 shipped in 0.21.0 as the
-> opt-in `valueFormat="date"`, defaulting to today's behaviour.
+> **One entry was wrong and has been withdrawn:** #3 said `Badge dot`
+> silently discards its children. It does, but deliberately — a test asserts
+> it, and the supported way to label a dot is `<Badge dot aria-label="…" />`.
+> The entry is kept below with a correction rather than deleted, because a
+> friction log that quietly edits out its mistakes is not worth reading.
 
 Feedback from a consumer with **zero prior familiarity** with the stack, building
 a real (small) app against it over one build. Written as it happened, not
@@ -52,8 +43,14 @@ Every `// STACKMYTH-GAP:` comment in the codebase has an entry here.
 
 ## 1. Two stylesheets per package, and the failure is silent
 
-> **Status at 0.20.0: still present.** `button.css` still writes `var(--sm-*)`
-> that only `button.vars.css` defines, across two files with no diagnostic.
+> **Status: FIXED in 0.22.0.** Exactly option 1 below: every `<pkg>.css` now
+> inlines its own `<pkg>.vars.css` at build time (`@use` in the scss source),
+> so one import per package works. Verified in the installed artifacts:
+> `layout.css` now defines the `--sm-space-*` scale it consumes. The separate
+> `.vars.css` files still ship, and importing both is harmless — custom
+> properties are idempotent. This app's root layout dropped its thirty
+> `*.vars.css` imports; only `core.vars.css` (tokens-only package) and the
+> font remain split.
 
 **Cost: the single biggest time sink of the build.**
 
@@ -108,9 +105,16 @@ repeat it.
 
 ## 2. `@stackmyth/manifests` is stale and mostly empty — but it is what I was pointed at
 
-> **Status at 0.20.0: still present.** `manifests` is on the independent
-> track (`0.1.0`, unchanged by the grouped release) and `require()` still
-> yields zero exports.
+> **Status: FIXED in `@stackmyth/manifests` 0.2.0.** All three problems:
+> versions now track each package's real release; `props` is generated from
+> the TypeScript sources via react-docgen-typescript (own-interface props
+> only — Button reports its 14, not the ~250 inherited HTML attributes —
+> with real types, defaults, enum values and JSDoc descriptions); and the
+> `import`/`css` strings carry the full `@stackmyth/` scope. The zero-exports
+> `require()` was its own bug — a `.js` CommonJS build inside a
+> `"type": "module"` package parses as ESM — fixed by shipping `.cjs`.
+> Verified from this app: `require("@stackmyth/manifests")` returns 13
+> exports and `getManifest("button").props.Button` has 14 entries.
 
 The brief specifically directed me to `@stackmyth/manifests` as the component
 inventory. It is the natural first stop, and it is the least reliable source in
@@ -291,8 +295,15 @@ only models the second.
 
 ## 7. Everything is `"use client"`, including pure presentation
 
-> **Status at 0.20.0: still present.** 33 of the 34 installed packages open
-> their bundle with `"use client"`.
+> **Status: FIXED in 0.22.0** for every package where it is true to fix.
+> Thirteen pure-presentation packages (aspect-ratio, button, empty-state,
+> kbd, label, layout, mark, progress, scroll-area, skeleton, spinner, stat,
+> timeline) ship directive-free — verified: installed `layout` and `button`
+> bundles open with a plain import. Genuinely interactive packages (Card
+> holds state, Text/Badge emit on the event bus) keep the boundary, which is
+> the correct split rather than a limitation. A CI check now imports every
+> directive-free bundle under `--conditions=react-server`, so the guarantee
+> cannot silently regress.
 
 All 20 installed packages begin their bundle with `"use client"` — verified
 across every one. That includes `Text`, `Box`, `Card`, `Badge`, `Divider`,
@@ -317,8 +328,11 @@ change on this list for anyone using the stack with the App Router.
 
 ## 8. `Container` and `Section` don't accept `LayoutProps`
 
-> **Status at 0.20.0: still present.** `ContainerProps` still does not
-> extend `LayoutProps`.
+> **Status: FIXED in 0.22.0.** `Container` and `Section` accept the full
+> `LayoutProps` set; `size` keeps its meaning and explicit props layer on
+> top. Every page in this app dropped the wrapper: `px`/`py` now live on
+> `Container` and the inner `Stack` keeps only the job it always really had
+> (`gap`).
 
 Minor but repeatedly annoying. `Box`, `Flex`, `Stack`, `Grid` and `GridItem` all
 accept the shared ~90-prop `LayoutProps` set. `Container` accepts only
@@ -338,8 +352,14 @@ reason for it.
 
 ## 9. `--sm-<status>-text` is an on-fill color, and nothing says so
 
-> **Status at 0.20.0: still present.** `--sm-info-text` is still `#ffffff`
-> in `core.vars.css`, with nothing marking it as on-fill.
+> **Status: FIXED in 0.22.0** — option 2, plus the documentation half of
+> option 1. New `--sm-<state>-accent` tokens carry the state hue safely on
+> the default surface (defined through the soft-text pair, so dark mode and
+> custom themes inherit correct values), and the `-text` tokens are now
+> explicitly documented as on-fill colors. Verified in the installed
+> `core.vars.css`. `Notice`'s icon in this app now uses the accents. The
+> `--sm-info-bg`/`--sm-info-on-bg` rename (option 1's naming) remains
+> undone — that one is breaking and was never going to ride a minor.
 
 **What I was building.** A static notice ("this event is closed", "10 spots
 left") with a small tone-coloured icon on the normal page surface.
@@ -388,8 +408,13 @@ because an invisible icon looks a lot like a layout bug.
 
 ## 10. No primitive for a `<form>` element
 
-> **Status at 0.20.0: still present.** `@stackmyth/form` exports controllers,
-> fields, hooks and resolvers — no `<form>` element component.
+> **Status: FIXED in 0.22.0.** `@stackmyth/form` ships a `Form` component:
+> a real `<form>` wired to the nearest `FormController` through context,
+> submitting via the store and falling back to the controller's
+> `onSubmit`/`onInvalid` exactly like `handleSubmit()` with no arguments.
+> `noValidate` defaults to true (the resolver is the validator), and
+> rendering it outside a controller throws at first render. All four forms
+> in this app dropped the render-prop dance for `<Form onValid={submit}>`.
 
 The one honest boundary of "build everything from Stackmyth" — and it is
 narrower than I first wrote.
@@ -485,9 +510,10 @@ not.
 
 ## 13. `Button asChild` reports a hydration mismatch under `next dev`
 
-> **Status at 0.20.0: not re-verified.** Dev-only HMR artifact; 0.20.0 did
-> not touch the `Slot` clone path, so there is no reason to expect a change.
-> Harmless in production either way.
+> **Status: RESOLVED in 0.22.0** the way this entry itself asked —
+> awareness, not API. The `asChild` prop's JSDoc now documents the warning
+> as a dev-only HMR artifact and tells the reader not to rewrite working
+> compositions to chase it. Verified in the installed `button.d.ts`.
 
 Minor, and **not** a production problem — recorded because it cost time to
 chase and the next person will hit it too.
@@ -510,10 +536,12 @@ sends you rewriting perfectly good code.
 
 ## 14. Small things, no workaround needed
 
-> **Status at 0.20.0: unchanged.** The `Stack`/`Flex` direction vocabularies
-> and the `SelectValue` requirement are as they were. `@stackmyth/toast` is
-> published at 0.20.0 and remains uninstalled here by choice — inline
-> `Alert`s still fit this app.
+> **Status: FIXED in 0.22.0** for the two actionable items. `Stack` accepts
+> `"column"`/`"row"` as aliases of its own vocabulary (responsive objects
+> included) — verified in the installed types — and `SelectTrigger` warns in
+> development when rendered without a `SelectValue` child, so the
+> blank-trigger mistake announces itself. `@stackmyth/toast` remains
+> uninstalled here by choice; the `datetime-local` note was praise.
 
 - **`Stack direction` is `"vertical" | "horizontal"`, `Flex direction` is
   `"row" | "column"`.** Two sibling components, two vocabularies for the same
@@ -565,9 +593,12 @@ private, which is not worth a minor-version surprise.
 
 ## 16. The published inventory is not discoverable from what is installed
 
-> **Status at 0.20.0: still present.** No meta-package appeared and
-> `manifests` still exports nothing. The working mitigation remains the
-> registry probe documented in STACKMYTH-NOTES.md.
+> **Status: FIXED in `@stackmyth/manifests` 0.2.0** — option 1. The
+> manifests package now IS the meta-package this entry asked for: every
+> published package and component, with real prop data (see #2). The
+> registry-probe mitigation in STACKMYTH-NOTES.md is retired for discovery,
+> though it remains the honest way to check what exists at a version you
+> have not installed.
 
 This one is on me, but the shape of the library is what made it possible, and
 it cost real work.

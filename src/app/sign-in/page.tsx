@@ -35,8 +35,8 @@ export default async function SignInPage({
   const { copy } = await getViewerCopy();
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="7" px="4">
+    <Container size="1" px="4" py="7">
+      <Stack gap="6">
         <Stack gap="2">
           <Text as="h1" variant="h2">
             {copy.auth.signInHeading}

@@ -45,8 +45,8 @@ export default async function MyEventsPage() {
   const base = await origin();
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="6" px="4">
+    <Container size="1" px="4" py="6">
+      <Stack gap="6">
         <Flex justify="between" align="center" gap="3" wrap="wrap">
           <OrganizerBadge organizer={organizer} />
           <Flex gap="2" align="center">

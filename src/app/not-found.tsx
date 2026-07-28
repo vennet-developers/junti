@@ -22,8 +22,8 @@ export default async function NotFound() {
   const { copy } = await getViewerCopy();
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="8" px="4">
+    <Container size="1" px="4" py="8">
+      <Stack gap="6">
         <EmptyState
           icon={<HelpCircleIcon size={28} />}
           title={copy.event.notFoundTitle}

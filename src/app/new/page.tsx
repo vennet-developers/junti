@@ -53,8 +53,8 @@ export default async function NewEventPage({
   ]);
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="6" px="4">
+    <Container size="1" px="4" py="6">
+      <Stack gap="6">
         <Flex justify="between" align="center">
           <Text variant="small" color="muted">
             <Link href={ROUTES.home}>{copy.common.back}</Link>

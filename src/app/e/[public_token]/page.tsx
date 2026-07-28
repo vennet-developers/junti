@@ -145,8 +145,8 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   };
 
   return (
-    <Container size="1">
-      <Stack gap="6" py="6" px="4">
+    <Container size="1" px="4" py="6">
+      <Stack gap="6">
         {/* Writes this device's zone into a cookie on a first visit, so the
             server can render every later paint on the right clock. */}
         <TimeZoneSync hasPreference={preferredTimeZone !== null} />

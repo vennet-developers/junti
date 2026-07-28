@@ -16,6 +16,7 @@ import { Textarea } from "@stackmyth/textarea";
 import { DateTimeField } from "@/components/date-time-field";
 import {
   ControlledField,
+  Form,
   FormController,
   FormError,
   FormField,
@@ -225,215 +226,213 @@ function CreateEventFormBody({
       mode="onSubmit"
       reValidateMode="onChange"
     >
-      {({ handleSubmit }) => (
-        <form onSubmit={handleSubmit(submit)} noValidate>
-          <Stack gap="5">
-            {/* First, because attribution cannot be fixed after the fact. */}
-            <SignInPill organizer={organizer} />
+      <Form onValid={submit}>
+        <Stack gap="5">
+          {/* First, because attribution cannot be fixed after the fact. */}
+          <SignInPill organizer={organizer} />
 
-            {restoredFromDraft ? <Notice tone="info" title={copy.createEvent.draftKept} /> : null}
+          {restoredFromDraft ? <Notice tone="info" title={copy.createEvent.draftKept} /> : null}
 
-            <FormError message={serverState.errors._form} />
+          <FormError message={serverState.errors._form} />
 
-            <FormField name="title">
+          <FormField name="title">
+            {({ fieldProps, error }) => (
+              <ControlledField
+                label={copy.createEvent.fields.title}
+                description={copy.createEvent.fields.titleHelp}
+                error={error ?? serverState.errors.title}
+                htmlFor={fieldProps.id}
+              >
+                <Input
+                  {...fieldProps}
+                  fullWidth
+                  size="lg"
+                  maxLength={120}
+                  autoComplete="off"
+                  placeholder={copy.createEvent.fields.titlePlaceholder}
+                  status={error ? "error" : "default"}
+                />
+              </ControlledField>
+            )}
+          </FormField>
+
+          <ControlledField
+            label={copy.createEvent.fields.kind}
+            error={serverState.errors.eventTypeId}
+          >
+            <SelectField
+              name="eventTypeId"
+              options={kindOptions}
+              defaultValue={eventTypes[0]?.id ?? ""}
+              onValueChange={setEventTypeId}
+            />
+          </ControlledField>
+
+          <ControlledField
+            label={copy.createEvent.fields.startsAt}
+            description={copy.createEvent.fields.startsAtHelp(
+              timeZoneLabel(timeZone, copy.intlLocale, new Date()),
+            )}
+            error={serverState.errors.startsAtDate ?? serverState.errors.startsAtTime}
+          >
+            <DateTimeField dateName="startsAtDate" timeName="startsAtTime" />
+          </ControlledField>
+
+          <ControlledField
+            label={copy.createEvent.fields.timeZone}
+            description={copy.createEvent.fields.timeZoneHelp}
+            error={serverState.errors.timeZone}
+          >
+            <SelectField
+              name="timeZone"
+              options={zoneOptions}
+              defaultValue={timeZone}
+              onValueChange={setChosenTimeZone}
+            />
+          </ControlledField>
+
+          <FormField name="location">
+            {({ fieldProps }) => (
+              <ControlledField
+                label={
+                  <>
+                    {copy.createEvent.fields.location}{" "}
+                    <Text as="span" variant="small" color="muted">
+                      ({copy.common.optional})
+                    </Text>
+                  </>
+                }
+                htmlFor={fieldProps.id}
+              >
+                <Input
+                  {...fieldProps}
+                  fullWidth
+                  size="lg"
+                  maxLength={200}
+                  autoComplete="off"
+                  placeholder={copy.createEvent.fields.locationPlaceholder}
+                />
+              </ControlledField>
+            )}
+          </FormField>
+
+          <FormField name="capacity">
+            {({ fieldProps, error }) => (
+              <ControlledField
+                label={
+                  <>
+                    {copy.createEvent.fields.capacity}{" "}
+                    <Text as="span" variant="small" color="muted">
+                      ({copy.common.optional})
+                    </Text>
+                  </>
+                }
+                description={copy.createEvent.fields.capacityHelp}
+                error={error ?? serverState.errors.capacity}
+                htmlFor={fieldProps.id}
+              >
+                <Input
+                  {...fieldProps}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  step={1}
+                  fullWidth
+                  size="lg"
+                  placeholder={copy.createEvent.fields.capacityPlaceholder}
+                  status={error ? "error" : "default"}
+                />
+              </ControlledField>
+            )}
+          </FormField>
+
+          <ControlledField label={copy.createEvent.fields.costMode}>
+            <SelectField
+              name="costMode"
+              options={costModeOptions}
+              defaultValue="none"
+              onValueChange={setCostMode}
+            />
+          </ControlledField>
+
+          {costMode !== "none" ? (
+            <FormField name="costAmount">
               {({ fieldProps, error }) => (
                 <ControlledField
-                  label={copy.createEvent.fields.title}
-                  description={copy.createEvent.fields.titleHelp}
-                  error={error ?? serverState.errors.title}
-                  htmlFor={fieldProps.id}
-                >
-                  <Input
-                    {...fieldProps}
-                    fullWidth
-                    size="lg"
-                    maxLength={120}
-                    autoComplete="off"
-                    placeholder={copy.createEvent.fields.titlePlaceholder}
-                    status={error ? "error" : "default"}
-                  />
-                </ControlledField>
-              )}
-            </FormField>
-
-            <ControlledField
-              label={copy.createEvent.fields.kind}
-              error={serverState.errors.eventTypeId}
-            >
-              <SelectField
-                name="eventTypeId"
-                options={kindOptions}
-                defaultValue={eventTypes[0]?.id ?? ""}
-                onValueChange={setEventTypeId}
-              />
-            </ControlledField>
-
-            <ControlledField
-              label={copy.createEvent.fields.startsAt}
-              description={copy.createEvent.fields.startsAtHelp(
-                timeZoneLabel(timeZone, copy.intlLocale, new Date()),
-              )}
-              error={serverState.errors.startsAtDate ?? serverState.errors.startsAtTime}
-            >
-              <DateTimeField dateName="startsAtDate" timeName="startsAtTime" />
-            </ControlledField>
-
-            <ControlledField
-              label={copy.createEvent.fields.timeZone}
-              description={copy.createEvent.fields.timeZoneHelp}
-              error={serverState.errors.timeZone}
-            >
-              <SelectField
-                name="timeZone"
-                options={zoneOptions}
-                defaultValue={timeZone}
-                onValueChange={setChosenTimeZone}
-              />
-            </ControlledField>
-
-            <FormField name="location">
-              {({ fieldProps }) => (
-                <ControlledField
-                  label={
-                    <>
-                      {copy.createEvent.fields.location}{" "}
-                      <Text as="span" variant="small" color="muted">
-                        ({copy.common.optional})
-                      </Text>
-                    </>
+                  label={copy.createEvent.fields.costAmount}
+                  description={
+                    costMode === "total"
+                      ? copy.createEvent.fields.costAmountHelpTotal
+                      : copy.createEvent.fields.costAmountHelpPerPerson
                   }
+                  error={error ?? serverState.errors.costAmount}
                   htmlFor={fieldProps.id}
                 >
-                  <Input
-                    {...fieldProps}
-                    fullWidth
-                    size="lg"
-                    maxLength={200}
-                    autoComplete="off"
-                    placeholder={copy.createEvent.fields.locationPlaceholder}
-                  />
+                  {/* The currency symbol is an addon, not a prop on the
+                      input. `InputGroup` owns the border and focus ring via
+                      `:has()`, so the symbol sits inside the same outline
+                      instead of beside it. The addon comes AFTER the input in
+                      the DOM and is placed by `align` — that is what keeps
+                      keyboard focus landing on the field first. */}
+                  <InputGroup fullWidth>
+                    <InputGroupInput
+                      {...fieldProps}
+                      inputMode="numeric"
+                      size="lg"
+                      autoComplete="off"
+                      placeholder="120000"
+                      status={error ? "error" : "default"}
+                    />
+                    <InputGroupAddon align="inline-start">
+                      <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                  </InputGroup>
                 </ControlledField>
               )}
             </FormField>
+          ) : null}
 
-            <FormField name="capacity">
-              {({ fieldProps, error }) => (
-                <ControlledField
-                  label={
-                    <>
-                      {copy.createEvent.fields.capacity}{" "}
-                      <Text as="span" variant="small" color="muted">
-                        ({copy.common.optional})
-                      </Text>
-                    </>
-                  }
-                  description={copy.createEvent.fields.capacityHelp}
-                  error={error ?? serverState.errors.capacity}
-                  htmlFor={fieldProps.id}
-                >
-                  <Input
-                    {...fieldProps}
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
-                    step={1}
-                    fullWidth
-                    size="lg"
-                    placeholder={copy.createEvent.fields.capacityPlaceholder}
-                    status={error ? "error" : "default"}
-                  />
-                </ControlledField>
-              )}
-            </FormField>
+          <FormField name="notes">
+            {({ fieldProps }) => (
+              <ControlledField
+                label={
+                  <>
+                    {copy.createEvent.fields.notes}{" "}
+                    <Text as="span" variant="small" color="muted">
+                      ({copy.common.optional})
+                    </Text>
+                  </>
+                }
+                htmlFor={fieldProps.id}
+              >
+                <Textarea
+                  {...fieldProps}
+                  fullWidth
+                  rows={3}
+                  maxLength={2000}
+                  placeholder={copy.createEvent.fields.notesPlaceholder}
+                />
+              </ControlledField>
+            )}
+          </FormField>
 
-            <ControlledField label={copy.createEvent.fields.costMode}>
-              <SelectField
-                name="costMode"
-                options={costModeOptions}
-                defaultValue="none"
-                onValueChange={setCostMode}
-              />
-            </ControlledField>
+          {/* Remounted when the kind changes (`key`), so switching from a
+              match to a party swaps the suggestions AND the pre-added rows
+              instead of leaving the previous type's choices behind. */}
+          <PolicyEditor
+            key={eventTypeId}
+            name="policies"
+            options={policyOptionsByType[eventTypeId] ?? []}
+            defaultValue={defaultPolicies(policyOptionsByType[eventTypeId])}
+          />
 
-            {costMode !== "none" ? (
-              <FormField name="costAmount">
-                {({ fieldProps, error }) => (
-                  <ControlledField
-                    label={copy.createEvent.fields.costAmount}
-                    description={
-                      costMode === "total"
-                        ? copy.createEvent.fields.costAmountHelpTotal
-                        : copy.createEvent.fields.costAmountHelpPerPerson
-                    }
-                    error={error ?? serverState.errors.costAmount}
-                    htmlFor={fieldProps.id}
-                  >
-                    {/* The currency symbol is an addon, not a prop on the
-                        input. `InputGroup` owns the border and focus ring via
-                        `:has()`, so the symbol sits inside the same outline
-                        instead of beside it. The addon comes AFTER the input in
-                        the DOM and is placed by `align` — that is what keeps
-                        keyboard focus landing on the field first. */}
-                    <InputGroup fullWidth>
-                      <InputGroupInput
-                        {...fieldProps}
-                        inputMode="numeric"
-                        size="lg"
-                        autoComplete="off"
-                        placeholder="120000"
-                        status={error ? "error" : "default"}
-                      />
-                      <InputGroupAddon align="inline-start">
-                        <InputGroupText>$</InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </ControlledField>
-                )}
-              </FormField>
-            ) : null}
-
-            <FormField name="notes">
-              {({ fieldProps }) => (
-                <ControlledField
-                  label={
-                    <>
-                      {copy.createEvent.fields.notes}{" "}
-                      <Text as="span" variant="small" color="muted">
-                        ({copy.common.optional})
-                      </Text>
-                    </>
-                  }
-                  htmlFor={fieldProps.id}
-                >
-                  <Textarea
-                    {...fieldProps}
-                    fullWidth
-                    rows={3}
-                    maxLength={2000}
-                    placeholder={copy.createEvent.fields.notesPlaceholder}
-                  />
-                </ControlledField>
-              )}
-            </FormField>
-
-            {/* Remounted when the kind changes (`key`), so switching from a
-                match to a party swaps the suggestions AND the pre-added rows
-                instead of leaving the previous type's choices behind. */}
-            <PolicyEditor
-              key={eventTypeId}
-              name="policies"
-              options={policyOptionsByType[eventTypeId] ?? []}
-              defaultValue={defaultPolicies(policyOptionsByType[eventTypeId])}
-            />
-
-            <SubmitButton
-              pending={pending}
-              idleLabel={copy.createEvent.submit}
-              pendingLabel={copy.createEvent.submitting}
-            />
-          </Stack>
-        </form>
-      )}
+          <SubmitButton
+            pending={pending}
+            idleLabel={copy.createEvent.submit}
+            pendingLabel={copy.createEvent.submitting}
+          />
+        </Stack>
+      </Form>
     </FormController>
   );
 }

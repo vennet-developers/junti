@@ -1,19 +1,16 @@
 import type { Metadata, Viewport } from "next";
 
 // ── Stackmyth ────────────────────────────────────────────────────────────────
-// EVERY package ships TWO stylesheets and both are required:
-//   <name>.vars.css  — the CSS custom properties the styles resolve against
-//   <name>.css       — the rules that consume them
+// One import per package: since 0.22.0 every `<name>.css` inlines its own
+// tokens (`<name>.vars.css`) at build time, so the old failure mode — rules
+// without variables, rendering a page with correct colors and zero spacing —
+// is gone at the source. This file used to carry thirty extra `*.vars.css`
+// imports as the workaround; see STACKMYTH-GAPS.md #1 for the history.
 //
-// Importing only the second is the trap: components still pick up their class
-// names and still look *mostly* styled, but every declaration written as
-// `gap: var(--sm-space-5)` silently collapses to its initial value. The result
-// is a page with correct colors and no spacing at all, which reads as "my
-// layout code is wrong" rather than "a stylesheet is missing".
-// Logged in STACKMYTH-GAPS.md — "Two stylesheets per package, no diagnostic".
-//
-// Order matters: core tokens first, then the self-hosted font (sets
-// --sm-font-family), then per-package tokens, then per-package styles.
+// Order still matters for the two that remain split on purpose:
+// `core.vars.css` first (the 278 global tokens every package resolves
+// against — core has no rules file, only tokens), then the self-hosted font
+// (sets --sm-font-family), then the per-package styles.
 //
 // The default palette in core.vars.css (no `data-theme` attribute) is the
 // neutral one and already ships a `prefers-color-scheme: dark` block, so light
@@ -21,36 +18,6 @@ import type { Metadata, Viewport } from "next";
 // See DECISIONS.md — "No Stackmyth theme file".
 import "@stackmyth/core/core.vars.css";
 import "@stackmyth/core/fonts/geist.css";
-
-import "@stackmyth/layout/layout.vars.css";
-import "@stackmyth/text/text.vars.css";
-import "@stackmyth/button/button.vars.css";
-import "@stackmyth/input/input.vars.css";
-import "@stackmyth/input-group/input-group.vars.css";
-import "@stackmyth/textarea/textarea.vars.css";
-import "@stackmyth/label/label.vars.css";
-import "@stackmyth/field/field.vars.css";
-import "@stackmyth/select/select.vars.css";
-import "@stackmyth/radio-group/radio-group.vars.css";
-import "@stackmyth/switch/switch.vars.css";
-import "@stackmyth/checkbox/checkbox.vars.css";
-import "@stackmyth/file-upload/file-upload.vars.css";
-import "@stackmyth/card/card.vars.css";
-import "@stackmyth/badge/badge.vars.css";
-import "@stackmyth/alert/alert.vars.css";
-import "@stackmyth/dialog/dialog.vars.css";
-import "@stackmyth/list-item/list-item.vars.css";
-import "@stackmyth/empty-state/empty-state.vars.css";
-import "@stackmyth/stat/stat.vars.css";
-import "@stackmyth/progress/progress.vars.css";
-import "@stackmyth/spinner/spinner.vars.css";
-import "@stackmyth/skeleton/skeleton.vars.css";
-import "@stackmyth/accordion/accordion.vars.css";
-import "@stackmyth/avatar/avatar.vars.css";
-import "@stackmyth/popover/popover.vars.css";
-import "@stackmyth/calendar/calendar.vars.css";
-import "@stackmyth/time-picker/time-picker.vars.css";
-import "@stackmyth/form/form.vars.css";
 
 import "@stackmyth/layout/layout.css";
 import "@stackmyth/text/text.css";

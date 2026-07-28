@@ -10,6 +10,7 @@ import { Text } from "@stackmyth/text";
 
 import {
   ControlledField,
+  Form,
   FormController,
   FormError,
   FormField,
@@ -79,72 +80,70 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
           mode="onBlur"
           reValidateMode="onChange"
         >
-          {({ handleSubmit }) => (
-            <form onSubmit={handleSubmit(submit)} noValidate>
-              <Stack gap="4">
-                {serverState.waitlisted ? (
-                  // A response to the user's own action, so an assertive live
-                  // region is the right behaviour here.
-                  <Alert variant="warning" soft>
-                    <AlertTitle>{copy.event.full}</AlertTitle>
-                    <AlertDescription>{copy.rsvp.waitlistedNotice}</AlertDescription>
-                  </Alert>
-                ) : null}
+          <Form onValid={submit}>
+            <Stack gap="4">
+              {serverState.waitlisted ? (
+                // A response to the user's own action, so an assertive live
+                // region is the right behaviour here.
+                <Alert variant="warning" soft>
+                  <AlertTitle>{copy.event.full}</AlertTitle>
+                  <AlertDescription>{copy.rsvp.waitlistedNotice}</AlertDescription>
+                </Alert>
+              ) : null}
 
-                {/* Say what will happen BEFORE they submit. Showing "Cupo
-                    lleno" elsewhere on the page and only revealing the
-                    consequence after submitting is the kind of surprise that
-                    makes people distrust a form. Not shown to someone who
-                    already holds a spot — they are not going anywhere. */}
-                {isFull && mine?.attendance !== "in" && !serverState.waitlisted ? (
-                  <Notice tone="warning" title={copy.rsvp.willBeWaitlisted} />
-                ) : null}
+              {/* Say what will happen BEFORE they submit. Showing "Cupo
+                  lleno" elsewhere on the page and only revealing the
+                  consequence after submitting is the kind of surprise that
+                  makes people distrust a form. Not shown to someone who
+                  already holds a spot — they are not going anywhere. */}
+              {isFull && mine?.attendance !== "in" && !serverState.waitlisted ? (
+                <Notice tone="warning" title={copy.rsvp.willBeWaitlisted} />
+              ) : null}
 
-                <FormError message={serverState.errors._form} />
+              <FormError message={serverState.errors._form} />
 
-                {editing ? (
-                  <Text variant="small" color="muted">
-                    {copy.rsvp.yourRsvp(mine.displayName)}
-                  </Text>
-                ) : null}
+              {editing ? (
+                <Text variant="small" color="muted">
+                  {copy.rsvp.yourRsvp(mine.displayName)}
+                </Text>
+              ) : null}
 
-                <FormField name="displayName">
-                  {({ fieldProps, error }) => (
-                    <ControlledField
-                      label={copy.rsvp.nameLabel}
-                      description={copy.rsvp.nameHelp}
-                      error={error ?? serverState.errors.displayName}
-                      htmlFor={fieldProps.id}
-                    >
-                      <Input
-                        {...fieldProps}
-                        fullWidth
-                        size="lg"
-                        maxLength={40}
-                        autoComplete="name"
-                        placeholder={copy.rsvp.namePlaceholder}
-                        status={error ? "error" : "default"}
-                      />
-                    </ControlledField>
-                  )}
-                </FormField>
+              <FormField name="displayName">
+                {({ fieldProps, error }) => (
+                  <ControlledField
+                    label={copy.rsvp.nameLabel}
+                    description={copy.rsvp.nameHelp}
+                    error={error ?? serverState.errors.displayName}
+                    htmlFor={fieldProps.id}
+                  >
+                    <Input
+                      {...fieldProps}
+                      fullWidth
+                      size="lg"
+                      maxLength={40}
+                      autoComplete="name"
+                      placeholder={copy.rsvp.namePlaceholder}
+                      status={error ? "error" : "default"}
+                    />
+                  </ControlledField>
+                )}
+              </FormField>
 
-                <ControlledField label={copy.rsvp.attendanceLabel}>
-                  <RadioField
-                    name="attendance"
-                    options={attendanceOptions}
-                    defaultValue={defaultAttendance}
-                  />
-                </ControlledField>
-
-                <SubmitButton
-                  pending={pending}
-                  idleLabel={editing ? copy.rsvp.submitEditing : copy.rsvp.submit}
-                  pendingLabel={copy.rsvp.submitting}
+              <ControlledField label={copy.rsvp.attendanceLabel}>
+                <RadioField
+                  name="attendance"
+                  options={attendanceOptions}
+                  defaultValue={defaultAttendance}
                 />
-              </Stack>
-            </form>
-          )}
+              </ControlledField>
+
+              <SubmitButton
+                pending={pending}
+                idleLabel={editing ? copy.rsvp.submitEditing : copy.rsvp.submit}
+                pendingLabel={copy.rsvp.submitting}
+              />
+            </Stack>
+          </Form>
         </FormController>
       </CardContent>
     </Card>

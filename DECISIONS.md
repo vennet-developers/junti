@@ -1022,3 +1022,10 @@ app would have been suspect at once.
 
 Full write-up, including what API would have prevented it, in
 [STACKMYTH-GAPS.md](./STACKMYTH-GAPS.md) #1.
+
+**Postscript.** The API that would have prevented it now exists: since
+Stackmyth 0.22.0 each `<pkg>.css` inlines its own tokens, so one import per
+package is enough and this class of failure is gone at the source. The root
+layout dropped thirty `*.vars.css` imports. Recording it anyway — the mistake
+was real, and the reason it was cheap (a smoke page at build-order step 2
+rather than step 8) is the transferable part.
