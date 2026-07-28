@@ -11,10 +11,12 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { MoneySummary } from "@/components/money-summary";
 import { Notice } from "@/components/notice";
 import { RosterGroup } from "@/components/roster-list";
+import { TimeZoneSync } from "@/components/time-zone-sync";
 import { getCopy } from "@/config/copy";
 import { db } from "@/db/client";
 import { participants } from "@/db/schema";
 import { resolveEventLocale } from "@/lib/locale";
+import { readingTimeZone, resolvePreferences } from "@/lib/preferences";
 import { getOrganizer } from "@/lib/organizer";
 import {
   findEventByPublicToken,
@@ -62,6 +64,10 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   // The event's language, unless the reader has chosen one for themselves.
   const locale = await resolveEventLocale(eventRow.locale);
   const copy = getCopy(locale);
+
+  // The reader's zone when one is known, else the event's own.
+  const { timeZone: preferredTimeZone } = await resolvePreferences();
+  const readerTimeZone = readingTimeZone(preferredTimeZone, eventRow.timeZone);
 
   const roster = await loadRoster(eventRow, locale);
   const organizer = await getOrganizer();
@@ -141,11 +147,20 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   return (
     <Container size="1">
       <Stack gap="6" py="6" px="4">
+        {/* Writes this device's zone into a cookie on a first visit, so the
+            server can render every later paint on the right clock. */}
+        <TimeZoneSync hasPreference={preferredTimeZone !== null} />
+
         <Flex justify="end">
           <LanguageSwitcher />
         </Flex>
 
-        <EventHeader event={event} attendingCount={roster.attending.length} copy={copy} />
+        <EventHeader
+          event={event}
+          attendingCount={roster.attending.length}
+          copy={copy}
+          readerTimeZone={readerTimeZone}
+        />
 
         {/* Only the "spots left" nudge lives here. When the event is FULL the
             RSVP box says so itself, right where the consequence applies —

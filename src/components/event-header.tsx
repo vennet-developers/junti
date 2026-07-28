@@ -4,7 +4,7 @@ import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import type { Copy } from "@/config/copy";
-import { formatEventDateTime } from "@/lib/format";
+import { describeEventTime } from "@/lib/event-time";
 import type { EventView } from "@/lib/roster";
 
 interface DetailRowProps {
@@ -19,11 +19,14 @@ function DetailRow({ icon, label, children }: DetailRowProps) {
       <Text as="span" color="muted" aria-hidden="true">
         {icon}
       </Text>
+      {/* Children are rendered raw rather than wrapped in <Text>, because the
+          "when" row is two stacked lines and a <div> inside a <p> is invalid
+          nesting. Callers passing a plain string wrap it themselves. */}
       <Stack gap="0">
         <Text variant="small" color="muted">
           {label}
         </Text>
-        <Text>{children}</Text>
+        {children}
       </Stack>
     </Flex>
   );
@@ -33,9 +36,18 @@ export interface EventHeaderProps {
   event: EventView;
   attendingCount: number;
   copy: Copy;
+  /** The reader's zone. Falls back to the event's, which shows one line. */
+  readerTimeZone: string;
 }
 
-export function EventHeader({ event, attendingCount, copy }: EventHeaderProps) {
+export function EventHeader({ event, attendingCount, copy, readerTimeZone }: EventHeaderProps) {
+  const when = describeEventTime({
+    startsAt: event.startsAt,
+    eventTimeZone: event.timeZone,
+    readerTimeZone,
+    copy,
+  });
+
   const capacityText =
     event.capacity === null
       ? copy.event.capacityUnlimited
@@ -68,15 +80,25 @@ export function EventHeader({ event, attendingCount, copy }: EventHeaderProps) {
 
       <Stack gap="3">
         <DetailRow icon={<CalendarIcon size={18} />} label={copy.event.whenLabel}>
-          {formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale)}
+          <Stack gap="0">
+            <Text>{when.primary}</Text>
+            {/* Only when the reader is somewhere else. Both times, both
+                places — a converted time without its zone is how a group ends
+                up disagreeing about when the match is. */}
+            {when.secondary ? (
+              <Text variant="small" color="muted">
+                {when.secondary}
+              </Text>
+            ) : null}
+          </Stack>
         </DetailRow>
 
         <DetailRow icon={<MapPinIcon size={18} />} label={copy.event.whereLabel}>
-          {event.location ?? copy.event.noLocation}
+          <Text>{event.location ?? copy.event.noLocation}</Text>
         </DetailRow>
 
         <DetailRow icon={<UserIcon size={18} />} label={copy.event.capacityLabel}>
-          {capacityText}
+          <Text>{capacityText}</Text>
         </DetailRow>
       </Stack>
 

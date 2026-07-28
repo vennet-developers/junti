@@ -14,8 +14,10 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { RosterGroup } from "@/components/roster-list";
 import { getCopy } from "@/config/copy";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
+import { shortEventTime } from "@/lib/event-time";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
+import { readingTimeZone, resolvePreferences } from "@/lib/preferences";
 import { getOrganizer } from "@/lib/organizer";
 import {
   authorizeOrganizer,
@@ -71,6 +73,9 @@ export default async function ManagePage({
   const locale = await resolveEventLocale(eventRow.locale);
   const copy = getCopy(locale);
 
+  const { timeZone: preferredTimeZone } = await resolvePreferences();
+  const readerTimeZone = readingTimeZone(preferredTimeZone, eventRow.timeZone);
+
   const roster = await loadRoster(eventRow, locale);
   const { event } = roster;
 
@@ -97,9 +102,11 @@ export default async function ManagePage({
   const participantUrl = `${base}${participantPath(publicToken)}`;
   const manageUrl = `${base}${managePath(publicToken, organizerToken)}`;
 
+  // The organizer's message goes out in the EVENT's zone with the place named,
+  // because it lands in a chat where somebody may be reading it from abroad.
   const shareMessage = copy.share.whatsAppMessage(
     event.title,
-    formatEventDateTimeShort(event.startsAt, event.timeZone, copy.intlLocale),
+    shortEventTime(event.startsAt, event.timeZone, copy),
     participantUrl,
   );
 
@@ -153,7 +160,12 @@ export default async function ManagePage({
           <LanguageSwitcher />
         </Flex>
 
-        <EventHeader event={event} attendingCount={roster.attending.length} copy={copy} />
+        <EventHeader
+          event={event}
+          attendingCount={roster.attending.length}
+          copy={copy}
+          readerTimeZone={readerTimeZone}
+        />
 
         {justCreated ? (
           <Stack gap="2">

@@ -71,6 +71,7 @@ export const config = {
   matcher: [
     /*
      *   /mis-eventos      the history, requires a session
+     *   /perfil           language and timezone settings
      *   /entrar           the sign-in page, redirects away when already in
      *   /auth/...         the OAuth / magic-link callback
      *   /new              so a signed-in creator gets attributed
@@ -79,6 +80,7 @@ export const config = {
      * Not matched, on purpose: /api and all static assets.
      */
     "/mis-eventos/:path*",
+    "/perfil",
     "/entrar",
     "/auth/:path*",
     "/new",

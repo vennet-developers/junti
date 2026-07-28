@@ -36,6 +36,13 @@
       "when": 1785249612425,
       "tag": "0004_retire_kind_enums",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785253320623,
+      "tag": "0005_user_preferences",
+      "breakpoints": true
     }
   ]
 }

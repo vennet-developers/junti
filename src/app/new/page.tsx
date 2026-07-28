@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { getViewerCopy } from "@/lib/locale";
 import { DEFAULT_TIME_ZONE } from "@/lib/format";
+import { resolvePreferences } from "@/lib/preferences";
 
 import { CreateEventForm } from "./create-event-form";
 
@@ -22,6 +23,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NewEventPage() {
   const { copy, locale } = await getViewerCopy();
+
+  // A stored or detected zone beats the floor: somebody who set Bogotá in their
+  // profile while living in Madrid should not re-pick it on every event.
+  const { timeZone: preferredTimeZone } = await resolvePreferences();
 
   const [eventTypes, policyOptionsByType] = await Promise.all([
     loadEventTypes(locale),
@@ -48,7 +53,7 @@ export default async function NewEventPage() {
             is UTC on Vercel — so the form detects the real one on mount and
             this is only what the first paint shows. */}
         <CreateEventForm
-          defaultTimeZone={DEFAULT_TIME_ZONE}
+          defaultTimeZone={preferredTimeZone ?? DEFAULT_TIME_ZONE}
           defaultLocale={locale}
           eventTypes={eventTypes}
           policyOptionsByType={policyOptionsByType}

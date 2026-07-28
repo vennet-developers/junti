@@ -497,6 +497,35 @@ export const policyEvidence = pgTable("policy_evidence", {
 });
 
 /**
+ * A signed-in person's own settings, so they follow them to a new device.
+ *
+ * **NULL means "follow my browser"**, which is why both columns are nullable
+ * and there is no separate `override_enabled` flag. Setting a value IS turning
+ * the override on, and clearing it is turning it off — one piece of state
+ * instead of two that can contradict each other.
+ *
+ * The durable record only. The per-device effective value lives in a cookie,
+ * because the server has to know it to render the first paint in the right
+ * language; this table is what re-seeds that cookie when the same person signs
+ * in somewhere new.
+ *
+ * No foreign key to `auth.users`, for the same reason as `events.organizer_id`:
+ * a cross-schema FK would tie these migrations to Supabase, and the schema is
+ * meant to run unchanged on any Postgres.
+ */
+export const userPreferences = pgTable("user_preferences", {
+  userId: uuid("user_id").primaryKey(),
+
+  /** Interface language, or NULL to follow `Accept-Language`. */
+  locale: text("locale"),
+
+  /** IANA identifier for reading times, or NULL to follow the device. */
+  timeZone: text("time_zone"),
+
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Single-row table poked by /api/keep-alive so Supabase does not pause the free
  * project after ~7 days of inactivity. Not part of the domain.
  */
@@ -515,6 +544,7 @@ export type PaymentRow = typeof payments.$inferSelect;
 export type NewPaymentRow = typeof payments.$inferInsert;
 export type EventPolicyRow = typeof eventPolicies.$inferSelect;
 export type NewEventPolicyRow = typeof eventPolicies.$inferInsert;
+export type UserPreferencesRow = typeof userPreferences.$inferSelect;
 export type EventTypeRow = typeof eventTypes.$inferSelect;
 export type PolicyDefinitionRow = typeof policyDefinitions.$inferSelect;
 export type EventTypePolicyRow = typeof eventTypePolicies.$inferSelect;

@@ -1,72 +1,51 @@
 import "server-only";
 
-import { cookies, headers } from "next/headers";
+import { getCopy, isLocale, type Copy, type Locale } from "@/config/copy";
 
-import {
-  DEFAULT_LOCALE,
-  getCopy,
-  isLocale,
-  localeFromAcceptLanguage,
-  type Copy,
-  type Locale,
-} from "@/config/copy";
+import { resolvePreferences } from "./preferences";
 
 /**
- * Which language to render the interface in.
+ * Language resolution, in terms of `preferences.ts`.
  *
- * Three sources, in descending order of how much they mean:
- *
- * 1. **The cookie** — the reader used the language switcher. An explicit
- *    choice, and the only one that should survive following a link to an event
- *    created in another language.
- * 2. **`Accept-Language`** — what their browser is set to. A real signal, but
- *    not a decision about this app.
- * 3. **Spanish.**
- *
- * `explicit` is what distinguishes the first from the rest: an event carries
- * its own language, and pages use it as the fallback, but never over a reader
- * who has actually chosen.
+ * This module is the thin, widely-imported face of that one. It exists so that
+ * pages ask "what language and strings do I render in?" without having to know
+ * about cookies, headers or a profile table.
  */
-export const LOCALE_COOKIE = "locale";
 
-/** A year. The choice is a preference, not a session. */
-export const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-
-export interface ResolvedLocale {
-  locale: Locale;
-  /** True only when it came from the cookie — i.e. the reader chose it. */
-  explicit: boolean;
-}
-
-export async function resolveViewerLocale(): Promise<ResolvedLocale> {
-  const cookieStore = await cookies();
-  const fromCookie = cookieStore.get(LOCALE_COOKIE)?.value;
-
-  if (isLocale(fromCookie)) {
-    return { locale: fromCookie, explicit: true };
-  }
-
-  const headerStore = await headers();
-  const fromHeader = localeFromAcceptLanguage(headerStore.get("accept-language"));
-
-  return { locale: fromHeader ?? DEFAULT_LOCALE, explicit: false };
-}
+export { LOCALE_COOKIE, PREFERENCE_COOKIE_MAX_AGE } from "./preferences";
 
 /**
  * The language for a page that belongs to an event.
  *
- * The event's own language wins over the browser's, because the organizer
- * picked it and everyone in the group chat is reading the same page. A reader
- * who has used the switcher still overrides both.
+ * **The reader's browser now wins over the event's own language.** It did not
+ * used to: the event's language came second, on the reasoning that the
+ * organizer picked it for a page a whole group chat reads. That was reversed on
+ * the owner's instruction, and the new rule is simpler to state — the interface
+ * is always in the reader's language, full stop.
+ *
+ * The event's language survives only as a fallback for a browser that asks for
+ * something we do not speak, which is better than defaulting a French reader to
+ * Spanish when the event was created in English.
+ *
+ * Nothing a human typed is translated either way. Titles, notes and names stay
+ * exactly as written.
  */
 export async function resolveEventLocale(eventLocale: string): Promise<Locale> {
-  const viewer = await resolveViewerLocale();
-  if (viewer.explicit) return viewer.locale;
-  return isLocale(eventLocale) ? eventLocale : viewer.locale;
+  const { locale, localeSource } = await resolvePreferences();
+
+  if (localeSource !== "fallback") return locale;
+
+  return isLocale(eventLocale) ? eventLocale : locale;
 }
 
-/** Shorthand for server components that only need the strings. */
-export async function getViewerCopy(): Promise<{ copy: Copy; locale: Locale }> {
-  const { locale } = await resolveViewerLocale();
+/** The strings for a page that belongs to an event. */
+export async function getEventCopy(eventLocale: string): Promise<{ copy: Copy; locale: Locale }> {
+  const locale = await resolveEventLocale(eventLocale);
   return { copy: getCopy(locale), locale };
+}
+
+/** Shorthand for a page with no event in hand. */
+export async function getViewerCopy(): Promise<{ copy: Copy; locale: Locale }> {
+  const { copy, locale } = await resolvePreferences();
+  return { copy, locale };
 }

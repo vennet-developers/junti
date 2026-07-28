@@ -105,8 +105,19 @@ export function detectTimeZone(): string {
  * computed for right now, so a zone on daylight saving reads as its current
  * offset, which is what someone checking the list expects to see.
  */
+/**
+ * Just the place: "Bogota", "Buenos Aires", "Madrid".
+ *
+ * Taken from the identifier rather than a translated list, so a zone nobody
+ * curated still names itself. Shown next to every converted time — a time
+ * without its zone is what makes conversion dangerous.
+ */
+export function timeZoneCity(timeZone: string): string {
+  return timeZone.split("/").slice(-1)[0]?.replaceAll("_", " ") ?? timeZone;
+}
+
 export function timeZoneLabel(timeZone: string, intlLocale: string, at: Date): string {
-  const city = timeZone.split("/").slice(-1)[0]?.replaceAll("_", " ") ?? timeZone;
+  const city = timeZoneCity(timeZone);
 
   let offset = "";
   try {

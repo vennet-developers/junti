@@ -118,6 +118,8 @@ export const en: Copy = {
     notFoundBody: "The link may be incomplete, or the event may have been deleted.",
     noLocation: "No place set",
     whenLabel: "When",
+    inZone: (place: string) => `${place} time`,
+    eventLocalTime: (when: string, place: string) => `In ${place}: ${when}`,
     whereLabel: "Where",
     notesLabel: "Notes",
     capacityLabel: "Spots",
@@ -331,6 +333,24 @@ export const en: Copy = {
     manage: "Manage",
     attendingCount: (n: number) => (n === 1 ? "1 confirmed" : `${n} confirmed`),
     signInToJoin: "Sign in and join in one tap",
+  },
+
+  profile: {
+    title: "My profile",
+    heading: "My profile",
+    subheading: "How you want to see the app. It only affects your own view.",
+    link: "My profile",
+    languageLabel: "Language",
+    languageAuto: "Whatever my browser uses",
+    timeZoneLabel: "Time zone",
+    timeZoneAuto: "Whatever my device uses",
+    timeZoneHelp:
+      "Event times are shown to you in this zone. When an event is somewhere else, you also see the local time there.",
+    autoHelp: (detected: string) => `Right now we detect: ${detected}.`,
+    save: "Save",
+    saving: "Saving…",
+    saved: "Saved.",
+    storedNotice: "Kept on your account, so it follows you to any device.",
   },
 
   errorBoundary: {

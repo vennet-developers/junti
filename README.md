@@ -184,25 +184,55 @@ alternative is machine-translating a message from someone the reader knows.
 
 ### How each default is chosen
 
-**Language — from the browser, unless the page belongs to an event.** The order
-is: the switcher cookie if the reader has ever used it, then the browser's own
-`Accept-Language`, then Spanish. On an event page the order changes in the
-middle: the cookie still wins, but the **event's** language comes next and the
-browser's comes last. The organizer picked a language for a page a whole group
-chat is reading; only somebody's explicit choice should override that.
+Both follow the same shape: **the browser decides, unless you have said
+otherwise.**
+
+| Setting       | Order                                                                                  |
+| ------------- | -------------------------------------------------------------------------------------- |
+| **Language**  | your saved setting → your browser's `Accept-Language` → the event's language → Spanish |
+| **Time zone** | your saved setting → your device's zone → the event's own zone                         |
 
 Region subtags are ignored — `es-CO`, `es-419` and `es` all resolve to Spanish.
 
-**Time zone — from the organizer's device, in the browser.** The server cannot
-know it: asking `Intl` on the server returns the _server's_ zone, which is UTC
-on Vercel. So the page renders a fixed floor, and the form adopts the real zone
-right after hydration, where the organizer can still change it.
+The event's own language is only a fallback for a browser asking for something
+the app does not speak; better to show a French reader an event's English than
+to default them to Spanish.
 
-Time zones then work the opposite way round from language: **the zone belongs
-to the event, not to the reader**. Every event stores its own IANA zone, and
-the time renders in that zone for everybody. A match at 8 p.m. in Medellín
-reads as 8 p.m. to the person opening the link in Madrid — telling them 3 a.m.
-would be technically correct and useless.
+The time zone cannot be detected on the server — asking there returns the
+_server's_ zone, which is UTC on Vercel. So the browser writes it into a cookie
+the first time you arrive, and every page after that renders on the right clock
+server-side.
+
+### Your profile
+
+Signed in, `/perfil` sets both. Each has an automatic option at the top — "the
+one my browser uses" — and that is the default. Picking a real value turns the
+override on; picking the automatic option turns it off. There is no separate
+switch, because a value and a switch are two things that can disagree.
+
+It is stored on your account, so it follows you to a new phone: at sign-in the
+saved setting is copied onto that device.
+
+### Reading times across zones
+
+Times are shown **in your zone, with the place always named**, and when the
+event is somewhere else you see both:
+
+```
+Cuándo
+domingo, 2 de agosto de 2026, 3:00 a. m. · hora de Madrid
+En Bogota: sáb, 1 de ago, 8:00 p. m.
+```
+
+Naming the zone is not decoration — it is what makes conversion safe. A bare
+"3:00 a.m." on a page two friends read in different countries is how a group
+ends up disagreeing about when the match is. In the event's own zone, which is
+the usual case, there is just the one line.
+
+**Everything is stored in UTC.** `events.time_zone` is not a time: it records
+which wall clock the organizer meant, which a UTC instant alone cannot recover
+— 01:00Z is 8 p.m. in Bogotá and 9 p.m. in Santiago. That column is what lets
+the second line exist.
 
 Adding a third language is one file: copy `src/config/copy/es.ts`, translate it,
 add a line to `src/config/copy/index.ts`. The compiler will not let the new file

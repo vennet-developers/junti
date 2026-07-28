@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { applyStoredPreferences } from "@/lib/preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -39,11 +40,19 @@ export async function GET(request: NextRequest) {
   const supabase = await createSupabaseServerClient();
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${destination}`);
+    const { error, data } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      // The one moment we know both who they are and that this device may
+      // never have seen them: copy their saved settings onto it.
+      if (data.user) await applyStoredPreferences(data.user.id);
+      return NextResponse.redirect(`${origin}${destination}`);
+    }
   } else if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-    if (!error) return NextResponse.redirect(`${origin}${destination}`);
+    const { error, data } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    if (!error) {
+      if (data.user) await applyStoredPreferences(data.user.id);
+      return NextResponse.redirect(`${origin}${destination}`);
+    }
   }
 
   return NextResponse.redirect(`${origin}/entrar?error=1`);

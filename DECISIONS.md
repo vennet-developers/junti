@@ -735,6 +735,94 @@ the type system cannot tell a server component from a client one.
 
 ---
 
+## Reader preferences
+
+### 58. The reader's language now beats the event's
+
+Decision #47 put the event's language ahead of the browser's, reasoning that
+the organizer picked it for a page a whole group chat reads. Reversed on the
+owner's instruction, and the new rule is easier to state: **the interface is in
+the reader's language, full stop.**
+
+The event's language survives only as a fallback for a browser asking for
+something we do not speak — better than defaulting a French reader to Spanish
+when the event was created in English.
+
+Order: preference cookie → `Accept-Language` → the event → Spanish. Verified
+across all five cases, including the two where the cookie has to win.
+
+### 59. Reader-side timezone conversion, with the zone always named
+
+Decision #47 also said the timezone belongs to the event, not the reader, and
+that rendering in each reader's zone would tell the traveller 3 a.m. and be
+useless. That is now reversed too, on the Calendly model — and the reason it is
+safe is the part Calendly gets right and my objection assumed away: **Calendly
+never shows a converted time without its zone.**
+
+So the rule is two-sided and both halves are load-bearing:
+
+1. Times render in the reader's zone, so somebody abroad can act without doing
+   arithmetic.
+2. The place is always named, and when the reader's zone differs from the
+   event's, **both times are shown**. `describeEventTime` returns a `secondary`
+   line that is null in the common case, so a group of friends in one city sees
+   exactly one line, as before.
+
+### 60. Storage is UTC and always was; `time_zone` is intent, not a time
+
+The owner asked that everything be stored in UTC. It already is — every column
+is `timestamptz` and `starts_at` is an instant.
+
+Worth writing down because the two are easy to conflate: `events.time_zone` does
+NOT store a time. It stores which wall clock the organizer meant, which a UTC
+instant alone cannot recover — 01:00Z is 8 p.m. in Bogotá and 9 p.m. in Santiago,
+and only the stored zone says which one somebody typed. It is what makes "8 p.m.
+in Medellín" showable next to a converted time.
+
+### 61. Cookie for the effective value, table for the durable one
+
+Both, and each earns its place:
+
+- The **cookie** is what the server reads. It has to know the language and zone
+  to render the first paint, and reading a preferences table on every request —
+  on a page a whole WhatsApp group opens at once — would be a database round
+  trip for nothing.
+- The **table** is what makes a setting follow somebody to a new phone. It is
+  read exactly once, in the auth callback, to seed the cookie.
+
+`localStorage` was the owner's first instinct and was rejected in conversation
+for a concrete reason: it does not exist on the server, so the language would
+be server-rendered from the browser header and then corrected — a visible flash
+of the wrong language on every page load.
+
+### 62. NULL means "follow my browser" — no second boolean
+
+`user_preferences.locale` and `.time_zone` are nullable, and that IS the
+override switch. Setting a value turns it on; choosing the automatic option
+writes NULL and turns it off.
+
+The alternative — a value plus an `override_enabled` flag — is two pieces of
+state that can contradict each other, and every reader of them has to decide
+which wins. In the interface this shows up as one dropdown whose first option
+is "the one my browser uses", not a checkbox that greys out a control beside it.
+
+Saving NULL also clears the cookie rather than leaving it, so "follow my
+browser" travels between devices too. Otherwise turning the override off on one
+phone would be silently undone by the next sign-in.
+
+### 63. The browser tells the server its timezone once, via a cookie
+
+The server cannot detect a zone. `TimeZoneSync` writes the detected one into
+the same cookie the profile uses, then refreshes once.
+
+The cost is honest and bounded: a first-time visitor renders once in the
+event's zone and once more in their own. The alternatives were worse — either
+re-format every date on the client after paint, which flashes on every load, or
+show everyone the event's zone regardless, which is the behaviour being
+replaced.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

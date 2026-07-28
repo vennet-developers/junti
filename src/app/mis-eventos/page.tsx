@@ -44,6 +44,9 @@ export default async function MyEventsPage() {
         <Flex justify="between" align="center" gap="3" wrap="wrap">
           <OrganizerBadge organizer={organizer} />
           <Flex gap="2" align="center">
+            <Text variant="small" color="muted">
+              <Link href="/perfil">{copy.profile.link}</Link>
+            </Text>
             <LanguageSwitcher />
             <SignOutButton />
           </Flex>

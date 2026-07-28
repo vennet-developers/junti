@@ -81,10 +81,10 @@ import "./globals.css";
 import { CopyProvider } from "@/components/copy-provider";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
 import { getCopy } from "@/config/copy";
-import { resolveViewerLocale } from "@/lib/locale";
+import { getViewerCopy } from "@/lib/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { locale } = await resolveViewerLocale();
+  const { locale } = await getViewerCopy();
 
   return {
     title: {
@@ -116,7 +116,7 @@ export const viewport: Viewport = {
  * language would be served to a reader who picked the other.
  */
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { locale } = await resolveViewerLocale();
+  const { locale } = await getViewerCopy();
 
   return (
     <html lang={getCopy(locale).intlLocale}>

@@ -125,6 +125,8 @@ export const es = {
     notFoundBody: "El link puede estar incompleto o el evento pudo haber sido eliminado.",
     noLocation: "Sin lugar definido",
     whenLabel: "Cuándo",
+    inZone: (place: string) => `hora de ${place}`,
+    eventLocalTime: (when: string, place: string) => `En ${place}: ${when}`,
     whereLabel: "Dónde",
     notesLabel: "Notas",
     capacityLabel: "Cupo",
@@ -338,6 +340,24 @@ export const es = {
     manage: "Administrar",
     attendingCount: (n: number) => (n === 1 ? "1 confirmado" : `${n} confirmados`),
     signInToJoin: "Entra y te apuntas con un toque",
+  },
+
+  profile: {
+    title: "Mi perfil",
+    heading: "Mi perfil",
+    subheading: "Cómo quieres ver el app. Solo aplica a lo tuyo.",
+    link: "Mi perfil",
+    languageLabel: "Idioma",
+    languageAuto: "El de mi navegador",
+    timeZoneLabel: "Zona horaria",
+    timeZoneAuto: "La de mi dispositivo",
+    timeZoneHelp:
+      "Las horas de los eventos se te muestran en esta zona. Cuando el evento es en otra, verás también la hora del lugar.",
+    autoHelp: (detected: string) => `Ahora mismo detectamos: ${detected}.`,
+    save: "Guardar",
+    saving: "Guardando…",
+    saved: "Listo, guardado.",
+    storedNotice: "Queda guardado en tu cuenta, así te sigue a cualquier dispositivo.",
   },
 
   errorBoundary: {

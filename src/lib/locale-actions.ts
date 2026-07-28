@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { isLocale } from "@/config/copy";
 
-import { LOCALE_COOKIE, LOCALE_COOKIE_MAX_AGE } from "./locale";
+import { LOCALE_COOKIE, PREFERENCE_COOKIE_MAX_AGE } from "./preferences";
 
 /**
  * Records the reader's language choice.
@@ -24,7 +24,7 @@ export async function setLocale(next: string): Promise<void> {
   const cookieStore = await cookies();
 
   cookieStore.set(LOCALE_COOKIE, next, {
-    maxAge: LOCALE_COOKIE_MAX_AGE,
+    maxAge: PREFERENCE_COOKIE_MAX_AGE,
     path: "/",
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
