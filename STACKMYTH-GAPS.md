@@ -36,9 +36,8 @@
 >
 > The rest were **re-verified against the installed 0.20.0 packages** —
 > each open entry below carries its status line and the evidence. Still
-> open: #1, #2, #7, #8, #9, #10, #13, #14, #16. #11 is fixed at source since
-> `de12d8db` — an opt-in `valueFormat="date"`, defaulting to today's
-> behaviour — and ships in the release after 0.20.0.
+> open: #1, #2, #7, #8, #9, #10, #13, #14, #16. #11 shipped in 0.21.0 as the
+> opt-in `valueFormat="date"`, defaulting to today's behaviour.
 
 Feedback from a consumer with **zero prior familiarity** with the stack, building
 a real (small) app against it over one build. Written as it happened, not
@@ -416,14 +415,14 @@ that was never intended to exist.
 
 ---
 
-## 11. `DatePicker`'s hidden value is a UTC instant, which is lossy for a date
+## 11. `DatePicker`'s hidden value is a UTC instant, which is lossy for a date — FIXED in 0.21.0
 
-> **Status: fixed at source, waiting on the next release.** `de12d8db` in the
+> **Status: FIXED in 0.21.0, which this app now consumes.** `de12d8db` in the
 > Stackmyth repo adds exactly the opt-in this entry asked for:
 > `valueFormat="date"` submits the local calendar day as `YYYY-MM-DD`, while
 > the default stays `"iso"` — byte-for-byte what existing forms submit, which
-> is what let it ship as a minor. Excluded from 0.20.0 deliberately; lands in
-> the release after it. This app's composed date field stays regardless: it
+> is what let it ship as a minor. Verified in the installed 0.21.0 artifact.
+> This app's composed date field stays regardless: it
 > pairs a date with a `TimePicker` and stores two wall-clock parts, which a
 > date-only control does not model.
 
