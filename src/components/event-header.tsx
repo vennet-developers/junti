@@ -46,7 +46,7 @@ export function EventHeader({ event, attendingCount, copy }: EventHeaderProps) {
       <Stack gap="2">
         <Flex gap="2" align="center" wrap="wrap">
           <Badge variant="secondary" size="sm">
-            {copy.createEvent.kinds[event.kind]}
+            {event.eventTypeLabel}
           </Badge>
           {event.isClosed ? (
             <Badge variant="error" size="sm" soft>

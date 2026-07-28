@@ -10,41 +10,63 @@ import { Input } from "@stackmyth/input";
 import { Box, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { POLICY_SUGGESTIONS, type PolicyKind } from "@/domain/policies";
-import type { EventKind } from "@/domain/types";
 import { MAX_POLICIES_PER_EVENT } from "@/lib/validation";
 
 import { useCopy } from "./copy-provider";
+import { Notice } from "./notice";
+
+/**
+ * One catalogue entry, as the server resolved it for this reader.
+ *
+ * Mirrors `PolicyOption` from `src/lib/catalog.ts`, redeclared here because
+ * that module is `server-only` and this component is not.
+ */
+export interface PolicyOptionView {
+  id: string;
+  slug: string;
+  handler: string;
+  label: string;
+  description: string | null;
+  isDefault: boolean;
+  isSupported: boolean;
+}
 
 export interface PolicyDraft {
   /** Absent on a row the organizer just added. */
   id?: string;
-  kind: PolicyKind;
-  label: string;
+  /** The catalogue entry this is an instance of. */
+  definitionId: string;
+  /** NULL follows the catalogue; a value is the organizer's own wording. */
+  label: string | null;
   description: string | null;
 }
-
-const ALL_KINDS: PolicyKind[] = ["proof_of_payment", "acknowledgement"];
 
 /**
  * Sets up what an event asks for before somebody counts as confirmed.
  *
- * The list travels to the server as **one JSON field** rather than as
- * `policies[0][label]`-style names. Rows are added and removed here, so indexed
- * names would leave a hole in the sequence the moment anyone deletes the middle
- * one, and every reader of the FormData would need to agree on how to close it.
+ * The list of what CAN be asked comes from the database — `policy_definitions`
+ * and its association to event types — not from a constant in this file. Adding
+ * a requirement to the platform is a row; this component only ever renders what
+ * it was handed.
  *
- * Suggestions follow the kind of event, but only ever as a button to press. An
- * organizer who picked "match" and wants no requirements at all should end up
- * with none, not have to delete something they never asked for.
+ * The name and instructions fields are **empty by default, showing the
+ * catalogue text as a placeholder**. That is the interface for an override:
+ * empty means "whatever the definition says, in whatever language the reader is
+ * using", so renaming it in the catalogue renames it here too. Typing something
+ * pins this event to those words.
+ *
+ * The list travels to the server as one JSON field rather than as
+ * `policies[0][label]`-style names, because rows are added and removed here and
+ * indexed names leave a hole the moment anyone deletes the middle one.
  */
 export function PolicyEditor({
   name,
-  eventKind,
+  options,
   defaultValue = [],
 }: {
   name: string;
-  eventKind: EventKind;
+  /** Everything this event type offers, suggested ones first. */
+  options: PolicyOptionView[];
   defaultValue?: PolicyDraft[];
 }) {
   const { copy } = useCopy();
@@ -58,14 +80,19 @@ export function PolicyEditor({
     // `form` is a fresh object each render; keying on the data avoids a loop.
   }, [drafts, name]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const suggested = POLICY_SUGGESTIONS[eventKind] ?? [];
-  const full = drafts.length >= MAX_POLICIES_PER_EVENT;
+  const byId = new Map(options.map((option) => [option.id, option]));
+  const used = new Set(drafts.map((draft) => draft.definitionId));
 
-  function add(kind: PolicyKind) {
+  const full = drafts.length >= MAX_POLICIES_PER_EVENT;
+  const available = options.filter((option) => !used.has(option.id));
+  const suggested = available.filter((option) => option.isDefault);
+  const rest = available.filter((option) => !option.isDefault);
+
+  function add(option: PolicyOptionView) {
     if (full) return;
     setDrafts((current) => [
       ...current,
-      { kind, label: copy.policies.defaultLabel[kind], description: null },
+      { definitionId: option.id, label: null, description: null },
     ]);
   }
 
@@ -94,97 +121,131 @@ export function PolicyEditor({
         </Text>
       ) : (
         <Stack gap="3">
-          {drafts.map((draft, index) => (
-            <Card surface="outlined" key={draft.id ?? `new-${draft.kind}-${index}`}>
-              <CardContent>
-                <Stack gap="3">
-                  <Flex justify="between" align="center" gap="2">
-                    <Box minWidth="0">
-                      <Text variant="small" color="muted">
-                        {copy.policies.kinds[draft.kind]}
-                      </Text>
-                    </Box>
-                    <Box flexShrink={0}>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => remove(index)}
-                        aria-label={`${copy.policies.remove}: ${draft.label}`}
-                      >
-                        {copy.policies.remove}
-                      </Button>
-                    </Box>
-                  </Flex>
+          {drafts.map((draft, index) => {
+            const option = byId.get(draft.definitionId);
 
-                  <Field>
-                    <FieldLabel htmlFor={`policy-label-${index}`}>
-                      {copy.policies.labelField}
-                    </FieldLabel>
-                    <Input
-                      id={`policy-label-${index}`}
-                      fullWidth
-                      size="lg"
-                      maxLength={60}
-                      value={draft.label}
-                      onChange={(event) => update(index, { label: event.target.value })}
-                    />
-                  </Field>
+            return (
+              <Card surface="outlined" key={draft.id ?? `new-${draft.definitionId}-${index}`}>
+                <CardContent>
+                  <Stack gap="3">
+                    <Flex justify="between" align="center" gap="2">
+                      <Box minWidth="0">
+                        <Text weight="semibold">{option?.label ?? draft.definitionId}</Text>
+                      </Box>
+                      <Box flexShrink={0}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => remove(index)}
+                          aria-label={`${copy.policies.remove}: ${option?.label ?? ""}`}
+                        >
+                          {copy.policies.remove}
+                        </Button>
+                      </Box>
+                    </Flex>
 
-                  <Field>
-                    <FieldLabel htmlFor={`policy-description-${index}`}>
-                      {copy.policies.descriptionField}
-                    </FieldLabel>
-                    <Input
-                      id={`policy-description-${index}`}
-                      fullWidth
-                      size="lg"
-                      maxLength={400}
-                      value={draft.description ?? ""}
-                      onChange={(event) =>
-                        update(index, { description: event.target.value || null })
-                      }
-                      placeholder={copy.policies.descriptionHelp}
-                    />
-                  </Field>
+                    {/* A catalogue row naming a behaviour this build does not
+                        have. It blocks nobody — see ParticipantCompliance —
+                        but the organizer should know why nothing happens. */}
+                    {option && !option.isSupported ? (
+                      <Notice tone="warning" title={copy.policies.unsupported} />
+                    ) : null}
 
-                  <Text variant="small" color="muted">
-                    {copy.policies.kindHelp[draft.kind]}
-                  </Text>
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
+                    <Field>
+                      <FieldLabel htmlFor={`policy-label-${index}`}>
+                        {copy.policies.labelField}
+                      </FieldLabel>
+                      <Input
+                        id={`policy-label-${index}`}
+                        fullWidth
+                        size="lg"
+                        maxLength={60}
+                        value={draft.label ?? ""}
+                        placeholder={option?.label ?? ""}
+                        onChange={(event) => update(index, { label: event.target.value || null })}
+                      />
+                    </Field>
+                    <Text variant="small" color="muted">
+                      {copy.policies.labelOverrideHelp}
+                    </Text>
+
+                    <Field>
+                      <FieldLabel htmlFor={`policy-description-${index}`}>
+                        {copy.policies.descriptionField}
+                      </FieldLabel>
+                      <Input
+                        id={`policy-description-${index}`}
+                        fullWidth
+                        size="lg"
+                        maxLength={400}
+                        value={draft.description ?? ""}
+                        placeholder={option?.description ?? ""}
+                        onChange={(event) =>
+                          update(index, { description: event.target.value || null })
+                        }
+                      />
+                    </Field>
+                    <Text variant="small" color="muted">
+                      {option
+                        ? (copy.policies.handlerHelp[option.handler] ??
+                          copy.policies.descriptionOverrideHelp)
+                        : copy.policies.descriptionOverrideHelp}
+                    </Text>
+                  </Stack>
+                </CardContent>
+              </Card>
+            );
+          })}
         </Stack>
       )}
 
-      {full ? null : (
-        <Stack gap="2">
+      {full || available.length === 0 ? null : (
+        <Stack gap="3">
           {suggested.length > 0 ? (
-            <Text variant="small" color="muted">
-              {copy.policies.suggestedForKind}
-            </Text>
+            <Stack gap="2">
+              <Text variant="small" color="muted">
+                {copy.policies.suggestedForKind}
+              </Text>
+              <Flex gap="2" wrap="wrap">
+                {suggested.map((option) => (
+                  <AddButton key={option.id} option={option} onAdd={add} />
+                ))}
+              </Flex>
+            </Stack>
           ) : null}
 
-          <Flex gap="2" wrap="wrap">
-            {/* Suggested kinds first, then the rest, so the recommended one is
-                the leftmost thumb target. */}
-            {[...suggested, ...ALL_KINDS.filter((kind) => !suggested.includes(kind))].map(
-              (kind) => (
-                <Button
-                  key={kind}
-                  type="button"
-                  size="md"
-                  variant="outline"
-                  onClick={() => add(kind)}
-                >
-                  + {copy.policies.kinds[kind]}
-                </Button>
-              ),
-            )}
-          </Flex>
+          {/* Everything else in the catalogue. The association decides what is
+              suggested, not what is permitted — an "other" event whose
+              organizer wants proof of payment should be able to say so. */}
+          {rest.length > 0 ? (
+            <Stack gap="2">
+              <Text variant="small" color="muted">
+                {copy.policies.otherAvailable}
+              </Text>
+              <Flex gap="2" wrap="wrap">
+                {rest.map((option) => (
+                  <AddButton key={option.id} option={option} onAdd={add} />
+                ))}
+              </Flex>
+            </Stack>
+          ) : null}
         </Stack>
       )}
     </Stack>
+  );
+}
+
+function AddButton({
+  option,
+  onAdd,
+}: {
+  option: PolicyOptionView;
+  onAdd: (option: PolicyOptionView) => void;
+}) {
+  return (
+    <Button type="button" size="md" variant="outline" onClick={() => onAdd(option)}>
+      + {option.label}
+    </Button>
   );
 }

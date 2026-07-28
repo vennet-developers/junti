@@ -94,12 +94,6 @@ export const es = {
       costAmountHelpPerPerson: "Cada persona que confirme paga este monto.",
       currency: "Moneda",
     },
-    kinds: {
-      match: "Partido",
-      party: "Fiesta",
-      kids_party: "Fiesta infantil",
-      other: "Otro",
-    },
     costModes: {
       none: "Sin costo",
       total: "Costo total a repartir",
@@ -203,20 +197,16 @@ export const es = {
     labelHelp: "Esto es lo que van a leer tus invitados.",
     descriptionField: "Instrucciones",
     descriptionHelp: "Opcional. Por ejemplo, a qué cuenta transferir.",
-    kindField: "Tipo de requisito",
     none: "Este evento no pide nada extra para confirmar.",
-    kinds: {
-      proof_of_payment: "Comprobante de pago",
-      acknowledgement: "Confirmación de lectura",
-    },
-    kindHelp: {
-      proof_of_payment: "Suben una foto del pago y tú la apruebas.",
-      acknowledgement: "Marcan una casilla. Queda cumplido de una vez, sin que revises nada.",
-    },
-    defaultLabel: {
-      proof_of_payment: "Comprobante de pago",
-      acknowledgement: "Leí las indicaciones",
-    },
+    otherAvailable: "Otros requisitos disponibles",
+    labelOverrideHelp: "Déjalo vacío para usar el nombre de siempre.",
+    descriptionOverrideHelp: "Déjalo vacío para usar las instrucciones de siempre.",
+    unsupported:
+      "Esta versión del app no sabe cómo pedir este requisito. No bloquea a nadie; avísale a quien administra el catálogo.",
+    handlerHelp: {
+      file_upload_reviewed: "Suben una foto y tú la apruebas.",
+      self_acknowledged: "Marcan una casilla. Queda cumplido de una vez, sin que revises nada.",
+    } as Record<string, string>,
     status: {
       missing: "Pendiente",
       submitted: "En revisión",
@@ -374,7 +364,6 @@ export const es = {
     rateLimited: "Vas muy rápido. Espera un momento y vuelve a intentar.",
     eventClosed: "El evento está cerrado.",
     timeZoneInvalid: "Esa zona horaria no existe.",
-    policyLabelRequired: "Ponle un nombre al requisito.",
     policyLabelTooLong: "Máximo 60 caracteres.",
     policyTooMany: (max: number) => `Máximo ${max} requisitos por evento.`,
     evidenceRequired: "Adjunta la foto del comprobante.",

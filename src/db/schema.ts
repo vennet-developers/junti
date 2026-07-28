@@ -1,12 +1,15 @@
 import { sql } from "drizzle-orm";
 import {
   bigint,
+  boolean,
   char,
   customType,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -24,23 +27,11 @@ import {
 
 // ── Enums ────────────────────────────────────────────────────────────────────
 
-export const eventKind = pgEnum("event_kind", ["match", "party", "kids_party", "other"]);
-
 export const costMode = pgEnum("cost_mode", ["none", "total", "per_person"]);
 
 export const attendance = pgEnum("attendance", ["in", "out", "maybe", "waitlisted"]);
 
 export const paymentStatus = pgEnum("payment_status", ["pending", "confirmed", "waived"]);
-
-/**
- * What a policy asks of a participant.
- *
- * - `proof_of_payment` — upload an image, then wait for the organizer to
- *   approve it. The only kind whose fulfilment someone else decides.
- * - `acknowledgement` — tick a box. Self-served: submitting IS fulfilling,
- *   there is nothing for the organizer to judge.
- */
-export const policyKind = pgEnum("policy_kind", ["proof_of_payment", "acknowledgement"]);
 
 /**
  * Deliberately has no "pending" member. A participant who has not responded to
@@ -65,6 +56,136 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   dataType: () => "bytea",
 });
 
+// ── Catalogues ───────────────────────────────────────────────────────────────
+
+/**
+ * Names in every language the interface speaks: `{"es": "Partido", "en": "Match"}`.
+ *
+ * `jsonb` rather than a `*_translations` table on purpose. A translation table
+ * buys referential integrity on the locale key and costs a join on every read
+ * plus a second table to seed and administer; with a closed set of locales
+ * declared in code and a fallback chain for a missing one, that integrity is
+ * not worth the weight here. Adding a language is an UPDATE, not a migration,
+ * which is the property that actually mattered.
+ *
+ * Read through `pickLabel()` — never index it directly, or a language somebody
+ * has not translated yet renders as `undefined`.
+ */
+type Labels = Record<string, string>;
+
+/**
+ * The kinds of event an organizer can pick.
+ *
+ * A table rather than the `event_kind` enum it replaces. Adding "tournament" or
+ * "asado" used to be a migration, a code change and a deploy; it is now one
+ * row. That is the whole reason this exists.
+ *
+ * Rows are **retired, never deleted** — `is_active = false` takes a type out of
+ * the picker while leaving every event that already used it intact. The foreign
+ * key from `events` is `restrict` precisely so a careless DELETE cannot take
+ * somebody's event with it.
+ */
+export const eventTypes = pgTable(
+  "event_types",
+  {
+    id: uuid("id").primaryKey(),
+
+    /**
+     * Stable key. Code that genuinely must special-case a type refers to this,
+     * never to a label or an id — labels get renamed and ids differ between
+     * environments.
+     */
+    slug: text("slug").notNull().unique(),
+
+    labels: jsonb("labels").$type<Labels>().notNull(),
+
+    /** Order in the picker. */
+    position: integer("position").notNull().default(0),
+
+    /** False hides it from new events without touching existing ones. */
+    isActive: boolean("is_active").notNull().default(true),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("event_types_active_position_idx").on(table.isActive, table.position)],
+);
+
+/**
+ * The catalogue of policies. **The source of truth for what a policy is.**
+ *
+ * An event does not invent a requirement; it points at a row here. Renaming
+ * "Comprobante de pago" fixes the wording on every event that inherited it.
+ *
+ * The important column is `handler`, and the important thing about it is what
+ * it does NOT do: it does not describe behaviour, it *names* it. A row cannot
+ * ship a file input, a canvas resizer, a byte sniffer and a review screen, so
+ * behaviour stays in code and this string is the contract between the two. See
+ * `src/domain/policy-handlers.ts`.
+ */
+export const policyDefinitions = pgTable(
+  "policy_definitions",
+  {
+    id: uuid("id").primaryKey(),
+
+    slug: text("slug").notNull().unique(),
+
+    /**
+     * Which registered behaviour this policy uses.
+     *
+     * Deliberately separate from `slug` so several catalogue entries can share
+     * one behaviour: "Comprobante de pago" and "Comprobante de inscripción" are
+     * two rows a participant sees differently and one `file_upload_reviewed`
+     * implementation. That is the difference between adding a policy (a row)
+     * and adding a kind of policy (code).
+     */
+    handler: text("handler").notNull(),
+
+    labels: jsonb("labels").$type<Labels>().notNull(),
+
+    /** Default instructions. An event may override them per policy. */
+    descriptions: jsonb("descriptions").$type<Labels>(),
+
+    position: integer("position").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("policy_definitions_active_position_idx").on(table.isActive, table.position),
+    index("policy_definitions_handler_idx").on(table.handler),
+  ],
+);
+
+/**
+ * Which policies each kind of event offers.
+ *
+ * Association only — attaching "proof of payment" to "tournament" is a row, and
+ * so is detaching it. Nothing here forces anything on an organizer: this
+ * decides what the create form *offers*, and `is_default` decides what it
+ * starts with already added.
+ */
+export const eventTypePolicies = pgTable(
+  "event_type_policies",
+  {
+    eventTypeId: uuid("event_type_id")
+      .notNull()
+      .references(() => eventTypes.id, { onDelete: "cascade" }),
+
+    policyDefinitionId: uuid("policy_definition_id")
+      .notNull()
+      .references(() => policyDefinitions.id, { onDelete: "cascade" }),
+
+    position: integer("position").notNull().default(0),
+
+    /** Pre-added on the create form rather than merely offered. */
+    isDefault: boolean("is_default").notNull().default(false),
+  },
+  (table) => [
+    primaryKey({ columns: [table.eventTypeId, table.policyDefinitionId] }),
+    index("event_type_policies_type_position_idx").on(table.eventTypeId, table.position),
+  ],
+);
+
 // ── Tables ───────────────────────────────────────────────────────────────────
 
 export const events = pgTable(
@@ -85,7 +206,16 @@ export const events = pgTable(
     organizerToken: text("organizer_token").notNull().unique(),
 
     title: text("title").notNull(),
-    kind: eventKind("kind").notNull().default("other"),
+
+    /**
+     * `restrict`, not `cascade`: retiring a kind of event must never be able to
+     * delete somebody's event as a side effect. Take it out of circulation with
+     * `is_active` instead.
+     */
+    eventTypeId: uuid("event_type_id")
+      .notNull()
+      .references(() => eventTypes.id, { onDelete: "restrict" }),
+
     startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
     location: text("location"),
 
@@ -244,13 +374,11 @@ export const payments = pgTable(
 );
 
 /**
- * A condition an event puts on being counted as confirmed.
+ * One policy, attached to one event.
  *
- * The suggested set depends on the kind of event — a match proposes proof of
- * payment, a kids' party proposes an acknowledgement — but nothing is imposed:
- * the organizer picks, renames and reorders. `label` is what participants
- * actually read, so it carries whatever wording the organizer chose, in their
- * own language, and is never translated.
+ * This is an **instance**, not a definition: it points at the catalogue row
+ * that says what the requirement is and how it behaves, and adds only what is
+ * specific to this event.
  */
 export const eventPolicies = pgTable(
   "event_policies",
@@ -261,12 +389,25 @@ export const eventPolicies = pgTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" }),
 
-    kind: policyKind("kind").notNull(),
+    /**
+     * `restrict` again: a definition that events are using cannot be deleted
+     * out from under them. Retire it with `is_active`.
+     */
+    policyDefinitionId: uuid("policy_definition_id")
+      .notNull()
+      .references(() => policyDefinitions.id, { onDelete: "restrict" }),
 
-    /** Shown to participants and used in "waiting on <label>". 1–60 chars. */
-    label: text("label").notNull(),
+    /**
+     * The organizer's own wording, or NULL to follow the catalogue.
+     *
+     * Null is the default and the interesting case: it means fixing a typo in
+     * the definition fixes it on every event that never overrode it, which is
+     * what makes the catalogue a source of truth rather than a template that
+     * was copied once. A non-null value is text a human typed, so it is shown
+     * verbatim and never translated.
+     */
+    label: text("label"),
 
-    /** Optional instructions: where to transfer, what the photo should show. */
     description: text("description"),
 
     /** Display order within the event. */
@@ -274,7 +415,14 @@ export const eventPolicies = pgTable(
 
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("event_policies_event_position_idx").on(table.eventId, table.position)],
+  (table) => [
+    index("event_policies_event_position_idx").on(table.eventId, table.position),
+    /** One instance of a given requirement per event. */
+    uniqueIndex("event_policies_event_definition_unique").on(
+      table.eventId,
+      table.policyDefinitionId,
+    ),
+  ],
 );
 
 /**
@@ -367,12 +515,13 @@ export type PaymentRow = typeof payments.$inferSelect;
 export type NewPaymentRow = typeof payments.$inferInsert;
 export type EventPolicyRow = typeof eventPolicies.$inferSelect;
 export type NewEventPolicyRow = typeof eventPolicies.$inferInsert;
+export type EventTypeRow = typeof eventTypes.$inferSelect;
+export type PolicyDefinitionRow = typeof policyDefinitions.$inferSelect;
+export type EventTypePolicyRow = typeof eventTypePolicies.$inferSelect;
 export type PolicySubmissionRow = typeof policySubmissions.$inferSelect;
 export type NewPolicySubmissionRow = typeof policySubmissions.$inferInsert;
 
-export type EventKind = (typeof eventKind.enumValues)[number];
 export type CostMode = (typeof costMode.enumValues)[number];
 export type Attendance = (typeof attendance.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatus.enumValues)[number];
-export type PolicyKind = (typeof policyKind.enumValues)[number];
 export type PolicySubmissionStatus = (typeof policySubmissionStatus.enumValues)[number];

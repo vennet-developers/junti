@@ -13,6 +13,7 @@ import { Notice } from "@/components/notice";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { RosterGroup } from "@/components/roster-list";
 import { getCopy } from "@/config/copy";
+import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
@@ -67,12 +68,19 @@ export default async function ManagePage({
   const eventRow = await authorizeOrganizer(publicToken, organizerToken, organizer?.id ?? null);
   if (!eventRow) notFound();
 
-  const copy = getCopy(await resolveEventLocale(eventRow.locale));
+  const locale = await resolveEventLocale(eventRow.locale);
+  const copy = getCopy(locale);
 
-  const roster = await loadRoster(eventRow);
+  const roster = await loadRoster(eventRow, locale);
   const { event } = roster;
 
-  const queue = await loadReviewQueue(eventRow.id);
+  const queue = await loadReviewQueue(eventRow.id, locale);
+
+  // The catalogue, for the edit form's kind picker and policy list.
+  const [eventTypes, policyOptionsByType] = await Promise.all([
+    loadEventTypes(locale),
+    loadPolicyOptionsByEventType(locale),
+  ]);
 
   const reviewItems: ReviewItem[] = queue.map((item) => ({
     id: item.id,
@@ -361,10 +369,15 @@ export default async function ManagePage({
             event={event}
             policies={roster.policies.map((policy) => ({
               id: policy.id,
-              kind: policy.kind,
-              label: policy.label,
-              description: policy.description,
+              definitionId: policy.definitionId,
+              /* Sent back as the override the organizer actually set, not the
+                 resolved text — passing the resolved label would silently pin
+                 every inherited policy to its current wording on first save. */
+              label: policy.labelOverride,
+              description: policy.descriptionOverride,
             }))}
+            eventTypes={eventTypes}
+            policyOptionsByType={policyOptionsByType}
           />
         </Disclosure>
 

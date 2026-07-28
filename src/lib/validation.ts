@@ -41,15 +41,15 @@ const optionalText = (max: number) =>
     .nullable()
     .catch(null);
 
-export const eventKindSchema = z.enum(["match", "party", "kids_party", "other"]);
 export const costModeSchema = z.enum(["none", "total", "per_person"]);
 export const paymentStatusSchema = z.enum(["pending", "confirmed", "waived"]);
-export const policyKindSchema = z.enum(["proof_of_payment", "acknowledgement"]);
 export const policyReviewSchema = z.enum(["approved", "rejected"]);
 export const localeSchema = z.enum(LOCALES).catch("es");
 
 export const participantIdSchema = z.uuid();
 export const policyIdSchema = z.uuid();
+export const eventTypeIdSchema = z.uuid();
+export const policyDefinitionIdSchema = z.uuid();
 export const submissionIdSchema = z.uuid();
 
 /**
@@ -160,7 +160,7 @@ const eventFieldsSchema = (copy: Copy) =>
       .trim()
       .min(1, copy.errors.titleRequired)
       .max(TITLE_MAX, copy.errors.titleTooLong),
-    kind: eventKindSchema,
+    eventTypeId: eventTypeIdSchema,
     startsAtDate: startsAtDateSchema(copy),
     startsAtTime: startsAtTimeSchema(copy),
     timeZone: timeZoneSchema(copy),
@@ -285,8 +285,9 @@ export const setPaymentStatusSchema = z.object({
 /**
  * One policy as the organizer's form describes it.
  *
- * `label` is free text and stays free text: it is what participants read, in
- * whatever words and language the organizer chose, and nothing translates it.
+ * Carries a reference to the catalogue plus, optionally, wording that overrides
+ * it. Free text either way: whatever a human typed is shown verbatim and never
+ * translated.
  */
 export const makePolicyInputSchema = (copy: Copy) =>
   z.object({
@@ -298,12 +299,27 @@ export const makePolicyInputSchema = (copy: Copy) =>
      * that does not come back is deleted, taking its submissions with it.
      */
     id: z.uuid().optional(),
-    kind: policyKindSchema,
+
+    /** Which catalogue entry this is an instance of. */
+    definitionId: policyDefinitionIdSchema,
+
+    /**
+     * The organizer's wording, or empty to follow the catalogue.
+     *
+     * Empty is meaningful here and is not the same as absent: it stores NULL,
+     * which means "whatever the definition says, in whatever language the
+     * reader is using". A non-empty value is text a human typed.
+     *
+     * There is no "required" rule any more — an empty box is a valid answer —
+     * so only the length is enforced.
+     */
     label: z
       .string()
       .trim()
-      .min(1, copy.errors.policyLabelRequired)
-      .max(POLICY_LABEL_MAX, copy.errors.policyLabelTooLong),
+      .max(POLICY_LABEL_MAX, copy.errors.policyLabelTooLong)
+      .transform((value) => (value.length === 0 ? null : value))
+      .nullable()
+      .catch(null),
     description: optionalText(POLICY_DESCRIPTION_MAX),
   });
 

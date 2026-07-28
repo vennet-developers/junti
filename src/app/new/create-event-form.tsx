@@ -17,9 +17,8 @@ import {
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
-import { PolicyEditor } from "@/components/policy-editor";
+import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
-import type { EventKind } from "@/domain/types";
 import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
 
@@ -28,9 +27,18 @@ import { createEvent, type CreateEventState } from "./actions";
 export function CreateEventForm({
   defaultTimeZone,
   defaultLocale,
+  eventTypes,
+  policyOptionsByType,
 }: {
   defaultTimeZone: string;
   defaultLocale: string;
+  /** From the `event_types` catalogue, already resolved for this reader. */
+  eventTypes: { id: string; slug: string; label: string }[];
+  /**
+   * What each type offers, keyed by type id. Loaded for every type at once so
+   * changing the kind updates the list without a round trip.
+   */
+  policyOptionsByType: Record<string, PolicyOptionView[]>;
 }) {
   const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
@@ -39,15 +47,12 @@ export function CreateEventForm({
   // Mirrors of the controls that are not plain inputs, so the resolver can see
   // their values and dependent fields can appear conditionally.
   const [costMode, setCostMode] = useState("none");
-  const [kind, setKind] = useState<EventKind>("match");
+  // The first catalogue entry is the default. Nothing in code names a type,
+  // so adding one and putting it first changes the default with no deploy.
+  const [eventTypeId, setEventTypeId] = useState(eventTypes[0]?.id ?? "");
   const [timeZone, setTimeZone] = useState(defaultTimeZone);
 
-  const kindOptions = [
-    { value: "match", label: copy.createEvent.kinds.match },
-    { value: "party", label: copy.createEvent.kinds.party },
-    { value: "kids_party", label: copy.createEvent.kinds.kids_party },
-    { value: "other", label: copy.createEvent.kinds.other },
-  ];
+  const kindOptions = eventTypes.map((type) => ({ value: type.id, label: type.label }));
 
   const costModeOptions = [
     { value: "none", label: copy.createEvent.costModes.none },
@@ -64,21 +69,35 @@ export function CreateEventForm({
 
   const resolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
 
-  const defaultValues = {
-    title: "",
-    kind: "match",
-    startsAtDate: "",
-    startsAtTime: "",
-    timeZone: defaultTimeZone,
-    locale: defaultLocale,
-    location: "",
-    capacity: "",
-    notes: "",
-    costMode: "none",
-    costAmount: "",
-    currency: "COP",
-    policies: "[]",
-  };
+  /**
+   * Memoised, and it has to be.
+   *
+   * `FormController` treats a new `defaultValues` identity as a reset, and this
+   * component re-renders on every keystroke and every picker change. Rebuilding
+   * the object inline wiped the store between typing and submitting, and the
+   * action arrived with empty FormData — silently, because a form that submits
+   * nothing produces no validation errors to show.
+   *
+   * The dependencies are all props, so this is computed once per page load.
+   */
+  const defaultValues = useMemo(
+    () => ({
+      title: "",
+      eventTypeId: eventTypes[0]?.id ?? "",
+      startsAtDate: "",
+      startsAtTime: "",
+      timeZone: defaultTimeZone,
+      locale: defaultLocale,
+      location: "",
+      capacity: "",
+      notes: "",
+      costMode: "none",
+      costAmount: "",
+      currency: "COP",
+      policies: JSON.stringify(defaultPolicies(policyOptionsByType[eventTypes[0]?.id ?? ""])),
+    }),
+    [eventTypes, policyOptionsByType, defaultTimeZone, defaultLocale],
+  );
 
   /**
    * Client validation has passed. Hand the raw values to the server action,
@@ -125,12 +144,15 @@ export function CreateEventForm({
               )}
             </FormField>
 
-            <ControlledField label={copy.createEvent.fields.kind}>
+            <ControlledField
+              label={copy.createEvent.fields.kind}
+              error={serverState.errors.eventTypeId}
+            >
               <SelectField
-                name="kind"
+                name="eventTypeId"
                 options={kindOptions}
-                defaultValue="match"
-                onValueChange={(value) => setKind(value as EventKind)}
+                defaultValue={eventTypes[0]?.id ?? ""}
+                onValueChange={setEventTypeId}
               />
             </ControlledField>
 
@@ -273,7 +295,15 @@ export function CreateEventForm({
               )}
             </FormField>
 
-            <PolicyEditor name="policies" eventKind={kind} />
+            {/* Remounted when the kind changes (`key`), so switching from a
+                match to a party swaps the suggestions AND the pre-added rows
+                instead of leaving the previous type's choices behind. */}
+            <PolicyEditor
+              key={eventTypeId}
+              name="policies"
+              options={policyOptionsByType[eventTypeId] ?? []}
+              defaultValue={defaultPolicies(policyOptionsByType[eventTypeId])}
+            />
 
             <SubmitButton
               pending={pending}
@@ -285,4 +315,17 @@ export function CreateEventForm({
       )}
     </FormController>
   );
+}
+
+/**
+ * The requirements a kind of event starts with already added.
+ *
+ * `is_default` in `event_type_policies` — a match pre-adds proof of payment,
+ * because that is the case the whole feature exists for. Everything else is
+ * merely offered.
+ */
+function defaultPolicies(options: PolicyOptionView[] | undefined): PolicyDraft[] {
+  return (options ?? [])
+    .filter((option) => option.isDefault)
+    .map((option) => ({ definitionId: option.id, label: null, description: null }));
 }

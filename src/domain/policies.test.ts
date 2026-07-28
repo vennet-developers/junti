@@ -4,29 +4,48 @@ import {
   initialSubmissionStatus,
   isSelfApproving,
   isSubjectToPolicies,
+  isSupported,
   partitionByCompliance,
   pendingReviewCount,
-  POLICY_SUGGESTIONS,
   resolveCompliance,
   resolveParticipantCompliance,
   type Policy,
   type PolicySubmission,
 } from "./policies";
+import { POLICY_HANDLERS } from "./policy-handlers";
 
 const payment: Policy = {
   id: "policy-payment",
-  kind: "proof_of_payment",
+  definitionId: "def-payment",
+  handler: "file_upload_reviewed",
   label: "Comprobante de pago",
   description: null,
+  labelOverride: null,
+  descriptionOverride: null,
   position: 0,
 };
 
 const rules: Policy = {
   id: "policy-rules",
-  kind: "acknowledgement",
+  definitionId: "def-rules",
+  handler: "self_acknowledged",
   label: "Leí las indicaciones",
   description: "Están en la descripción del evento.",
+  labelOverride: null,
+  descriptionOverride: null,
   position: 1,
+};
+
+/** A catalogue row naming a behaviour this build does not implement. */
+const fromTheFuture: Policy = {
+  id: "policy-future",
+  definitionId: "def-future",
+  handler: "digital_signature",
+  label: "Firma digital",
+  description: null,
+  labelOverride: null,
+  descriptionOverride: null,
+  position: 2,
 };
 
 function submission(
@@ -192,23 +211,62 @@ describe("who policies apply to", () => {
 
 describe("who approves a submission", () => {
   it("settles an acknowledgement on submission", () => {
-    expect(isSelfApproving("acknowledgement")).toBe(true);
-    expect(initialSubmissionStatus("acknowledgement")).toBe("approved");
+    expect(isSelfApproving(rules)).toBe(true);
+    expect(initialSubmissionStatus(rules)).toBe("approved");
   });
 
   it("sends proof of payment to the organizer", () => {
-    expect(isSelfApproving("proof_of_payment")).toBe(false);
-    expect(initialSubmissionStatus("proof_of_payment")).toBe("submitted");
+    expect(isSelfApproving(payment)).toBe(false);
+    expect(initialSubmissionStatus(payment)).toBe("submitted");
   });
 
   it("means an acknowledgement never blocks once submitted", () => {
     const result = resolveParticipantCompliance(
       "ana",
       [rules],
-      [submission(rules.id, "ana", initialSubmissionStatus(rules.kind))],
+      [submission(rules.id, "ana", initialSubmissionStatus(rules))],
     );
 
     expect(result.compliant).toBe(true);
+  });
+
+  it("puts a human in the loop for a handler it does not recognise", () => {
+    // Unreachable through the UI, so the conservative fallback is the one that
+    // does not auto-confirm.
+    expect(isSelfApproving(fromTheFuture)).toBe(false);
+    expect(initialSubmissionStatus(fromTheFuture)).toBe("submitted");
+  });
+});
+
+describe("a policy naming a handler this build does not have", () => {
+  it("is reported as unsupported", () => {
+    expect(isSupported(payment)).toBe(true);
+    expect(isSupported(fromTheFuture)).toBe(false);
+  });
+
+  it("does NOT block, because nobody could act on it", () => {
+    const result = resolveParticipantCompliance("ana", [fromTheFuture], []);
+
+    expect(result.blocking).toEqual([]);
+    expect(result.unsupported).toEqual([fromTheFuture]);
+    // Fail-safe: operator error should be loud, not paralysing.
+    expect(result.compliant).toBe(true);
+  });
+
+  it("still lets the policies around it block normally", () => {
+    const result = resolveParticipantCompliance("ana", [payment, fromTheFuture], []);
+
+    expect(result.blocking).toEqual([payment]);
+    expect(result.unsupported).toEqual([fromTheFuture]);
+    expect(result.compliant).toBe(false);
+  });
+
+  it("keeps somebody out of the pending section on its own", () => {
+    const compliance = resolveCompliance(["ana"], [fromTheFuture], []);
+    const { confirmed, pending } = partitionByCompliance([{ id: "ana" }], compliance);
+
+    expect(confirmed).toEqual([{ id: "ana" }]);
+    expect(pending).toEqual([]);
   });
 });
 
@@ -229,18 +287,25 @@ describe("pendingReviewCount", () => {
   });
 });
 
-describe("POLICY_SUGGESTIONS", () => {
-  it("suggests proof of payment for a match, which is the case that motivated this", () => {
-    expect(POLICY_SUGGESTIONS.match).toContain("proof_of_payment");
-  });
-
-  it("suggests nothing for an unclassified event", () => {
-    expect(POLICY_SUGGESTIONS.other).toEqual([]);
-  });
-
-  it("covers every event kind, so the create form never reads undefined", () => {
-    for (const kind of ["match", "party", "kids_party", "other"] as const) {
-      expect(Array.isArray(POLICY_SUGGESTIONS[kind])).toBe(true);
+describe("POLICY_HANDLERS", () => {
+  it("keys every handler by its own name, so the registry cannot disagree with itself", () => {
+    for (const [key, handler] of Object.entries(POLICY_HANDLERS)) {
+      expect(handler.key).toBe(key);
     }
+  });
+
+  it("covers the handlers the seeded catalogue references", () => {
+    // These strings are in `policy_definitions.handler` in a live database.
+    // Renaming one here without a data migration would strand those rows.
+    expect(POLICY_HANDLERS.file_upload_reviewed).toBeDefined();
+    expect(POLICY_HANDLERS.self_acknowledged).toBeDefined();
+  });
+
+  it("asks for an image exactly when a human has to look at one", () => {
+    expect(POLICY_HANDLERS.file_upload_reviewed.evidence).toBe("image");
+    expect(POLICY_HANDLERS.file_upload_reviewed.settledBy).toBe("organizer");
+
+    expect(POLICY_HANDLERS.self_acknowledged.evidence).toBe("none");
+    expect(POLICY_HANDLERS.self_acknowledged.settledBy).toBe("participant");
   });
 });

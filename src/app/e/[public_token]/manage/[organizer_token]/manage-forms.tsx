@@ -17,7 +17,7 @@ import {
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
-import { PolicyEditor, type PolicyDraft } from "@/components/policy-editor";
+import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { RadioField } from "@/components/radio-field";
 import { SelectField } from "@/components/select-field";
 import { toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
@@ -134,19 +134,40 @@ export function EditEventForm({
   organizerToken,
   event,
   policies,
-}: Ctx & { event: EventView; policies: PolicyDraft[] }) {
+  eventTypes,
+  policyOptionsByType,
+}: Ctx & {
+  event: EventView;
+  policies: PolicyDraft[];
+  eventTypes: { id: string; slug: string; label: string }[];
+  policyOptionsByType: Record<string, PolicyOptionView[]>;
+}) {
   const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<ManageState>({ errors: {} });
   const [costMode, setCostMode] = useState<string>(event.costMode);
   const [timeZone, setTimeZone] = useState(event.timeZone);
+  const [eventTypeId, setEventTypeId] = useState(event.eventTypeId);
 
-  const kindOptions = [
-    { value: "match", label: copy.createEvent.kinds.match },
-    { value: "party", label: copy.createEvent.kinds.party },
-    { value: "kids_party", label: copy.createEvent.kinds.kids_party },
-    { value: "other", label: copy.createEvent.kinds.other },
-  ];
+  const kindOptions = eventTypes.map((type) => ({ value: type.id, label: type.label }));
+
+  /**
+   * Everything on offer here, plus whatever this event already uses.
+   *
+   * The union matters when a policy was retired from the catalogue, or when the
+   * organizer changes the kind of event: without it, a requirement the event
+   * genuinely has would render with no name and silently vanish on save.
+   */
+  const policyOptions = (() => {
+    const forType = policyOptionsByType[eventTypeId] ?? [];
+    const seen = new Set(forType.map((option) => option.id));
+    const extra = Object.values(policyOptionsByType)
+      .flat()
+      .filter(
+        (option) => policies.some((p) => p.definitionId === option.id) && !seen.has(option.id),
+      );
+    return [...forType, ...extra];
+  })();
 
   const costModeOptions = [
     { value: "none", label: copy.createEvent.costModes.none },
@@ -161,26 +182,30 @@ export function EditEventForm({
 
   const eventResolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
 
-  const defaults = {
-    title: event.title,
-    kind: event.kind,
-    /* Wall-clock in the event's OWN zone, so editing does not silently shift
-       the start time by the difference from wherever the organizer is now. */
-    startsAtDate: toDatePartValue(event.startsAt, event.timeZone),
-    startsAtTime: toTimePartValue(event.startsAt, event.timeZone),
-    timeZone: event.timeZone,
-    locale: event.locale,
-    location: event.location ?? "",
-    capacity: event.capacity === null ? "" : String(event.capacity),
-    notes: event.notes ?? "",
-    costMode: event.costMode,
-    costAmount:
-      event.costAmountMinor === null
-        ? ""
-        : String(toMajorUnits(event.costAmountMinor, event.currency)),
-    currency: event.currency,
-    policies: JSON.stringify(policies),
-  };
+  /** Memoised for the same reason as the create form — see the note there. */
+  const defaults = useMemo(
+    () => ({
+      title: event.title,
+      eventTypeId: event.eventTypeId,
+      /* Wall-clock in the event's OWN zone, so editing does not silently shift
+         the start time by the difference from wherever the organizer is now. */
+      startsAtDate: toDatePartValue(event.startsAt, event.timeZone),
+      startsAtTime: toTimePartValue(event.startsAt, event.timeZone),
+      timeZone: event.timeZone,
+      locale: event.locale,
+      location: event.location ?? "",
+      capacity: event.capacity === null ? "" : String(event.capacity),
+      notes: event.notes ?? "",
+      costMode: event.costMode,
+      costAmount:
+        event.costAmountMinor === null
+          ? ""
+          : String(toMajorUnits(event.costAmountMinor, event.currency)),
+      currency: event.currency,
+      policies: JSON.stringify(policies),
+    }),
+    [event, policies],
+  );
 
   function submit(data: Record<string, unknown>) {
     startTransition(async () => {
@@ -219,8 +244,16 @@ export function EditEventForm({
               )}
             </FormField>
 
-            <ControlledField label={copy.createEvent.fields.kind}>
-              <SelectField name="kind" options={kindOptions} defaultValue={event.kind} />
+            <ControlledField
+              label={copy.createEvent.fields.kind}
+              error={serverState.errors.eventTypeId}
+            >
+              <SelectField
+                name="eventTypeId"
+                options={kindOptions}
+                defaultValue={event.eventTypeId}
+                onValueChange={setEventTypeId}
+              />
             </ControlledField>
 
             <ControlledField
@@ -326,7 +359,7 @@ export function EditEventForm({
               )}
             </FormField>
 
-            <PolicyEditor name="policies" eventKind={event.kind} defaultValue={policies} />
+            <PolicyEditor name="policies" options={policyOptions} defaultValue={policies} />
 
             <SubmitButton
               pending={pending}

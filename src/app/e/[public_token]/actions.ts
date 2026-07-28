@@ -8,8 +8,8 @@ import { uuidv7 } from "uuidv7";
 import { getCopy } from "@/config/copy";
 import type { Copy } from "@/config/copy";
 import { db } from "@/db/client";
-import { eventPolicies, participants, policySubmissions } from "@/db/schema";
-import { initialSubmissionStatus } from "@/domain/policies";
+import { eventPolicies, participants, policyDefinitions, policySubmissions } from "@/db/schema";
+import { findHandler, initialStatusFor } from "@/domain/policy-handlers";
 import { resolveAttendance } from "@/domain/waitlist";
 import { checkEvidence, EVIDENCE_MAX_BYTES, putEvidence } from "@/lib/evidence-store";
 import { resolveEventLocale } from "@/lib/locale";
@@ -303,13 +303,22 @@ export async function submitPolicyResponse(
   if (!policyId.success) return { errors: { _form: copy.errors.notFound } };
 
   // Scoped to this event, so a policy id from somewhere else finds nothing.
+  // The handler comes from the catalogue, which is what decides both what this
+  // submission must carry and who settles it — never the client.
   const [policy] = await db
-    .select({ id: eventPolicies.id, kind: eventPolicies.kind })
+    .select({ id: eventPolicies.id, handler: policyDefinitions.handler })
     .from(eventPolicies)
+    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
     .where(and(eq(eventPolicies.id, policyId.data), eq(eventPolicies.eventId, event.id)))
     .limit(1);
 
   if (!policy) return { errors: { _form: copy.errors.notFound } };
+
+  const handler = findHandler(policy.handler);
+
+  // A catalogue row naming a behaviour this build does not implement. There is
+  // no control for it, so reaching here means a hand-made request.
+  if (!handler) return { errors: { _form: copy.errors.notFound } };
 
   const participant = await findMyParticipantRow(event.id);
   if (!participant) return { errors: { _form: copy.errors.forbidden } };
@@ -320,7 +329,7 @@ export async function submitPolicyResponse(
   // rejected upload leaves nothing behind to clean up.
   let evidence: { mimeType: string; bytes: Buffer } | null = null;
 
-  if (policy.kind === "proof_of_payment") {
+  if (handler.evidence === "image") {
     const file = formData.get("evidence");
 
     if (!(file instanceof File) || file.size === 0) {
@@ -342,7 +351,7 @@ export async function submitPolicyResponse(
     evidence = { mimeType: checked.mimeType, bytes: checked.bytes };
   }
 
-  const status = initialSubmissionStatus(policy.kind);
+  const status = initialStatusFor(handler);
   const now = new Date();
 
   const [row] = await db

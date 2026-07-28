@@ -88,12 +88,6 @@ export const en: Copy = {
       costAmountHelpPerPerson: "Everyone who confirms pays this much.",
       currency: "Currency",
     },
-    kinds: {
-      match: "Match",
-      party: "Party",
-      kids_party: "Kids' party",
-      other: "Other",
-    },
     costModes: {
       none: "Free",
       total: "One total to split",
@@ -196,20 +190,16 @@ export const en: Copy = {
     labelHelp: "This is what your guests will read.",
     descriptionField: "Instructions",
     descriptionHelp: "Optional. Which account to transfer to, for example.",
-    kindField: "Kind of requirement",
     none: "This event asks for nothing extra to confirm.",
-    kinds: {
-      proof_of_payment: "Proof of payment",
-      acknowledgement: "Read and accepted",
-    },
-    kindHelp: {
-      proof_of_payment: "They upload a photo of the payment and you approve it.",
-      acknowledgement: "They tick a box. Met immediately, with nothing for you to review.",
-    },
-    defaultLabel: {
-      proof_of_payment: "Proof of payment",
-      acknowledgement: "I read the instructions",
-    },
+    otherAvailable: "Other requirements available",
+    labelOverrideHelp: "Leave it empty to use the usual name.",
+    descriptionOverrideHelp: "Leave it empty to use the usual instructions.",
+    unsupported:
+      "This version of the app does not know how to ask for this requirement. It blocks nobody; tell whoever administers the catalogue.",
+    handlerHelp: {
+      file_upload_reviewed: "They upload a photo and you approve it.",
+      self_acknowledged: "They tick a box. Met immediately, with nothing for you to review.",
+    } as Record<string, string>,
     status: {
       missing: "Pending",
       submitted: "Under review",
@@ -367,7 +357,6 @@ export const en: Copy = {
     rateLimited: "Too fast. Wait a moment and try again.",
     eventClosed: "The event is closed.",
     timeZoneInvalid: "That time zone does not exist.",
-    policyLabelRequired: "Give the requirement a name.",
     policyLabelTooLong: "60 characters max.",
     policyTooMany: (max: number) => `${max} requirements per event, maximum.`,
     evidenceRequired: "Attach a photo of the receipt.",

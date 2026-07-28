@@ -75,6 +75,77 @@ The kind of event only decides what gets **suggested** — a match proposes proo
 of payment, a kids' party proposes an acknowledgement. Everything is added by an
 explicit tap, renameable, and removable. Five per event, maximum.
 
+### Adding a kind of event, or a new requirement
+
+Both live in the database, not in the code. Three tables:
+
+| Table                 | Holds                                             |
+| --------------------- | ------------------------------------------------- |
+| `event_types`         | Match, Party, Kids' party, Other…                 |
+| `policy_definitions`  | The requirements that exist, and how each behaves |
+| `event_type_policies` | Which requirements each kind of event offers      |
+
+So a new kind of event is one row:
+
+```sql
+insert into event_types (id, slug, labels, position)
+values (gen_random_uuid(), 'tournament', '{"es":"Torneo","en":"Tournament"}', 4);
+```
+
+It appears in the create form immediately, in both languages, with no deploy.
+Same for a new requirement that behaves like an existing one — a registration
+receipt is another "upload a photo and the organizer approves it":
+
+```sql
+insert into policy_definitions (id, slug, handler, labels, descriptions, position)
+values (gen_random_uuid(), 'registration_receipt', 'file_upload_reviewed',
+        '{"es":"Comprobante de inscripción","en":"Registration receipt"}',
+        '{"es":"Sube el soporte de la inscripción.","en":"Upload the registration slip."}', 2);
+```
+
+Then attach it to the types that should offer it — `is_default` decides whether
+the create form starts with it already added or merely offers it:
+
+```sql
+insert into event_type_policies (event_type_id, policy_definition_id, position, is_default)
+select t.id, d.id, 0, true
+  from event_types t, policy_definitions d
+ where t.slug = 'tournament' and d.slug = 'registration_receipt';
+```
+
+**Retire, do not delete.** Set `is_active = false` to take something out of the
+picker. Both foreign keys are `ON DELETE RESTRICT`, so a `DELETE` on a row that
+events are using fails rather than taking those events with it — and existing
+events keep showing a requirement even after it is retired.
+
+There is no admin screen yet: this is SQL or the Supabase table editor.
+
+### What a row cannot do: `handler`
+
+`policy_definitions.handler` is a **key into a registry in the code**, not a
+description of behaviour. A row cannot ship a file input, an image resizer, a
+byte sniffer and a review screen, so:
+
+| You want                                                | Cost           |
+| ------------------------------------------------------- | -------------- |
+| A requirement that behaves like an existing one         | **one row**    |
+| A genuinely new behaviour (signature, QR, payment link) | code + one row |
+
+The handlers that exist today are `file_upload_reviewed` and
+`self_acknowledged`. Adding one means three things that have to agree, which is
+also why the behaviour is not defined in the component alone — if it were, the
+server would have to trust the client about what to validate:
+
+1. an entry in `src/domain/policy-handlers.ts` — who settles it, what evidence
+   it needs;
+2. a control in the participant panel (`src/app/e/[public_token]/policy-panel.tsx`);
+3. whatever the submission action must accept for it.
+
+A row naming a handler that does not exist in the running build does **not**
+block anyone. It is shown to the organizer as a warning and otherwise ignored,
+because stranding participants over an operator error is worse than a policy
+that quietly does nothing.
+
 ### What a requirement does not do
 
 It does not free the spot and it does not change the money. Someone who has not

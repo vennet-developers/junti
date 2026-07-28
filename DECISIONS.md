@@ -591,6 +591,108 @@ WhatsApp group opening a roster pays for a map lookup, not a round trip.
 
 ---
 
+## The catalogue: open data, closed behaviour
+
+### 50. Event types and policies are tables, not enums
+
+`event_kind` and `policy_kind` were Postgres enums, and the per-kind
+suggestions were a constant in TypeScript. Adding "tournament" cost a
+migration, a code change and a deploy — three things, for what is a fact about
+the product rather than about the software.
+
+They are now `event_types` and `policy_definitions`, joined by
+`event_type_policies`. Adding a kind of event is a row. Adding a policy that
+behaves like an existing one is a row. Changing which policies a kind suggests
+is a row. Renaming or translating any of it is an UPDATE.
+
+Verified rather than asserted: a `tournament` type and a
+`registration_receipt` policy were inserted with SQL against a running server,
+appeared in the create form in both languages with the right suggestions, and
+an event was created against them — no restart, no rebuild, no deploy.
+
+### 51. `handler` names a behaviour; it does not describe one
+
+This is the load-bearing decision, and it is where the extensibility stops
+being free.
+
+Data can be open. Behaviour cannot: a row cannot ship a file input, a canvas
+resizer, a byte sniffer and a review screen. So `policy_definitions.handler`
+holds a string, and `src/domain/policy-handlers.ts` maps it to an
+implementation.
+
+Three things have to agree for a policy to work — the control the participant
+sees, what the server accepts, and who settles it — which is precisely why the
+behaviour is NOT defined in the component. If the component were the source of
+truth, the server would have to trust the client about what to validate, and
+for a payment gate it cannot. The key in the database is the contract; the
+component is one of three things registered against it.
+
+`handler` is deliberately separate from `slug`, so "Comprobante de pago" and
+"Comprobante de inscripción" can be two catalogue rows a participant reads
+differently and one implementation. That separation is the whole difference
+between adding a policy and adding a _kind_ of policy.
+
+Renaming a handler key is a data migration, not a refactor: the old string is
+in rows that are already live. A test asserts the seeded keys still exist.
+
+### 52. An unknown handler is inert, not blocking
+
+A catalogue row can name a behaviour this build does not have — a database
+seeded ahead of the code, or a deploy rolled back under it.
+
+Such a policy is excluded from `blocking` and reported in `unsupported`, so
+nobody is held back by a requirement they cannot act on, and the organizer sees
+a warning explaining why. Fail-safe rather than fail-closed, because this is
+roster tidiness and not security: blocking would strand every participant with
+no way forward, to punish an operator error.
+
+### 53. Retire catalogue rows, never delete them
+
+Both foreign keys into the catalogue are `restrict`, and `is_active = false` is
+how something leaves the picker. `cascade` would mean a tidy-up in the
+catalogue could delete somebody's event, and reads of existing events
+deliberately ignore `is_active` — retiring a policy must not blank out the
+requirement on events that already carry it.
+
+Tested: with one event live, deleting its event type and its policy definition
+both raise `foreign_key_violation` and everything survives.
+
+### 54. An event's label is an override, and NULL is the interesting value
+
+`event_policies.label` is nullable, and null means "follow the catalogue". That
+is what makes the catalogue a source of truth rather than a template that was
+copied once: fixing a typo in a definition fixes it on every event that never
+overrode it, in every language.
+
+It shows up in the interface as a field that is **empty, with the catalogue
+text as its placeholder**. The consequence for the edit form is subtle enough
+to have its own field on the domain type: it must be sent the raw
+`labelOverride`, not the resolved `label`, or the first save would silently pin
+every inherited policy to its current wording.
+
+### 55. Translations are `jsonb`, not a translations table
+
+Catalogue labels are `{"es": "...", "en": "..."}` in a column. A translations
+table would buy referential integrity on the locale key and cost a join on
+every read plus a second table to seed and administer. With a closed set of
+locales declared in code and a fallback chain, that integrity is not worth the
+weight — and the property that mattered, adding a language without a migration,
+is present either way.
+
+Nothing indexes the object directly. `pickLabel()` falls back through the
+requested locale, the default locale, any populated one, and finally the slug —
+a raw `kids_party` on screen is unmistakably a missing translation, where an
+empty string is a blank nobody notices.
+
+### 56. There is no administration screen yet
+
+The catalogue is administered with SQL or the Supabase table editor. That is a
+real limitation and it is deliberate for now: the tables and their constraints
+are the part that is expensive to change later, and a CRUD screen over four
+small tables is not.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

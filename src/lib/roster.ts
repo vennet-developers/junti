@@ -6,8 +6,10 @@ import { db } from "@/db/client";
 import {
   eventPolicies,
   events,
+  eventTypes,
   participants,
   payments,
+  policyDefinitions,
   policyEvidence,
   policySubmissions,
 } from "@/db/schema";
@@ -24,7 +26,10 @@ import { computeSplit, type Share, type SplitParticipant } from "@/domain/split"
 import type { Attendance } from "@/domain/types";
 import { openSlots, promotableCount, waitlistOrder } from "@/domain/waitlist";
 
+import type { Locale } from "@/config/copy";
+
 import { hasEvidence } from "./evidence-store";
+import { pickLabel, pickOptionalLabel } from "./labels";
 
 /**
  * Reads an event and everything hanging off it, then runs the domain rules over
@@ -52,7 +57,12 @@ export interface EventView {
   id: string;
   publicToken: string;
   title: string;
-  kind: EventRow["kind"];
+  /** The catalogue row this event points at. */
+  eventTypeId: string;
+  /** Stable key, for the rare code that must special-case a type. */
+  eventTypeSlug: string;
+  /** Already resolved into the reader's language. */
+  eventTypeLabel: string;
   startsAt: Date;
   timeZone: string;
   locale: string;
@@ -101,12 +111,14 @@ type JoinedRow = {
   payment: PaymentRow | null;
 };
 
-function toEventView(row: EventRow): EventView {
+function toEventView(row: EventRow, type: { slug: string; label: string }): EventView {
   return {
     id: row.id,
     publicToken: row.publicToken,
     title: row.title,
-    kind: row.kind,
+    eventTypeId: row.eventTypeId,
+    eventTypeSlug: type.slug,
+    eventTypeLabel: type.label,
     startsAt: row.startsAt,
     timeZone: row.timeZone,
     locale: row.locale,
@@ -203,21 +215,46 @@ async function loadJoinedRows(eventId: string): Promise<JoinedRow[]> {
   return rows;
 }
 
-/** The event's policies, in display order. */
-export async function loadEventPolicies(eventId: string): Promise<Policy[]> {
+/**
+ * The event's policies, in display order, resolved for reading.
+ *
+ * Each row carries only what is specific to this event; the wording and the
+ * behaviour come from the catalogue. The override wins when the organizer set
+ * one, and NULL means follow the definition — which is what makes fixing a
+ * typo in the catalogue fix it everywhere that never overrode it.
+ *
+ * Deliberately does NOT filter on `policy_definitions.is_active`. Retiring a
+ * policy takes it out of the picker for new events; it must not blank out the
+ * requirement on events that already have it.
+ */
+export async function loadEventPolicies(eventId: string, locale: Locale): Promise<Policy[]> {
   const rows = await db
     .select({
       id: eventPolicies.id,
-      kind: eventPolicies.kind,
-      label: eventPolicies.label,
-      description: eventPolicies.description,
+      definitionId: policyDefinitions.id,
+      handler: policyDefinitions.handler,
+      slug: policyDefinitions.slug,
+      override: eventPolicies.label,
+      overrideDescription: eventPolicies.description,
+      labels: policyDefinitions.labels,
+      descriptions: policyDefinitions.descriptions,
       position: eventPolicies.position,
     })
     .from(eventPolicies)
+    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
     .where(eq(eventPolicies.eventId, eventId))
     .orderBy(asc(eventPolicies.position), asc(eventPolicies.id));
 
-  return rows;
+  return rows.map((row) => ({
+    id: row.id,
+    definitionId: row.definitionId,
+    handler: row.handler,
+    label: row.override ?? pickLabel(row.labels, locale, row.slug),
+    description: row.overrideDescription ?? pickOptionalLabel(row.descriptions, locale),
+    labelOverride: row.override,
+    descriptionOverride: row.overrideDescription,
+    position: row.position,
+  }));
 }
 
 /**
@@ -237,17 +274,26 @@ export async function loadPolicySubmissions(eventId: string): Promise<PolicySubm
     })
     .from(policySubmissions)
     .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
     .where(eq(eventPolicies.eventId, eventId));
 
   return rows;
 }
 
-/** Builds the full view of an event: roster, money, capacity, policies. */
-export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
-  const [rows, policies, submissions] = await Promise.all([
+/**
+ * Builds the full view of an event: roster, money, capacity, policies.
+ *
+ * Takes the reader's language because catalogue labels are stored per locale
+ * and the roster renders them. That is presentation reaching into the loader,
+ * and the alternative — returning raw translation bags and resolving them at
+ * every call site — spreads the same concern over more places.
+ */
+export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<RosterView> {
+  const [rows, policies, submissions, type] = await Promise.all([
     loadJoinedRows(eventRow.id),
-    loadEventPolicies(eventRow.id),
+    loadEventPolicies(eventRow.id, locale),
     loadPolicySubmissions(eventRow.id),
+    loadEventType(eventRow.eventTypeId, locale),
   ]);
 
   const split = computeSplit({
@@ -299,7 +345,7 @@ export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
   const { confirmed, pending } = partitionByCompliance(attending, compliance);
 
   return {
-    event: toEventView(eventRow),
+    event: toEventView(eventRow, type),
     members,
     attending,
     confirmed,
@@ -336,7 +382,7 @@ export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
 export interface OrganizerEventSummary {
   id: string;
   title: string;
-  kind: EventRow["kind"];
+  eventTypeId: string;
   startsAt: Date;
   /** Each event renders in its own zone — a history can span countries. */
   timeZone: string;
@@ -353,7 +399,7 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
     .select({
       id: events.id,
       title: events.title,
-      kind: events.kind,
+      eventTypeId: events.eventTypeId,
       startsAt: events.startsAt,
       timeZone: events.timeZone,
       createdAt: events.createdAt,
@@ -374,7 +420,7 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
   return rows.map((row) => ({
     id: row.id,
     title: row.title,
-    kind: row.kind,
+    eventTypeId: row.eventTypeId,
     startsAt: row.startsAt,
     timeZone: row.timeZone,
     createdAt: row.createdAt,
@@ -393,11 +439,45 @@ export async function loadParticipantRows(eventId: string): Promise<JoinedRow[]>
 
 // ── Policy submissions ───────────────────────────────────────────────────────
 
+interface SubmissionRow {
+  id: string;
+  policyId: string;
+  policyOverride: string | null;
+  policySlug: string;
+  policyLabels: Record<string, string>;
+  policyHandler: string;
+  participantId: string;
+  participantName: string;
+  status: PolicySubmission["status"];
+  note: string | null;
+  reviewNote: string | null;
+  createdAt: Date;
+}
+
+/** The event's override wins; otherwise the catalogue, in the reader's language. */
+function toSubmissionDetail(
+  row: SubmissionRow,
+  locale: Locale,
+): Omit<SubmissionDetail, "hasEvidence"> {
+  return {
+    id: row.id,
+    policyId: row.policyId,
+    policyLabel: row.policyOverride ?? pickLabel(row.policyLabels, locale, row.policySlug),
+    policyHandler: row.policyHandler,
+    participantId: row.participantId,
+    participantName: row.participantName,
+    status: row.status,
+    note: row.note,
+    reviewNote: row.reviewNote,
+    createdAt: row.createdAt,
+  };
+}
+
 export interface SubmissionDetail {
   id: string;
   policyId: string;
   policyLabel: string;
-  policyKind: Policy["kind"];
+  policyHandler: string;
   participantId: string;
   participantName: string;
   status: PolicySubmission["status"];
@@ -418,13 +498,16 @@ export interface SubmissionDetail {
 export async function findSubmissionInEvent(
   eventId: string,
   submissionId: string,
+  locale: Locale,
 ): Promise<SubmissionDetail | null> {
   const [row] = await db
     .select({
       id: policySubmissions.id,
       policyId: policySubmissions.policyId,
-      policyLabel: eventPolicies.label,
-      policyKind: eventPolicies.kind,
+      policyOverride: eventPolicies.label,
+      policySlug: policyDefinitions.slug,
+      policyLabels: policyDefinitions.labels,
+      policyHandler: policyDefinitions.handler,
       participantId: policySubmissions.participantId,
       participantName: participants.displayName,
       status: policySubmissions.status,
@@ -434,13 +517,14 @@ export async function findSubmissionInEvent(
     })
     .from(policySubmissions)
     .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
     .innerJoin(participants, eq(participants.id, policySubmissions.participantId))
     .where(and(eq(policySubmissions.id, submissionId), eq(eventPolicies.eventId, eventId)))
     .limit(1);
 
   if (!row) return null;
 
-  return { ...row, hasEvidence: await hasEvidence(row.id) };
+  return { ...toSubmissionDetail(row, locale), hasEvidence: await hasEvidence(row.id) };
 }
 
 /**
@@ -450,13 +534,18 @@ export async function findSubmissionInEvent(
  * Acknowledgements never appear: they are approved on submission, so there is
  * nothing to decide.
  */
-export async function loadReviewQueue(eventId: string): Promise<SubmissionDetail[]> {
+export async function loadReviewQueue(
+  eventId: string,
+  locale: Locale,
+): Promise<SubmissionDetail[]> {
   const rows = await db
     .select({
       id: policySubmissions.id,
       policyId: policySubmissions.policyId,
-      policyLabel: eventPolicies.label,
-      policyKind: eventPolicies.kind,
+      policyOverride: eventPolicies.label,
+      policySlug: policyDefinitions.slug,
+      policyLabels: policyDefinitions.labels,
+      policyHandler: policyDefinitions.handler,
       participantId: policySubmissions.participantId,
       participantName: participants.displayName,
       status: policySubmissions.status,
@@ -466,6 +555,7 @@ export async function loadReviewQueue(eventId: string): Promise<SubmissionDetail
     })
     .from(policySubmissions)
     .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
     .innerJoin(participants, eq(participants.id, policySubmissions.participantId))
     .where(and(eq(eventPolicies.eventId, eventId), eq(policySubmissions.status, "submitted")))
     .orderBy(asc(policySubmissions.createdAt));
@@ -488,19 +578,25 @@ export async function loadReviewQueue(eventId: string): Promise<SubmissionDetail
     ).map((row) => row.submissionId),
   );
 
-  return rows.map((row) => ({ ...row, hasEvidence: withImages.has(row.id) }));
+  return rows.map((row) => ({
+    ...toSubmissionDetail(row, locale),
+    hasEvidence: withImages.has(row.id),
+  }));
 }
 
 /** One participant's submissions, for the "what is left" panel on their page. */
 export async function loadParticipantSubmissions(
   participantId: string,
+  locale: Locale,
 ): Promise<SubmissionDetail[]> {
   const rows = await db
     .select({
       id: policySubmissions.id,
       policyId: policySubmissions.policyId,
-      policyLabel: eventPolicies.label,
-      policyKind: eventPolicies.kind,
+      policyOverride: eventPolicies.label,
+      policySlug: policyDefinitions.slug,
+      policyLabels: policyDefinitions.labels,
+      policyHandler: policyDefinitions.handler,
       participantId: policySubmissions.participantId,
       participantName: participants.displayName,
       status: policySubmissions.status,
@@ -510,9 +606,33 @@ export async function loadParticipantSubmissions(
     })
     .from(policySubmissions)
     .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
     .innerJoin(participants, eq(participants.id, policySubmissions.participantId))
     .where(eq(policySubmissions.participantId, participantId))
     .orderBy(asc(eventPolicies.position));
 
-  return rows.map((row) => ({ ...row, hasEvidence: false }));
+  return rows.map((row) => ({ ...toSubmissionDetail(row, locale), hasEvidence: false }));
+}
+
+/**
+ * One catalogue row, resolved.
+ *
+ * Falls back rather than throwing when the row is missing: `restrict` on the
+ * foreign key means it cannot happen through the app, and an event that fails
+ * to render because its type was deleted out of the database by hand would be
+ * a worse outcome than one labelled with its own id.
+ */
+async function loadEventType(
+  eventTypeId: string,
+  locale: Locale,
+): Promise<{ slug: string; label: string }> {
+  const [row] = await db
+    .select({ slug: eventTypes.slug, labels: eventTypes.labels })
+    .from(eventTypes)
+    .where(eq(eventTypes.id, eventTypeId))
+    .limit(1);
+
+  if (!row) return { slug: "unknown", label: "—" };
+
+  return { slug: row.slug, label: pickLabel(row.labels, locale, row.slug) };
 }

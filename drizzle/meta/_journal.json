@@ -22,6 +22,20 @@
       "when": 1785242883933,
       "tag": "0002_icy_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785249565760,
+      "tag": "0003_catalogues",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785249612425,
+      "tag": "0004_retire_kind_enums",
+      "breakpoints": true
     }
   ]
 }

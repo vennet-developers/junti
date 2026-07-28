@@ -297,7 +297,7 @@ export async function editEvent(
 
   const parsed = makeEventSchema(copy).safeParse({
     title: field(formData, "title"),
-    kind: field(formData, "kind"),
+    eventTypeId: field(formData, "eventTypeId"),
     startsAtDate: field(formData, "startsAtDate"),
     startsAtTime: field(formData, "startsAtTime"),
     timeZone: field(formData, "timeZone") || event.timeZone,
@@ -321,7 +321,7 @@ export async function editEvent(
     .update(events)
     .set({
       title: input.title,
-      kind: input.kind,
+      eventTypeId: input.eventTypeId,
       startsAt: input.startsAt,
       timeZone: input.timeZone,
       locale: input.locale,
@@ -377,7 +377,11 @@ export async function reviewSubmission(
 
   // Scoped to this event, so an organizer cannot judge a submission that
   // belongs to somebody else's event by passing its id.
-  const submission = await findSubmissionInEvent(event.id, parsed.data.submissionId);
+  const submission = await findSubmissionInEvent(
+    event.id,
+    parsed.data.submissionId,
+    await resolveEventLocale(event.locale),
+  );
   if (!submission) return { errors: { _form: copy.errors.notFound } };
 
   await db
@@ -416,8 +420,8 @@ async function reconcilePolicies(
   eventId: string,
   submitted: {
     id?: string;
-    kind: "proof_of_payment" | "acknowledgement";
-    label: string;
+    definitionId: string;
+    label: string | null;
     description: string | null;
   }[],
 ): Promise<void> {
@@ -457,7 +461,7 @@ async function reconcilePolicies(
         await tx.insert(eventPolicies).values({
           id: uuidv7(),
           eventId,
-          kind: policy.kind,
+          policyDefinitionId: policy.definitionId,
           label: policy.label,
           description: policy.description,
           position: index,

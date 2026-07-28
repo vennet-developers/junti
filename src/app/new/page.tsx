@@ -5,6 +5,7 @@ import { Container, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { getViewerCopy } from "@/lib/locale";
 import { detectTimeZone } from "@/lib/time-zones";
 
@@ -21,6 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NewEventPage() {
   const { copy, locale } = await getViewerCopy();
+
+  const [eventTypes, policyOptionsByType] = await Promise.all([
+    loadEventTypes(locale),
+    loadPolicyOptionsByEventType(locale),
+  ]);
 
   return (
     <Container size="1">
@@ -40,7 +46,12 @@ export default async function NewEventPage() {
         {/* The server cannot know the organizer's zone — it only ever sees
             UTC on Vercel — so the form detects it in the browser and this is
             just the floor if that fails. */}
-        <CreateEventForm defaultTimeZone={detectTimeZone()} defaultLocale={locale} />
+        <CreateEventForm
+          defaultTimeZone={detectTimeZone()}
+          defaultLocale={locale}
+          eventTypes={eventTypes}
+          policyOptionsByType={policyOptionsByType}
+        />
       </Stack>
     </Container>
   );

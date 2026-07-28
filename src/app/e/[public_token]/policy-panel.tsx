@@ -12,14 +12,16 @@ import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
 import { Notice } from "@/components/notice";
-import type { PolicyKind, PolicyState } from "@/domain/policies";
+import type { PolicyState } from "@/domain/policies";
+import { findHandler } from "@/domain/policy-handlers";
 import { downscaleImage, EVIDENCE_ACCEPT } from "@/lib/image-downscale";
 
 import { submitPolicyResponse, type SubmissionState } from "./actions";
 
 export interface PolicyPanelItem {
   id: string;
-  kind: PolicyKind;
+  /** Behaviour key from the catalogue. */
+  handler: string;
   label: string;
   description: string | null;
   state: PolicyState;
@@ -129,7 +131,7 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
     formData.set("policyId", item.id);
     formData.set("note", note);
 
-    if (item.kind === "proof_of_payment") {
+    if (findHandler(item.handler)?.evidence === "image") {
       if (!prepared) {
         setState({ errors: { evidence: copy.errors.evidenceRequired } });
         return;
@@ -190,7 +192,7 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
         </Text>
       ) : null}
 
-      {done ? null : item.kind === "acknowledgement" ? (
+      {done ? null : findHandler(item.handler)?.evidence === "none" ? (
         <Button type="button" size="lg" fullWidth disabled={pending} onClick={submit}>
           {pending ? copy.policies.uploadSubmitting : copy.policies.acknowledgeSubmit}
         </Button>

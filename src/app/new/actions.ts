@@ -48,7 +48,7 @@ export async function createEvent(
 
   const parsed = makeEventSchema(copy).safeParse({
     title: field(formData, "title"),
-    kind: field(formData, "kind"),
+    eventTypeId: field(formData, "eventTypeId"),
     startsAtDate: field(formData, "startsAtDate"),
     startsAtTime: field(formData, "startsAtTime"),
     timeZone: field(formData, "timeZone"),
@@ -95,7 +95,7 @@ export async function createEvent(
       publicToken,
       organizerToken,
       title: input.title,
-      kind: input.kind,
+      eventTypeId: input.eventTypeId,
       startsAt: input.startsAt,
       timeZone: input.timeZone,
       locale: input.locale,
@@ -112,7 +112,7 @@ export async function createEvent(
         policies.value.map((policy, index) => ({
           id: uuidv7(),
           eventId,
-          kind: policy.kind,
+          policyDefinitionId: policy.definitionId,
           label: policy.label,
           description: policy.description,
           position: index,

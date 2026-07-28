@@ -1,4 +1,5 @@
-import type { Attendance, EventKind } from "./types";
+import { findHandler, initialStatusFor, isKnownHandler } from "./policy-handlers";
+import type { Attendance } from "./types";
 
 /**
  * Whether somebody who said they are coming actually counts as confirmed.
@@ -13,8 +14,6 @@ import type { Attendance, EventKind } from "./types";
  * them.** Everything below is the bookkeeping around that sentence.
  */
 
-export type PolicyKind = "proof_of_payment" | "acknowledgement";
-
 export type PolicySubmissionStatus = "submitted" | "approved" | "rejected";
 
 /**
@@ -25,12 +24,44 @@ export type PolicyState = "missing" | PolicySubmissionStatus;
 
 export interface Policy {
   id: string;
-  kind: PolicyKind;
-  /** The organizer's own wording. Rendered verbatim, never translated. */
+  /** The catalogue entry this is an instance of. */
+  definitionId: string;
+  /**
+   * The behaviour key from the catalogue. Resolved through
+   * `src/domain/policy-handlers.ts`; a value this deploy does not recognise is
+   * handled explicitly rather than crashing — see `isSupported`.
+   */
+  handler: string;
+  /**
+   * What the participant reads: the organizer's override if they set one, else
+   * the catalogue label in the reader's language. Resolved before it gets here.
+   */
   label: string;
-  /** Optional instructions — where to transfer, what the photo should show. */
+  /** Instructions — where to transfer, what the photo should show. */
   description: string | null;
+  /**
+   * What the organizer actually typed, or null when this policy follows the
+   * catalogue.
+   *
+   * Separate from `label` because the two answer different questions: `label`
+   * is what to render, and this is what to send back to the edit form. Feeding
+   * the resolved label into the form would pin every inherited policy to its
+   * current wording the first time anybody saved the event.
+   */
+  labelOverride: string | null;
+  descriptionOverride: string | null;
   position: number;
+}
+
+/**
+ * Whether this deploy knows how to make somebody satisfy this policy.
+ *
+ * False only through operator error: a catalogue row naming a handler that
+ * does not exist here, which happens if the database is seeded ahead of the
+ * code or a deploy is rolled back under it.
+ */
+export function isSupported(policy: Policy): boolean {
+  return isKnownHandler(policy.handler);
 }
 
 export interface PolicySubmission {
@@ -54,41 +85,38 @@ export interface ParticipantCompliance {
   awaitingReview: Policy[];
   /** The subset of `blocking` the organizer turned down. */
   rejected: Policy[];
+  /**
+   * Policies naming a handler this deploy does not know.
+   *
+   * Reported so the organizer can be told, and deliberately EXCLUDED from
+   * `blocking`. Fail-safe rather than fail-closed: this is roster tidiness,
+   * not security, and blocking on a requirement nobody can act on would strand
+   * every participant with no way forward. Operator error should be loud, not
+   * paralysing.
+   */
+  unsupported: Policy[];
   /** True when nothing is blocking. Vacuously true on an event with no policies. */
   compliant: boolean;
 }
 
 /**
- * Which policies to offer when the organizer picks a kind of event.
+ * Whether the participant settles this policy alone.
  *
- * Suggestions, not rules: every one is added by an explicit tap and can be
- * removed, renamed or replaced. A five-a-side game is the case that motivated
- * the whole feature — somebody fronts the pitch and wants the money before
- * anyone counts as coming — while a kids' party is more likely to care that
- * parents read the address and the allergy note than that they paid.
+ * Delegates to the handler registry rather than deciding here, because "who
+ * approves this" is a property of the behaviour, and the behaviour is named by
+ * a row in the catalogue. Unknown handlers report false — nothing offers a
+ * control for them, so nothing is ever submitted.
  */
-export const POLICY_SUGGESTIONS: Record<EventKind, PolicyKind[]> = {
-  match: ["proof_of_payment"],
-  party: ["proof_of_payment", "acknowledgement"],
-  kids_party: ["acknowledgement"],
-  other: [],
-};
-
-/**
- * Whether this kind of policy is settled by the participant alone.
- *
- * Ticking a box is its own proof, so an acknowledgement is approved the moment
- * it is submitted. A payment receipt is a claim about the world that somebody
- * has to look at, which is the whole point of requiring one — if uploading any
- * image confirmed you, the policy would check that a person owns a camera.
- */
-export function isSelfApproving(kind: PolicyKind): boolean {
-  return kind === "acknowledgement";
+export function isSelfApproving(policy: Policy): boolean {
+  return findHandler(policy.handler)?.settledBy === "participant";
 }
 
-/** The status a fresh submission gets, given who decides it. */
-export function initialSubmissionStatus(kind: PolicyKind): PolicySubmissionStatus {
-  return isSelfApproving(kind) ? "approved" : "submitted";
+/** The status a fresh submission gets, given who settles it. */
+export function initialSubmissionStatus(policy: Policy): PolicySubmissionStatus {
+  const handler = findHandler(policy.handler);
+  // Unreachable through the UI; "submitted" is the conservative fallback
+  // because it puts a human in the loop rather than auto-confirming.
+  return handler ? initialStatusFor(handler) : "submitted";
 }
 
 /**
@@ -132,7 +160,11 @@ export function resolveParticipantCompliance(
     state: byPolicy.get(policy.id) ?? "missing",
   }));
 
-  const blocking = standings.filter((s) => s.state !== "approved").map((s) => s.policy);
+  const unsupported = standings.filter((s) => !isSupported(s.policy)).map((s) => s.policy);
+
+  const blocking = standings
+    .filter((s) => s.state !== "approved" && isSupported(s.policy))
+    .map((s) => s.policy);
 
   return {
     participantId,
@@ -140,6 +172,7 @@ export function resolveParticipantCompliance(
     blocking,
     awaitingReview: standings.filter((s) => s.state === "submitted").map((s) => s.policy),
     rejected: standings.filter((s) => s.state === "rejected").map((s) => s.policy),
+    unsupported,
     compliant: blocking.length === 0,
   };
 }

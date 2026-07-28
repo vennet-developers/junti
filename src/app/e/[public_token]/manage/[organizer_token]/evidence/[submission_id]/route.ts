@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getEvidence } from "@/lib/evidence-store";
+import { resolveEventLocale } from "@/lib/locale";
 import { getCurrentUser } from "@/lib/supabase/server";
 import { authorizeOrganizer, findSubmissionInEvent } from "@/lib/roster";
 
@@ -42,7 +43,11 @@ export async function GET(
     return new NextResponse(null, { status: 404 });
   }
 
-  const submission = await findSubmissionInEvent(event.id, submission_id);
+  const submission = await findSubmissionInEvent(
+    event.id,
+    submission_id,
+    await resolveEventLocale(event.locale),
+  );
 
   if (!submission) {
     return new NextResponse(null, { status: 404 });

@@ -60,9 +60,10 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   if (!eventRow) notFound();
 
   // The event's language, unless the reader has chosen one for themselves.
-  const copy = getCopy(await resolveEventLocale(eventRow.locale));
+  const locale = await resolveEventLocale(eventRow.locale);
+  const copy = getCopy(locale);
 
-  const roster = await loadRoster(eventRow);
+  const roster = await loadRoster(eventRow, locale);
   const organizer = await getOrganizer();
 
   /**
@@ -103,14 +104,14 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   let myPolicies: PolicyPanelItem[] = [];
 
   if (mineRow && roster.policies.length > 0 && mineRow.attendance === "in") {
-    const submissions = await loadParticipantSubmissions(mineRow.id);
+    const submissions = await loadParticipantSubmissions(mineRow.id, locale);
     const byPolicy = new Map(submissions.map((s) => [s.policyId, s]));
 
     myPolicies = roster.policies.map((policy) => {
       const submission = byPolicy.get(policy.id);
       return {
         id: policy.id,
-        kind: policy.kind,
+        handler: policy.handler,
         label: policy.label,
         description: policy.description ?? null,
         state: submission?.status ?? "missing",
