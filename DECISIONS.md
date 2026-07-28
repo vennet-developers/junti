@@ -479,7 +479,7 @@ One less thing to keep in sync, one less place holding personal data.
 `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`; it is Node-only) exists
 because Server Components cannot set cookies, so an expiring session would sign
 someone out mid-visit. But every matched request is a billable invocation, and
-COSTS.md commits to the free tier — so it matches only `/mis-eventos`, `/entrar`,
+COSTS.md commits to the free tier — so it matches only `/my-events`, `/sign-in`,
 `/auth/*` and `/new`. The participant page, the one a whole WhatsApp group opens
 at once, is deliberately excluded.
 
@@ -820,6 +820,30 @@ event's zone and once more in their own. The alternatives were worse — either
 re-format every date on the client after paint, which flashes on every load, or
 show everyone the event's zone regardless, which is the behaviour being
 replaced.
+
+---
+
+## A rule I broke
+
+### 64. Routes are code, so they are in English
+
+The brief says code, identifiers, comments and docs are English, and only what a
+human reads is Spanish. Routes are code. Three of them were not: `/entrar`,
+`/mis-eventos` and `/perfil`, added while building organizer accounts and the
+profile page, and each one looked reasonable next to the Spanish page it served.
+
+Renamed to `/sign-in`, `/my-events` and `/profile`, with no redirects from the
+old paths — the app has one account and no shared links pointing at them, so a
+clean break beats permanent compatibility cruft.
+
+The lasting fix is `src/config/routes.ts`. Every static path is a named constant
+there, which is what makes the rule checkable at a glance instead of depending
+on nobody typing a Spanish word into a string literal. A path that exists in one
+module cannot drift from a redirect in another, either — that failure is silent,
+because a stale redirect just lands somebody on a 404.
+
+What did NOT move: `/e/<token>` and `/e/<token>/manage/<token>` were already
+English and are the links people actually hold, so no shared URL changed.
 
 ---
 

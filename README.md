@@ -39,7 +39,7 @@ authentication.** There is no account recovery — if the organizer loses their
 link, they lose control of the event. The app says so, loudly, on the page where
 the link is first shown.
 
-Signing in adds one page on top of that, `/mis-eventos`: the events you created
+Signing in adds one page on top of that, `/my-events`: the events you created
 while signed in, newest first. It is a convenience — a way to find a link you
 mislaid — and it grants nothing the organizer link does not already grant. An
 event created while signed out belongs to nobody and will never appear there,
@@ -205,7 +205,7 @@ server-side.
 
 ### Your profile
 
-Signed in, `/perfil` sets both. Each has an automatic option at the top — "the
+Signed in, `/profile` sets both. Each has an automatic option at the top — "the
 one my browser uses" — and that is the default. Picking a real value turns the
 override on; picking the automatic option turns it off. There is no separate
 switch, because a value and a switch are two things that can disagree.

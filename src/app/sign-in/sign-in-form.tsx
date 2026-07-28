@@ -11,6 +11,7 @@ import { Spinner } from "@stackmyth/spinner";
 import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
+import { ROUTES } from "@/config/routes";
 import { Notice } from "@/components/notice";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -32,7 +33,7 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
   const [error, setError] = useState<string | null>(null);
 
   function callbackUrl() {
-    const url = new URL("/auth/callback", window.location.origin);
+    const url = new URL(ROUTES.authCallback, window.location.origin);
     url.searchParams.set("next", redirectTo);
     return url.toString();
   }

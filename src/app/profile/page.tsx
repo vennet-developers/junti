@@ -6,6 +6,7 @@ import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { OrganizerBadge } from "@/components/organizer-badge";
+import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import { loadStoredPreferences } from "@/lib/preferences";
@@ -31,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProfilePage() {
   const organizer = await getOrganizer();
-  if (!organizer) redirect("/entrar?next=%2Fperfil");
+  if (!organizer) redirect(signInPath(ROUTES.profile));
 
   const { copy } = await getViewerCopy();
 
@@ -46,7 +47,7 @@ export default async function ProfilePage() {
         <Flex justify="between" align="center" gap="3" wrap="wrap">
           <OrganizerBadge organizer={organizer} />
           <Text variant="small" color="muted">
-            <Link href="/mis-eventos">{copy.auth.myEventsLink}</Link>
+            <Link href={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
           </Text>
         </Flex>
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getCurrentUser } from "@/lib/supabase/server";
 
@@ -27,7 +28,7 @@ export default async function SignInPage({
 
   // Only relative paths, so `?next=https://evil.example` cannot turn the
   // sign-in flow into an open redirect.
-  const redirectTo = next?.startsWith("/") && !next.startsWith("//") ? next : "/mis-eventos";
+  const redirectTo = next?.startsWith("/") && !next.startsWith("//") ? next : ROUTES.myEvents;
 
   if (await getCurrentUser()) redirect(redirectTo);
 

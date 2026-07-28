@@ -70,18 +70,18 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     *   /mis-eventos      the history, requires a session
-     *   /perfil           language and timezone settings
-     *   /entrar           the sign-in page, redirects away when already in
+     *   /my-events        the history, requires a session
+     *   /profile          language and timezone settings
+     *   /sign-in          the sign-in page, redirects away when already in
      *   /auth/...         the OAuth / magic-link callback
      *   /new              so a signed-in creator gets attributed
      *   /e/...            one-tap joining and policy submissions
      *
      * Not matched, on purpose: /api and all static assets.
      */
-    "/mis-eventos/:path*",
-    "/perfil",
-    "/entrar",
+    "/my-events/:path*",
+    "/profile",
+    "/sign-in",
     "/auth/:path*",
     "/new",
     "/e/:path*",

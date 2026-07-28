@@ -10,6 +10,7 @@ import { TriangleAlertIcon } from "@stackmyth/icons";
 import { Container, Flex, Stack } from "@stackmyth/layout";
 
 import { useCopy } from "@/components/copy-provider";
+import { ROUTES } from "@/config/routes";
 
 /**
  * Route error boundary.
@@ -56,7 +57,7 @@ export default function Error({
                     to a page is an ESLint error in Next. A full page load, not
                     a client transition: if the router itself is unhappy,
                     next/link would fail the same way. */}
-                <Link href="/">{copy.errorBoundary.home}</Link>
+                <Link href={ROUTES.home}>{copy.errorBoundary.home}</Link>
               </Button>
             </Flex>
           }

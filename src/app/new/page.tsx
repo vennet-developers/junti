@@ -7,6 +7,7 @@ import { Text } from "@stackmyth/text";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { getViewerCopy } from "@/lib/locale";
+import { ROUTES } from "@/config/routes";
 import { DEFAULT_TIME_ZONE } from "@/lib/format";
 import { resolvePreferences } from "@/lib/preferences";
 
@@ -38,7 +39,7 @@ export default async function NewEventPage() {
       <Stack gap="6" py="6" px="4">
         <Flex justify="between" align="center">
           <Text variant="small" color="muted">
-            <Link href="/">{copy.common.back}</Link>
+            <Link href={ROUTES.home}>{copy.common.back}</Link>
           </Text>
           <LanguageSwitcher />
         </Flex>

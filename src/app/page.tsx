@@ -9,6 +9,7 @@ import { Text } from "@stackmyth/text";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
+import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,12 +42,12 @@ export default async function HomePage() {
 
         <Stack gap="3">
           <Button asChild fullWidth size="lg">
-            <Link href="/new">{copy.home.cta}</Link>
+            <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
           </Button>
           {/* Secondary on purpose: creating an event must stay possible without
               an account. Signing in only adds the history and the photo. */}
           <Button asChild fullWidth size="md" variant="ghost">
-            <Link href="/mis-eventos">{copy.auth.myEventsLink}</Link>
+            <Link href={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
           </Button>
         </Stack>
 

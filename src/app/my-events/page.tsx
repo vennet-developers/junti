@@ -13,6 +13,7 @@ import { Text } from "@stackmyth/text";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrganizerBadge } from "@/components/organizer-badge";
 import { formatDate, formatEventDateTime } from "@/lib/format";
+import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import { loadOrganizerEvents } from "@/lib/roster";
@@ -31,7 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function MyEventsPage() {
   const organizer = await getOrganizer();
-  if (!organizer) redirect("/entrar?next=%2Fmis-eventos");
+  if (!organizer) redirect(signInPath(ROUTES.myEvents));
 
   const { copy } = await getViewerCopy();
 
@@ -45,7 +46,7 @@ export default async function MyEventsPage() {
           <OrganizerBadge organizer={organizer} />
           <Flex gap="2" align="center">
             <Text variant="small" color="muted">
-              <Link href="/perfil">{copy.profile.link}</Link>
+              <Link href={ROUTES.profile}>{copy.profile.link}</Link>
             </Text>
             <LanguageSwitcher />
             <SignOutButton />
@@ -70,7 +71,7 @@ export default async function MyEventsPage() {
             description={copy.auth.myEventsEmptyHelp}
             action={
               <Button asChild size="md">
-                <Link href="/new">{copy.home.cta}</Link>
+                <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
               </Button>
             }
           />
@@ -117,7 +118,7 @@ export default async function MyEventsPage() {
             </List>
 
             <Button asChild size="lg" fullWidth>
-              <Link href="/new">{copy.home.cta}</Link>
+              <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
             </Button>
           </>
         )}

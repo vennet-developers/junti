@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { ROUTES, signInPath } from "@/config/routes";
 import { applyStoredPreferences } from "@/lib/preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get("next");
 
   // Relative paths only — an absolute `next` would make this an open redirect.
-  const destination = next?.startsWith("/") && !next.startsWith("//") ? next : "/mis-eventos";
+  const destination = next?.startsWith("/") && !next.startsWith("//") ? next : ROUTES.myEvents;
 
   const supabase = await createSupabaseServerClient();
 
@@ -55,5 +56,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/entrar?error=1`);
+  return NextResponse.redirect(`${origin}${signInPath()}?error=1`);
 }

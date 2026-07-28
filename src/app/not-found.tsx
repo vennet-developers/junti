@@ -7,6 +7,7 @@ import { HelpCircleIcon } from "@stackmyth/icons";
 import { Container, Stack } from "@stackmyth/layout";
 
 import { getViewerCopy } from "@/lib/locale";
+import { ROUTES } from "@/config/routes";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { copy } = await getViewerCopy();
@@ -29,7 +30,7 @@ export default async function NotFound() {
           description={copy.event.notFoundBody}
           action={
             <Button asChild size="md" variant="secondary">
-              <Link href="/">{copy.common.back}</Link>
+              <Link href={ROUTES.home}>{copy.common.back}</Link>
             </Button>
           }
         />
