@@ -410,6 +410,81 @@ louder than the event name; they take a `Text` node at `h4` instead.
 
 ---
 
+## Organizer accounts (reversal of a founding constraint)
+
+### 37. Accounts were added on purpose, against the original spec
+
+The brief was explicit: section 2 said "No user accounts. No login. No
+passwords."; section 3.2 banned `@supabase/supabase-js`, `@supabase/ssr` and
+Supabase Auth; section 7 listed accounts and OAuth as out of scope. This
+reverses all three, on the owner's instruction, to get organizers a history of
+their events and a profile photo.
+
+Recorded as a deliberate change of direction, not an oversight. The
+`@supabase/*` packages are now present for a reason they were never banned
+for — the ban was about using them as a _data_ client.
+
+### 38. Supabase Auth for identity, Drizzle for data
+
+The packages are used **only** to establish who is signed in. Every event,
+participant and payment still moves through Drizzle over Postgres from server
+code.
+
+What that preserves:
+
+- The domain logic and its 59 tests, untouched.
+- Migrations in the repo, still plain Postgres, still portable.
+- **No RLS.** There is still no browser-side database access, so there is still
+  nothing for RLS to protect. Adding it now would be the security theatre the
+  original decision avoided.
+
+The publishable key does ship in the browser bundle — that is what
+`NEXT_PUBLIC_` means — but it grants no data access here, because the only
+thing it talks to is the auth endpoint.
+
+### 39. Participants still have no accounts
+
+Only organizers sign in. Asking someone who received a WhatsApp link to
+authenticate before answering "¿vienes?" would break the one thing this app is
+for. The RSVP flow is unchanged.
+
+### 40. An event is managed by the token OR by its owner
+
+Two independent routes, both server-checked:
+
+1. **The organizer token in the URL** — the original model, and still the only
+   one that works for someone without an account. It is how you hand an event
+   to a friend.
+2. **Ownership** — the signed-in account that created it, which is what lets
+   the history page link straight into managing.
+
+Ownership is read from the verified session (`getUser()`, which revalidates
+against Supabase — not `getSession()`, which trusts the cookie). Events created
+while signed out have a null `organizer_id` and remain token-only.
+
+### 41. `organizer_id` has no foreign key to `auth.users`
+
+A cross-schema FK would tie these migrations to Supabase specifically, and
+portability was an explicit requirement (#22). The column is a plain uuid
+meaning "the identity that owns this event". Swapping the identity provider
+would not need a migration.
+
+Nothing about the person is stored — no profile table, no copied name or
+avatar. The session already carries them, and the history only ever shows the
+viewer their own events, so there is no case needing another user's details.
+One less thing to keep in sync, one less place holding personal data.
+
+### 42. The session proxy has a narrow matcher
+
+`src/proxy.ts` (Next 16 renamed `middleware` to `proxy`; it is Node-only) exists
+because Server Components cannot set cookies, so an expiring session would sign
+someone out mid-visit. But every matched request is a billable invocation, and
+COSTS.md commits to the free tier — so it matches only `/mis-eventos`, `/entrar`,
+`/auth/*` and `/new`. The participant page, the one a whole WhatsApp group opens
+at once, is deliberately excluded.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

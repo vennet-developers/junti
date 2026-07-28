@@ -41,5 +41,27 @@ async function main() {
 
 main().catch((error: unknown) => {
   console.error("Migration failed:", error instanceof Error ? error.message : error);
+
+  // Drizzle wraps the driver error, and its own message only repeats the SQL
+  // that failed. The reason — permission denied, duplicate column, bad type —
+  // lives on the cause, so print it or the output says nothing useful.
+  const cause = error instanceof Error ? error.cause : undefined;
+  if (cause) {
+    const detail = cause as {
+      severity?: string;
+      code?: string;
+      message?: string;
+      detail?: string;
+      hint?: string;
+    };
+    console.error("Cause:", {
+      severity: detail.severity,
+      code: detail.code,
+      message: detail.message,
+      detail: detail.detail,
+      hint: detail.hint,
+    });
+  }
+
   process.exit(1);
 });

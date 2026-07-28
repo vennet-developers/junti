@@ -226,6 +226,35 @@ export const copy = {
     copyOrganizerLink: "Copiar mi link de organizador",
   },
 
+  auth: {
+    signInTitle: "Entrar",
+    signInHeading: "Entra para ver tus eventos",
+    signInSubheading:
+      "Solo los organizadores necesitan cuenta. Quien recibe el link no tiene que entrar a nada.",
+    google: "Continuar con Google",
+    orEmail: "o con tu correo",
+    emailLabel: "Tu correo",
+    emailPlaceholder: "tu@correo.com",
+    emailSubmit: "Enviarme un link",
+    emailSending: "Enviando…",
+    emailSent: (email: string) =>
+      `Te mandamos un link a ${email}. Ábrelo desde este mismo dispositivo para entrar.`,
+    emailInvalid: "Escribe un correo válido.",
+    signOut: "Salir",
+    signedInAs: (name: string) => `Conectado como ${name}`,
+    failed: "No pudimos completar el ingreso. Intenta de nuevo.",
+    myEventsTitle: "Mis eventos",
+    myEventsHeading: "Mis eventos",
+    myEventsEmpty: "Todavía no has creado ningún evento.",
+    myEventsEmptyHelp: "Cuando crees uno, aparecerá acá con su historial.",
+    myEventsLink: "Mis eventos",
+    createdOn: (date: string) => `Creado el ${date}`,
+    manage: "Administrar",
+    attendingCount: (n: number) => (n === 1 ? "1 confirmado" : `${n} confirmados`),
+    onlyOwnerNotice:
+      "Este evento no está asociado a tu cuenta. Se creó antes de que entraras, o lo creó otra persona.",
+  },
+
   errorBoundary: {
     title: "Algo se rompió",
     body: "No pudimos cargar esta pantalla. Puede ser una falla temporal de conexión con la base de datos.",

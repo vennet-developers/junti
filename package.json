@@ -19,6 +19,7 @@
   "dependencies": {
     "@stackmyth/accordion": "^0.19.1",
     "@stackmyth/alert": "^0.19.1",
+    "@stackmyth/avatar": "^0.19.1",
     "@stackmyth/badge": "^0.19.1",
     "@stackmyth/button": "^0.19.1",
     "@stackmyth/calendar": "^0.19.1",
@@ -45,6 +46,8 @@
     "@stackmyth/text": "^0.19.1",
     "@stackmyth/textarea": "^0.19.1",
     "@stackmyth/time-picker": "^0.19.1",
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.8",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.12",
     "postgres": "^3.4.9",

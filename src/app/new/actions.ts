@@ -8,6 +8,7 @@ import { copy } from "@/config/copy";
 import { db } from "@/db/client";
 import { events } from "@/db/schema";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { getOrganizer } from "@/lib/organizer";
 import { createOrganizerToken, createPublicToken } from "@/lib/tokens";
 import { eventSchema, field, fieldErrors } from "@/lib/validation";
 
@@ -62,7 +63,13 @@ export async function createEvent(
   const publicToken = createPublicToken();
   const organizerToken = createOrganizerToken();
 
+  // Attribute the event when someone is signed in, so it shows up in their
+  // history. Creating anonymously still works — that is the original flow and
+  // the tokens remain the access path either way.
+  const organizer = await getOrganizer();
+
   await db.insert(events).values({
+    organizerId: organizer?.id ?? null,
     id: uuidv7(),
     publicToken,
     organizerToken,

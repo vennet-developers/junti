@@ -13,7 +13,8 @@ import { Notice } from "@/components/notice";
 import { RosterGroup } from "@/components/roster-list";
 import { copy } from "@/config/copy";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
-import { findEventByOrganizerToken, loadRoster } from "@/lib/roster";
+import { getOrganizer } from "@/lib/organizer";
+import { authorizeOrganizer, loadRoster } from "@/lib/roster";
 import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
 
 import { CloseEventControl } from "./close-event-control";
@@ -45,7 +46,8 @@ export default async function ManagePage({
   const { public_token: publicToken, organizer_token: organizerToken } = await params;
   const { created } = await searchParams;
 
-  const eventRow = await findEventByOrganizerToken(publicToken, organizerToken);
+  const organizer = await getOrganizer();
+  const eventRow = await authorizeOrganizer(publicToken, organizerToken, organizer?.id ?? null);
   if (!eventRow) notFound();
 
   const roster = await loadRoster(eventRow);

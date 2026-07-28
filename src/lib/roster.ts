@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { events, participants, payments } from "@/db/schema";
@@ -123,6 +123,39 @@ export async function findEventByOrganizerToken(
   return row ?? null;
 }
 
+/**
+ * Authorizes an organizer action by EITHER route.
+ *
+ * Two ways to manage an event, deliberately:
+ *
+ * 1. **The organizer token in the URL.** The original model, and the only one
+ *    that works for someone without an account — it is still how you hand an
+ *    event to a friend.
+ * 2. **Ownership.** The signed-in account that created it, which is what makes
+ *    the history page able to link straight into managing.
+ *
+ * Ownership is checked against the session, never against anything the client
+ * sends. Returns null when neither holds.
+ */
+export async function authorizeOrganizer(
+  publicToken: string,
+  organizerToken: string,
+  currentOrganizerId: string | null,
+): Promise<EventRow | null> {
+  const byToken = await findEventByOrganizerToken(publicToken, organizerToken);
+  if (byToken) return byToken;
+
+  if (!currentOrganizerId) return null;
+
+  const [owned] = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.publicToken, publicToken), eq(events.organizerId, currentOrganizerId)))
+    .limit(1);
+
+  return owned ?? null;
+}
+
 async function loadJoinedRows(eventId: string): Promise<JoinedRow[]> {
   const rows = await db
     .select({ participant: participants, payment: payments })
@@ -189,6 +222,65 @@ export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
     openSlots: openSlots(eventRow.capacity, capacityInput),
     promotable: promotableCount(eventRow.capacity, capacityInput),
   };
+}
+
+/**
+ * An organizer's events, newest first, with the attending count.
+ *
+ * Ordered by `created_at` descending — when they set it up, not when it
+ * happens — which is what "history" means here and what
+ * `events_organizer_created_idx` is built for.
+ *
+ * Returns the organizer token: this is only ever called for the viewer's OWN
+ * events, and the history needs to link straight into managing them.
+ */
+export interface OrganizerEventSummary {
+  id: string;
+  title: string;
+  kind: EventRow["kind"];
+  startsAt: Date;
+  createdAt: Date;
+  location: string | null;
+  isClosed: boolean;
+  publicToken: string;
+  organizerToken: string;
+  attendingCount: number;
+}
+
+export async function loadOrganizerEvents(organizerId: string): Promise<OrganizerEventSummary[]> {
+  const rows = await db
+    .select({
+      id: events.id,
+      title: events.title,
+      kind: events.kind,
+      startsAt: events.startsAt,
+      createdAt: events.createdAt,
+      location: events.location,
+      closedAt: events.closedAt,
+      publicToken: events.publicToken,
+      organizerToken: events.organizerToken,
+      attendingCount: sql<number>`(
+        select count(*)::int from ${participants}
+        where ${participants.eventId} = ${events.id}
+          and ${participants.attendance} = 'in'
+      )`,
+    })
+    .from(events)
+    .where(eq(events.organizerId, organizerId))
+    .orderBy(desc(events.createdAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    kind: row.kind,
+    startsAt: row.startsAt,
+    createdAt: row.createdAt,
+    location: row.location,
+    isClosed: row.closedAt !== null,
+    publicToken: row.publicToken,
+    organizerToken: row.organizerToken,
+    attendingCount: row.attendingCount,
+  }));
 }
 
 /** The raw participant + payment rows, for actions that need to write. */

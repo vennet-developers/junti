@@ -28,9 +28,16 @@ export default function HomePage() {
 
         <Text>{copy.home.pitch}</Text>
 
-        <Button asChild fullWidth size="lg">
-          <Link href="/new">{copy.home.cta}</Link>
-        </Button>
+        <Stack gap="3">
+          <Button asChild fullWidth size="lg">
+            <Link href="/new">{copy.home.cta}</Link>
+          </Button>
+          {/* Secondary on purpose: creating an event must stay possible without
+              an account. Signing in only adds the history and the photo. */}
+          <Button asChild fullWidth size="md" variant="ghost">
+            <Link href="/mis-eventos">{copy.auth.myEventsLink}</Link>
+          </Button>
+        </Stack>
 
         <Divider />
 

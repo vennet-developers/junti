@@ -10,7 +10,8 @@ import { events, participants, payments } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
 import { resolveAttendance } from "@/domain/waitlist";
 import { syncPayments } from "@/lib/payments";
-import { findEventByOrganizerToken, loadParticipantRows } from "@/lib/roster";
+import { getOrganizer } from "@/lib/organizer";
+import { authorizeOrganizer, loadParticipantRows } from "@/lib/roster";
 import { createEditToken } from "@/lib/tokens";
 import { managePath, participantPath } from "@/lib/urls";
 import {
@@ -43,7 +44,10 @@ export type ManageState = { errors: Record<string, string>; ok?: boolean };
  * success. Returns null when the caller is not the organizer.
  */
 async function authorize(publicToken: string, organizerToken: string): Promise<EventRow | null> {
-  return findEventByOrganizerToken(publicToken, organizerToken);
+  // Either the URL token or ownership of the event. Ownership comes from the
+  // verified session, never from anything the client sends.
+  const organizer = await getOrganizer();
+  return authorizeOrganizer(publicToken, organizerToken, organizer?.id ?? null);
 }
 
 function refresh(publicToken: string, organizerToken: string): void {

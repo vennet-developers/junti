@@ -69,9 +69,30 @@ export const events = pgTable(
     /** When set, RSVPs are frozen. */
     closedAt: timestamp("closed_at", { withTimezone: true }),
 
+    /**
+     * The signed-in account that created this event, or null when it was
+     * created anonymously (the original token-only flow, still supported).
+     *
+     * Deliberately a plain uuid with NO foreign key to `auth.users`. A
+     * cross-schema FK would tie these migrations to Supabase specifically, and
+     * the schema is meant to run unchanged on any Postgres — see DECISIONS.md
+     * #22. The column means "the identity that owns this event"; today that
+     * identity comes from Supabase Auth, and swapping the provider would not
+     * require a migration.
+     */
+    organizerId: uuid("organizer_id"),
+
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("events_starts_at_idx").on(table.startsAt)],
+  (table) => [
+    index("events_starts_at_idx").on(table.startsAt),
+    /**
+     * The organizer's history: their events, newest first. Descending on
+     * `created_at` so the index order matches the query and Postgres can walk
+     * it without a sort.
+     */
+    index("events_organizer_created_idx").on(table.organizerId, table.createdAt.desc()),
+  ],
 );
 
 export const participants = pgTable(
