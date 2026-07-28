@@ -27,6 +27,7 @@
     "@stackmyth/checkbox": "^0.19.1",
     "@stackmyth/classnames": "^0.1.0",
     "@stackmyth/core": "^0.19.1",
+    "@stackmyth/date-picker": "^0.19.1",
     "@stackmyth/dialog": "^0.19.1",
     "@stackmyth/empty-state": "^0.19.1",
     "@stackmyth/field": "^0.19.1",

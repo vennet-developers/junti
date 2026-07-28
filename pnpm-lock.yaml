@@ -37,6 +37,9 @@ importers:
       "@stackmyth/core":
         specifier: ^0.19.1
         version: 0.19.1(react@19.2.4)
+      "@stackmyth/date-picker":
+        specifier: ^0.19.1
+        version: 0.19.1(@stackmyth/calendar@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4))(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/popover@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       "@stackmyth/dialog":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1753,6 +1756,18 @@ packages:
         tarball: https://npm.pkg.github.com/download/@stackmyth/core/0.19.1/e08112f5fa3e55d5a38b75acee5f5be38468123d,
       }
     peerDependencies:
+      react: ">=18.0.0"
+
+  "@stackmyth/date-picker@0.19.1":
+    resolution:
+      {
+        integrity: sha512-DX0vlfW/aN8gihKcsughF59LGwnSf/rAg7YzKl7YYeS6batRlMm/K/eAi5/2J+Oy4vWD/a85d3uNTCq3DCMorw==,
+        tarball: https://npm.pkg.github.com/download/@stackmyth/date-picker/0.19.1/3a1c267998685b7d0df8a54d96cf657d62bfa201,
+      }
+    peerDependencies:
+      "@stackmyth/calendar": ">=0.0.0"
+      "@stackmyth/core": ">=0.0.0"
+      "@stackmyth/popover": ">=0.0.0"
       react: ">=18.0.0"
 
   "@stackmyth/dialog@0.19.1":
@@ -5681,6 +5696,15 @@ snapshots:
   "@stackmyth/core@0.19.1(react@19.2.4)":
     dependencies:
       "@stackmyth/event-bus": 0.1.0(react@19.2.4)
+      react: 19.2.4
+
+  "@stackmyth/date-picker@0.19.1(@stackmyth/calendar@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4))(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/popover@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@stackmyth/calendar": 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
+      "@stackmyth/classnames": 0.1.0
+      "@stackmyth/core": 0.19.1(react@19.2.4)
+      "@stackmyth/event-bus": 0.1.0(react@19.2.4)
+      "@stackmyth/popover": 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
   "@stackmyth/dialog@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)":

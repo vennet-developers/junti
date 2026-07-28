@@ -1,5 +1,31 @@
 # Stackmyth — friction log
 
+> **Status, after being given access to the library.**
+>
+> Five of these are **fixed at source** and waiting on a release —
+> `1cdf35b5` in the Stackmyth repo, with changesets attached:
+>
+> | Gap                                              | Fix                                                             | Package               |
+> | ------------------------------------------------ | --------------------------------------------------------------- | --------------------- |
+> | #4 `Button loading` hardcodes English            | `loadingLabel` prop                                             | `button` (minor)      |
+> | #5 `Select` cannot submit natively               | `name` / `required` / `form`                                    | `select` (minor)      |
+> | #6 `Alert` is always assertive                   | `live` prop                                                     | `alert` (minor)       |
+> | #12 `DatePicker` locale never reaches `Calendar` | forwarded, plus `weekStartsOn` / `timezone` / `showOutsideDays` | `date-picker` (patch) |
+> | #15 No `reValidateMode`                          | `reValidateMode` prop                                           | `form` (minor)        |
+>
+> All five are additive and default to the current behaviour. The library's
+> suite went from 2621 to 2634 tests, all passing, with type-check, lint, a11y
+> coverage and all 78 package builds green.
+>
+> **One entry was wrong and has been withdrawn:** #3 said `Badge dot` silently
+> discards its children. It does, but deliberately — a test asserts it, and the
+> supported way to label a dot is `<Badge dot aria-label="…" />`, which the
+> component already handles. The entry is kept below with a correction rather
+> than deleted, because a friction log that quietly edits out its mistakes is
+> not worth reading.
+>
+> The rest are still open: #1, #2, #7, #8, #9, #10, #11, #13, #14, #16.
+
 Feedback from a consumer with **zero prior familiarity** with the stack, building
 a real (small) app against it over one build. Written as it happened, not
 cleaned up afterwards. Ordered roughly by how much time each one cost.
@@ -119,7 +145,7 @@ keep for finding which package a component lives in.
 
 ---
 
-## 3. `Badge dot` silently discards its children
+## 3. `Badge dot` discards its children — WITHDRAWN, this is intended
 
 **What I was building.** A "Pagó" / "Pendiente" indicator per person on the
 roster. I wanted the little status dot _and_ the label:
@@ -150,7 +176,7 @@ passed-in content is the worst of the three options.
 
 ---
 
-## 4. `Button loading` hardcodes English
+## 4. `Button loading` hardcodes English — FIXED
 
 ```html
 <span class="sm-button__sr-only">Loading…</span>
@@ -179,7 +205,7 @@ strings across the stack — but a prop would have been enough here.
 
 ---
 
-## 5. `Select` cannot participate in native form submission
+## 5. `Select` cannot participate in native form submission — FIXED
 
 **What I was building.** The create-event form (event kind, cost mode) as a
 plain `<form action={serverAction}>`, which is the idiomatic Next.js App Router
@@ -219,7 +245,7 @@ a decision.
 
 ---
 
-## 6. `Alert` is `aria-live="assertive"` unconditionally
+## 6. `Alert` is an assertive live region unconditionally — FIXED
 
 **What I was building.** A static, always-present notice on the participant
 page: "this event is closed" / "you're on the waitlist". Informational, not
@@ -382,7 +408,7 @@ the date through it.
 
 ---
 
-## 12. `DatePicker`'s `locale` never reaches the `Calendar` inside it
+## 12. `DatePicker`'s `locale` never reaches the `Calendar` inside it — FIXED
 
 **What I was building.** The event date field, in a Spanish (es-CO) app.
 
@@ -456,7 +482,7 @@ sends you rewriting perfectly good code.
 
 ---
 
-## 15. No `reValidateMode`, and `mode` cannot be changed at runtime
+## 15. No `reValidateMode`, and `mode` cannot be changed at runtime — FIXED
 
 `FormController` takes one `mode`: `"onChange" | "onBlur" | "onSubmit"`. The
 usual want is two — validate nothing until the first submit, then re-validate
