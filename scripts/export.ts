@@ -38,9 +38,29 @@ async function main() {
 
   console.log(`Dumping ${describe(direct)}`);
 
-  // --no-owner / --no-privileges keep the dump restorable into a different
-  // project, where the Supabase-managed roles do not exist.
-  const args = ["--no-owner", "--no-privileges", "--clean", "--if-exists", "--file", outputPath];
+  const args = [
+    // Only this application's schemas.
+    //
+    // Without these, pg_dump also captures Supabase's platform schemas — auth
+    // (23 tables), storage (8), realtime (3) — which the app never touches,
+    // which the platform owns and recreates itself, and which cannot be
+    // restored into a fresh project or into plain Postgres. They made the dump
+    // forty times larger and not restorable, which defeats the point of having
+    // one. `drizzle` is kept: it is the migration ledger, so a restore does not
+    // think the schema is unmigrated.
+    "--schema=public",
+    "--schema=drizzle",
+
+    // Keep it restorable somewhere else, where the Supabase-managed roles do
+    // not exist.
+    "--no-owner",
+    "--no-privileges",
+
+    "--clean",
+    "--if-exists",
+    "--file",
+    outputPath,
+  ];
 
   const exitCode = await new Promise<number>((resolve, reject) => {
     const child = spawn("pg_dump", args, {

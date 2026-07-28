@@ -280,13 +280,28 @@ Writes a timestamped `.sql` dump to `./backups/` (git-ignored) using `pg_dump`
 over the direct connection. Run it before anything risky, and occasionally
 otherwise. Keep a copy somewhere that is not your laptop.
 
+The dump is scoped to `--schema=public --schema=drizzle`. Without that, pg_dump
+also captures Supabase's own `auth`, `storage` and `realtime` schemas — 34
+tables this app never touches, which the platform owns and recreates itself,
+and which cannot be restored into a fresh project or into plain Postgres. That
+made the file forty times larger and not restorable, which defeats the point.
+
+Verified end to end: the dump restores into a clean Postgres 17 with zero
+errors, reproducing all 4 tables, 4 enums and 11 indexes.
+
 If it fails with a server version mismatch, your local `pg_dump` is older than
-the database. Check the server version under **Project Settings →
-Infrastructure** and install a matching client:
+the database — `pg_dump`'s major version must be **>=** the server's. Check the
+server version under **Project Settings → Infrastructure** and install a
+matching client:
 
 ```bash
-brew install postgresql@17 && brew link --overwrite --force postgresql@17
+brew install postgresql@17
+brew unlink postgresql@15          # if an older one is linked
+brew link --overwrite --force postgresql@17
 ```
+
+Note that this repoints `psql` and `pg_dump` system-wide. `brew unlink
+postgresql@17 && brew link postgresql@15` puts it back.
 
 ---
 
