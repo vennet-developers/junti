@@ -245,6 +245,20 @@ way.
    http://localhost:3001/**          # next dev falls back here when 3000 is taken
    ```
 
+### Publish the Google app, or only you can sign in
+
+Under **Google Auth Platform → Audience**, publishing status must be
+**In production**. A new project starts in **Testing**, where only listed test
+users can sign in — and the trap is that the project's own owner is allowed
+implicitly, so sign-in appears to work perfectly for the person who set it up
+and fails for everyone else. Testing also expires refresh tokens after 7 days.
+
+Publishing is one button and needs no review here, because the app requests only
+`openid email profile`: all three consent-screen scope tables — non-sensitive,
+sensitive, restricted — are empty, and the 100-user cap applies only to
+unapproved sensitive or restricted scopes. Adding a scope later is what would
+change that.
+
 ### Two failure modes worth recognising
 
 - **`redirect_uri_mismatch` from Google** — the Supabase callback is missing
