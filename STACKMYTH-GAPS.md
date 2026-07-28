@@ -34,7 +34,12 @@
 > than deleted, because a friction log that quietly edits out its mistakes is
 > not worth reading.
 >
-> The rest are still open: #1, #2, #7, #8, #9, #10, #11, #13, #14, #16.
+> The rest were **re-verified against the installed 0.20.0 packages** —
+> each open entry below carries its status line and the evidence. Still
+> open: #1, #2, #7, #8, #9, #10, #11, #13, #14, #16. Of those, #11 is the
+> only one that was deliberately excluded from 0.20.0: its fix changes
+> what a form submits, which is breaking, where the other five were
+> additive.
 
 Feedback from a consumer with **zero prior familiarity** with the stack, building
 a real (small) app against it over one build. Written as it happened, not
@@ -48,6 +53,9 @@ Every `// STACKMYTH-GAP:` comment in the codebase has an entry here.
 ---
 
 ## 1. Two stylesheets per package, and the failure is silent
+
+> **Status at 0.20.0: still present.** `button.css` still writes `var(--sm-*)`
+> that only `button.vars.css` defines, across two files with no diagnostic.
 
 **Cost: the single biggest time sink of the build.**
 
@@ -101,6 +109,10 @@ repeat it.
 ---
 
 ## 2. `@stackmyth/manifests` is stale and mostly empty — but it is what I was pointed at
+
+> **Status at 0.20.0: still present.** `manifests` is on the independent
+> track (`0.1.0`, unchanged by the grouped release) and `require()` still
+> yields zero exports.
 
 The brief specifically directed me to `@stackmyth/manifests` as the component
 inventory. It is the natural first stop, and it is the least reliable source in
@@ -186,7 +198,7 @@ passed-in content is the worst of the three options.
 
 ---
 
-## 4. `Button loading` hardcodes English — FIXED
+## 4. `Button loading` hardcodes English — FIXED in 0.20.0
 
 ```html
 <span class="sm-button__sr-only">Loading…</span>
@@ -215,7 +227,7 @@ strings across the stack — but a prop would have been enough here.
 
 ---
 
-## 5. `Select` cannot participate in native form submission — FIXED
+## 5. `Select` cannot participate in native form submission — FIXED in 0.20.0
 
 **What I was building.** The create-event form (event kind, cost mode) as a
 plain `<form action={serverAction}>`, which is the idiomatic Next.js App Router
@@ -255,7 +267,7 @@ a decision.
 
 ---
 
-## 6. `Alert` is an assertive live region unconditionally — FIXED
+## 6. `Alert` is an assertive live region unconditionally — FIXED in 0.20.0
 
 **What I was building.** A static, always-present notice on the participant
 page: "this event is closed" / "you're on the waitlist". Informational, not
@@ -281,6 +293,9 @@ only models the second.
 
 ## 7. Everything is `"use client"`, including pure presentation
 
+> **Status at 0.20.0: still present.** 33 of the 34 installed packages open
+> their bundle with `"use client"`.
+
 All 20 installed packages begin their bundle with `"use client"` — verified
 across every one. That includes `Text`, `Box`, `Card`, `Badge`, `Divider`,
 `Stat`, `EmptyState`: components that render a `<div>` with a class name and
@@ -304,6 +319,9 @@ change on this list for anyone using the stack with the App Router.
 
 ## 8. `Container` and `Section` don't accept `LayoutProps`
 
+> **Status at 0.20.0: still present.** `ContainerProps` still does not
+> extend `LayoutProps`.
+
 Minor but repeatedly annoying. `Box`, `Flex`, `Stack`, `Grid` and `GridItem` all
 accept the shared ~90-prop `LayoutProps` set. `Container` accepts only
 `size: "1"|"2"|"3"|"4"` and `Section` only `size: "1"|"2"|"3"` — no `px`, no
@@ -321,6 +339,9 @@ reason for it.
 ---
 
 ## 9. `--sm-<status>-text` is an on-fill color, and nothing says so
+
+> **Status at 0.20.0: still present.** `--sm-info-text` is still `#ffffff`
+> in `core.vars.css`, with nothing marking it as on-fill.
 
 **What I was building.** A static notice ("this event is closed", "10 spots
 left") with a small tone-coloured icon on the normal page surface.
@@ -369,6 +390,9 @@ because an invisible icon looks a lot like a layout bug.
 
 ## 10. No primitive for a `<form>` element
 
+> **Status at 0.20.0: still present.** `@stackmyth/form` exports controllers,
+> fields, hooks and resolvers — no `<form>` element component.
+
 The one honest boundary of "build everything from Stackmyth" — and it is
 narrower than I first wrote.
 
@@ -395,6 +419,12 @@ that was never intended to exist.
 
 ## 11. `DatePicker`'s hidden value is a UTC instant, which is lossy for a date
 
+> **Status at 0.20.0: still present, deliberately.** The hidden input still
+> serialises `value.toISOString()`. This was the one DatePicker fix left out
+> of 0.20.0 on purpose: changing what an existing form submits is a breaking
+> change, unlike the additive `locale` forwarding that did ship (#12). Needs
+> a maintainer decision — an opt-in `valueFormat="date"` prop, or a major.
+
 `DatePicker` and `TimePicker` both accept `name` and — unlike `Select`, gap #5 —
 render their own hidden input, so they submit natively. Good. But the date one
 submits `value.toISOString()`.
@@ -418,7 +448,7 @@ the date through it.
 
 ---
 
-## 12. `DatePicker`'s `locale` never reaches the `Calendar` inside it — FIXED
+## 12. `DatePicker`'s `locale` never reaches the `Calendar` inside it — FIXED in 0.20.0
 
 **What I was building.** The event date field, in a Spanish (es-CO) app.
 
@@ -454,6 +484,10 @@ not.
 
 ## 13. `Button asChild` reports a hydration mismatch under `next dev`
 
+> **Status at 0.20.0: not re-verified.** Dev-only HMR artifact; 0.20.0 did
+> not touch the `Slot` clone path, so there is no reason to expect a change.
+> Harmless in production either way.
+
 Minor, and **not** a production problem — recorded because it cost time to
 chase and the next person will hit it too.
 
@@ -475,6 +509,11 @@ sends you rewriting perfectly good code.
 
 ## 14. Small things, no workaround needed
 
+> **Status at 0.20.0: unchanged.** The `Stack`/`Flex` direction vocabularies
+> and the `SelectValue` requirement are as they were. `@stackmyth/toast` is
+> published at 0.20.0 and remains uninstalled here by choice — inline
+> `Alert`s still fit this app.
+
 - **`Stack direction` is `"vertical" | "horizontal"`, `Flex direction` is
   `"row" | "column"`.** Two sibling components, two vocabularies for the same
   axis. I typed `direction="column"` into a `Stack` on reflex more than once;
@@ -492,7 +531,7 @@ sends you rewriting perfectly good code.
 
 ---
 
-## 15. No `reValidateMode`, and `mode` cannot be changed at runtime — FIXED
+## 15. No `reValidateMode`, and `mode` cannot be changed at runtime — FIXED in 0.20.0
 
 `FormController` takes one `mode`: `"onChange" | "onBlur" | "onSubmit"`. The
 usual want is two — validate nothing until the first submit, then re-validate
@@ -524,6 +563,10 @@ private, which is not worth a minor-version surprise.
 ---
 
 ## 16. The published inventory is not discoverable from what is installed
+
+> **Status at 0.20.0: still present.** No meta-package appeared and
+> `manifests` still exports nothing. The working mitigation remains the
+> registry probe documented in STACKMYTH-NOTES.md.
 
 This one is on me, but the shape of the library is what made it possible, and
 it cost real work.
