@@ -4,6 +4,7 @@ import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Stack } from "@stackmyth/layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@stackmyth/select";
 import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
@@ -22,9 +23,11 @@ import { saveProfile, type ProfileState } from "./actions";
  * value turns it on, choosing the automatic option turns it off. One piece of
  * state rather than a checkbox that can disagree with a dropdown next to it.
  *
- * Plain `<select>` elements rather than `SelectField`, because this form is not
- * inside a `FormController` — it has two fields and no cross-field rules, so
- * the validation machinery would be more moving parts than the problem has.
+ * Stackmyth `Select` used directly rather than through `SelectField`, because
+ * this form has no `FormController` around it — two fields and no cross-field
+ * rules do not need the validation machinery, but they do need the design
+ * system. An earlier version reached for native `<select>` elements here and
+ * they stood out immediately: browser chrome in the middle of a styled page.
  */
 export function ProfileForm({
   initialLocale,
@@ -79,19 +82,21 @@ export function ProfileForm({
           error={state.errors.locale}
           htmlFor="profile-locale"
         >
-          <select
-            id="profile-locale"
-            name="locale"
-            value={locale}
-            onChange={(event) => setLocale(event.target.value)}
-          >
-            <option value="">{copy.profile.languageAuto}</option>
-            {LOCALES.map((option) => (
-              <option key={option} value={option}>
-                {getCopy(option).localeName}
-              </option>
-            ))}
-          </select>
+          <Select value={locale} onValueChange={setLocale} id="profile-locale">
+            <SelectTrigger fullWidth size="lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {/* The empty value is the default and is not a blank: it means
+                  "follow my browser". */}
+              <SelectItem value="">{copy.profile.languageAuto}</SelectItem>
+              {LOCALES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {getCopy(option).localeName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </ControlledField>
 
         <ControlledField
@@ -100,19 +105,19 @@ export function ProfileForm({
           error={state.errors.timeZone}
           htmlFor="profile-timezone"
         >
-          <select
-            id="profile-timezone"
-            name="timeZone"
-            value={timeZone}
-            onChange={(event) => setTimeZone(event.target.value)}
-          >
-            <option value="">{copy.profile.timeZoneAuto}</option>
-            {zoneOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <Select value={timeZone} onValueChange={setTimeZone} id="profile-timezone">
+            <SelectTrigger fullWidth size="lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{copy.profile.timeZoneAuto}</SelectItem>
+              {zoneOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </ControlledField>
 
         {detected && timeZone === "" ? (

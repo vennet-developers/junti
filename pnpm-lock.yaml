@@ -28,6 +28,9 @@ importers:
       "@stackmyth/card":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
+      "@stackmyth/checkbox":
+        specifier: ^0.19.1
+        version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
       "@stackmyth/classnames":
         specifier: ^0.1.0
         version: 0.1.0
@@ -43,6 +46,9 @@ importers:
       "@stackmyth/field":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/label@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      "@stackmyth/file-upload":
+        specifier: ^0.19.1
+        version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
       "@stackmyth/form":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
@@ -52,6 +58,9 @@ importers:
       "@stackmyth/input":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/field@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/label@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4))(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
+      "@stackmyth/input-group":
+        specifier: ^0.19.1
+        version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
       "@stackmyth/label":
         specifier: ^0.19.1
         version: 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
@@ -1720,6 +1729,16 @@ packages:
       "@stackmyth/core": ">=0.0.0"
       react: ">=18.0.0"
 
+  "@stackmyth/checkbox@0.19.1":
+    resolution:
+      {
+        integrity: sha512-aBKhwRnmCm+74s70grXyIkyXOC/ruHi4LNK0/ScgvSglCY/EMFaMNRyo6P4wHioTTAy75zR72NElJBSIWNsbGg==,
+        tarball: https://npm.pkg.github.com/download/@stackmyth/checkbox/0.19.1/5939881b996cdf15c0bd95215cc5a10eeb61f9ef,
+      }
+    peerDependencies:
+      "@stackmyth/core": ">=0.0.0"
+      react: ">=18.0.0"
+
   "@stackmyth/classnames@0.1.0":
     resolution:
       {
@@ -1777,6 +1796,16 @@ packages:
       "@stackmyth/label": ">=0.0.0"
       react: ">=18.0.0"
 
+  "@stackmyth/file-upload@0.19.1":
+    resolution:
+      {
+        integrity: sha512-Sg+PBBq3Uj8NQ9vOmtNHHUjMLj2zkxg/zXJCWjq5jKtToISNv9jbubX9Jq36ih/QLKYhraCvure5rRPtvzo+LQ==,
+        tarball: https://npm.pkg.github.com/download/@stackmyth/file-upload/0.19.1/bff79c4678a30321d287014d7e42b7b60d231512,
+      }
+    peerDependencies:
+      "@stackmyth/core": ">=0.0.0"
+      react: ">=18.0.0"
+
   "@stackmyth/form@0.19.1":
     resolution:
       {
@@ -1794,6 +1823,16 @@ packages:
         tarball: https://npm.pkg.github.com/download/@stackmyth/icons/0.1.0/51e6837b8f2acf5cf201f6b073f6adb71de6d4c5,
       }
     peerDependencies:
+      react: ">=18.0.0"
+
+  "@stackmyth/input-group@0.19.1":
+    resolution:
+      {
+        integrity: sha512-denZy/OSEUupsmiAhE0SoszwQoT8Ex5GAxbp05zoVcGfoy+ES27fTz9oPNZvuMII/cQIC9EYFuamMMAuz1Y1rw==,
+        tarball: https://npm.pkg.github.com/download/@stackmyth/input-group/0.19.1/bcbea8ab6fbcd3cbe06c813e1a17cfa69dd12245,
+      }
+    peerDependencies:
+      "@stackmyth/core": ">=0.0.0"
       react: ">=18.0.0"
 
   "@stackmyth/input@0.19.1":
@@ -5629,6 +5668,14 @@ snapshots:
       "@stackmyth/core": 0.19.1(react@19.2.4)
       react: 19.2.4
 
+  "@stackmyth/checkbox@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@stackmyth/classnames": 0.1.0
+      "@stackmyth/core": 0.19.1(react@19.2.4)
+      "@stackmyth/event-bus": 0.1.0(react@19.2.4)
+      "@stackmyth/primitives": 0.1.0(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+
   "@stackmyth/classnames@0.1.0": {}
 
   "@stackmyth/core@0.19.1(react@19.2.4)":
@@ -5661,6 +5708,13 @@ snapshots:
       "@stackmyth/label": 0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
+  "@stackmyth/file-upload@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@stackmyth/classnames": 0.1.0
+      "@stackmyth/core": 0.19.1(react@19.2.4)
+      "@stackmyth/event-bus": 0.1.0(react@19.2.4)
+      react: 19.2.4
+
   "@stackmyth/form@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)":
     dependencies:
       "@stackmyth/core": 0.19.1(react@19.2.4)
@@ -5669,6 +5723,13 @@ snapshots:
 
   "@stackmyth/icons@0.1.0(react@19.2.4)":
     dependencies:
+      react: 19.2.4
+
+  "@stackmyth/input-group@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4)":
+    dependencies:
+      "@stackmyth/classnames": 0.1.0
+      "@stackmyth/core": 0.19.1(react@19.2.4)
+      "@stackmyth/event-bus": 0.1.0(react@19.2.4)
       react: 19.2.4
 
   "@stackmyth/input@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/field@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(@stackmyth/label@0.19.1(@stackmyth/core@0.19.1(react@19.2.4))(react@19.2.4))(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)":

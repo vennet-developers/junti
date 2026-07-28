@@ -933,6 +933,60 @@ is an explicit request for _that_ event.
 
 ---
 
+## A second rule I broke
+
+### 70. The Stackmyth inventory was taken from what was installed, not what exists
+
+`STACKMYTH-NOTES.md` opened with "if a component is not in this file, it does
+not exist for this project" — written after reading every `.d.ts` under
+`node_modules/@stackmyth`. That enumerates the **installed** packages, and the
+initial `package.json` was a guess. Ten published packages were therefore
+invisible for the entire build.
+
+Two had already been worked around in code:
+
+- the amount field used `<Input prefix="$">` where `InputGroup` exists;
+- the receipt upload used a bare `<input type="file">` under a comment
+  asserting _"the library has no file field"_ — which was simply false.
+
+A gap log that records absences which are not real is worse than no gap log. The
+notes now carry the correction, and the discovery method is `pnpm view
+@stackmyth/<name> version` against the registry rather than a directory listing.
+`combobox`, `tabs`, `tooltip`, `toast`, `slider`, `pagination`, `breadcrumb`,
+`table` and `data-table` are also published and available if wanted.
+
+Recorded as STACKMYTH-GAPS.md #16, because the library makes it possible: there
+is no meta-package, `@stackmyth/manifests` is empty, and an npm scope cannot be
+listed.
+
+### 71. Nothing turns red until the create button is pressed once
+
+`mode="onBlur"` meant tabbing through a form you had not finished accused you of
+every field you had passed. It is now `onSubmit`: no validation, no red, until
+the first press.
+
+The cost is real and is a library limitation, not a choice —
+STACKMYTH-GAPS.md #15. There is no `reValidateMode`, so after that first press a
+corrected field cannot clear its own error until the button is pressed again,
+and `FormStore.mode` is `private readonly` so it cannot be swapped at runtime.
+Mutating a library private through a cast would work today and break on a minor
+version.
+
+### 72. Every control in the app is now a Stackmyth component
+
+The profile page shipped with native `<select>` elements, which is exactly what
+they looked like: browser chrome in the middle of a styled page. They are
+`Select` now, using `SelectItem value=""` for the "follow my browser" option —
+verified against the source rather than assumed, since many select
+implementations reject an empty value. Stackmyth's `labelsMap.get("")` resolves
+it like any other.
+
+A sweep confirms no raw `<input>`, `<select>`, `<textarea>` or `<button>`
+survives outside comments. The `<form>` element itself is still hand-written,
+which remains a genuine gap (#10) rather than an oversight.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

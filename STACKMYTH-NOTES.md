@@ -1,8 +1,22 @@
 # Stackmyth — what is actually installed and how to use it
 
 This file is the contract for the UI layer. It was written by reading the
-installed packages, not from memory or documentation. **If a component is not in
-this file, it does not exist for this project.**
+installed packages, not from memory or documentation.
+
+> **Correction.** "Installed" was the wrong ground truth, and this file said the
+> opposite of what it should have for most of the build: _if a component is not
+> in this file, it does not exist for this project_. It does not follow. The
+> registry publishes packages this project had simply never added, and two of
+> them had already been worked around in code — `InputGroup` (the amount field)
+> and `FileUpload` (the receipt upload, under a comment asserting no file field
+> existed). **Before concluding that Stackmyth lacks something, probe the
+> registry, not `node_modules`:**
+>
+> ```bash
+> pnpm view @stackmyth/<guess> version   # a version means it exists
+> ```
+>
+> See STACKMYTH-GAPS.md #16.
 
 Ground truth, in order of authority:
 
@@ -15,11 +29,18 @@ Ground truth, in order of authority:
 Verified against: `@stackmyth/*` **0.19.1** (`icons` and `classnames` are on
 `0.1.0`, `manifests` on `0.1.0`), React 19.2.4, Next.js 16.2.12.
 
-**26 packages installed.** UI: `core` `layout` `text` `button` `input`
-`textarea` `label` `field` `select` `radio-group` `switch` `card` `badge`
-`alert` `dialog` `popover` `list-item` `empty-state` `stat` `progress`
-`spinner` `skeleton` `calendar` `time-picker`. Plus `form` (validation) and
-`icons`. `manifests` is a devDependency only.
+**29 packages installed.** UI: `core` `layout` `text` `button` `input`
+`input-group` `textarea` `label` `field` `select` `radio-group` `switch`
+`checkbox` `file-upload` `card` `badge` `alert` `dialog` `popover` `list-item`
+`empty-state` `stat` `progress` `spinner` `skeleton` `calendar` `time-picker`.
+Plus `form` (validation) and `icons`. `manifests` is a devDependency only.
+
+**Published but not installed**, verified to exist at `0.19.1` — add them rather
+than working around them: `combobox` `tabs` `tooltip` `toast` `slider`
+`pagination` `breadcrumb` `table` `data-table`.
+
+Probed and confirmed **not** to exist: `number-input`, `menu`, `drawer`,
+`separator`, `form-field`, `upload`.
 
 ---
 

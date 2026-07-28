@@ -456,6 +456,83 @@ sends you rewriting perfectly good code.
 
 ---
 
+## 15. No `reValidateMode`, and `mode` cannot be changed at runtime
+
+`FormController` takes one `mode`: `"onChange" | "onBlur" | "onSubmit"`. The
+usual want is two — validate nothing until the first submit, then re-validate
+per field so a corrected error clears as the user types. That is what
+react-hook-form calls `reValidateMode`, and there is no equivalent here.
+
+`"onSubmit"` gets the first half right and leaves the second broken in a way
+users notice: after a failed submit the red messages sit there while you fix
+the field, and only refresh when you press the button again.
+
+The escape hatch does not exist either. `FormStore.mode` is
+`private readonly` in the published types, so it cannot be swapped after the
+first submission:
+
+```ts
+// form-store.d.ts
+private readonly mode;
+```
+
+Mutating it through a cast would work at runtime and reach into a library
+private, which is not worth a minor-version surprise.
+
+**What would fix it:** a second optional prop, defaulting to the first.
+
+```tsx
+<FormController mode="onSubmit" reValidateMode="onChange" />
+```
+
+---
+
+## 16. The published inventory is not discoverable from what is installed
+
+This one is on me, but the shape of the library is what made it possible, and
+it cost real work.
+
+`STACKMYTH-NOTES.md` was built by reading the `.d.ts` files of the packages in
+`node_modules`. That enumerates what is **installed**, not what **exists** — and
+`package.json` was seeded with an initial guess. Ten packages were therefore
+invisible for the whole build:
+
+```
+input-group  file-upload  checkbox  combobox  tabs  tooltip
+toast        slider       pagination  breadcrumb  table  data-table
+```
+
+Two of them had already been worked around in code. The amount field used
+`<Input prefix="$">` where `InputGroup` exists, and the receipt upload used a
+bare `<input type="file">` under a comment asserting "the library has no file
+field" — which was simply false. A gap log is worse than useless when it records
+absences that are not real.
+
+`@stackmyth/manifests` looks like it should be the answer and is not: it is
+stale and mostly empty (gap #2), and `require()`ing it yields no exports at all.
+There is no index package, no `@stackmyth/all`, and the registry cannot be
+listed by scope over plain npm — the only reliable method turned out to be
+guessing names and probing:
+
+```bash
+pnpm view @stackmyth/input-group version   # 0.19.1 — exists, was never installed
+pnpm view @stackmyth/number-input version  # 404 — does not
+```
+
+**What would fix it:** any one of these, in order of usefulness.
+
+1. A meta-package — `@stackmyth/all` or a populated `@stackmyth/manifests` —
+   that lists every published package and its components.
+2. A component index in the Storybook that maps component → package name, so
+   somebody reading the docs learns which dependency to add.
+3. Peer-dependency hints, so installing `@stackmyth/form` at least mentions the
+   field-level packages that pair with it.
+
+Until one exists, the discovery step has to start from the registry rather than
+from `node_modules`.
+
+---
+
 ## What worked well, unprompted
 
 Stating this because a gaps file that is only complaints is not honest feedback.

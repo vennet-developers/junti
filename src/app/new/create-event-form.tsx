@@ -3,6 +3,12 @@
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@stackmyth/input-group";
 import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
@@ -202,8 +208,18 @@ function CreateEventFormBody({
     clearDraft();
   }
 
+  /*
+   * `onSubmit`, not `onBlur`: nothing is validated and nothing turns red until
+   * the create button is pressed once. Tabbing through a form you have not
+   * finished should not accuse you of anything.
+   *
+   * STACKMYTH-GAP: there is no `reValidateMode`, so after that first press the
+   * messages only refresh on the next one — a corrected field cannot clear its
+   * own error as you type. `mode` is `private readonly` on the store, so it
+   * cannot be swapped at runtime either. See STACKMYTH-GAPS.md #15.
+   */
   return (
-    <FormController resolver={resolver} defaultValues={defaultValues} mode="onBlur">
+    <FormController resolver={resolver} defaultValues={defaultValues} mode="onSubmit">
       {({ handleSubmit }) => (
         <form onSubmit={handleSubmit(submit)} noValidate>
           <Stack gap="5">
@@ -347,16 +363,25 @@ function CreateEventFormBody({
                     error={error ?? serverState.errors.costAmount}
                     htmlFor={fieldProps.id}
                   >
-                    <Input
-                      {...fieldProps}
-                      inputMode="numeric"
-                      fullWidth
-                      size="lg"
-                      autoComplete="off"
-                      placeholder="120000"
-                      prefix="$"
-                      status={error ? "error" : "default"}
-                    />
+                    {/* The currency symbol is an addon, not a prop on the
+                        input. `InputGroup` owns the border and focus ring via
+                        `:has()`, so the symbol sits inside the same outline
+                        instead of beside it. The addon comes AFTER the input in
+                        the DOM and is placed by `align` — that is what keeps
+                        keyboard focus landing on the field first. */}
+                    <InputGroup fullWidth>
+                      <InputGroupInput
+                        {...fieldProps}
+                        inputMode="numeric"
+                        size="lg"
+                        autoComplete="off"
+                        placeholder="120000"
+                        status={error ? "error" : "default"}
+                      />
+                      <InputGroupAddon align="inline-start">
+                        <InputGroupText>$</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </ControlledField>
                 )}
               </FormField>

@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
 import { Field, FieldError, FieldLabel } from "@stackmyth/field";
+import { FileUpload } from "@stackmyth/file-upload";
 import { Input } from "@stackmyth/input";
 import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
@@ -95,14 +96,20 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
   const [prepared, setPrepared] = useState<Blob | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [note, setNote] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  /** What FileUpload is showing; the shrunken copy lives in `prepared`. */
+  const [chosen, setChosen] = useState<File[]>([]);
 
   const done = item.state === "approved";
   const waiting = item.state === "submitted";
 
-  async function pickFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function pickFiles(files: File[]) {
+    setChosen(files);
+
+    const file = files[0];
+    if (!file) {
+      setPrepared(null);
+      return;
+    }
 
     setPreparing(true);
     setState({ errors: {} });
@@ -146,8 +153,8 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
 
       if (result.done) {
         setPrepared(null);
+        setChosen([]);
         setNote("");
-        if (fileRef.current) fileRef.current.value = "";
       }
     });
   }
@@ -201,29 +208,42 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
           <Field invalid={Boolean(state.errors.evidence)}>
             <FieldLabel htmlFor={`evidence-${item.id}`}>{copy.policies.uploadLabel}</FieldLabel>
             {/*
-              A bare file input rather than a Stackmyth control: the library has
-              no file field, and `capture` matters more here than styling —
-              on a phone it opens the camera directly, which is what somebody
-              photographing a receipt wants.
+              `FileUpload` from @stackmyth/file-upload. An earlier version used
+              a bare <input type="file"> under a comment claiming the library
+              had no file field — it does; the package simply had never been
+              installed, because the inventory was taken from what was present
+              rather than from what the registry offers.
+
+              Validation here is advisory. The bytes are re-checked server-side
+              by sniffing the leading bytes, because `accept` is a hint to the
+              file picker and nothing more.
             */}
-            <input
-              ref={fileRef}
+            <FileUpload
               id={`evidence-${item.id}`}
-              type="file"
-              accept={EVIDENCE_ACCEPT}
-              onChange={pickFile}
+              validation={{
+                accept: EVIDENCE_ACCEPT.split(","),
+                maxFiles: 1,
+              }}
               disabled={pending || preparing}
+              onValueChange={pickFiles}
+              value={chosen}
+              title={copy.policies.uploadChoose}
+              hint={copy.policies.uploadHelp}
+              size="md"
             />
             {state.errors.evidence ? <FieldError>{state.errors.evidence}</FieldError> : null}
           </Field>
 
-          <Text variant="small" color="muted">
-            {preparing
-              ? copy.policies.uploadPreparing
-              : prepared
-                ? `${Math.round(prepared.size / 1024)} KB`
-                : copy.policies.uploadHelp}
-          </Text>
+          {/* Only the states FileUpload does not already show. The accepted
+              formats are its `hint`; repeating them here printed the same
+              sentence twice. */}
+          {preparing || prepared ? (
+            <Text variant="small" color="muted">
+              {preparing
+                ? copy.policies.uploadPreparing
+                : `${Math.round(prepared!.size / 1024)} KB`}
+            </Text>
+          ) : null}
 
           <Field>
             <FieldLabel htmlFor={`note-${item.id}`}>{copy.policies.noteLabel}</FieldLabel>
