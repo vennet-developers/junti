@@ -1,9 +1,10 @@
 import { spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
-import { statSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { config } from "dotenv";
+
+import { describe, resolveConnections } from "../src/config/db-connection";
 
 config({ path: ".env.local", quiet: true });
 config({ path: ".env", quiet: true });
@@ -16,6 +17,11 @@ config({ path: ".env", quiet: true });
  * risky, and occasionally otherwise, is the only safety net that exists.
  *
  * Uses the DIRECT connection: pg_dump needs a session-mode connection.
+ *
+ * Credentials are passed as libpq environment variables (PGHOST, PGPASSWORD, …)
+ * rather than a connection URI. That is the standard libpq mechanism and it
+ * takes the password verbatim, so one containing @ # or % needs no escaping —
+ * and it never appears in the process list the way a URI argument would.
  */
 const BACKUP_DIR = "backups";
 
@@ -25,30 +31,30 @@ function timestamp(): string {
 }
 
 async function main() {
-  const url = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
-
-  if (!url) {
-    console.error("Set DIRECT_DATABASE_URL (preferred) or DATABASE_URL in .env.local first.");
-    process.exit(1);
-  }
+  const { direct } = resolveConnections(process.env);
 
   mkdirSync(BACKUP_DIR, { recursive: true });
   const outputPath = join(BACKUP_DIR, `backup-${timestamp()}.sql`);
 
+  console.log(`Dumping ${describe(direct)}`);
+
   // --no-owner / --no-privileges keep the dump restorable into a different
   // project, where the Supabase-managed roles do not exist.
-  const args = [
-    "--no-owner",
-    "--no-privileges",
-    "--clean",
-    "--if-exists",
-    "--file",
-    outputPath,
-    url,
-  ];
+  const args = ["--no-owner", "--no-privileges", "--clean", "--if-exists", "--file", outputPath];
 
   const exitCode = await new Promise<number>((resolve, reject) => {
-    const child = spawn("pg_dump", args, { stdio: ["ignore", "inherit", "inherit"] });
+    const child = spawn("pg_dump", args, {
+      stdio: ["ignore", "inherit", "inherit"],
+      env: {
+        ...process.env,
+        PGHOST: direct.host,
+        PGPORT: String(direct.port),
+        PGUSER: direct.user,
+        PGPASSWORD: direct.password,
+        PGDATABASE: direct.database,
+        PGSSLMODE: direct.ssl === "require" ? "require" : "prefer",
+      },
+    });
     child.on("error", reject);
     child.on("close", (code) => resolve(code ?? 1));
   }).catch((error: unknown) => {
@@ -82,6 +88,6 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  console.error("Export failed:", error);
+  console.error("Export failed:", error instanceof Error ? error.message : error);
   process.exit(1);
 });

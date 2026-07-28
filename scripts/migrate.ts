@@ -3,6 +3,8 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+import { describe, resolveConnections } from "../src/config/db-connection";
+
 config({ path: ".env.local", quiet: true });
 config({ path: ".env", quiet: true });
 
@@ -11,28 +13,23 @@ config({ path: ".env", quiet: true });
  *
  * Runs over the DIRECT connection (session mode, port 5432). DDL needs session
  * state that Supabase's transaction-mode pooler cannot hold, so pointing this
- * at the pooled URL fails in confusing ways.
- *
- * Falls back to DATABASE_URL when DIRECT_DATABASE_URL is unset — correct for a
- * local Postgres, which has no pooler.
+ * at the pooled port fails in confusing ways.
  */
 async function main() {
-  const url = process.env.DIRECT_DATABASE_URL ?? process.env.DATABASE_URL;
+  const { direct, source } = resolveConnections(process.env);
 
-  if (!url) {
-    console.error("Set DIRECT_DATABASE_URL (preferred) or DATABASE_URL in .env.local first.");
-    process.exit(1);
-  }
-
-  if (process.env.DIRECT_DATABASE_URL === undefined && url.includes(":6543")) {
-    console.warn(
-      "Warning: DATABASE_URL looks like the pooled connection (port 6543). " +
-        "Migrations need the direct connection — set DIRECT_DATABASE_URL.",
-    );
-  }
+  console.log(`Migrating ${describe(direct)}  (config from ${source})`);
 
   // max: 1 because migrations must run serially on a single connection.
-  const client = postgres(url, { max: 1, prepare: false });
+  const client = postgres({
+    ...direct,
+    max: 1,
+    prepare: false,
+    // Re-running migrations emits NOTICEs ("schema drizzle already exists,
+    // skipping"). They are the normal output of CREATE IF NOT EXISTS and look
+    // alarmingly like errors on stderr.
+    onnotice: () => {},
+  });
 
   try {
     await migrate(drizzle(client), { migrationsFolder: "./drizzle" });
@@ -43,6 +40,6 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  console.error("Migration failed:", error);
+  console.error("Migration failed:", error instanceof Error ? error.message : error);
   process.exit(1);
 });
