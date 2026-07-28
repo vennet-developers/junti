@@ -4,21 +4,23 @@ import { redirect } from "next/navigation";
 
 import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
+import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";
 import { CalendarIcon } from "@stackmyth/icons";
 import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
-import { List, ListItem } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
 
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrganizerBadge } from "@/components/organizer-badge";
+import { shortEventTime } from "@/lib/event-time";
 import { formatDate, formatEventDateTime } from "@/lib/format";
 import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import { loadOrganizerEvents } from "@/lib/roster";
-import { managePath } from "@/lib/urls";
+import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
 
+import { EventCardActions } from "./event-card-actions";
 import { SignOutButton } from "./sign-out-button";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -38,6 +40,9 @@ export default async function MyEventsPage() {
 
   // Newest first — see loadOrganizerEvents.
   const events = await loadOrganizerEvents(organizer.id);
+
+  // Absolute, because the share message is pasted into WhatsApp.
+  const base = await origin();
 
   return (
     <Container size="1">
@@ -77,45 +82,52 @@ export default async function MyEventsPage() {
           />
         ) : (
           <>
-            <List as="ul" divided>
+            <Stack gap="3">
               {events.map((event) => (
-                <ListItem key={event.id}>
-                  <Stack gap="2" width="100%">
-                    <Flex justify="between" align="start" gap="3">
-                      <Box minWidth="0">
-                        <Stack gap="1">
-                          <Text weight="semibold">{event.title}</Text>
-                          <Text variant="small" color="muted">
-                            {formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale)}
-                          </Text>
-                        </Stack>
-                      </Box>
-                      <Box flexShrink={0}>
-                        {event.isClosed ? (
-                          <Badge variant="error" size="sm" soft>
-                            {copy.event.closedBadge}
-                          </Badge>
-                        ) : null}
-                      </Box>
-                    </Flex>
+                <Card surface="outlined" key={event.id}>
+                  <CardContent>
+                    <Stack gap="3">
+                      <Flex justify="between" align="start" gap="3">
+                        <Box minWidth="0">
+                          <Stack gap="1">
+                            <Text weight="semibold">{event.title}</Text>
+                            <Text variant="small" color="muted">
+                              {formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale)}
+                            </Text>
+                          </Stack>
+                        </Box>
+                        <Box flexShrink={0}>
+                          {event.isClosed ? (
+                            <Badge variant="error" size="sm" soft>
+                              {copy.event.closedBadge}
+                            </Badge>
+                          ) : null}
+                        </Box>
+                      </Flex>
 
-                    <Flex justify="between" align="center" gap="3" wrap="wrap">
                       <Text variant="small" color="muted">
                         {copy.auth.attendingCount(event.attendingCount)} ·{" "}
                         {copy.auth.createdOn(
                           formatDate(event.createdAt, event.timeZone, copy.intlLocale),
                         )}
                       </Text>
-                      <Button asChild size="md" variant="secondary">
-                        <Link href={managePath(event.publicToken, event.organizerToken)}>
-                          {copy.auth.manage}
-                        </Link>
-                      </Button>
-                    </Flex>
-                  </Stack>
-                </ListItem>
+
+                      <EventCardActions
+                        eventId={event.id}
+                        managePath={managePath(event.publicToken, event.organizerToken)}
+                        whatsAppUrl={whatsAppShareUrl(
+                          copy.share.whatsAppMessage(
+                            event.title,
+                            shortEventTime(event.startsAt, event.timeZone, copy),
+                            `${base}${participantPath(event.publicToken)}`,
+                          ),
+                        )}
+                      />
+                    </Stack>
+                  </CardContent>
+                </Card>
               ))}
-            </List>
+            </Stack>
 
             <Button asChild size="lg" fullWidth>
               <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>

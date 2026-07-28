@@ -47,6 +47,7 @@ export const policyReviewSchema = z.enum(["approved", "rejected"]);
 export const localeSchema = z.enum(LOCALES).catch("es");
 
 export const participantIdSchema = z.uuid();
+export const eventIdSchema = z.uuid();
 export const policyIdSchema = z.uuid();
 export const eventTypeIdSchema = z.uuid();
 export const policyDefinitionIdSchema = z.uuid();

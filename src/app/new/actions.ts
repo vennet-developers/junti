@@ -9,7 +9,9 @@ import { eventPolicies, events } from "@/db/schema";
 import { getViewerCopy } from "@/lib/locale";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getOrganizer } from "@/lib/organizer";
+import { ROUTES } from "@/config/routes";
 import { createOrganizerToken, createPublicToken } from "@/lib/tokens";
+import { managePath } from "@/lib/urls";
 import { field, fieldErrors, makeEventSchema, parsePoliciesField } from "@/lib/validation";
 
 /**
@@ -121,7 +123,18 @@ export async function createEvent(
     }
   });
 
+  /**
+   * Where you land depends on whether the event has an owner.
+   *
+   * **Signed out** → the organizer panel, with the links panel open. Those two
+   * URLs are the only way back into the event that will ever exist, so putting
+   * anything between the creator and them would be careless.
+   *
+   * **Signed in** → the history, where the new event is the first card. It is
+   * recoverable from there forever, so the links stop being an emergency and
+   * become one tap away like everything else.
+   */
   // redirect() throws to unwind, so it must be outside the try/catch above and
   // is never reached on a validation failure.
-  redirect(`/e/${publicToken}/manage/${organizerToken}?created=1`);
+  redirect(organizer ? ROUTES.myEvents : `${managePath(publicToken, organizerToken)}?created=1`);
 }

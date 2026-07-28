@@ -64,6 +64,13 @@ export const es = {
 
   createEvent: {
     title: "Crear evento",
+    attributionSignedIn: (name: string) => `Se guardará en tu cuenta, ${name}.`,
+    attributionSignedInHelp: "Podrás editarlo después y duplicarlo cuando se repita.",
+    attributionAnonTitle: "¿Entras primero?",
+    attributionAnonHelp:
+      "Sin cuenta el evento funciona igual, pero no vas a poder editarlo después ni recuperar el link si lo pierdes.",
+    attributionContinueAnon: "Sigo sin cuenta",
+    draftKept: "Guardamos lo que llevas escrito.",
     heading: "Nuevo evento",
     subheading: "Solo toma un minuto. No necesitas crear una cuenta.",
     fields: {
@@ -300,6 +307,11 @@ export const es = {
     closeEventHelp: "Congela las confirmaciones. Puedes reabrirlo después.",
     reopenEvent: "Reabrir evento",
     editEvent: "Editar evento",
+    editNeedsAccount: "Para editar los datos hace falta una cuenta",
+    editNeedsAccountHelp:
+      "Este evento se creó sin cuenta, así que sus datos quedan fijos. Todo lo demás —pagos, gente, lista de espera, cerrarlo— sigue funcionando desde este link.",
+    editNotYours:
+      "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos.",
     editEventSaved: "Cambios guardados.",
     shareSection: "Links",
     splitWarningTitle: "Ojo con las cuentas",
@@ -336,6 +348,14 @@ export const es = {
     myEventsEmpty: "Todavía no has creado ningún evento.",
     myEventsEmptyHelp: "Cuando crees uno, aparecerá acá con su historial.",
     myEventsLink: "Mis eventos",
+    share: "Compartir",
+    duplicate: "Duplicar",
+    duplicateAndEdit: "Duplicar y editar",
+    duplicating: "Duplicando…",
+    duplicatedNotice: "Listo, lo duplicamos para la próxima semana.",
+    duplicateExists: "Ya tienes un evento igual esa semana. Revisa la lista antes de crear otro.",
+    duplicateFailed: "No pudimos duplicarlo. Intenta de nuevo.",
+    nextWeekHint: (when: string) => `Quedaría el ${when}.`,
     createdOn: (date: string) => `Creado el ${date}`,
     manage: "Administrar",
     attendingCount: (n: number) => (n === 1 ? "1 confirmado" : `${n} confirmados`),

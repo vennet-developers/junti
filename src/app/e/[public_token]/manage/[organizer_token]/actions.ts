@@ -283,6 +283,25 @@ export async function setEventClosed(
   return { errors: {}, ok: true };
 }
 
+/**
+ * Whether this event's details may be changed, and by whom.
+ *
+ * Editing is the one organizer power that needs an account. An event created
+ * signed out has no owner and its details are fixed for good — that is the
+ * deliberate difference between the two creation paths, and the reason the
+ * create form says so before you press the button.
+ *
+ * Everything else an organizer does — payments, adding people, the waitlist,
+ * closing — still works from the link alone, because "who has paid" is the
+ * product and gating it behind an account would gut it.
+ */
+async function mayEdit(event: EventRow): Promise<boolean> {
+  if (event.organizerId === null) return false;
+
+  const organizer = await getOrganizer();
+  return organizer !== null && organizer.id === event.organizerId;
+}
+
 /** Edits the event details, then re-splits in case the cost changed. */
 export async function editEvent(
   publicToken: string,
@@ -294,6 +313,17 @@ export async function editEvent(
   if (!event) return denied();
 
   const copy = await eventCopy(event.locale);
+
+  // Re-checked here and not merely hidden in the UI: the panel is reachable by
+  // anyone holding the link, so the form's absence is a courtesy and this is
+  // the rule.
+  if (!(await mayEdit(event))) {
+    return {
+      errors: {
+        _form: event.organizerId === null ? copy.manage.editNeedsAccount : copy.manage.editNotYours,
+      },
+    };
+  }
 
   const parsed = makeEventSchema(copy).safeParse({
     title: field(formData, "title"),

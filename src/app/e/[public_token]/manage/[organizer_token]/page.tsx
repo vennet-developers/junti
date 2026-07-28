@@ -74,6 +74,10 @@ export default async function ManagePage({
   const copy = getCopy(locale);
 
   const { timeZone: preferredTimeZone } = await resolvePreferences();
+
+  // Editing needs the account the event is attributed to. Anonymous events have
+  // none, so their details are fixed — see DECISIONS.md.
+  const canEdit = eventRow.organizerId !== null && organizer?.id === eventRow.organizerId;
   const readerTimeZone = readingTimeZone(preferredTimeZone, eventRow.timeZone);
 
   const roster = await loadRoster(eventRow, locale);
@@ -375,22 +379,38 @@ export default async function ManagePage({
         </Stack>
 
         <Disclosure id="edit" label={copy.manage.editEvent}>
-          <EditEventForm
-            publicToken={publicToken}
-            organizerToken={organizerToken}
-            event={event}
-            policies={roster.policies.map((policy) => ({
-              id: policy.id,
-              definitionId: policy.definitionId,
-              /* Sent back as the override the organizer actually set, not the
+          {canEdit ? (
+            <EditEventForm
+              publicToken={publicToken}
+              organizerToken={organizerToken}
+              event={event}
+              policies={roster.policies.map((policy) => ({
+                id: policy.id,
+                definitionId: policy.definitionId,
+                /* Sent back as the override the organizer actually set, not the
                  resolved text — passing the resolved label would silently pin
                  every inherited policy to its current wording on first save. */
-              label: policy.labelOverride,
-              description: policy.descriptionOverride,
-            }))}
-            eventTypes={eventTypes}
-            policyOptionsByType={policyOptionsByType}
-          />
+                label: policy.labelOverride,
+                description: policy.descriptionOverride,
+              }))}
+              eventTypes={eventTypes}
+              policyOptionsByType={policyOptionsByType}
+            />
+          ) : (
+            /* Say why rather than showing nothing. An absent form reads as a
+               bug; "this needs an account" is a fact about how the event was
+               created, and everything else on this page still works. */
+            <Notice
+              tone="info"
+              title={
+                eventRow.organizerId === null
+                  ? copy.manage.editNeedsAccount
+                  : copy.manage.editNotYours
+              }
+            >
+              {eventRow.organizerId === null ? copy.manage.editNeedsAccountHelp : null}
+            </Notice>
+          )}
         </Disclosure>
 
         {/* Closing is deliberately last and low-key: it is the end of the

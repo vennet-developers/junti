@@ -59,6 +59,13 @@ export const en: Copy = {
 
   createEvent: {
     title: "Create event",
+    attributionSignedIn: (name: string) => `This will be saved to your account, ${name}.`,
+    attributionSignedInHelp: "You will be able to edit it later, and duplicate it when it repeats.",
+    attributionAnonTitle: "Sign in first?",
+    attributionAnonHelp:
+      "Without an account the event works the same, but you will not be able to edit it later or recover the link if you lose it.",
+    attributionContinueAnon: "Carry on without an account",
+    draftKept: "We kept what you had typed.",
     heading: "New event",
     subheading: "Takes a minute. You do not need an account.",
     fields: {
@@ -293,6 +300,10 @@ export const en: Copy = {
     closeEventHelp: "Freezes the answers. You can reopen it later.",
     reopenEvent: "Reopen event",
     editEvent: "Edit event",
+    editNeedsAccount: "Editing the details needs an account",
+    editNeedsAccountHelp:
+      "This event was created without one, so its details are fixed. Everything else — payments, people, the waitlist, closing it — still works from this link.",
+    editNotYours: "This event belongs to another account, so only that one can change its details.",
     editEventSaved: "Changes saved.",
     shareSection: "Links",
     splitWarningTitle: "Careful with the numbers",
@@ -329,6 +340,15 @@ export const en: Copy = {
     myEventsEmpty: "You have not created any events yet.",
     myEventsEmptyHelp: "Once you create one, it shows up here with its history.",
     myEventsLink: "My events",
+    share: "Share",
+    duplicate: "Duplicate",
+    duplicateAndEdit: "Duplicate and edit",
+    duplicating: "Duplicating…",
+    duplicatedNotice: "Done — duplicated for next week.",
+    duplicateExists:
+      "You already have the same event that week. Check the list before creating another.",
+    duplicateFailed: "We could not duplicate it. Try again.",
+    nextWeekHint: (when: string) => `It would land on ${when}.`,
     createdOn: (date: string) => `Created on ${date}`,
     manage: "Manage",
     attendingCount: (n: number) => (n === 1 ? "1 confirmed" : `${n} confirmed`),

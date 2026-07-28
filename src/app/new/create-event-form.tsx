@@ -19,17 +19,15 @@ import {
 import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
+import { Notice } from "@/components/notice";
+import { clearDraft, takeDraft, type EventDraft } from "@/lib/event-draft";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
 
 import { createEvent, type CreateEventState } from "./actions";
+import { SignInPill } from "./sign-in-pill";
 
-export function CreateEventForm({
-  defaultTimeZone,
-  defaultLocale,
-  eventTypes,
-  policyOptionsByType,
-}: {
+export interface CreateEventFormProps {
   defaultTimeZone: string;
   defaultLocale: string;
   /** From the `event_types` catalogue, already resolved for this reader. */
@@ -39,17 +37,78 @@ export function CreateEventForm({
    * changing the kind updates the list without a round trip.
    */
   policyOptionsByType: Record<string, PolicyOptionView[]>;
-}) {
+  /** Who the event will be attributed to, or null when signed out. */
+  organizer: { displayName: string; avatarUrl: string | null } | null;
+  /**
+   * An event being duplicated, already shifted to next week.
+   *
+   * Outranks a parked draft: arriving here from "duplicate and edit" is an
+   * explicit request for THIS event, and restoring something half-typed from an
+   * earlier sitting over it would be baffling.
+   */
+  prefill: Record<string, unknown> | null;
+}
+
+/**
+ * Read at most once per page load, and cached so `useSyncExternalStore` gets a
+ * stable reference — returning a fresh object from `getSnapshot` makes React
+ * re-render forever.
+ */
+let cachedDraft: EventDraft | null | undefined;
+
+function draftSnapshot(): EventDraft | null {
+  if (cachedDraft === undefined) cachedDraft = takeDraft();
+  return cachedDraft;
+}
+
+/**
+ * Restores a draft parked before signing in, then hands off.
+ *
+ * The restore has to remount the body rather than merely feed it new props:
+ * `FormController` builds its store once, and several controls hold their own
+ * state. Keying on whether a draft was found means exactly one remount, right
+ * after hydration and before anybody has typed.
+ */
+export function CreateEventForm(props: CreateEventFormProps) {
+  const parked = useSyncExternalStore(
+    () => () => {},
+    draftSnapshot,
+    () => null,
+  );
+
+  const draft = props.prefill ?? parked;
+
+  return (
+    <CreateEventFormBody
+      key={props.prefill ? "duplicate" : draft ? "restored" : "fresh"}
+      {...props}
+      draft={draft}
+      restoredFromDraft={!props.prefill && draft !== null}
+    />
+  );
+}
+
+function CreateEventFormBody({
+  defaultTimeZone,
+  defaultLocale,
+  eventTypes,
+  policyOptionsByType,
+  organizer,
+  draft,
+  restoredFromDraft,
+}: CreateEventFormProps & { draft: EventDraft | null; restoredFromDraft: boolean }) {
   const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<CreateEventState>({ errors: {} });
 
   // Mirrors of the controls that are not plain inputs, so the resolver can see
   // their values and dependent fields can appear conditionally.
-  const [costMode, setCostMode] = useState("none");
+  const [costMode, setCostMode] = useState(str(draft?.costMode) ?? "none");
   // The first catalogue entry is the default. Nothing in code names a type,
   // so adding one and putting it first changes the default with no deploy.
-  const [eventTypeId, setEventTypeId] = useState(eventTypes[0]?.id ?? "");
+  const [eventTypeId, setEventTypeId] = useState(
+    str(draft?.eventTypeId) ?? eventTypes[0]?.id ?? "",
+  );
   /**
    * The organizer's actual timezone.
    *
@@ -68,7 +127,7 @@ export function CreateEventForm({
   );
 
   /** Null until the organizer picks one; their choice always wins. */
-  const [chosenTimeZone, setChosenTimeZone] = useState<string | null>(null);
+  const [chosenTimeZone, setChosenTimeZone] = useState<string | null>(str(draft?.timeZone) ?? null);
   const timeZone = chosenTimeZone ?? detectedTimeZone;
 
   const kindOptions = eventTypes.map((type) => ({ value: type.id, label: type.label }));
@@ -116,8 +175,10 @@ export function CreateEventForm({
       costAmount: "",
       currency: "COP",
       policies: JSON.stringify(defaultPolicies(policyOptionsByType[eventTypes[0]?.id ?? ""])),
+      // A restored draft wins over every default above it.
+      ...(draft ?? {}),
     }),
-    [eventTypes, policyOptionsByType, defaultTimeZone, defaultLocale],
+    [eventTypes, policyOptionsByType, defaultTimeZone, defaultLocale, draft],
   );
 
   /**
@@ -135,6 +196,10 @@ export function CreateEventForm({
       // A successful create redirects, so anything returned is a failure.
       if (result) setServerState(result);
     });
+
+    // The draft has served its purpose either way: on success the event exists,
+    // and on failure the form is still on screen holding the same values.
+    clearDraft();
   }
 
   return (
@@ -142,6 +207,11 @@ export function CreateEventForm({
       {({ handleSubmit }) => (
         <form onSubmit={handleSubmit(submit)} noValidate>
           <Stack gap="5">
+            {/* First, because attribution cannot be fixed after the fact. */}
+            <SignInPill organizer={organizer} />
+
+            {restoredFromDraft ? <Notice tone="info" title={copy.createEvent.draftKept} /> : null}
+
             <FormError message={serverState.errors._form} />
 
             <FormField name="title">
@@ -349,4 +419,9 @@ function defaultPolicies(options: PolicyOptionView[] | undefined): PolicyDraft[]
   return (options ?? [])
     .filter((option) => option.isDefault)
     .map((option) => ({ definitionId: option.id, label: null, description: null }));
+}
+
+/** A draft value as a string, or undefined when it is absent or not one. */
+function str(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }

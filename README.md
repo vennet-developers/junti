@@ -52,6 +52,52 @@ themselves, and a signed-in one already has.
 
 ---
 
+## Creating an event: two paths
+
+The form asks, at the top, who the event should belong to. **That decision
+cannot be changed afterwards** — an event created signed out has no owner
+forever — which is why it is the first thing on the page rather than something
+you discover later.
+
+|                                            | Without an account    | Signed in                   |
+| ------------------------------------------ | --------------------- | --------------------------- |
+| Public link, RSVPs, roster                 | yes                   | yes                         |
+| Mark payments, add people, waitlist, close | yes                   | yes                         |
+| **Edit the event's details**               | no                    | yes                         |
+| Recover the link if you lose it            | no                    | yes — it is in your history |
+| Duplicate for next week                    | no                    | yes                         |
+| After creating you land on                 | the panel, links open | My events                   |
+
+Signing out of the app is never suggested on that form, and creating without an
+account is one tap away. The anonymous path is the original product, not a
+degraded one — which is why **only editing** needs an account. Withholding the
+organizer link entirely was considered and rejected: "who has already paid" is
+half of what this is for, and an organizer who cannot record a payment has a
+roster, not a ledger.
+
+Signing in from that form does not cost you what you had typed: the draft is
+parked before the round trip through Google and restored when you come back.
+
+### Repeating events
+
+Every card in My events has two duplicate buttons, because they answer different
+questions:
+
+- **Duplicate** creates it there and then, same time next week. For the fixture
+  that never changes — five-a-side every Thursday — where opening a form to
+  confirm what you already know is the whole friction.
+- **Duplicate and edit** opens the form already describing next week, for the
+  week the pitch moved or the price went up.
+
+"Next week" is seven days added to the stored instant, so the wall clock is
+preserved even across a daylight-saving change. The copy gets fresh links and
+carries the requirements, but not the submissions against them — a new week is a
+new round of proving you paid. Creating the same event twice in one week is
+refused rather than silently duplicated, because on a phone one gesture is
+easily two taps.
+
+---
+
 ## Requirements before someone counts as confirmed
 
 An event can ask for things. Say the pitch costs 120,000 and you fronted it: add

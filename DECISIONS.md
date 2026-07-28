@@ -847,6 +847,92 @@ English and are the links people actually hold, so no shared URL changed.
 
 ---
 
+## Two ways to create an event
+
+### 65. Attribution is decided at creation and cannot be fixed later
+
+An event created signed out has `organizer_id = null` forever. There is no
+claiming it afterwards, which makes the moment of creation the only one where
+the decision is visible — and `/new` used to say nothing at all about it. A
+session that had quietly expired produced an orphaned event, and the only
+symptom was its absence from My events days later.
+
+Hence the pill at the top of the form: signed in it names the account, signed
+out it offers Google or email and explains what is lost. Creating without one
+stays one tap away. The anonymous flow is the original product, not a
+punishment.
+
+### 66. Only editing needs an account — payments never do
+
+Signed out you keep the organizer link and everything it does: mark payments,
+add people, promote from the waitlist, close the event. What you cannot do is
+change the event's details.
+
+The alternative considered and rejected was withholding the organizer link
+entirely from anonymous creators. It would push harder toward accounts and it
+would gut the product: "who has already paid" is half of what this app is for,
+and an organizer who cannot record a payment has a roster, not a ledger.
+
+Enforced in `editEvent`, not merely hidden. The panel is reachable by anyone
+holding the link, so the missing form is a courtesy and the action is the rule.
+The panel says _why_ rather than showing nothing — an absent form reads as a
+bug, where "this event was created without an account" is a fact about how it
+came to exist.
+
+### 67. Where you land after creating depends on whether it is recoverable
+
+**Signed out** → the organizer panel with the links open, because those two URLs
+are the only way back into the event that will ever exist.
+
+**Signed in** → My events, where it is the first card. It is recoverable
+forever, so the links stop being an emergency. That is also why the cards grew a
+share button: account holders now arrive there immediately after creating, and
+sharing is what they came to do.
+
+### 68. Two duplicate buttons, because they answer different questions
+
+- **Duplicate** creates it immediately, same time next week. For the fixture
+  that never changes — five-a-side every Thursday — where a form to confirm what
+  you already know _is_ the friction.
+- **Duplicate and edit** opens the form already describing next week, for the
+  week the pitch moved or the price went up.
+
+Offering only the first risks events nobody checked; only the second leaves the
+weekly case two screens away. They are cheap to have both.
+
+Next week is seven days added to the **UTC instant**, not to the local date.
+Because the stored zone is applied at render time, that is what preserves the
+wall clock — including across a daylight-saving change, where adding a local
+date would move the hour.
+
+A duplicate gets **new tokens**: it is a different event, and reusing the links
+would put two rosters behind one URL. It carries the requirements but not the
+submissions against them — a new week is a new round of proving you paid.
+
+Guarded against the double tap: same owner, same title, same instant is refused
+with a message rather than silently creating twins, because on a phone one
+gesture can easily be two events.
+
+### 69. A parked draft, so signing in does not cost you what you typed
+
+The pill offers Google, which is a navigation to another origin and back. Left
+alone, the feature meant to help you attribute an event would throw away the
+event you were describing.
+
+The form is written to `sessionStorage` before leaving and restored on return —
+`sessionStorage`, not `localStorage`, because a draft is worth one tab and one
+sitting; finding a stale half-event weeks later would be worse than losing it.
+
+Restoring costs one remount right after hydration: `FormController` builds its
+store once and several controls hold their own state, so keying the body on
+whether a draft was found is what makes them all take the restored values. It
+happens before anybody has typed, so nothing is visibly disturbed.
+
+`?from=<id>` for "duplicate and edit" outranks a parked draft — arriving there
+is an explicit request for _that_ event.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:
