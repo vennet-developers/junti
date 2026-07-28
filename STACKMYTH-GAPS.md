@@ -36,10 +36,9 @@
 >
 > The rest were **re-verified against the installed 0.20.0 packages** —
 > each open entry below carries its status line and the evidence. Still
-> open: #1, #2, #7, #8, #9, #10, #11, #13, #14, #16. Of those, #11 is the
-> only one that was deliberately excluded from 0.20.0: its fix changes
-> what a form submits, which is breaking, where the other five were
-> additive.
+> open: #1, #2, #7, #8, #9, #10, #13, #14, #16. #11 is fixed at source since
+> `de12d8db` — an opt-in `valueFormat="date"`, defaulting to today's
+> behaviour — and ships in the release after 0.20.0.
 
 Feedback from a consumer with **zero prior familiarity** with the stack, building
 a real (small) app against it over one build. Written as it happened, not
@@ -419,11 +418,14 @@ that was never intended to exist.
 
 ## 11. `DatePicker`'s hidden value is a UTC instant, which is lossy for a date
 
-> **Status at 0.20.0: still present, deliberately.** The hidden input still
-> serialises `value.toISOString()`. This was the one DatePicker fix left out
-> of 0.20.0 on purpose: changing what an existing form submits is a breaking
-> change, unlike the additive `locale` forwarding that did ship (#12). Needs
-> a maintainer decision — an opt-in `valueFormat="date"` prop, or a major.
+> **Status: fixed at source, waiting on the next release.** `de12d8db` in the
+> Stackmyth repo adds exactly the opt-in this entry asked for:
+> `valueFormat="date"` submits the local calendar day as `YYYY-MM-DD`, while
+> the default stays `"iso"` — byte-for-byte what existing forms submit, which
+> is what let it ship as a minor. Excluded from 0.20.0 deliberately; lands in
+> the release after it. This app's composed date field stays regardless: it
+> pairs a date with a `TimePicker` and stores two wall-clock parts, which a
+> date-only control does not model.
 
 `DatePicker` and `TimePicker` both accept `name` and — unlike `Select`, gap #5 —
 render their own hidden input, so they submit natively. Good. But the date one
