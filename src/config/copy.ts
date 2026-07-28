@@ -232,7 +232,6 @@ export const copy = {
     signInSubheading:
       "Solo los organizadores necesitan cuenta. Quien recibe el link no tiene que entrar a nada.",
     google: "Continuar con Google",
-    orEmail: "o con tu correo",
     emailLabel: "Tu correo",
     emailPlaceholder: "tu@correo.com",
     emailSubmit: "Enviarme un link",
@@ -241,7 +240,6 @@ export const copy = {
       `Te mandamos un link a ${email}. Ábrelo desde este mismo dispositivo para entrar.`,
     emailInvalid: "Escribe un correo válido.",
     signOut: "Salir",
-    signedInAs: (name: string) => `Conectado como ${name}`,
     failed: "No pudimos completar el ingreso. Intenta de nuevo.",
     myEventsTitle: "Mis eventos",
     myEventsHeading: "Mis eventos",
@@ -251,8 +249,6 @@ export const copy = {
     createdOn: (date: string) => `Creado el ${date}`,
     manage: "Administrar",
     attendingCount: (n: number) => (n === 1 ? "1 confirmado" : `${n} confirmados`),
-    onlyOwnerNotice:
-      "Este evento no está asociado a tu cuenta. Se creó antes de que entraras, o lo creó otra persona.",
   },
 
   errorBoundary: {

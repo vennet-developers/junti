@@ -4,16 +4,19 @@
 
 **USD 0 / month.**
 
-| Service  | Plan  | What it does here                                                                      | Cost |
-| -------- | ----- | -------------------------------------------------------------------------------------- | ---- |
-| Supabase | Free  | Managed Postgres. Nothing else — no Auth, no Storage, no Realtime, no Edge Functions.  | $0   |
-| Vercel   | Hobby | Hosting, serverless functions, HTTPS, the deploy pipeline.                             | $0   |
-| GitHub   | Free  | Repository, GitHub Packages (the private UI library), Actions for the keep-alive cron. | $0   |
+| Service  | Plan  | What it does here                                                                                               | Cost |
+| -------- | ----- | --------------------------------------------------------------------------------------------------------------- | ---- |
+| Supabase | Free  | Managed Postgres, plus Auth for optional organizer sign-in. No Storage, no Realtime, no Edge Functions, no RLS. | $0   |
+| Vercel   | Hobby | Hosting, serverless functions, HTTPS, the deploy pipeline.                                                      | $0   |
+| GitHub   | Free  | Repository, GitHub Packages (the private UI library), Actions for the keep-alive cron.                          | $0   |
 
-Nothing else is used. No Redis, no queue, no object storage, no email provider,
-no error-tracking SaaS, no analytics, no CDN beyond what Vercel includes. Every
-one of those was considered and rejected — the reasoning is in
-[DECISIONS.md](./DECISIONS.md).
+Nothing else is used. No Redis, no queue, no object storage, no error-tracking
+SaaS, no analytics, no CDN beyond what Vercel includes. Every one of those was
+considered and rejected — the reasoning is in [DECISIONS.md](./DECISIONS.md).
+
+No email provider either, and the asterisk on that is in the next section: magic
+links go out through Supabase's built-in mailer, which is rate-limited to the
+point of being a demo feature.
 
 ---
 
@@ -22,13 +25,32 @@ one of those was considered and rejected — the reasoning is in
 Commercial use **is** permitted on the free tier. The constraints that actually
 bite are operational:
 
-| Limit                         | Value      | What it means here                                                                                                                                           |
-| ----------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Inactivity pause**          | ~7 days    | The big one. A paused project is unreachable until restored by hand. Handled by `/api/keep-alive` + a GitHub Actions cron — see README → "Keeping it alive". |
-| **Database storage**          | 500 MB     | Not a concern. This app stores short text rows. Ten thousand events with twenty participants each is on the order of a few MB.                               |
-| **Backup retention**          | **Zero**   | There is no snapshot to restore from. `npm run db:export` is the only backup that exists, and running it is a manual act.                                    |
-| **Projects per organization** | 2          | Relevant only if you want separate staging and production databases — that uses both slots.                                                                  |
-| **Egress**                    | 5 GB/month | Not a concern for text-only pages with no images.                                                                                                            |
+| Limit                         | Value        | What it means here                                                                                                                                           |
+| ----------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Inactivity pause**          | ~7 days      | The big one. A paused project is unreachable until restored by hand. Handled by `/api/keep-alive` + a GitHub Actions cron — see README → "Keeping it alive". |
+| **Database storage**          | 500 MB       | Not a concern. This app stores short text rows. Ten thousand events with twenty participants each is on the order of a few MB.                               |
+| **Backup retention**          | **Zero**     | There is no snapshot to restore from. `npm run db:export` is the only backup that exists, and running it is a manual act.                                    |
+| **Projects per organization** | 2            | Relevant only if you want separate staging and production databases — that uses both slots.                                                                  |
+| **Egress**                    | 5 GB/month   | Not a concern for text-only pages with no images.                                                                                                            |
+| **Built-in email**            | **2–3/hour** | Sharp. Every magic-link sign-in spends one. Google sign-in spends none, which is the practical answer; see below.                                            |
+| **Monthly active users**      | 50,000       | Not a concern. Only organizers ever sign in, and only if they want a history.                                                                                |
+
+### The email limit is the one that will surprise you
+
+Supabase's built-in SMTP is explicitly labelled for testing: roughly **2–3
+messages per hour, project-wide**. Four organizers requesting a magic link in
+the same hour is enough for the fourth to be told, truthfully, that the email
+was sent — and for it never to arrive.
+
+It has not been raised, for two reasons. Google sign-in is the primary route and
+sends no email at all, and the alternative is a custom SMTP provider, which is
+the first thing on this page that plausibly costs money later. Resend and
+Brevo's free tiers are generous enough today (3,000/month and 300/day
+respectively), but both want a verified sending domain, which is a domain
+purchase if you do not already own one.
+
+Configure custom SMTP the day email sign-in stops being a fallback and becomes
+how people actually get in.
 
 ---
 

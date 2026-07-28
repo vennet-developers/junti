@@ -13,7 +13,9 @@ That's it. It is not a marketplace, not a ticketing platform, and **it never
 touches money** — the organizer records payments by hand. The app is a ledger,
 not a payment rail.
 
-- **No accounts, no login, no passwords.** Access is by unguessable URL only.
+- **No passwords, ever.** Participants need no account at all — access is by
+  unguessable URL. Organizers _may_ sign in, with Google or an emailed link, to
+  get a history of their own events; it is optional and buys nothing else.
 - **Mobile-first.** Designed at 390px, because every user opens it from a
   WhatsApp link on a phone.
 - **Costs USD 0/month to run.** See [COSTS.md](./COSTS.md).
@@ -35,6 +37,12 @@ authentication.** There is no account recovery — if the organizer loses their
 link, they lose control of the event. The app says so, loudly, on the page where
 the link is first shown.
 
+Signing in adds one page on top of that, `/mis-eventos`: the events you created
+while signed in, newest first. It is a convenience — a way to find a link you
+mislaid — and it grants nothing the organizer link does not already grant. An
+event created while signed out belongs to nobody and will never appear there,
+which is the honest consequence of not having required an account.
+
 ---
 
 ## Prerequisites
@@ -43,7 +51,8 @@ the link is first shown.
 - **pnpm 10+.** This project uses pnpm — `packageManager` in `package.json`
   pins it, so `corepack enable` is enough. There is deliberately only one
   lockfile; see the note below.
-- **A Supabase project** on the free tier — used purely as managed Postgres.
+- **A Supabase project** on the free tier — managed Postgres, plus Auth if you
+  want organizer sign-in.
 - **`psql` / `pg_dump`** for backups (`brew install libpq` on macOS). The
   `pg_dump` major version must be **>= your database's** or it refuses to run.
 - **Access to the private `@stackmyth/*` packages** — see next section.
@@ -114,26 +123,51 @@ read it again later.
 cp .env.example .env.local
 ```
 
-Open `.env.local` and fill in both connection strings. Find them under
-**Project Settings → Database → Connection string**. You need _both_, and they
-are different:
+Open `.env.local` and fill in the database fields. Find them under
+**Project Settings → Database → Connection string**, with _Display connection
+pooler_ ticked.
 
-| Variable              | Port     | Mode                           | Used by                   |
-| --------------------- | -------- | ------------------------------ | ------------------------- |
-| `DATABASE_URL`        | **6543** | Transaction (Supavisor pooler) | The running app           |
-| `DIRECT_DATABASE_URL` | **5432** | Session (direct)               | `db:migrate`, `db:export` |
+| Variable         | Meaning                            |                           |
+| ---------------- | ---------------------------------- | ------------------------- |
+| `DB_HOST`        | `aws-0-REGION.pooler.supabase.com` |                           |
+| `DB_USER`        | `postgres.YOUR_PROJECT_REF`        |                           |
+| `DB_PASSWORD`    | **Verbatim.** Never escape it.     |                           |
+| `DB_NAME`        | `postgres`                         |                           |
+| `DB_PORT`        | **6543** — transaction pooler      | The running app           |
+| `DB_DIRECT_PORT` | **5432** — session mode            | `db:migrate`, `db:export` |
 
-This split is not optional. Vercel runs serverless functions and each cold start
-wants its own connection, while Supabase's direct connection limit is small — so
-runtime traffic must go through the pooler. But transaction-mode pooling does
-not support prepared statements or session state, so migrations and `pg_dump`
-must use the direct connection. The driver is already configured with
+Discrete fields rather than one URL, because a connection URI reserves
+`@ # % : / ?` and Supabase generates passwords containing exactly those — a
+password pasted into a URL unescaped parses into the wrong host and fails with a
+misleading authentication error. Here the driver receives the password as its
+own field, so rotating it is a paste and nothing else. A single `DATABASE_URL`
+is still accepted as a fallback for platforms that only hand you one string; if
+both are present the discrete fields win. See `src/config/db-connection.ts`.
+
+The two ports are not optional either. Vercel runs serverless functions and each
+cold start wants its own connection, while Supabase's direct connection limit is
+small — so runtime traffic must go through the pooler. But transaction-mode
+pooling supports neither prepared statements nor session state, so migrations
+and `pg_dump` must use the direct port. The driver is already configured with
 `prepare: false` in `src/db/client.ts`; without it you get intermittent failures
 under concurrency that look exactly like application bugs.
 
-Neither variable may ever be prefixed `NEXT_PUBLIC_`. They are credentials.
+None of these may ever be prefixed `NEXT_PUBLIC_`. They are credentials.
 
-**4. Run the migrations**
+**4. Configure organizer sign-in** _(optional locally)_
+
+```ini
+NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="sb_publishable_..."
+```
+
+From **Project Settings → API**. These two _are_ public: the publishable key
+identifies the project and grants no data access here, because Supabase Auth is
+used for identity only and every read and write still goes through Drizzle from
+server code. Skip them and the app runs fine — sign-in is what stops working.
+Setup is under [Organizer accounts](#organizer-accounts) below.
+
+**5. Run the migrations**
 
 ```bash
 pnpm db:migrate
@@ -142,7 +176,7 @@ pnpm db:migrate
 Migrations live in `./drizzle` and are checked into the repo — never run DDL
 from the Supabase SQL editor, or the schema history stops matching the code.
 
-**5. Start the app**
+**6. Start the app**
 
 ```bash
 pnpm dev
@@ -161,9 +195,71 @@ docker run -d --name event-roster-pg \
   -p 55432:5432 postgres:15-alpine
 ```
 
-Then point both URLs at `postgresql://postgres:devpassword@127.0.0.1:55432/event_roster`.
-There is no pooler locally, so they are the same string. Match the Postgres
-major version to your local `pg_dump` so `pnpm db:export` works.
+Then set `DB_HOST=127.0.0.1`, `DB_USER=postgres`, `DB_PASSWORD=devpassword`,
+`DB_NAME=event_roster` and both ports to `55432` — there is no pooler locally,
+so the two are the same. TLS switches itself off for localhost. Match the
+Postgres major version to your local `pg_dump` so `pnpm db:export` works.
+
+---
+
+## Organizer accounts
+
+Organizers can sign in to get a history of their events, newest first, with
+their Google profile photo. **Participants still need no account** — the RSVP
+flow is unchanged, and creating an event without signing in still works.
+
+Two passwordless routes:
+
+- **Google** — the only one that yields a profile photo, which is why the
+  feature exists.
+- **Email magic link** — for anyone without a Google account.
+
+Signing in with both, using the same verified address, lands on **one account**:
+Supabase links the identities automatically, so the history is the same either
+way.
+
+### Supabase setup
+
+1. **Authentication → Providers → Google**: enable it and paste a Client ID and
+   Secret from Google Cloud Console.
+2. In Google Cloud Console (**APIs & Services → Credentials**, OAuth client of
+   type _Web application_), the **Authorized redirect URI** is Supabase's, not
+   this app's:
+
+   ```
+   https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+   ```
+
+   One entry covers every environment. Localhost does **not** need its own —
+   Google only ever redirects to Supabase, which then redirects back to
+   whichever origin started the flow.
+
+3. **Authentication → URL Configuration**: set `Site URL` to production, and add
+   every origin that may start a sign-in to the redirect allow list:
+
+   ```
+   https://your-app.vercel.app/auth/callback
+   https://your-app.vercel.app/**
+   http://localhost:3000/auth/callback
+   http://localhost:3000/**
+   http://localhost:3001/**          # next dev falls back here when 3000 is taken
+   ```
+
+### Two failure modes worth recognising
+
+- **`redirect_uri_mismatch` from Google** — the Supabase callback is missing
+  from the Google client's authorized URIs. Blocks every environment at once,
+  since that URI is environment-independent.
+- **"This browser or app may not be secure"** — Google refuses OAuth in
+  automated browsers and in the in-app browsers of WhatsApp, Instagram and
+  friends. Not fixable from the app; the user opens the link in a real browser,
+  or signs in by email instead.
+
+### Email limits
+
+Without custom SMTP, Supabase's built-in mailer allows roughly **2–3 emails per
+hour**. Fine for testing, not for real use. Configuring SMTP is the moment to
+re-read [COSTS.md](./COSTS.md).
 
 ---
 
@@ -173,7 +269,12 @@ major version to your local `pg_dump` so `pnpm db:export` works.
 2. In Vercel: **Add New → Project**, import the repo. The framework is detected
    automatically; no build settings to change.
 3. Under **Settings → Environment Variables**, add:
-   - `DATABASE_URL` — the **pooled** string (port 6543)
+   - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT` — the database
+     fields from step 3 of the local setup. `DB_PORT` must be **6543**, the
+     pooler.
+   - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — for
+     organizer sign-in. Omit them and everything else still works; only the
+     sign-in page breaks.
    - `NPM_RC` — the registry credential for the private `@stackmyth/*`
      packages. Vercel writes this variable's contents to `~/.npmrc` before
      installing, which is a location pnpm trusts. Two lines:
@@ -203,15 +304,15 @@ major version to your local `pg_dump` so `pnpm db:export` works.
      and stop the day it expires. For a team repo, a fine-grained token or a
      machine user with `read:packages` ages better.
 
-   `DIRECT_DATABASE_URL` is **not** needed in Vercel — the app never opens that
-   connection. Keep it local.
+   `DB_DIRECT_PORT` is **not** needed in Vercel — the app never opens the
+   session-mode connection. Keep it local.
 
    Vercel detects pnpm from `pnpm-lock.yaml` and honours the `packageManager`
    field, so the install command needs no override.
 
 4. Deploy.
-5. Run migrations against production from your machine, with
-   `DIRECT_DATABASE_URL` pointing at the production database:
+5. Run migrations against production from your machine, with the `DB_*` fields
+   in `.env.local` pointing at the production database:
 
    ```bash
    pnpm db:migrate
