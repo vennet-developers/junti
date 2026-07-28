@@ -11,8 +11,7 @@ import { Flex, Stack } from "@stackmyth/layout";
 import { Popover, PopoverContent, PopoverTrigger } from "@stackmyth/popover";
 import { TimePicker } from "@stackmyth/time-picker";
 
-import { copy } from "@/config/copy";
-import { EVENT_TIME_ZONE } from "@/lib/format";
+import { useCopy } from "./copy-provider";
 
 /**
  * When the event starts, as Stackmyth date and time pickers.
@@ -27,17 +26,13 @@ import { EVENT_TIME_ZONE } from "@/lib/format";
  * it. See STACKMYTH-GAPS.md #12.
  *
  * The value reaches the form store as two wall-clock strings, `YYYY-MM-DD` and
- * `HH:mm`, which the server joins and interprets in America/Bogota.
+ * `HH:mm`, which the server joins and interprets in the event's own timezone.
+ *
+ * Both halves are wall-clock and stay that way here. The picker never converts
+ * to an instant, so it needs the reader's LANGUAGE — to name the months — but
+ * not the event's timezone: "the 14th at 8 p.m." is the same two strings
+ * whichever zone eventually gives them meaning.
  */
-
-const LOCALE = "es-CO";
-
-const LABEL_FORMAT = new Intl.DateTimeFormat(LOCALE, {
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
 
 function toDateInputValue(date: Date): string {
   // Local getters, never toISOString(). The calendar builds local midnight, so
@@ -91,6 +86,16 @@ export function DateTimeField({
   const generatedId = useId();
   const dateId = id ?? generatedId;
 
+  const { copy } = useCopy();
+  const intlLocale = copy.intlLocale;
+
+  const labelFormat = new Intl.DateTimeFormat(intlLocale, {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
   const [date, setDate] = useState<Date | null>(() => fromDateInputValue(defaultDate));
   const [time, setTime] = useState<string | null>(defaultTime ?? null);
   const [open, setOpen] = useState(false);
@@ -131,7 +136,7 @@ export function DateTimeField({
               aria-label={copy.createEvent.fields.startsAtDateLabel}
             >
               <CalendarIcon size={16} />
-              {date ? LABEL_FORMAT.format(date) : copy.createEvent.fields.startsAtDatePlaceholder}
+              {date ? labelFormat.format(date) : copy.createEvent.fields.startsAtDatePlaceholder}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" sideOffset={6}>
@@ -139,10 +144,10 @@ export function DateTimeField({
               mode="single"
               selected={date ?? undefined}
               onSelect={handleSelect}
-              locale={LOCALE}
-              // Colombia starts the week on Monday.
+              locale={intlLocale}
+              /* Monday, in both languages this ships in: Spanish-speaking
+                 countries and the UK start the week there. */
               weekStartsOn={1}
-              timezone={EVENT_TIME_ZONE}
               fromDate={allowPast ? undefined : startOfToday()}
               showOutsideDays
             />

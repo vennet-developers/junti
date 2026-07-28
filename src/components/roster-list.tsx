@@ -4,22 +4,26 @@ import { Box, Flex, Stack } from "@stackmyth/layout";
 import { List, ListItem } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
 
-import { copy } from "@/config/copy";
+import type { Copy } from "@/config/copy";
 import { formatMoney } from "@/lib/format";
 import type { RosterMember } from "@/lib/roster";
 
 import { PaymentBadge } from "./payment-badge";
+import { PersonAvatar } from "./person-avatar";
 
 export interface RosterGroupProps {
   title: string;
   members: RosterMember[];
   currency: string;
+  copy: Copy;
   /** Money is hidden entirely when the event has no cost. */
   showMoney: boolean;
   /** Position number, shown for the waitlist so people know where they stand. */
   numbered?: boolean;
   /** Organizer-only controls, rendered per member. */
   renderActions?: (member: RosterMember) => ReactNode;
+  /** A line under the name — what a pending participant is still waiting on. */
+  renderNote?: (member: RosterMember) => ReactNode;
 }
 
 /**
@@ -39,9 +43,11 @@ export function RosterGroup({
   title,
   members,
   currency,
+  copy,
   showMoney,
   numbered = false,
   renderActions,
+  renderNote,
 }: RosterGroupProps) {
   return (
     <Stack gap="2">
@@ -60,46 +66,70 @@ export function RosterGroup({
         </Text>
       ) : (
         <List as="ul" divided>
-          {members.map((member, index) => (
-            <ListItem key={member.id}>
-              <Stack gap="2" width="100%">
-                {/* Identity + status: one line, name allowed to shrink. */}
-                <Flex justify="between" align="center" gap="3">
-                  <Box minWidth="0">
-                    <Flex gap="2" align="baseline">
-                      {numbered ? (
-                        /* Box for flexShrink — Text has no LayoutProps (gap #8). */
-                        <Box flexShrink={0}>
-                          <Text as="span" variant="small" color="muted">
-                            {index + 1}.
-                          </Text>
-                        </Box>
+          {members.map((member, index) => {
+            const note = renderNote?.(member);
+
+            return (
+              <ListItem key={member.id}>
+                <Stack gap="2" width="100%">
+                  {/* Identity + status: one line, name allowed to shrink. */}
+                  <Flex justify="between" align="center" gap="3">
+                    <Box minWidth="0">
+                      <Flex gap="2" align="center">
+                        {numbered ? (
+                          /* Box for flexShrink — Text has no LayoutProps (gap #8). */
+                          <Box flexShrink={0}>
+                            <Text as="span" variant="small" color="muted">
+                              {index + 1}.
+                            </Text>
+                          </Box>
+                        ) : null}
+
+                        {/* Only signed-in participants have one. Everyone else
+                            keeps the plain name they always had — no initials
+                            placeholder, which would imply an account. */}
+                        {member.avatarUrl ? (
+                          <Box flexShrink={0}>
+                            <PersonAvatar
+                              src={member.avatarUrl}
+                              name={member.displayName}
+                              size="sm"
+                            />
+                          </Box>
+                        ) : null}
+
+                        <Text weight="medium">{member.displayName}</Text>
+                      </Flex>
+                    </Box>
+
+                    <Flex gap="2" align="center" flexShrink={0}>
+                      {showMoney && member.share.owes ? (
+                        <Text variant="small" color="muted" whiteSpace="nowrap">
+                          {formatMoney(
+                            member.share.effectiveAmountMinor,
+                            currency,
+                            copy.intlLocale,
+                          )}
+                        </Text>
                       ) : null}
-                      <Text weight="medium">{member.displayName}</Text>
+                      {showMoney && member.share.owes ? (
+                        <PaymentBadge status={member.share.status} copy={copy} />
+                      ) : null}
                     </Flex>
-                  </Box>
-
-                  <Flex gap="2" align="center" flexShrink={0}>
-                    {showMoney && member.share.owes ? (
-                      <Text variant="small" color="muted" whiteSpace="nowrap">
-                        {formatMoney(member.share.effectiveAmountMinor, currency)}
-                      </Text>
-                    ) : null}
-                    {showMoney && member.share.owes ? (
-                      <PaymentBadge status={member.share.status} />
-                    ) : null}
                   </Flex>
-                </Flex>
 
-                {/* Controls get the full width of the row. */}
-                {renderActions ? (
-                  <Flex gap="2" wrap="wrap" align="center">
-                    {renderActions(member)}
-                  </Flex>
-                ) : null}
-              </Stack>
-            </ListItem>
-          ))}
+                  {note ? <Box>{note}</Box> : null}
+
+                  {/* Controls get the full width of the row. */}
+                  {renderActions ? (
+                    <Flex gap="2" wrap="wrap" align="center">
+                      {renderActions(member)}
+                    </Flex>
+                  ) : null}
+                </Stack>
+              </ListItem>
+            );
+          })}
         </List>
       )}
     </Stack>

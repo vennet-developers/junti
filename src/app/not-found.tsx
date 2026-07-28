@@ -6,14 +6,20 @@ import { EmptyState } from "@stackmyth/empty-state";
 import { HelpCircleIcon } from "@stackmyth/icons";
 import { Container, Stack } from "@stackmyth/layout";
 
-import { copy } from "@/config/copy";
+import { getViewerCopy } from "@/lib/locale";
 
-export const metadata: Metadata = {
-  title: copy.event.notFoundTitle,
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { copy } = await getViewerCopy();
 
-export default function NotFound() {
+  return {
+    title: copy.event.notFoundTitle,
+    robots: { index: false, follow: false },
+  };
+}
+
+export default async function NotFound() {
+  const { copy } = await getViewerCopy();
+
   return (
     <Container size="1">
       <Stack gap="6" py="8" px="4">

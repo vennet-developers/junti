@@ -7,18 +7,29 @@ import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { List, ListItem, ListItemContent, ListItemTitle } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
-import { copy } from "@/config/copy";
+import { getViewerCopy } from "@/lib/locale";
 
-export const metadata: Metadata = {
-  title: { absolute: copy.home.title },
-  description: BRAND_DESCRIPTION,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { copy } = await getViewerCopy();
 
-export default function HomePage() {
+  return {
+    title: { absolute: copy.home.title },
+    description: BRAND_DESCRIPTION,
+  };
+}
+
+export default async function HomePage() {
+  const { copy } = await getViewerCopy();
+
   return (
     <Container size="1">
       <Stack gap="6" py="7" px="4">
+        <Flex justify="end">
+          <LanguageSwitcher />
+        </Flex>
+
         <Stack gap="2">
           <Text variant="h1">{BRAND_NAME}</Text>
           <Text variant="lead" color="muted">
@@ -44,7 +55,7 @@ export default function HomePage() {
         <Stack gap="3">
           <Text variant="h3">{copy.home.howItWorksTitle}</Text>
           <List as="ol" divided>
-            {copy.home.steps.map((step, index) => (
+            {copy.home.steps.map((step: string, index: number) => (
               <ListItem key={step}>
                 <ListItemContent>
                   <Flex gap="3" align="baseline">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
@@ -16,36 +16,16 @@ import {
   SubmitButton,
   createZodResolver,
 } from "@/components/form-shell";
+import { useCopy } from "@/components/copy-provider";
+import { PolicyEditor, type PolicyDraft } from "@/components/policy-editor";
 import { RadioField } from "@/components/radio-field";
 import { SelectField } from "@/components/select-field";
-import { copy } from "@/config/copy";
 import { toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
 import type { EventView } from "@/lib/roster";
-import { addParticipantSchema, eventClientSchema } from "@/lib/validation";
+import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
+import { makeAddParticipantSchema, makeEventClientSchema } from "@/lib/validation";
 
 import { addParticipant, editEvent, type ManageState } from "./actions";
-
-const KIND_OPTIONS = [
-  { value: "match", label: copy.createEvent.kinds.match },
-  { value: "party", label: copy.createEvent.kinds.party },
-  { value: "kids_party", label: copy.createEvent.kinds.kids_party },
-  { value: "other", label: copy.createEvent.kinds.other },
-] as const;
-
-const COST_MODE_OPTIONS = [
-  { value: "none", label: copy.createEvent.costModes.none },
-  { value: "total", label: copy.createEvent.costModes.total },
-  { value: "per_person", label: copy.createEvent.costModes.per_person },
-] as const;
-
-const ATTENDANCE_OPTIONS = [
-  { value: "in", label: copy.attendance.in },
-  { value: "out", label: copy.attendance.out },
-  { value: "maybe", label: copy.attendance.maybe },
-] as const;
-
-const eventResolver = createZodResolver(eventClientSchema);
-const participantResolver = createZodResolver(addParticipantSchema);
 
 interface Ctx {
   publicToken: string;
@@ -62,9 +42,21 @@ function toFormData(data: Record<string, unknown>): FormData {
 }
 
 export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<ManageState>({ errors: {} });
   const [formKey, setFormKey] = useState(0);
+
+  const attendanceOptions = [
+    { value: "in", label: copy.attendance.in },
+    { value: "out", label: copy.attendance.out },
+    { value: "maybe", label: copy.attendance.maybe },
+  ];
+
+  const participantResolver = useMemo(
+    () => createZodResolver(makeAddParticipantSchema(copy)),
+    [copy],
+  );
 
   function submit(data: Record<string, unknown>) {
     startTransition(async () => {
@@ -117,7 +109,7 @@ export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
             <ControlledField label={copy.rsvp.attendanceLabel}>
               <RadioField
                 name="attendance"
-                options={ATTENDANCE_OPTIONS}
+                options={attendanceOptions}
                 defaultValue="in"
                 orientation="horizontal"
               />
@@ -137,16 +129,47 @@ export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
   );
 }
 
-export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { event: EventView }) {
+export function EditEventForm({
+  publicToken,
+  organizerToken,
+  event,
+  policies,
+}: Ctx & { event: EventView; policies: PolicyDraft[] }) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<ManageState>({ errors: {} });
   const [costMode, setCostMode] = useState<string>(event.costMode);
+  const [timeZone, setTimeZone] = useState(event.timeZone);
+
+  const kindOptions = [
+    { value: "match", label: copy.createEvent.kinds.match },
+    { value: "party", label: copy.createEvent.kinds.party },
+    { value: "kids_party", label: copy.createEvent.kinds.kids_party },
+    { value: "other", label: copy.createEvent.kinds.other },
+  ];
+
+  const costModeOptions = [
+    { value: "none", label: copy.createEvent.costModes.none },
+    { value: "total", label: copy.createEvent.costModes.total },
+    { value: "per_person", label: copy.createEvent.costModes.per_person },
+  ];
+
+  const zoneOptions = useMemo(
+    () => timeZoneOptions(event.timeZone, copy.intlLocale, new Date()),
+    [event.timeZone, copy.intlLocale],
+  );
+
+  const eventResolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
 
   const defaults = {
     title: event.title,
     kind: event.kind,
-    startsAtDate: toDatePartValue(event.startsAt),
-    startsAtTime: toTimePartValue(event.startsAt),
+    /* Wall-clock in the event's OWN zone, so editing does not silently shift
+       the start time by the difference from wherever the organizer is now. */
+    startsAtDate: toDatePartValue(event.startsAt, event.timeZone),
+    startsAtTime: toTimePartValue(event.startsAt, event.timeZone),
+    timeZone: event.timeZone,
+    locale: event.locale,
     location: event.location ?? "",
     capacity: event.capacity === null ? "" : String(event.capacity),
     notes: event.notes ?? "",
@@ -156,6 +179,7 @@ export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { ev
         ? ""
         : String(toMajorUnits(event.costAmountMinor, event.currency)),
     currency: event.currency,
+    policies: JSON.stringify(policies),
   };
 
   function submit(data: Record<string, unknown>) {
@@ -196,12 +220,14 @@ export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { ev
             </FormField>
 
             <ControlledField label={copy.createEvent.fields.kind}>
-              <SelectField name="kind" options={KIND_OPTIONS} defaultValue={event.kind} />
+              <SelectField name="kind" options={kindOptions} defaultValue={event.kind} />
             </ControlledField>
 
             <ControlledField
               label={copy.createEvent.fields.startsAt}
-              description={copy.createEvent.fields.startsAtHelp}
+              description={copy.createEvent.fields.startsAtHelp(
+                timeZoneLabel(timeZone, copy.intlLocale, new Date()),
+              )}
               error={serverState.errors.startsAtDate ?? serverState.errors.startsAtTime}
             >
               {/* allowPast: an event already under way must stay editable. */}
@@ -211,6 +237,19 @@ export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { ev
                 defaultDate={defaults.startsAtDate}
                 defaultTime={defaults.startsAtTime}
                 allowPast
+              />
+            </ControlledField>
+
+            <ControlledField
+              label={copy.createEvent.fields.timeZone}
+              description={copy.createEvent.fields.timeZoneHelp}
+              error={serverState.errors.timeZone}
+            >
+              <SelectField
+                name="timeZone"
+                options={zoneOptions}
+                defaultValue={event.timeZone}
+                onValueChange={setTimeZone}
               />
             </ControlledField>
 
@@ -247,7 +286,7 @@ export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { ev
             <ControlledField label={copy.createEvent.fields.costMode}>
               <SelectField
                 name="costMode"
-                options={COST_MODE_OPTIONS}
+                options={costModeOptions}
                 defaultValue={event.costMode}
                 onValueChange={setCostMode}
               />
@@ -286,6 +325,8 @@ export function EditEventForm({ publicToken, organizerToken, event }: Ctx & { ev
                 </ControlledField>
               )}
             </FormField>
+
+            <PolicyEditor name="policies" eventKind={event.kind} defaultValue={policies} />
 
             <SubmitButton
               pending={pending}

@@ -47,7 +47,11 @@ export function toOrganizer(user: User): Organizer {
   return {
     id: user.id,
     email,
-    displayName: name ?? email?.split("@")[0] ?? "Organizador",
+    // Both sign-in routes carry a verified email, so the second branch is what
+    // actually runs for an email sign-in and the third is unreachable in
+    // practice. It is a dash rather than a word so that no language is
+    // hardcoded into a name.
+    displayName: name ?? email?.split("@")[0] ?? "—",
     avatarUrl: avatar,
   };
 }

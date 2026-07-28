@@ -1,26 +1,30 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { uuidv7 } from "uuidv7";
 
-import { copy } from "@/config/copy";
+import { getCopy } from "@/config/copy";
+import type { Copy } from "@/config/copy";
 import { db } from "@/db/client";
-import { events, participants, payments } from "@/db/schema";
+import { eventPolicies, events, participants, payments, policySubmissions } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
 import { resolveAttendance } from "@/domain/waitlist";
+import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
 import { getOrganizer } from "@/lib/organizer";
-import { authorizeOrganizer, loadParticipantRows } from "@/lib/roster";
+import { authorizeOrganizer, findSubmissionInEvent, loadParticipantRows } from "@/lib/roster";
 import { createEditToken } from "@/lib/tokens";
 import { managePath, participantPath } from "@/lib/urls";
 import {
-  addParticipantSchema,
-  eventSchema,
   field,
   fieldErrors,
+  makeAddParticipantSchema,
+  makeEventSchema,
+  parsePoliciesField,
   participantIdSchema,
   paymentStatusSchema,
+  reviewSubmissionSchema,
 } from "@/lib/validation";
 
 /**
@@ -55,7 +59,23 @@ function refresh(publicToken: string, organizerToken: string): void {
   revalidatePath(managePath(publicToken, organizerToken));
 }
 
-const forbidden: ManageState = { errors: { _form: copy.errors.forbidden } };
+/**
+ * The strings for the language this event is being managed in.
+ *
+ * Resolved per call because a server action has no React context to read it
+ * from. Every early return below needs it, which is why `forbidden` became a
+ * function — it used to be a constant, and a constant would have frozen one
+ * language into the module.
+ */
+async function eventCopy(eventLocale: string): Promise<Copy> {
+  return getCopy(await resolveEventLocale(eventLocale));
+}
+
+/** Denial before the event is known, so there is no event language to use. */
+async function denied(): Promise<ManageState> {
+  const copy = getCopy(await resolveEventLocale("es"));
+  return { errors: { _form: copy.errors.forbidden } };
+}
 
 /**
  * Toggles a participant's payment between pending, confirmed and waived.
@@ -73,7 +93,9 @@ export async function setPaymentStatus(
   rawMethod?: string,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
-  if (!event) return forbidden;
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
 
   const participantId = participantIdSchema.safeParse(rawParticipantId);
   const status = paymentStatusSchema.safeParse(rawStatus);
@@ -127,9 +149,11 @@ export async function addParticipant(
   formData: FormData,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
-  if (!event) return forbidden;
+  if (!event) return denied();
 
-  const parsed = addParticipantSchema.safeParse({
+  const copy = await eventCopy(event.locale);
+
+  const parsed = makeAddParticipantSchema(copy).safeParse({
     displayName: field(formData, "displayName"),
     attendance: field(formData, "attendance"),
   });
@@ -184,7 +208,9 @@ export async function removeParticipant(
   rawParticipantId: string,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
-  if (!event) return forbidden;
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
 
   const participantId = participantIdSchema.safeParse(rawParticipantId);
   if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
@@ -213,7 +239,9 @@ export async function promoteParticipant(
   rawParticipantId: string,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
-  if (!event) return forbidden;
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
 
   const participantId = participantIdSchema.safeParse(rawParticipantId);
   if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
@@ -244,7 +272,7 @@ export async function setEventClosed(
   closed: boolean,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
-  if (!event) return forbidden;
+  if (!event) return denied();
 
   await db
     .update(events)
@@ -263,13 +291,17 @@ export async function editEvent(
   formData: FormData,
 ): Promise<ManageState> {
   const event = await authorize(publicToken, organizerToken);
-  if (!event) return forbidden;
+  if (!event) return denied();
 
-  const parsed = eventSchema.safeParse({
+  const copy = await eventCopy(event.locale);
+
+  const parsed = makeEventSchema(copy).safeParse({
     title: field(formData, "title"),
     kind: field(formData, "kind"),
     startsAtDate: field(formData, "startsAtDate"),
     startsAtTime: field(formData, "startsAtTime"),
+    timeZone: field(formData, "timeZone") || event.timeZone,
+    locale: field(formData, "locale") || event.locale,
     location: field(formData, "location"),
     capacity: field(formData, "capacity"),
     notes: field(formData, "notes"),
@@ -280,6 +312,9 @@ export async function editEvent(
 
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
 
+  const policies = parsePoliciesField(field(formData, "policies"), copy);
+  if (!policies.ok) return { errors: { _form: policies.message } };
+
   const input = parsed.data;
 
   await db
@@ -288,6 +323,8 @@ export async function editEvent(
       title: input.title,
       kind: input.kind,
       startsAt: input.startsAt,
+      timeZone: input.timeZone,
+      locale: input.locale,
       location: input.location,
       capacity: input.capacity,
       notes: input.notes,
@@ -297,10 +334,135 @@ export async function editEvent(
     })
     .where(eq(events.id, event.id));
 
+  await reconcilePolicies(event.id, policies.value);
+
   // Re-read so syncPayments splits against the new cost, not the old one.
   const updated = await authorize(publicToken, organizerToken);
   if (updated) await syncPayments(updated);
 
   refresh(publicToken, organizerToken);
   return { errors: {}, ok: true };
+}
+
+/**
+ * Approves or rejects a submitted receipt.
+ *
+ * This is the act the whole policy feature exists for: somebody said they are
+ * coming and sent proof, and a human decides whether it counts. Approving is
+ * what moves them out of the pending section and into the confirmed list.
+ *
+ * A rejection carries the reason back to the participant, who can then send
+ * another. It does not delete the submission — the row is reused, so the roster
+ * shows one standing per policy rather than a pile of attempts.
+ */
+export async function reviewSubmission(
+  publicToken: string,
+  organizerToken: string,
+  rawSubmissionId: string,
+  rawDecision: string,
+  rawReason?: string,
+): Promise<ManageState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const parsed = reviewSubmissionSchema.safeParse({
+    submissionId: rawSubmissionId,
+    decision: rawDecision,
+    reviewNote: rawReason ?? "",
+  });
+
+  if (!parsed.success) return { errors: { _form: copy.errors.notFound } };
+
+  // Scoped to this event, so an organizer cannot judge a submission that
+  // belongs to somebody else's event by passing its id.
+  const submission = await findSubmissionInEvent(event.id, parsed.data.submissionId);
+  if (!submission) return { errors: { _form: copy.errors.notFound } };
+
+  await db
+    .update(policySubmissions)
+    .set({
+      status: parsed.data.decision,
+      // Only meaningful on a rejection; cleared on approval so an old reason
+      // cannot resurface if the participant sends something else later.
+      reviewNote: parsed.data.decision === "rejected" ? parsed.data.reviewNote : null,
+      reviewedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(policySubmissions.id, submission.id));
+
+  refresh(publicToken, organizerToken);
+  return { errors: {}, ok: true };
+}
+
+/**
+ * Brings the event's policies in line with what the organizer submitted.
+ *
+ * Three cases, and the distinction between the first two is the reason
+ * `PolicyEditor` sends ids back:
+ *
+ * - **A row that returns with its id** is updated in place. Fixing a typo in a
+ *   label must not throw away the receipts already approved against it.
+ * - **A row with no id** is new.
+ * - **A row that does not come back** is deleted, and its submissions go with
+ *   it by cascade. That is the honest reading of removing a requirement: it no
+ *   longer exists, so neither does anyone's standing on it.
+ *
+ * Position is taken from the order they arrive in, so reordering is just
+ * resubmitting the list.
+ */
+async function reconcilePolicies(
+  eventId: string,
+  submitted: {
+    id?: string;
+    kind: "proof_of_payment" | "acknowledgement";
+    label: string;
+    description: string | null;
+  }[],
+): Promise<void> {
+  const keptIds = submitted.map((policy) => policy.id).filter((id): id is string => Boolean(id));
+
+  await db.transaction(async (tx) => {
+    // Anything the organizer dropped. `notInArray` with an empty list matches
+    // nothing in SQL, so the empty case is handled separately.
+    if (keptIds.length > 0) {
+      await tx
+        .delete(eventPolicies)
+        .where(and(eq(eventPolicies.eventId, eventId), notInArray(eventPolicies.id, keptIds)));
+    } else {
+      await tx.delete(eventPolicies).where(eq(eventPolicies.eventId, eventId));
+    }
+
+    // Only ids that really belong to this event survive, so a forged id cannot
+    // reach across to another organizer's policy.
+    const existing = keptIds.length
+      ? new Set(
+          (
+            await tx
+              .select({ id: eventPolicies.id })
+              .from(eventPolicies)
+              .where(and(eq(eventPolicies.eventId, eventId), inArray(eventPolicies.id, keptIds)))
+          ).map((row) => row.id),
+        )
+      : new Set<string>();
+
+    for (const [index, policy] of submitted.entries()) {
+      if (policy.id && existing.has(policy.id)) {
+        await tx
+          .update(eventPolicies)
+          .set({ label: policy.label, description: policy.description, position: index })
+          .where(eq(eventPolicies.id, policy.id));
+      } else {
+        await tx.insert(eventPolicies).values({
+          id: uuidv7(),
+          eventId,
+          kind: policy.kind,
+          label: policy.label,
+          description: policy.description,
+          position: index,
+        });
+      }
+    }
+  });
 }

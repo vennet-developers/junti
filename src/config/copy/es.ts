@@ -1,16 +1,26 @@
-import { BRAND_NAME, BRAND_TAGLINE } from "./brand";
+import { BRAND_NAME, BRAND_TAGLINE } from "../brand";
 
 /**
- * Every user-facing string in the app, in Spanish (es-CO).
+ * Every user-facing string, in Spanish (es-CO).
  *
- * Code, identifiers and comments are English; only what a human reads lives
- * here. Keeping it in one module means the UI language can be swapped by
- * replacing this file — no i18n library, no extraction step, no runtime cost.
+ * This file is the shape: `Copy` is inferred from it, and every other language
+ * has to satisfy that type, so a missing or misspelled key fails the build
+ * instead of rendering `undefined` to someone.
  *
- * Functions are used where a string needs interpolation, so callers never
- * build sentences by concatenation.
+ * Deliberately NOT `as const`. Widening the literals to `string` is what lets
+ * `en.ts` be checked against this without every value having to be the same
+ * Spanish text.
+ *
+ * Functions are used wherever a string needs interpolation, so callers never
+ * build sentences by concatenation — word order is not the same in every
+ * language, and a sentence assembled from fragments can only be correct in the
+ * one it was written for.
  */
-export const copy = {
+export const es = {
+  localeName: "Español",
+  /** For `Intl` — formatting conventions, not just language. */
+  intlLocale: "es-CO",
+
   brand: {
     name: BRAND_NAME,
     tagline: BRAND_TAGLINE,
@@ -30,6 +40,8 @@ export const copy = {
     unknownError: "Algo salió mal. Intenta de nuevo.",
     required: "Este campo es obligatorio",
     optional: "opcional",
+    language: "Idioma",
+    changeLanguage: "Cambiar idioma",
   },
 
   home: {
@@ -60,11 +72,14 @@ export const copy = {
       titleHelp: "Así lo verán tus invitados.",
       kind: "Tipo de evento",
       startsAt: "¿Cuándo?",
-      startsAtHelp: "Hora de Colombia (America/Bogotá).",
+      startsAtHelp: (zone: string) => `Hora de ${zone}.`,
       startsAtDatePlaceholder: "Elige el día",
       startsAtTimePlaceholder: "Hora",
       startsAtDateLabel: "Día",
       startsAtTimeLabel: "Hora",
+      timeZone: "Zona horaria",
+      timeZoneHelp:
+        "La hora del evento se muestra siempre en esta zona, para todos. Nadie tiene que hacer cuentas.",
       location: "¿Dónde?",
       locationPlaceholder: "Cancha La 90, Medellín",
       capacity: "Cupo máximo",
@@ -134,6 +149,11 @@ export const copy = {
     empty: "Todavía nadie ha confirmado. Sé el primero.",
     emptyGroup: "Nadie por aquí.",
     countIn: (n: number) => (n === 1 ? "1 persona" : `${n} personas`),
+    pendingPolicyTitle: "Falta un requisito",
+    pendingPolicyHelp:
+      "Dijeron que vienen, pero todavía no cumplen lo que pide el evento. No cuentan como confirmados.",
+    waitingOn: (labels: string) => `Falta: ${labels}`,
+    inReview: (labels: string) => `En revisión: ${labels}`,
   },
 
   attendance: {
@@ -162,6 +182,84 @@ export const copy = {
     duplicateName:
       "Ya hay alguien con ese nombre en este evento. Usa otro (por ejemplo, agrega tu apellido).",
     closed: "El evento está cerrado y ya no acepta cambios.",
+    oneTapHeading: "Apúntate de una",
+    oneTapSubmit: (name: string) => `Voy — apúntame como ${name}`,
+    oneTapSubmitting: "Apuntándote…",
+    oneTapHelp: "Un toque y quedas en la lista. Después puedes cambiar tu respuesta.",
+    oneTapNameTaken:
+      "Ya hay alguien con tu nombre en este evento. Ajústalo y te apuntamos igual de rápido.",
+    signedInAs: (name: string) => `Estás como ${name}.`,
+    useAnotherName: "Prefiero escribir otro nombre",
+  },
+
+  policies: {
+    sectionTitle: "Requisitos para quedar confirmado",
+    sectionHelp:
+      "Quien diga que viene pero no los cumpla aparece aparte, como pendiente. Tú decides cuáles pones.",
+    suggestedForKind: "Sugeridos para este tipo de evento",
+    add: "Agregar requisito",
+    remove: "Quitar",
+    labelField: "¿Cómo se llama?",
+    labelHelp: "Esto es lo que van a leer tus invitados.",
+    descriptionField: "Instrucciones",
+    descriptionHelp: "Opcional. Por ejemplo, a qué cuenta transferir.",
+    kindField: "Tipo de requisito",
+    none: "Este evento no pide nada extra para confirmar.",
+    kinds: {
+      proof_of_payment: "Comprobante de pago",
+      acknowledgement: "Confirmación de lectura",
+    },
+    kindHelp: {
+      proof_of_payment: "Suben una foto del pago y tú la apruebas.",
+      acknowledgement: "Marcan una casilla. Queda cumplido de una vez, sin que revises nada.",
+    },
+    defaultLabel: {
+      proof_of_payment: "Comprobante de pago",
+      acknowledgement: "Leí las indicaciones",
+    },
+    status: {
+      missing: "Pendiente",
+      submitted: "En revisión",
+      approved: "Cumplido",
+      rejected: "Rechazado",
+    },
+    yourStatusHeading: "Lo que falta para tu confirmación",
+    allDone: "Cumpliste todo. Ya estás confirmado.",
+    blockedNotice: (labels: string) =>
+      `Estás en la lista, pero todavía no confirmado: falta ${labels}.`,
+    acknowledgeSubmit: "Confirmo que lo leí",
+    acknowledged: "Ya lo confirmaste.",
+    uploadLabel: "Foto del comprobante",
+    uploadHelp: "JPG, PNG o WebP. La reducimos en tu teléfono antes de subirla.",
+    uploadChoose: "Elegir foto",
+    uploadChange: "Cambiar foto",
+    uploadSubmit: "Enviar comprobante",
+    uploadSubmitting: "Enviando…",
+    uploadPreparing: "Preparando la imagen…",
+    noteLabel: "Nota",
+    noteHelp: "Opcional. Por ejemplo, el número de la transferencia.",
+    notePlaceholder: "Transferencia 4471",
+    submittedNotice: "Enviado. El organizador lo revisa y te confirma.",
+    rejectedNotice: (reason: string) => `El organizador no lo aceptó: ${reason}`,
+    rejectedNoticeNoReason: "El organizador no lo aceptó. Vuelve a enviarlo.",
+    resubmit: "Enviar otro",
+    onlyOrganizerSeesEvidence: "Solo el organizador ve esta foto. No aparece en la lista pública.",
+  },
+
+  review: {
+    heading: "Por revisar",
+    empty: "No hay nada pendiente de revisar.",
+    pendingCount: (n: number) => (n === 1 ? "1 por revisar" : `${n} por revisar`),
+    viewEvidence: "Ver comprobante",
+    approve: "Aprobar",
+    reject: "Rechazar",
+    reasonLabel: "¿Por qué?",
+    reasonPlaceholder: "La foto no se ve, no coincide el monto…",
+    reasonHelp: "Se lo mostramos a la persona para que lo vuelva a enviar.",
+    submittedBy: (name: string, when: string) => `${name} · enviado ${when}`,
+    approvedNotice: "Aprobado.",
+    rejectedNotice: "Rechazado. La persona ya puede volver a enviarlo.",
+    noEvidence: "Sin foto adjunta.",
   },
 
   money: {
@@ -249,6 +347,7 @@ export const copy = {
     createdOn: (date: string) => `Creado el ${date}`,
     manage: "Administrar",
     attendingCount: (n: number) => (n === 1 ? "1 confirmado" : `${n} confirmados`),
+    signInToJoin: "Entra y te apuntas con un toque",
   },
 
   errorBoundary: {
@@ -274,5 +373,17 @@ export const copy = {
     forbidden: "Este link no tiene permiso para hacer eso.",
     rateLimited: "Vas muy rápido. Espera un momento y vuelve a intentar.",
     eventClosed: "El evento está cerrado.",
+    timeZoneInvalid: "Esa zona horaria no existe.",
+    policyLabelRequired: "Ponle un nombre al requisito.",
+    policyLabelTooLong: "Máximo 60 caracteres.",
+    policyTooMany: (max: number) => `Máximo ${max} requisitos por evento.`,
+    evidenceRequired: "Adjunta la foto del comprobante.",
+    evidenceTooLarge: (maxKb: number) =>
+      `La imagen pesa demasiado (máximo ${maxKb} KB después de reducirla).`,
+    evidenceWrongType: "Solo aceptamos imágenes JPG, PNG o WebP.",
+    evidenceUnreadable: "No pudimos leer esa imagen. Intenta con otra foto.",
+    signInRequired: "Entra a tu cuenta para hacer eso.",
   },
-} as const;
+};
+
+export type Copy = typeof es;

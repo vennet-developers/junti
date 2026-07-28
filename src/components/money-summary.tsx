@@ -3,12 +3,17 @@ import { Progress } from "@stackmyth/progress";
 import { Stat } from "@stackmyth/stat";
 import { Text } from "@stackmyth/text";
 
-import { copy } from "@/config/copy";
+import type { Copy } from "@/config/copy";
 import { formatMoney } from "@/lib/format";
 import type { RosterView } from "@/lib/roster";
 
-export function MoneySummary({ roster }: { roster: RosterView }) {
+/**
+ * A server component, so `copy` comes down as a prop rather than through the
+ * context hook — and it can, because nothing crosses the client boundary here.
+ */
+export function MoneySummary({ roster, copy }: { roster: RosterView; copy: Copy }) {
   const { event, collectedMinor, outstandingMinor, waivedMinor, totalComputedMinor } = roster;
+  const money = (amount: number) => formatMoney(amount, event.currency, copy.intlLocale);
 
   if (!event.hasCost) return null;
 
@@ -45,7 +50,7 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
           label={copy.money.collectedLabel}
           value={
             <Text as="span" variant="h4" weight="bold" whiteSpace="nowrap">
-              {formatMoney(collectedMinor, event.currency)}
+              {money(collectedMinor)}
             </Text>
           }
         />
@@ -53,7 +58,7 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
           label={copy.money.outstandingLabel}
           value={
             <Text as="span" variant="h4" weight="bold" whiteSpace="nowrap">
-              {formatMoney(outstandingMinor, event.currency)}
+              {money(outstandingMinor)}
             </Text>
           }
         />
@@ -63,16 +68,10 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
         <Progress
           value={percent}
           max={100}
-          aria-label={copy.money.progressLabel(
-            formatMoney(collectedMinor, event.currency),
-            formatMoney(target, event.currency),
-          )}
+          aria-label={copy.money.progressLabel(money(collectedMinor), money(target))}
         />
         <Text variant="small" color="muted">
-          {copy.money.progressLabel(
-            formatMoney(collectedMinor, event.currency),
-            formatMoney(target, event.currency),
-          )}
+          {copy.money.progressLabel(money(collectedMinor), money(target))}
         </Text>
       </Stack>
 
@@ -83,7 +82,7 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
           <Text variant="small" color="muted">
             {copy.money.totalLabel}
           </Text>
-          <Text variant="small">{formatMoney(totalComputedMinor, event.currency)}</Text>
+          <Text variant="small">{money(totalComputedMinor)}</Text>
         </Flex>
 
         {event.costMode === "total" ? (
@@ -97,7 +96,7 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
             <Text variant="small" color="muted">
               {copy.money.perPersonLabel}
             </Text>
-            <Text variant="small">{formatMoney(event.costAmountMinor ?? 0, event.currency)}</Text>
+            <Text variant="small">{money(event.costAmountMinor ?? 0)}</Text>
           </Flex>
         )}
 
@@ -106,7 +105,7 @@ export function MoneySummary({ roster }: { roster: RosterView }) {
             <Text variant="small" color="muted">
               {copy.money.waived}
             </Text>
-            <Text variant="small">{formatMoney(waivedMinor, event.currency)}</Text>
+            <Text variant="small">{money(waivedMinor)}</Text>
           </Flex>
         ) : null}
       </Stack>

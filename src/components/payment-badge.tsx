@@ -1,6 +1,6 @@
 import { Badge } from "@stackmyth/badge";
 
-import { copy } from "@/config/copy";
+import type { Copy } from "@/config/copy";
 import type { PaymentStatus } from "@/domain/types";
 
 // STACKMYTH-GAP: Badge's `dot` prop discards its children — <Badge dot>Pagó</Badge>
@@ -9,17 +9,23 @@ import type { PaymentStatus } from "@/domain/types";
 // See STACKMYTH-GAPS.md #3.
 
 const STATUS_VARIANT = {
-  confirmed: { variant: "success", soft: false, label: copy.money.paid },
-  pending: { variant: "warning", soft: true, label: copy.money.pending },
-  waived: { variant: "secondary", soft: true, label: copy.money.waived },
+  confirmed: { variant: "success", soft: false },
+  pending: { variant: "warning", soft: true },
+  waived: { variant: "secondary", soft: true },
 } as const;
 
-export function PaymentBadge({ status }: { status: PaymentStatus }) {
+export function PaymentBadge({ status, copy }: { status: PaymentStatus; copy: Copy }) {
   const config = STATUS_VARIANT[status];
+
+  const label = {
+    confirmed: copy.money.paid,
+    pending: copy.money.pending,
+    waived: copy.money.waived,
+  }[status];
 
   return (
     <Badge variant={config.variant} size="sm" soft={config.soft}>
-      {config.label}
+      {label}
     </Badge>
   );
 }

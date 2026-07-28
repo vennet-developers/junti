@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
@@ -16,47 +16,69 @@ import {
   SubmitButton,
   createZodResolver,
 } from "@/components/form-shell";
+import { useCopy } from "@/components/copy-provider";
+import { PolicyEditor } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
-import { copy } from "@/config/copy";
-import { eventClientSchema } from "@/lib/validation";
+import type { EventKind } from "@/domain/types";
+import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
+import { makeEventClientSchema } from "@/lib/validation";
 
 import { createEvent, type CreateEventState } from "./actions";
 
-const KIND_OPTIONS = [
-  { value: "match", label: copy.createEvent.kinds.match },
-  { value: "party", label: copy.createEvent.kinds.party },
-  { value: "kids_party", label: copy.createEvent.kinds.kids_party },
-  { value: "other", label: copy.createEvent.kinds.other },
-] as const;
-
-const COST_MODE_OPTIONS = [
-  { value: "none", label: copy.createEvent.costModes.none },
-  { value: "total", label: copy.createEvent.costModes.total },
-  { value: "per_person", label: copy.createEvent.costModes.per_person },
-] as const;
-
-const resolver = createZodResolver(eventClientSchema);
-
-const DEFAULT_VALUES = {
-  title: "",
-  kind: "match",
-  startsAtDate: "",
-  startsAtTime: "",
-  location: "",
-  capacity: "",
-  notes: "",
-  costMode: "none",
-  costAmount: "",
-  currency: "COP",
-};
-
-export function CreateEventForm() {
+export function CreateEventForm({
+  defaultTimeZone,
+  defaultLocale,
+}: {
+  defaultTimeZone: string;
+  defaultLocale: string;
+}) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<CreateEventState>({ errors: {} });
 
-  // Mirrors of the two controls that are not plain inputs, so the resolver can
-  // see their values and the cost field can appear conditionally.
+  // Mirrors of the controls that are not plain inputs, so the resolver can see
+  // their values and dependent fields can appear conditionally.
   const [costMode, setCostMode] = useState("none");
+  const [kind, setKind] = useState<EventKind>("match");
+  const [timeZone, setTimeZone] = useState(defaultTimeZone);
+
+  const kindOptions = [
+    { value: "match", label: copy.createEvent.kinds.match },
+    { value: "party", label: copy.createEvent.kinds.party },
+    { value: "kids_party", label: copy.createEvent.kinds.kids_party },
+    { value: "other", label: copy.createEvent.kinds.other },
+  ];
+
+  const costModeOptions = [
+    { value: "none", label: copy.createEvent.costModes.none },
+    { value: "total", label: copy.createEvent.costModes.total },
+    { value: "per_person", label: copy.createEvent.costModes.per_person },
+  ];
+
+  // `new Date()` only to label zones with their CURRENT offset, so a zone on
+  // daylight saving reads the way the person checking the list expects.
+  const zoneOptions = useMemo(
+    () => timeZoneOptions(defaultTimeZone, copy.intlLocale, new Date()),
+    [defaultTimeZone, copy.intlLocale],
+  );
+
+  const resolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
+
+  const defaultValues = {
+    title: "",
+    kind: "match",
+    startsAtDate: "",
+    startsAtTime: "",
+    timeZone: defaultTimeZone,
+    locale: defaultLocale,
+    location: "",
+    capacity: "",
+    notes: "",
+    costMode: "none",
+    costAmount: "",
+    currency: "COP",
+    policies: "[]",
+  };
 
   /**
    * Client validation has passed. Hand the raw values to the server action,
@@ -76,7 +98,7 @@ export function CreateEventForm() {
   }
 
   return (
-    <FormController resolver={resolver} defaultValues={DEFAULT_VALUES} mode="onBlur">
+    <FormController resolver={resolver} defaultValues={defaultValues} mode="onBlur">
       {({ handleSubmit }) => (
         <form onSubmit={handleSubmit(submit)} noValidate>
           <Stack gap="5">
@@ -104,15 +126,35 @@ export function CreateEventForm() {
             </FormField>
 
             <ControlledField label={copy.createEvent.fields.kind}>
-              <SelectField name="kind" options={KIND_OPTIONS} defaultValue="match" />
+              <SelectField
+                name="kind"
+                options={kindOptions}
+                defaultValue="match"
+                onValueChange={(value) => setKind(value as EventKind)}
+              />
             </ControlledField>
 
             <ControlledField
               label={copy.createEvent.fields.startsAt}
-              description={copy.createEvent.fields.startsAtHelp}
+              description={copy.createEvent.fields.startsAtHelp(
+                timeZoneLabel(timeZone, copy.intlLocale, new Date()),
+              )}
               error={serverState.errors.startsAtDate ?? serverState.errors.startsAtTime}
             >
               <DateTimeField dateName="startsAtDate" timeName="startsAtTime" />
+            </ControlledField>
+
+            <ControlledField
+              label={copy.createEvent.fields.timeZone}
+              description={copy.createEvent.fields.timeZoneHelp}
+              error={serverState.errors.timeZone}
+            >
+              <SelectField
+                name="timeZone"
+                options={zoneOptions}
+                defaultValue={defaultTimeZone}
+                onValueChange={setTimeZone}
+              />
             </ControlledField>
 
             <FormField name="location">
@@ -173,7 +215,7 @@ export function CreateEventForm() {
             <ControlledField label={copy.createEvent.fields.costMode}>
               <SelectField
                 name="costMode"
-                options={COST_MODE_OPTIONS}
+                options={costModeOptions}
                 defaultValue="none"
                 onValueChange={setCostMode}
               />
@@ -230,6 +272,8 @@ export function CreateEventForm() {
                 </ControlledField>
               )}
             </FormField>
+
+            <PolicyEditor name="policies" eventKind={kind} />
 
             <SubmitButton
               pending={pending}

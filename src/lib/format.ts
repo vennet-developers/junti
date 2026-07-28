@@ -1,16 +1,23 @@
 /**
  * Presentation-layer formatting.
  *
- * Timestamps are stored UTC and only ever rendered in America/Bogota — the
- * group this app is for is all in one timezone, and showing a match time in the
- * viewer's local zone would be actively wrong for the one person travelling.
+ * Every function takes the timezone and the formatting locale explicitly.
+ * Neither used to be a parameter — the module hardcoded America/Bogota and
+ * es-CO — and the reason they are now is that the two answer different
+ * questions and must be allowed to disagree:
  *
- * No `server-only` here: these run on both sides.
+ * - **The timezone belongs to the event.** A match at 8 p.m. in Medellín is at
+ *   8 p.m. for everyone reading the roster, including the person reading it
+ *   from Madrid. Rendering in the reader's own zone would tell them 3 a.m. and
+ *   be technically correct and practically useless.
+ * - **The locale belongs to the reader.** Month names, the order of day and
+ *   month, and where the currency symbol goes should follow whoever is looking.
+ *
+ * No `server-only`: these run on both sides.
  */
 
-export const EVENT_TIME_ZONE = "America/Bogota";
-
-const LOCALE = "es-CO";
+/** Used when a caller has no event in hand, and as the schema default. */
+export const DEFAULT_TIME_ZONE = "America/Bogota";
 
 /**
  * How many minor units make one major unit, by ISO 4217 code.
@@ -46,13 +53,13 @@ export function toMinorUnits(amountMajor: number, currency: string): number {
 }
 
 /**
- * Formats money for display: `$ 50.000` for COP, `$ 50.000,25` for a currency
- * with cents.
+ * Formats money for display: `$ 50.000` for COP read in Spanish, `$50,000` read
+ * in English. Same amount, same currency, different separators.
  */
-export function formatMoney(amountMinor: number, currency: string): string {
+export function formatMoney(amountMinor: number, currency: string, intlLocale: string): string {
   const exponent = exponentFor(currency);
 
-  return new Intl.NumberFormat(LOCALE, {
+  return new Intl.NumberFormat(intlLocale, {
     style: "currency",
     currency,
     minimumFractionDigits: exponent,
@@ -61,49 +68,63 @@ export function formatMoney(amountMinor: number, currency: string): string {
 }
 
 /** Long form for the event header: "jueves, 12 de marzo de 2026, 8:00 p. m." */
-export function formatEventDateTime(date: Date): string {
-  return new Intl.DateTimeFormat(LOCALE, {
+export function formatEventDateTime(date: Date, timeZone: string, intlLocale: string): string {
+  return new Intl.DateTimeFormat(intlLocale, {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: EVENT_TIME_ZONE,
+    timeZone,
   }).format(date);
 }
 
 /** Short form for the WhatsApp message: "jue 12 mar, 8:00 p. m." */
-export function formatEventDateTimeShort(date: Date): string {
-  return new Intl.DateTimeFormat(LOCALE, {
+export function formatEventDateTimeShort(date: Date, timeZone: string, intlLocale: string): string {
+  return new Intl.DateTimeFormat(intlLocale, {
     weekday: "short",
     day: "numeric",
     month: "short",
     hour: "numeric",
     minute: "2-digit",
-    timeZone: EVENT_TIME_ZONE,
+    timeZone,
   }).format(date);
 }
 
-/** The Bogota calendar day of an instant, as `YYYY-MM-DD`, for `DateTimeField`. */
-export function toDatePartValue(date: Date): string {
-  return toDateTimeLocalValue(date).slice(0, 10);
+/** Date only, for "created on" lines in the organizer's history. */
+export function formatDate(date: Date, timeZone: string, intlLocale: string): string {
+  return new Intl.DateTimeFormat(intlLocale, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone,
+  }).format(date);
 }
 
-/** The Bogota wall-clock time of an instant, as `HH:mm`, for `DateTimeField`. */
-export function toTimePartValue(date: Date): string {
-  return toDateTimeLocalValue(date).slice(11, 16);
+/** The event day of an instant, as `YYYY-MM-DD`, for `DateTimeField`. */
+export function toDatePartValue(date: Date, timeZone: string): string {
+  return toDateTimeLocalValue(date, timeZone).slice(0, 10);
+}
+
+/** The event wall-clock time of an instant, as `HH:mm`, for `DateTimeField`. */
+export function toTimePartValue(date: Date, timeZone: string): string {
+  return toDateTimeLocalValue(date, timeZone).slice(11, 16);
 }
 
 /**
- * Renders a UTC instant as a `YYYY-MM-DDTHH:mm` wall-clock string in Bogota
- * time.
+ * Renders a UTC instant as a `YYYY-MM-DDTHH:mm` wall-clock string in the given
+ * zone.
  *
  * Wall-clock strings have no timezone concept, so this is how a stored event
  * survives a round trip through the edit form without drifting by the UTC
  * offset. `fromDateTimeLocalValue` is the inverse.
+ *
+ * Formats through `en-CA` deliberately: it is the one common locale whose date
+ * order is already `YYYY-MM-DD`, so the parts come out in the order the string
+ * needs regardless of what language the reader is using.
  */
-export function toDateTimeLocalValue(date: Date): string {
+export function toDateTimeLocalValue(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     year: "numeric",
     month: "2-digit",
@@ -111,7 +132,7 @@ export function toDateTimeLocalValue(date: Date): string {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-    timeZone: EVENT_TIME_ZONE,
+    timeZone,
   }).formatToParts(date);
 
   const get = (type: Intl.DateTimeFormatPartTypes) =>
@@ -124,22 +145,23 @@ export function toDateTimeLocalValue(date: Date): string {
 }
 
 /**
- * Parses a `datetime-local` value as Bogota wall-clock time and returns the
- * corresponding UTC instant.
+ * Parses a `datetime-local` value as wall-clock time in `timeZone` and returns
+ * the corresponding UTC instant.
  *
  * `new Date("2026-03-12T20:00")` would interpret the string in the *server's*
- * timezone, which on Vercel is UTC — silently shifting every event by five
- * hours. This computes the real offset for that instant instead of assuming a
- * fixed -05:00, so it stays correct if Colombia ever adopts DST again.
+ * timezone, which on Vercel is UTC — silently shifting every event by the
+ * offset. This computes the real offset for that instant instead of assuming a
+ * fixed one, so it stays correct across daylight saving in the zones that have
+ * it, and if Colombia ever adopts it again.
  */
-export function fromDateTimeLocalValue(value: string): Date | null {
+export function fromDateTimeLocalValue(value: string, timeZone: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
   if (!match) return null;
 
   const [, year, month, day, hour, minute, second] = match;
 
   // Treat the wall-clock reading as if it were UTC, then correct by however far
-  // Bogota was from UTC at that moment.
+  // the zone was from UTC at that moment.
   const asUtc = Date.UTC(
     Number(year),
     Number(month) - 1,
@@ -151,16 +173,20 @@ export function fromDateTimeLocalValue(value: string): Date | null {
 
   if (Number.isNaN(asUtc)) return null;
 
-  const offsetMs = zoneOffsetMs(new Date(asUtc));
-  const result = new Date(asUtc - offsetMs);
+  // The offset is computed at the approximate instant, then re-checked once.
+  // Around a DST transition the first guess can land on the wrong side of the
+  // jump; a second pass settles it, which is as far as this needs to go for
+  // picking an evening kickoff.
+  const firstGuess = new Date(asUtc - zoneOffsetMs(new Date(asUtc), timeZone));
+  const result = new Date(asUtc - zoneOffsetMs(firstGuess, timeZone));
 
   return Number.isNaN(result.getTime()) ? null : result;
 }
 
-/** Milliseconds America/Bogota is ahead of UTC at `instant` (negative in practice). */
-function zoneOffsetMs(instant: Date): number {
+/** Milliseconds `timeZone` is ahead of UTC at `instant`. */
+function zoneOffsetMs(instant: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: EVENT_TIME_ZONE,
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Button } from "@stackmyth/button";
-import { Box, Container, Divider, Stack } from "@stackmyth/layout";
+import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { EventHeader } from "@/components/event-header";
@@ -10,16 +10,25 @@ import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
 import { Disclosure } from "@/components/disclosure";
 import { Notice } from "@/components/notice";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { RosterGroup } from "@/components/roster-list";
-import { copy } from "@/config/copy";
+import { getCopy } from "@/config/copy";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
+import { resolveEventLocale } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
-import { authorizeOrganizer, loadRoster } from "@/lib/roster";
+import {
+  authorizeOrganizer,
+  findEventByPublicToken,
+  loadReviewQueue,
+  loadRoster,
+  type RosterMember,
+} from "@/lib/roster";
 import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
 
 import { CloseEventControl } from "./close-event-control";
 import { AddParticipantForm, EditEventForm } from "./manage-forms";
 import { PaymentControls, PromoteControl, RemoveControl } from "./participant-controls";
+import { ReviewQueue, type ReviewItem } from "./review-queue";
 
 /**
  * The organizer view.
@@ -31,10 +40,18 @@ import { PaymentControls, PromoteControl, RemoveControl } from "./participant-co
 
 type Params = { public_token: string; organizer_token: string };
 
-export const metadata: Metadata = {
-  title: copy.manage.title,
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
+  // Reads the event so the tab title is in the same language as the page.
+  // Only the public token is needed, and it grants nothing on its own.
+  const { public_token: publicToken } = await params;
+  const event = await findEventByPublicToken(publicToken);
+  const copy = getCopy(await resolveEventLocale(event?.locale ?? "es"));
+
+  return {
+    title: copy.manage.title,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function ManagePage({
   params,
@@ -50,8 +67,23 @@ export default async function ManagePage({
   const eventRow = await authorizeOrganizer(publicToken, organizerToken, organizer?.id ?? null);
   if (!eventRow) notFound();
 
+  const copy = getCopy(await resolveEventLocale(eventRow.locale));
+
   const roster = await loadRoster(eventRow);
   const { event } = roster;
+
+  const queue = await loadReviewQueue(eventRow.id);
+
+  const reviewItems: ReviewItem[] = queue.map((item) => ({
+    id: item.id,
+    participantName: item.participantName,
+    policyLabel: item.policyLabel,
+    note: item.note,
+    submittedAt: formatEventDateTimeShort(item.createdAt, event.timeZone, copy.intlLocale),
+    hasEvidence: item.hasEvidence,
+    // Under the organizer path, so the token in the URL is what authorises it.
+    evidenceUrl: `${managePath(publicToken, organizerToken)}/evidence/${item.id}`,
+  }));
 
   const base = await origin();
   const participantUrl = `${base}${participantPath(publicToken)}`;
@@ -59,7 +91,7 @@ export default async function ManagePage({
 
   const shareMessage = copy.share.whatsAppMessage(
     event.title,
-    formatEventDateTimeShort(event.startsAt),
+    formatEventDateTimeShort(event.startsAt, event.timeZone, copy.intlLocale),
     participantUrl,
   );
 
@@ -69,12 +101,51 @@ export default async function ManagePage({
   const nameOf = (participantId: string) =>
     roster.members.find((m) => m.id === participantId)?.displayName ?? "";
 
+  /** What a pending participant still owes the event. */
+  const pendingNote = (member: RosterMember) => {
+    const compliance = roster.compliance.get(member.id);
+    if (!compliance || compliance.blocking.length === 0) return null;
+
+    const labels = compliance.blocking.map((policy) => policy.label).join(", ");
+    const allSubmitted = compliance.awaitingReview.length === compliance.blocking.length;
+
+    return (
+      <Text variant="small" color="muted">
+        {allSubmitted ? copy.roster.inReview(labels) : copy.roster.waitingOn(labels)}
+      </Text>
+    );
+  };
+
+  const participantActions = (member: RosterMember) => (
+    <>
+      {showMoney ? (
+        <PaymentControls
+          publicToken={publicToken}
+          organizerToken={organizerToken}
+          participantId={member.id}
+          displayName={member.displayName}
+          status={member.share.status}
+        />
+      ) : null}
+      <RemoveControl
+        publicToken={publicToken}
+        organizerToken={organizerToken}
+        participantId={member.id}
+        displayName={member.displayName}
+      />
+    </>
+  );
+
   return (
     <Container size="1">
       <Stack gap="6" py="6" px="4">
         {/* The event itself comes first. On a return visit that is what the
             organizer opened the page for; the links are one tap away below. */}
-        <EventHeader event={event} attendingCount={roster.attending.length} />
+        <Flex justify="end">
+          <LanguageSwitcher />
+        </Flex>
+
+        <EventHeader event={event} attendingCount={roster.attending.length} copy={copy} />
 
         {justCreated ? (
           <Stack gap="2">
@@ -134,6 +205,26 @@ export default async function ManagePage({
 
         {/* Confirmed payments that no longer match the computed share. Never
             reconciled automatically — the organizer sorts it out in person. */}
+        {/* Above the money and the roster, because it is the only thing on this
+            page that somebody else is actively waiting on. */}
+        {roster.policies.length > 0 ? (
+          <Disclosure
+            id="review"
+            label={
+              reviewItems.length > 0
+                ? `${copy.review.heading} · ${copy.review.pendingCount(reviewItems.length)}`
+                : copy.review.heading
+            }
+            defaultOpen={reviewItems.length > 0}
+          >
+            <ReviewQueue
+              publicToken={publicToken}
+              organizerToken={organizerToken}
+              items={reviewItems}
+            />
+          </Disclosure>
+        ) : null}
+
         {roster.discrepancies.map((discrepancy) => (
           <Notice
             key={discrepancy.participantId}
@@ -142,15 +233,15 @@ export default async function ManagePage({
           >
             {copy.manage.splitWarningBody(
               nameOf(discrepancy.participantId),
-              formatMoney(discrepancy.confirmedAmountMinor, event.currency),
-              formatMoney(discrepancy.computedAmountMinor, event.currency),
+              formatMoney(discrepancy.confirmedAmountMinor, event.currency, copy.intlLocale),
+              formatMoney(discrepancy.computedAmountMinor, event.currency, copy.intlLocale),
             )}
           </Notice>
         ))}
 
         <Divider />
 
-        <MoneySummary roster={roster} />
+        <MoneySummary roster={roster} copy={copy} />
 
         {showMoney ? <Divider /> : null}
 
@@ -163,35 +254,42 @@ export default async function ManagePage({
             <>
               <RosterGroup
                 title={copy.roster.inTitle}
-                members={roster.attending}
+                members={roster.confirmed}
                 currency={event.currency}
+                copy={copy}
                 showMoney={showMoney}
-                renderActions={(member) => (
-                  <>
-                    {showMoney ? (
-                      <PaymentControls
-                        publicToken={publicToken}
-                        organizerToken={organizerToken}
-                        participantId={member.id}
-                        displayName={member.displayName}
-                        status={member.share.status}
-                      />
-                    ) : null}
-                    <RemoveControl
-                      publicToken={publicToken}
-                      organizerToken={organizerToken}
-                      participantId={member.id}
-                      displayName={member.displayName}
-                    />
-                  </>
-                )}
+                renderActions={participantActions}
               />
+
+              {roster.pendingPolicy.length > 0 ? (
+                <Disclosure
+                  id="pending-policy"
+                  label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
+                  defaultOpen
+                >
+                  <Stack gap="3">
+                    <Text variant="small" color="muted">
+                      {copy.roster.pendingPolicyHelp}
+                    </Text>
+                    <RosterGroup
+                      title={copy.roster.pendingPolicyTitle}
+                      members={roster.pendingPolicy}
+                      currency={event.currency}
+                      copy={copy}
+                      showMoney={showMoney}
+                      renderNote={pendingNote}
+                      renderActions={participantActions}
+                    />
+                  </Stack>
+                </Disclosure>
+              ) : null}
 
               {roster.waitlisted.length > 0 ? (
                 <RosterGroup
                   title={copy.roster.waitlistedTitle}
                   members={roster.waitlisted}
                   currency={event.currency}
+                  copy={copy}
                   showMoney={false}
                   numbered
                   renderActions={(member) => (
@@ -218,6 +316,7 @@ export default async function ManagePage({
                   title={copy.roster.maybeTitle}
                   members={roster.maybe}
                   currency={event.currency}
+                  copy={copy}
                   showMoney={false}
                   renderActions={(member) => (
                     <RemoveControl
@@ -235,6 +334,7 @@ export default async function ManagePage({
                   title={copy.roster.outTitle}
                   members={roster.notAttending}
                   currency={event.currency}
+                  copy={copy}
                   showMoney={false}
                   renderActions={(member) => (
                     <RemoveControl
@@ -255,7 +355,17 @@ export default async function ManagePage({
         </Stack>
 
         <Disclosure id="edit" label={copy.manage.editEvent}>
-          <EditEventForm publicToken={publicToken} organizerToken={organizerToken} event={event} />
+          <EditEventForm
+            publicToken={publicToken}
+            organizerToken={organizerToken}
+            event={event}
+            policies={roster.policies.map((policy) => ({
+              id: policy.id,
+              kind: policy.kind,
+              label: policy.label,
+              description: policy.description,
+            }))}
+          />
         </Disclosure>
 
         {/* Closing is deliberately last and low-key: it is the end of the

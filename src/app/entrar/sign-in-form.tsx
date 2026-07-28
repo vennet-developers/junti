@@ -10,8 +10,8 @@ import { Input } from "@stackmyth/input";
 import { Spinner } from "@stackmyth/spinner";
 import { Text } from "@stackmyth/text";
 
+import { useCopy } from "@/components/copy-provider";
 import { Notice } from "@/components/notice";
-import { copy } from "@/config/copy";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /**
@@ -25,6 +25,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
  * Both land on /auth/callback, which exchanges the code for a session.
  */
 export function SignInForm({ redirectTo }: { redirectTo: string }) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);

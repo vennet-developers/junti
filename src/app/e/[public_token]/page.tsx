@@ -2,21 +2,31 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { Container, Divider, Stack } from "@stackmyth/layout";
+import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { MoneySummary } from "@/components/money-summary";
 import { Notice } from "@/components/notice";
 import { RosterGroup } from "@/components/roster-list";
-import { copy } from "@/config/copy";
+import { getCopy } from "@/config/copy";
 import { db } from "@/db/client";
 import { participants } from "@/db/schema";
-import { findEventByPublicToken, loadRoster } from "@/lib/roster";
+import { resolveEventLocale } from "@/lib/locale";
+import { getOrganizer } from "@/lib/organizer";
+import {
+  findEventByPublicToken,
+  loadParticipantSubmissions,
+  loadRoster,
+  type RosterMember,
+} from "@/lib/roster";
 import { editCookieName } from "@/lib/rsvp-cookie";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 
-import { RsvpForm } from "./rsvp-form";
+import { JoinPanel } from "./join-panel";
+import { PolicyPanel, type PolicyPanelItem } from "./policy-panel";
 
 /**
  * The participant view.
@@ -24,7 +34,9 @@ import { RsvpForm } from "./rsvp-form";
  * Everything here is safe for anyone holding the public link. The organizer
  * token is never loaded into this component — `loadRoster` returns an
  * `EventView` that has no such field, so it cannot leak into the HTML or the
- * server-component payload by accident.
+ * server-component payload by accident. The same goes for uploaded receipts:
+ * they are reachable only through the organizer-only evidence route, and no
+ * query on this page selects their bytes.
  */
 
 type Params = { public_token: string };
@@ -32,6 +44,7 @@ type Params = { public_token: string };
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { public_token: publicToken } = await params;
   const event = await findEventByPublicToken(publicToken);
+  const copy = getCopy(await resolveEventLocale(event?.locale ?? "es"));
 
   return {
     title: event ? event.title : copy.event.notFoundTitle,
@@ -46,32 +59,92 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   const eventRow = await findEventByPublicToken(publicToken);
   if (!eventRow) notFound();
 
-  const roster = await loadRoster(eventRow);
+  // The event's language, unless the reader has chosen one for themselves.
+  const copy = getCopy(await resolveEventLocale(eventRow.locale));
 
-  // Identify this device's own RSVP, if it has one, so the form can prefill
-  // and amend rather than creating a duplicate.
+  const roster = await loadRoster(eventRow);
+  const organizer = await getOrganizer();
+
+  /**
+   * This reader's own row, if they have one.
+   *
+   * Matched on the account first and the device cookie second, which is what
+   * lets a signed-in person amend their answer from a phone that has never
+   * been here.
+   */
   const editToken = (await cookies()).get(editCookieName(eventRow.id))?.value;
 
-  const mine = editToken
-    ? ((
-        await db
-          .select({
-            displayName: participants.displayName,
-            attendance: participants.attendance,
-          })
-          .from(participants)
-          .where(and(eq(participants.eventId, eventRow.id), eq(participants.editToken, editToken)))
-          .limit(1)
-      )[0] ?? null)
+  const identityFilters = [
+    editToken ? eq(participants.editToken, editToken) : null,
+    organizer ? eq(participants.userId, organizer.id) : null,
+  ].filter((clause) => clause !== null);
+
+  const mineRow =
+    identityFilters.length > 0
+      ? ((
+          await db
+            .select({
+              id: participants.id,
+              displayName: participants.displayName,
+              attendance: participants.attendance,
+            })
+            .from(participants)
+            .where(and(eq(participants.eventId, eventRow.id), or(...identityFilters)))
+            .limit(1)
+        )[0] ?? null)
+      : null;
+
+  const mine = mineRow
+    ? { displayName: mineRow.displayName, attendance: mineRow.attendance }
     : null;
+
+  // What this person still owes the event, if anything. Only their own — never
+  // anyone else's standing, which is the organizer's business.
+  let myPolicies: PolicyPanelItem[] = [];
+
+  if (mineRow && roster.policies.length > 0 && mineRow.attendance === "in") {
+    const submissions = await loadParticipantSubmissions(mineRow.id);
+    const byPolicy = new Map(submissions.map((s) => [s.policyId, s]));
+
+    myPolicies = roster.policies.map((policy) => {
+      const submission = byPolicy.get(policy.id);
+      return {
+        id: policy.id,
+        kind: policy.kind,
+        label: policy.label,
+        description: policy.description ?? null,
+        state: submission?.status ?? "missing",
+        reviewNote: submission?.reviewNote ?? null,
+      };
+    });
+  }
 
   const { event } = roster;
   const showMoney = event.hasCost;
 
+  /** "Waiting on: receipt" under a pending person's name. */
+  const pendingNote = (member: RosterMember) => {
+    const compliance = roster.compliance.get(member.id);
+    if (!compliance || compliance.blocking.length === 0) return null;
+
+    const labels = compliance.blocking.map((policy) => policy.label).join(", ");
+    const allSubmitted = compliance.awaitingReview.length === compliance.blocking.length;
+
+    return (
+      <Text variant="small" color="muted">
+        {allSubmitted ? copy.roster.inReview(labels) : copy.roster.waitingOn(labels)}
+      </Text>
+    );
+  };
+
   return (
     <Container size="1">
       <Stack gap="6" py="6" px="4">
-        <EventHeader event={event} attendingCount={roster.attending.length} />
+        <Flex justify="end">
+          <LanguageSwitcher />
+        </Flex>
+
+        <EventHeader event={event} attendingCount={roster.attending.length} copy={copy} />
 
         {/* Only the "spots left" nudge lives here. When the event is FULL the
             RSVP box says so itself, right where the consequence applies —
@@ -92,16 +165,27 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
         {event.isClosed ? (
           <Notice tone="warning" title={copy.event.closedNotice} />
         ) : (
-          <RsvpForm
+          <JoinPanel
             publicToken={publicToken}
             mine={mine}
             isFull={roster.openSlots !== null && roster.openSlots === 0}
+            account={
+              organizer
+                ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
+                : null
+            }
           />
         )}
 
+        {/* Immediately under the answer, because it is the rest of the same
+            act: you said you are coming, here is what is still missing. */}
+        {!event.isClosed && myPolicies.length > 0 ? (
+          <PolicyPanel publicToken={publicToken} items={myPolicies} />
+        ) : null}
+
         <Divider />
 
-        <MoneySummary roster={roster} />
+        <MoneySummary roster={roster} copy={copy} />
 
         {showMoney ? <Divider /> : null}
 
@@ -114,15 +198,48 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             <>
               <RosterGroup
                 title={copy.roster.inTitle}
-                members={roster.attending}
+                members={roster.confirmed}
                 currency={event.currency}
+                copy={copy}
                 showMoney={showMoney}
               />
+
+              {/*
+                Collapsed, and below the confirmed list.
+
+                These people said they are coming and still hold a spot — they
+                are simply not confirmed yet. Putting them in the main list
+                would overstate how many are certain; leaving them off the page
+                would hide the fact that they are counted against capacity.
+                Collapsed says both: present, and not the same thing.
+              */}
+              {roster.pendingPolicy.length > 0 ? (
+                <Disclosure
+                  id="pending-policy"
+                  label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
+                >
+                  <Stack gap="3">
+                    <Text variant="small" color="muted">
+                      {copy.roster.pendingPolicyHelp}
+                    </Text>
+                    <RosterGroup
+                      title={copy.roster.pendingPolicyTitle}
+                      members={roster.pendingPolicy}
+                      currency={event.currency}
+                      copy={copy}
+                      showMoney={showMoney}
+                      renderNote={pendingNote}
+                    />
+                  </Stack>
+                </Disclosure>
+              ) : null}
+
               {roster.waitlisted.length > 0 ? (
                 <RosterGroup
                   title={copy.roster.waitlistedTitle}
                   members={roster.waitlisted}
                   currency={event.currency}
+                  copy={copy}
                   showMoney={false}
                   numbered
                 />
@@ -132,6 +249,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
                   title={copy.roster.maybeTitle}
                   members={roster.maybe}
                   currency={event.currency}
+                  copy={copy}
                   showMoney={false}
                 />
               ) : null}
@@ -140,6 +258,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
                   title={copy.roster.outTitle}
                   members={roster.notAttending}
                   currency={event.currency}
+                  copy={copy}
                   showMoney={false}
                 />
               ) : null}

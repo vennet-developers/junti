@@ -5,10 +5,11 @@ import { useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 
-import { copy } from "@/config/copy";
+import { useCopy } from "@/components/copy-provider";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function SignOutButton() {
+  const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 

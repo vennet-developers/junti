@@ -15,7 +15,7 @@ import {
 import { Flex } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { copy } from "@/config/copy";
+import { useCopy } from "@/components/copy-provider";
 import type { PaymentStatus } from "@/domain/types";
 
 import { promoteParticipant, removeParticipant, setPaymentStatus } from "./actions";
@@ -45,6 +45,7 @@ export function PaymentControls({
   participantId,
   status,
 }: Ctx & { status: PaymentStatus }) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
 
   function set(next: PaymentStatus) {
@@ -85,6 +86,7 @@ export function PaymentControls({
 
 /** Promotes somebody off the waitlist. Never automatic — this is the explicit act. */
 export function PromoteControl({ publicToken, organizerToken, participantId }: Ctx) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
 
   function promote() {
@@ -102,6 +104,7 @@ export function PromoteControl({ publicToken, organizerToken, participantId }: C
 
 /** Removes a participant, behind a confirmation. */
 export function RemoveControl({ publicToken, organizerToken, participantId, displayName }: Ctx) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@stackmyth/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
@@ -16,20 +16,12 @@ import {
   SubmitButton,
   createZodResolver,
 } from "@/components/form-shell";
+import { useCopy } from "@/components/copy-provider";
 import { Notice } from "@/components/notice";
 import { RadioField } from "@/components/radio-field";
-import { copy } from "@/config/copy";
-import { rsvpSchema } from "@/lib/validation";
+import { makeRsvpSchema } from "@/lib/validation";
 
 import { submitRsvp, type RsvpState } from "./actions";
-
-const ATTENDANCE_OPTIONS = [
-  { value: "in", label: copy.attendance.in },
-  { value: "out", label: copy.attendance.out },
-  { value: "maybe", label: copy.attendance.maybe },
-] as const;
-
-const resolver = createZodResolver(rsvpSchema);
 
 export interface RsvpFormProps {
   publicToken: string;
@@ -40,8 +32,20 @@ export interface RsvpFormProps {
 }
 
 export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<RsvpState>({ errors: {} });
+
+  // Both are built from `copy`, so they are per-render rather than module-level
+  // constants. The resolver in particular has to carry the messages for the
+  // language currently on screen.
+  const attendanceOptions = [
+    { value: "in", label: copy.attendance.in },
+    { value: "out", label: copy.attendance.out },
+    { value: "maybe", label: copy.attendance.maybe },
+  ];
+
+  const resolver = useMemo(() => createZodResolver(makeRsvpSchema(copy)), [copy]);
 
   const editing = mine !== null;
 
@@ -127,7 +131,7 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
                 <ControlledField label={copy.rsvp.attendanceLabel}>
                   <RadioField
                     name="attendance"
-                    options={ATTENDANCE_OPTIONS}
+                    options={attendanceOptions}
                     defaultValue={defaultAttendance}
                   />
                 </ControlledField>

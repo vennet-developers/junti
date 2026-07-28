@@ -9,7 +9,7 @@ import { EmptyState } from "@stackmyth/empty-state";
 import { TriangleAlertIcon } from "@stackmyth/icons";
 import { Container, Flex, Stack } from "@stackmyth/layout";
 
-import { copy } from "@/config/copy";
+import { useCopy } from "@/components/copy-provider";
 
 /**
  * Route error boundary.
@@ -30,6 +30,11 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Safe here: error.tsx renders INSIDE the root layout, which is where the
+  // provider lives. Only a failure of the layout itself would escape it, and
+  // that needs a global-error.tsx this project does not have.
+  const { copy } = useCopy();
+
   useEffect(() => {
     console.error("Route error:", error);
   }, [error]);

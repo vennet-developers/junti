@@ -6,7 +6,7 @@ import { Button } from "@stackmyth/button";
 import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { copy } from "@/config/copy";
+import { useCopy } from "@/components/copy-provider";
 
 import { setEventClosed } from "./actions";
 
@@ -19,6 +19,7 @@ export function CloseEventControl({
   organizerToken: string;
   isClosed: boolean;
 }) {
+  const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
 
   function toggle() {

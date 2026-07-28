@@ -78,15 +78,22 @@ import "@stackmyth/form/form.css";
 
 import "./globals.css";
 
+import { CopyProvider } from "@/components/copy-provider";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
+import { getCopy } from "@/config/copy";
+import { resolveViewerLocale } from "@/lib/locale";
 
-export const metadata: Metadata = {
-  title: {
-    default: BRAND_NAME,
-    template: `%s · ${BRAND_NAME}`,
-  },
-  description: BRAND_DESCRIPTION,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale } = await resolveViewerLocale();
+
+  return {
+    title: {
+      default: BRAND_NAME,
+      template: `%s · ${BRAND_NAME}`,
+    },
+    description: getCopy(locale).brand.tagline || BRAND_DESCRIPTION,
+  };
+}
 
 /**
  * Mobile-first: every user arrives from a WhatsApp link on a phone. The layout
@@ -102,10 +109,20 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+/**
+ * Reading the language cookie here opts the whole tree into dynamic rendering,
+ * including the home page, which could otherwise be served from the CDN. That
+ * is the price of honouring the choice everywhere: a page cached in one
+ * language would be served to a reader who picked the other.
+ */
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const { locale } = await resolveViewerLocale();
+
   return (
-    <html lang="es-CO">
-      <body>{children}</body>
+    <html lang={getCopy(locale).intlLocale}>
+      <body>
+        <CopyProvider locale={locale}>{children}</CopyProvider>
+      </body>
     </html>
   );
 }

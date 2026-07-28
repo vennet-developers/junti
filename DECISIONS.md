@@ -485,6 +485,112 @@ at once, is deliberately excluded.
 
 ---
 
+## Policies, languages and time zones
+
+### 43. Policies gate confirmation, not attendance or money
+
+An event can attach requirements — proof of payment, an acknowledgement — and
+somebody who has not met them shows as pending rather than confirmed. What that
+deliberately does **not** touch is capacity or the split: an unconfirmed person
+still holds their spot and still owes their share.
+
+The alternative — freeing the spot until they pay — sounds tidier and is worse.
+A slow payment would silently reopen a spot somebody already believes they have,
+the waitlist would promote over them, and the roster would overbook itself every
+week without anyone doing anything wrong. Confirmation is about how certain the
+organizer is, and that is a display question. `partitionByCompliance` is the
+only thing policies change, and `split.ts` and `waitlist.ts` never learned they
+exist — which is why their 59 tests still hold unchanged.
+
+### 44. Proof of payment is approved by a human; an acknowledgement approves itself
+
+Ticking "I read the instructions" is its own proof, so it is settled the moment
+it is submitted. A receipt is a claim about the world, so it waits for the
+organizer. If uploading any image confirmed you, the policy would be checking
+that a person owns a camera.
+
+### 45. Receipts live in Postgres, not object storage
+
+Supabase Storage is free, purpose-built for this and the obvious choice. It
+lost on one point that outweighed the rest: **the free tier keeps zero
+backups**, so `pnpm db:export` is the only copy of anything that exists. Bytes
+in a table are inside that dump. Bytes in a bucket are not, and would be gone
+exactly when it mattered.
+
+Two smaller reasons pointed the same way. Storage needs either RLS — banned by
+the spec — or server-signed URLs, and it would drag `@supabase/supabase-js`
+back in after it was deliberately removed. A `bytea` column also keeps the
+"portable to any Postgres" property that the migrations are built around.
+
+The cost is real: images are the only thing here that consumes the 500 MB
+allowance at any rate. It is bounded by shrinking every upload in the browser to
+100–200 KB before it is sent, which puts the comfortable ceiling around 1,500
+receipts — years, for a group of friends. COSTS.md records where the line is,
+and `src/lib/evidence-store.ts` is the single module that has to change to cross
+it.
+
+### 46. The receipt is organizer-only, enforced by there being one way to read it
+
+A payment screenshot carries a full name, a phone number and a bank. The
+participant page is opened by an entire WhatsApp group, so the image is served
+by exactly one route, under the organizer token, and no page anywhere selects
+its bytes. The image lives in its own table so that a careless
+`select().from(policySubmissions)` cannot pull it into a page by accident.
+
+That route checks two things, not one: that the caller is the organizer of the
+event named in the path, **and** that the submission belongs to that event.
+Without the second check, any organizer could read any submission in the
+database by guessing an id.
+
+### 47. The timezone belongs to the event; the language belongs to the reader
+
+They answer different questions, so they resolve differently. A match at 8 p.m.
+in Medellín is at 8 p.m. for everyone reading the roster, including the person
+reading it from Madrid — rendering in the reader's zone would tell them 3 a.m.
+and be technically correct and useless. Month names and separators, on the other
+hand, should follow whoever is looking.
+
+So `events.time_zone` is stored and every timestamp renders through it, while
+the language comes from the reader's cookie, then their `Accept-Language`, then
+the event's own — the event's choice being a sensible default for a group chat,
+never an override of somebody's explicit pick.
+
+**What is never translated is anything a person typed.** Titles, notes, names
+and policy labels are stored and shown exactly as written. A friend's "Llevar
+guayos" stays that way on an English page, because the alternative is machine
+translation of a message from someone the reader knows.
+
+### 48. Two language files, checked by the compiler, no i18n library
+
+`copy/es.ts` is the shape and `Copy` is inferred from it; `copy/en.ts` is typed
+as `Copy`. A missing key, a renamed one or a function taking the wrong arguments
+is a build error rather than `undefined` rendered to somebody. No extraction
+step, no message catalogue, no runtime dependency — the whole mechanism is one
+object per language.
+
+Two consequences worth naming:
+
+- **The provider takes a locale string, not the resolved strings.** `Copy` holds
+  functions like `spotsLeft(n)`, and functions do not cross the
+  server-to-client boundary. Passing the object would fail to serialize.
+- **Every Zod schema became a factory taking `Copy`.** A schema built once at
+  import time bakes in whichever language compiled first, and hands a Spanish
+  validation error to someone reading the English page.
+
+### 49. Reading the language cookie makes the whole app dynamic
+
+The root layout reads it, which opts every route into dynamic rendering —
+including the home page, which could otherwise be served from the CDN. That is
+the price of honouring the choice everywhere: a page cached in one language
+would eventually be served to a reader who picked the other.
+
+Every page that matters already hits the database, so this costs one static
+route. The session-refresh proxy pays for its own extension to the event page
+differently: it returns immediately unless a Supabase cookie is present, so the
+WhatsApp group opening a roster pays for a map lookup, not a round trip.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

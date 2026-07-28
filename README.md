@@ -14,10 +14,12 @@ touches money** — the organizer records payments by hand. The app is a ledger,
 not a payment rail.
 
 - **No passwords, ever.** Participants need no account at all — access is by
-  unguessable URL. Organizers _may_ sign in, with Google or an emailed link, to
-  get a history of their own events; it is optional and buys nothing else.
+  unguessable URL. Signing in is optional, and buys two things: a history of the
+  events you organized, and joining someone else's in a single tap.
 - **Mobile-first.** Designed at 390px, because every user opens it from a
   WhatsApp link on a phone.
+- **Spanish and English**, switchable per reader. Every event carries its own
+  time zone, so the group all read the same clock.
 - **Costs USD 0/month to run.** See [COSTS.md](./COSTS.md).
 
 > The product name is not final. It lives in exactly one module,
@@ -42,6 +44,82 @@ while signed in, newest first. It is a convenience — a way to find a link you
 mislaid — and it grants nothing the organizer link does not already grant. An
 event created while signed out belongs to nobody and will never appear there,
 which is the honest consequence of not having required an account.
+
+It also removes the form. Someone already signed in who opens an event link gets
+a single button with their own name and photo on it: one tap and they are on the
+list. The RSVP form exists because an anonymous participant has to introduce
+themselves, and a signed-in one already has.
+
+---
+
+## Requirements before someone counts as confirmed
+
+An event can ask for things. Say the pitch costs 120,000 and you fronted it: add
+a **Proof of payment** requirement, and anyone who says they are coming has to
+upload a photo of the transfer. Until you approve it they are on the list but
+**not confirmed** — they appear in a separate, collapsed section labelled with
+whatever you called the requirement.
+
+Two kinds, and the difference is who decides:
+
+| Kind                  | The participant does | Confirmed when                  |
+| --------------------- | -------------------- | ------------------------------- |
+| **Proof of payment**  | Uploads a photo      | You approve it                  |
+| **Read and accepted** | Ticks a box          | Immediately — nothing to review |
+
+Ticking a box is its own proof. A receipt is a claim about the world, so a human
+looks at it; if uploading any image confirmed you, the requirement would be
+checking that people own cameras.
+
+The kind of event only decides what gets **suggested** — a match proposes proof
+of payment, a kids' party proposes an acknowledgement. Everything is added by an
+explicit tap, renameable, and removable. Five per event, maximum.
+
+### What a requirement does not do
+
+It does not free the spot and it does not change the money. Someone who has not
+paid yet still occupies their place and still owes their share. The alternative
+— reopening the spot until they pay — would mean the waitlist promotes over
+somebody who already believes they are coming, and the roster quietly overbooks
+every time a payment is slow. Being confirmed is about how sure the organizer
+is, and that is a display question.
+
+### Receipts are private, and where they live
+
+A payment screenshot carries a full name, a phone number and a bank. **Only the
+organizer can open one**, through a single route behind the organizer token; it
+never appears on the participant page the whole group chat can see.
+
+The image is shrunk in the browser to 1400px and JPEG quality 0.8 before it is
+uploaded — a 3 MB screenshot arrives as ~150 KB — and stored in Postgres rather
+than in a bucket. That is a deliberate trade for one reason: the free tier keeps
+no backups, so `pnpm db:export` is the only copy that exists, and bytes in a
+table are inside it while bytes in a bucket are not. It is also the only thing
+in this app that consumes storage at any rate; [COSTS.md](./COSTS.md) says where
+the ceiling is and what crossing it costs.
+
+---
+
+## Languages and time zones
+
+The interface is in **Spanish and English**. The switcher is on every page, the
+choice is remembered for a year, and it follows the reader — cookie first, then
+the browser's `Accept-Language`, then the language the event was created in.
+
+**Nothing anyone typed is ever translated.** Titles, notes, names and the labels
+you give your own requirements are stored and shown exactly as written. A
+friend's "Llevar guayos" stays that way on an English page, because the
+alternative is machine-translating a message from someone the reader knows.
+
+Time zones work the other way round: **the zone belongs to the event, not to the
+reader**. Every event stores its own IANA zone, chosen when you create it and
+defaulted from your device, and the time renders in that zone for everybody. A
+match at 8 p.m. in Medellín reads as 8 p.m. to the person opening the link in
+Madrid — telling them 3 a.m. would be technically correct and useless.
+
+Adding a third language is one file: copy `src/config/copy/es.ts`, translate it,
+add a line to `src/config/copy/index.ts`. The compiler will not let the new file
+be missing a key.
 
 ---
 

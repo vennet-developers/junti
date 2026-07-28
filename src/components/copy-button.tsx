@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@stackmyth/button";
 import { CheckIcon, CopyIcon } from "@stackmyth/icons";
 
-import { copy as strings } from "@/config/copy";
+import { useCopy } from "./copy-provider";
 
 export interface CopyButtonProps {
   value: string;
@@ -18,6 +18,7 @@ export interface CopyButtonProps {
  * else signals that the clipboard changed.
  */
 export function CopyButton({ value, label, fullWidth }: CopyButtonProps) {
+  const { copy: strings } = useCopy();
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
 

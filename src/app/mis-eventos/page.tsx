@@ -10,30 +10,30 @@ import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { List, ListItem } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
 
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { OrganizerBadge } from "@/components/organizer-badge";
-import { copy } from "@/config/copy";
-import { formatEventDateTime } from "@/lib/format";
+import { formatDate, formatEventDateTime } from "@/lib/format";
+import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import { loadOrganizerEvents } from "@/lib/roster";
 import { managePath } from "@/lib/urls";
 
 import { SignOutButton } from "./sign-out-button";
 
-export const metadata: Metadata = {
-  title: copy.auth.myEventsTitle,
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { copy } = await getViewerCopy();
 
-const SHORT_DATE = new Intl.DateTimeFormat("es-CO", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "America/Bogota",
-});
+  return {
+    title: copy.auth.myEventsTitle,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function MyEventsPage() {
   const organizer = await getOrganizer();
   if (!organizer) redirect("/entrar?next=%2Fmis-eventos");
+
+  const { copy } = await getViewerCopy();
 
   // Newest first — see loadOrganizerEvents.
   const events = await loadOrganizerEvents(organizer.id);
@@ -43,7 +43,10 @@ export default async function MyEventsPage() {
       <Stack gap="6" py="6" px="4">
         <Flex justify="between" align="center" gap="3" wrap="wrap">
           <OrganizerBadge organizer={organizer} />
-          <SignOutButton />
+          <Flex gap="2" align="center">
+            <LanguageSwitcher />
+            <SignOutButton />
+          </Flex>
         </Flex>
 
         <Divider />
@@ -79,7 +82,7 @@ export default async function MyEventsPage() {
                         <Stack gap="1">
                           <Text weight="semibold">{event.title}</Text>
                           <Text variant="small" color="muted">
-                            {formatEventDateTime(event.startsAt)}
+                            {formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale)}
                           </Text>
                         </Stack>
                       </Box>
@@ -95,7 +98,9 @@ export default async function MyEventsPage() {
                     <Flex justify="between" align="center" gap="3" wrap="wrap">
                       <Text variant="small" color="muted">
                         {copy.auth.attendingCount(event.attendingCount)} ·{" "}
-                        {copy.auth.createdOn(SHORT_DATE.format(event.createdAt))}
+                        {copy.auth.createdOn(
+                          formatDate(event.createdAt, event.timeZone, copy.intlLocale),
+                        )}
                       </Text>
                       <Button asChild size="md" variant="secondary">
                         <Link href={managePath(event.publicToken, event.organizerToken)}>

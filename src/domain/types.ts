@@ -9,6 +9,8 @@
 
 export type Attendance = "in" | "out" | "maybe" | "waitlisted";
 
+export type EventKind = "match" | "party" | "kids_party" | "other";
+
 export type CostMode = "none" | "total" | "per_person";
 
 export type PaymentStatus = "pending" | "confirmed" | "waived";

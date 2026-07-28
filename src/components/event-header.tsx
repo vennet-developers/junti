@@ -3,7 +3,7 @@ import { CalendarIcon, MapPinIcon, UserIcon } from "@stackmyth/icons";
 import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { copy } from "@/config/copy";
+import type { Copy } from "@/config/copy";
 import { formatEventDateTime } from "@/lib/format";
 import type { EventView } from "@/lib/roster";
 
@@ -32,9 +32,10 @@ function DetailRow({ icon, label, children }: DetailRowProps) {
 export interface EventHeaderProps {
   event: EventView;
   attendingCount: number;
+  copy: Copy;
 }
 
-export function EventHeader({ event, attendingCount }: EventHeaderProps) {
+export function EventHeader({ event, attendingCount, copy }: EventHeaderProps) {
   const capacityText =
     event.capacity === null
       ? copy.event.capacityUnlimited
@@ -67,7 +68,7 @@ export function EventHeader({ event, attendingCount }: EventHeaderProps) {
 
       <Stack gap="3">
         <DetailRow icon={<CalendarIcon size={18} />} label={copy.event.whenLabel}>
-          {formatEventDateTime(event.startsAt)}
+          {formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale)}
         </DetailRow>
 
         <DetailRow icon={<MapPinIcon size={18} />} label={copy.event.whereLabel}>

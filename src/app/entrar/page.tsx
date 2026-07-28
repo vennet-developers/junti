@@ -4,15 +4,19 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { copy } from "@/config/copy";
+import { getViewerCopy } from "@/lib/locale";
 import { getCurrentUser } from "@/lib/supabase/server";
 
 import { SignInForm } from "./sign-in-form";
 
-export const metadata: Metadata = {
-  title: copy.auth.signInTitle,
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { copy } = await getViewerCopy();
+
+  return {
+    title: copy.auth.signInTitle,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function SignInPage({
   searchParams,
@@ -26,6 +30,8 @@ export default async function SignInPage({
   const redirectTo = next?.startsWith("/") && !next.startsWith("//") ? next : "/mis-eventos";
 
   if (await getCurrentUser()) redirect(redirectTo);
+
+  const { copy } = await getViewerCopy();
 
   return (
     <Container size="1">

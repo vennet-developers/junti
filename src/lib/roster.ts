@@ -1,13 +1,30 @@
 import "server-only";
 
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { events, participants, payments } from "@/db/schema";
+import {
+  eventPolicies,
+  events,
+  participants,
+  payments,
+  policyEvidence,
+  policySubmissions,
+} from "@/db/schema";
 import type { EventRow, ParticipantRow, PaymentRow } from "@/db/schema";
+import {
+  partitionByCompliance,
+  pendingReviewCount,
+  resolveCompliance,
+  type ParticipantCompliance,
+  type Policy,
+  type PolicySubmission,
+} from "@/domain/policies";
 import { computeSplit, type Share, type SplitParticipant } from "@/domain/split";
 import type { Attendance } from "@/domain/types";
 import { openSlots, promotableCount, waitlistOrder } from "@/domain/waitlist";
+
+import { hasEvidence } from "./evidence-store";
 
 /**
  * Reads an event and everything hanging off it, then runs the domain rules over
@@ -26,6 +43,9 @@ export interface RosterMember {
   attendance: Attendance;
   joinedAt: Date;
   share: Share;
+  /** Set when this RSVP came from a signed-in account. */
+  userId: string | null;
+  avatarUrl: string | null;
 }
 
 export interface EventView {
@@ -34,6 +54,8 @@ export interface EventView {
   title: string;
   kind: EventRow["kind"];
   startsAt: Date;
+  timeZone: string;
+  locale: string;
   location: string | null;
   capacity: number | null;
   notes: string | null;
@@ -52,6 +74,18 @@ export interface RosterView {
   notAttending: RosterMember[];
   maybe: RosterMember[];
   waitlisted: RosterMember[];
+  /**
+   * `attending`, split by whether the event's policies are met.
+   *
+   * Both halves are still attending: they hold their spot and owe their share
+   * either way. The split governs how the roster reads, not who is on it.
+   */
+  confirmed: RosterMember[];
+  pendingPolicy: RosterMember[];
+  policies: Policy[];
+  compliance: Map<string, ParticipantCompliance>;
+  /** Submissions waiting on the organizer, for the badge on the review section. */
+  pendingReview: number;
   collectedMinor: number;
   outstandingMinor: number;
   waivedMinor: number;
@@ -74,6 +108,8 @@ function toEventView(row: EventRow): EventView {
     title: row.title,
     kind: row.kind,
     startsAt: row.startsAt,
+    timeZone: row.timeZone,
+    locale: row.locale,
     location: row.location,
     capacity: row.capacity,
     notes: row.notes,
@@ -167,9 +203,52 @@ async function loadJoinedRows(eventId: string): Promise<JoinedRow[]> {
   return rows;
 }
 
-/** Builds the full view of an event: roster, money, capacity. */
+/** The event's policies, in display order. */
+export async function loadEventPolicies(eventId: string): Promise<Policy[]> {
+  const rows = await db
+    .select({
+      id: eventPolicies.id,
+      kind: eventPolicies.kind,
+      label: eventPolicies.label,
+      description: eventPolicies.description,
+      position: eventPolicies.position,
+    })
+    .from(eventPolicies)
+    .where(eq(eventPolicies.eventId, eventId))
+    .orderBy(asc(eventPolicies.position), asc(eventPolicies.id));
+
+  return rows;
+}
+
+/**
+ * Every submission on the event, as the domain layer wants them.
+ *
+ * Selects explicit columns rather than the whole row — not for speed here, but
+ * because `select().from()` habits are how the image would eventually get
+ * dragged in. The image lives in its own table precisely so it cannot be, and
+ * this keeps the habit consistent.
+ */
+export async function loadPolicySubmissions(eventId: string): Promise<PolicySubmission[]> {
+  const rows = await db
+    .select({
+      policyId: policySubmissions.policyId,
+      participantId: policySubmissions.participantId,
+      status: policySubmissions.status,
+    })
+    .from(policySubmissions)
+    .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .where(eq(eventPolicies.eventId, eventId));
+
+  return rows;
+}
+
+/** Builds the full view of an event: roster, money, capacity, policies. */
 export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
-  const rows = await loadJoinedRows(eventRow.id);
+  const [rows, policies, submissions] = await Promise.all([
+    loadJoinedRows(eventRow.id),
+    loadEventPolicies(eventRow.id),
+    loadPolicySubmissions(eventRow.id),
+  ]);
 
   const split = computeSplit({
     costMode: eventRow.costMode,
@@ -184,6 +263,8 @@ export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
     displayName: row.participant.displayName,
     attendance: row.participant.attendance,
     joinedAt: row.participant.createdAt,
+    userId: row.participant.userId,
+    avatarUrl: row.participant.avatarUrl,
     // Every participant gets a share entry from computeSplit, so this is always
     // present; the fallback keeps the code free of a non-null assertion.
     share: sharesById.get(row.participant.id) ?? {
@@ -204,10 +285,28 @@ export async function loadRoster(eventRow: EventRow): Promise<RosterView> {
 
   const waitlistIds = new Set(waitlistOrder(capacityInput).map((p) => p.id));
 
+  const attending = members.filter((m) => m.attendance === "in");
+
+  // Compliance is resolved only for people who said they are coming — nobody
+  // else is subject to the policies, and computing it for them would put an
+  // "out" answer into the pending-policy bucket.
+  const compliance = resolveCompliance(
+    attending.map((m) => m.id),
+    policies,
+    submissions,
+  );
+
+  const { confirmed, pending } = partitionByCompliance(attending, compliance);
+
   return {
     event: toEventView(eventRow),
     members,
-    attending: members.filter((m) => m.attendance === "in"),
+    attending,
+    confirmed,
+    pendingPolicy: pending,
+    policies,
+    compliance,
+    pendingReview: pendingReviewCount(submissions),
     notAttending: members.filter((m) => m.attendance === "out"),
     maybe: members.filter((m) => m.attendance === "maybe"),
     // Ordered by the domain's waitlist rule, not by array position.
@@ -239,6 +338,8 @@ export interface OrganizerEventSummary {
   title: string;
   kind: EventRow["kind"];
   startsAt: Date;
+  /** Each event renders in its own zone — a history can span countries. */
+  timeZone: string;
   createdAt: Date;
   location: string | null;
   isClosed: boolean;
@@ -254,6 +355,7 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
       title: events.title,
       kind: events.kind,
       startsAt: events.startsAt,
+      timeZone: events.timeZone,
       createdAt: events.createdAt,
       location: events.location,
       closedAt: events.closedAt,
@@ -274,6 +376,7 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
     title: row.title,
     kind: row.kind,
     startsAt: row.startsAt,
+    timeZone: row.timeZone,
     createdAt: row.createdAt,
     location: row.location,
     isClosed: row.closedAt !== null,
@@ -286,4 +389,130 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
 /** The raw participant + payment rows, for actions that need to write. */
 export async function loadParticipantRows(eventId: string): Promise<JoinedRow[]> {
   return loadJoinedRows(eventId);
+}
+
+// ── Policy submissions ───────────────────────────────────────────────────────
+
+export interface SubmissionDetail {
+  id: string;
+  policyId: string;
+  policyLabel: string;
+  policyKind: Policy["kind"];
+  participantId: string;
+  participantName: string;
+  status: PolicySubmission["status"];
+  note: string | null;
+  reviewNote: string | null;
+  createdAt: Date;
+  hasEvidence: boolean;
+}
+
+/**
+ * A submission, but only if it belongs to this event.
+ *
+ * The event id is part of the query rather than checked afterwards, which is
+ * what stops a valid organizer token for event A from being used to read a
+ * submission on event B by id. Everything that serves or judges evidence goes
+ * through here.
+ */
+export async function findSubmissionInEvent(
+  eventId: string,
+  submissionId: string,
+): Promise<SubmissionDetail | null> {
+  const [row] = await db
+    .select({
+      id: policySubmissions.id,
+      policyId: policySubmissions.policyId,
+      policyLabel: eventPolicies.label,
+      policyKind: eventPolicies.kind,
+      participantId: policySubmissions.participantId,
+      participantName: participants.displayName,
+      status: policySubmissions.status,
+      note: policySubmissions.note,
+      reviewNote: policySubmissions.reviewNote,
+      createdAt: policySubmissions.createdAt,
+    })
+    .from(policySubmissions)
+    .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(participants, eq(participants.id, policySubmissions.participantId))
+    .where(and(eq(policySubmissions.id, submissionId), eq(eventPolicies.eventId, eventId)))
+    .limit(1);
+
+  if (!row) return null;
+
+  return { ...row, hasEvidence: await hasEvidence(row.id) };
+}
+
+/**
+ * What the organizer has to look at, oldest first — whoever has been waiting
+ * longest goes to the top.
+ *
+ * Acknowledgements never appear: they are approved on submission, so there is
+ * nothing to decide.
+ */
+export async function loadReviewQueue(eventId: string): Promise<SubmissionDetail[]> {
+  const rows = await db
+    .select({
+      id: policySubmissions.id,
+      policyId: policySubmissions.policyId,
+      policyLabel: eventPolicies.label,
+      policyKind: eventPolicies.kind,
+      participantId: policySubmissions.participantId,
+      participantName: participants.displayName,
+      status: policySubmissions.status,
+      note: policySubmissions.note,
+      reviewNote: policySubmissions.reviewNote,
+      createdAt: policySubmissions.createdAt,
+    })
+    .from(policySubmissions)
+    .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(participants, eq(participants.id, policySubmissions.participantId))
+    .where(and(eq(eventPolicies.eventId, eventId), eq(policySubmissions.status, "submitted")))
+    .orderBy(asc(policySubmissions.createdAt));
+
+  if (rows.length === 0) return [];
+
+  // One query for all of them rather than one per row, and still without
+  // reading a single image byte.
+  const withImages = new Set(
+    (
+      await db
+        .select({ submissionId: policyEvidence.submissionId })
+        .from(policyEvidence)
+        .where(
+          inArray(
+            policyEvidence.submissionId,
+            rows.map((row) => row.id),
+          ),
+        )
+    ).map((row) => row.submissionId),
+  );
+
+  return rows.map((row) => ({ ...row, hasEvidence: withImages.has(row.id) }));
+}
+
+/** One participant's submissions, for the "what is left" panel on their page. */
+export async function loadParticipantSubmissions(
+  participantId: string,
+): Promise<SubmissionDetail[]> {
+  const rows = await db
+    .select({
+      id: policySubmissions.id,
+      policyId: policySubmissions.policyId,
+      policyLabel: eventPolicies.label,
+      policyKind: eventPolicies.kind,
+      participantId: policySubmissions.participantId,
+      participantName: participants.displayName,
+      status: policySubmissions.status,
+      note: policySubmissions.note,
+      reviewNote: policySubmissions.reviewNote,
+      createdAt: policySubmissions.createdAt,
+    })
+    .from(policySubmissions)
+    .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+    .innerJoin(participants, eq(participants.id, policySubmissions.participantId))
+    .where(eq(policySubmissions.participantId, participantId))
+    .orderBy(asc(eventPolicies.position));
+
+  return rows.map((row) => ({ ...row, hasEvidence: false }));
 }

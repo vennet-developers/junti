@@ -4,13 +4,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { uuidv7 } from "uuidv7";
 
-import { copy } from "@/config/copy";
 import { db } from "@/db/client";
-import { events } from "@/db/schema";
+import { eventPolicies, events } from "@/db/schema";
+import { getViewerCopy } from "@/lib/locale";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getOrganizer } from "@/lib/organizer";
 import { createOrganizerToken, createPublicToken } from "@/lib/tokens";
-import { eventSchema, field, fieldErrors } from "@/lib/validation";
+import { field, fieldErrors, makeEventSchema, parsePoliciesField } from "@/lib/validation";
 
 /**
  * A `"use server"` module may only export async functions, so the initial state
@@ -38,15 +38,21 @@ export async function createEvent(
   const ip = clientIp(await headers());
   const limit = rateLimit(`create-event:${ip}`, CREATE_LIMIT, CREATE_WINDOW_MS);
 
+  // The event does not exist yet, so there is no event language to defer to —
+  // this one belongs to whoever is filling in the form.
+  const { copy } = await getViewerCopy();
+
   if (!limit.ok) {
     return { errors: { _form: copy.errors.rateLimited } };
   }
 
-  const parsed = eventSchema.safeParse({
+  const parsed = makeEventSchema(copy).safeParse({
     title: field(formData, "title"),
     kind: field(formData, "kind"),
     startsAtDate: field(formData, "startsAtDate"),
     startsAtTime: field(formData, "startsAtTime"),
+    timeZone: field(formData, "timeZone"),
+    locale: field(formData, "locale"),
     location: field(formData, "location"),
     capacity: field(formData, "capacity"),
     notes: field(formData, "notes"),
@@ -59,6 +65,12 @@ export async function createEvent(
     return { errors: fieldErrors(parsed.error) };
   }
 
+  const policies = parsePoliciesField(field(formData, "policies"), copy);
+
+  if (!policies.ok) {
+    return { errors: { _form: policies.message } };
+  }
+
   const input = parsed.data;
   const publicToken = createPublicToken();
   const organizerToken = createOrganizerToken();
@@ -67,21 +79,46 @@ export async function createEvent(
   // history. Creating anonymously still works — that is the original flow and
   // the tokens remain the access path either way.
   const organizer = await getOrganizer();
+  const eventId = uuidv7();
 
-  await db.insert(events).values({
-    organizerId: organizer?.id ?? null,
-    id: uuidv7(),
-    publicToken,
-    organizerToken,
-    title: input.title,
-    kind: input.kind,
-    startsAt: input.startsAt,
-    location: input.location,
-    capacity: input.capacity,
-    notes: input.notes,
-    costMode: input.costMode,
-    costAmountMinor: input.costAmountMinor,
-    currency: input.currency,
+  /**
+   * The event and its policies land together or not at all.
+   *
+   * Without the transaction, a failure between the two inserts leaves an event
+   * whose organizer chose requirements that silently do not exist — and the
+   * roster would then confirm everybody.
+   */
+  await db.transaction(async (tx) => {
+    await tx.insert(events).values({
+      organizerId: organizer?.id ?? null,
+      id: eventId,
+      publicToken,
+      organizerToken,
+      title: input.title,
+      kind: input.kind,
+      startsAt: input.startsAt,
+      timeZone: input.timeZone,
+      locale: input.locale,
+      location: input.location,
+      capacity: input.capacity,
+      notes: input.notes,
+      costMode: input.costMode,
+      costAmountMinor: input.costAmountMinor,
+      currency: input.currency,
+    });
+
+    if (policies.value.length > 0) {
+      await tx.insert(eventPolicies).values(
+        policies.value.map((policy, index) => ({
+          id: uuidv7(),
+          eventId,
+          kind: policy.kind,
+          label: policy.label,
+          description: policy.description,
+          position: index,
+        })),
+      );
+    }
   });
 
   // redirect() throws to unwind, so it must be outside the try/catch above and
