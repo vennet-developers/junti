@@ -182,11 +182,27 @@ you give your own requirements are stored and shown exactly as written. A
 friend's "Llevar guayos" stays that way on an English page, because the
 alternative is machine-translating a message from someone the reader knows.
 
-Time zones work the other way round: **the zone belongs to the event, not to the
-reader**. Every event stores its own IANA zone, chosen when you create it and
-defaulted from your device, and the time renders in that zone for everybody. A
-match at 8 p.m. in Medellín reads as 8 p.m. to the person opening the link in
-Madrid — telling them 3 a.m. would be technically correct and useless.
+### How each default is chosen
+
+**Language — from the browser, unless the page belongs to an event.** The order
+is: the switcher cookie if the reader has ever used it, then the browser's own
+`Accept-Language`, then Spanish. On an event page the order changes in the
+middle: the cookie still wins, but the **event's** language comes next and the
+browser's comes last. The organizer picked a language for a page a whole group
+chat is reading; only somebody's explicit choice should override that.
+
+Region subtags are ignored — `es-CO`, `es-419` and `es` all resolve to Spanish.
+
+**Time zone — from the organizer's device, in the browser.** The server cannot
+know it: asking `Intl` on the server returns the _server's_ zone, which is UTC
+on Vercel. So the page renders a fixed floor, and the form adopts the real zone
+right after hydration, where the organizer can still change it.
+
+Time zones then work the opposite way round from language: **the zone belongs
+to the event, not to the reader**. Every event stores its own IANA zone, and
+the time renders in that zone for everybody. A match at 8 p.m. in Medellín
+reads as 8 p.m. to the person opening the link in Madrid — telling them 3 a.m.
+would be technically correct and useless.
 
 Adding a third language is one file: copy `src/config/copy/es.ts`, translate it,
 add a line to `src/config/copy/index.ts`. The compiler will not let the new file

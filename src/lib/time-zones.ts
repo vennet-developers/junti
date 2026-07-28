@@ -77,6 +77,13 @@ export function isValidTimeZone(value: string): boolean {
 /**
  * The zone the reader's device is in, when it is one we can use.
  *
+ * **Call this in the browser only.** On the server `Intl` resolves the
+ * *server's* zone, which on Vercel is UTC — so calling it from a server
+ * component silently defaults every new event to UTC while looking perfectly
+ * correct in local development on a machine that happens to sit in the right
+ * country. That is exactly the bug this comment exists to prevent; see
+ * DECISIONS.md.
+ *
  * Only a default for the create form — a good guess at where the organizer is
  * planning the event. Never used to render an existing event, which always
  * shows in its own stored zone.

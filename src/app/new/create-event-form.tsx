@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
@@ -19,7 +19,7 @@ import {
 import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
-import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
+import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
 
 import { createEvent, type CreateEventState } from "./actions";
@@ -50,7 +50,26 @@ export function CreateEventForm({
   // The first catalogue entry is the default. Nothing in code names a type,
   // so adding one and putting it first changes the default with no deploy.
   const [eventTypeId, setEventTypeId] = useState(eventTypes[0]?.id ?? "");
-  const [timeZone, setTimeZone] = useState(defaultTimeZone);
+  /**
+   * The organizer's actual timezone.
+   *
+   * `useSyncExternalStore` rather than an effect, because this is exactly the
+   * problem it exists for: a value the server cannot know and the client can.
+   * The server snapshot renders the floor, React re-renders with the real zone
+   * straight after hydration, and there is no mismatch and no `setState` in an
+   * effect.
+   *
+   * `subscribe` is a no-op — a device does not change timezone mid-form.
+   */
+  const detectedTimeZone = useSyncExternalStore(
+    () => () => {},
+    () => detectTimeZone(),
+    () => defaultTimeZone,
+  );
+
+  /** Null until the organizer picks one; their choice always wins. */
+  const [chosenTimeZone, setChosenTimeZone] = useState<string | null>(null);
+  const timeZone = chosenTimeZone ?? detectedTimeZone;
 
   const kindOptions = eventTypes.map((type) => ({ value: type.id, label: type.label }));
 
@@ -62,9 +81,11 @@ export function CreateEventForm({
 
   // `new Date()` only to label zones with their CURRENT offset, so a zone on
   // daylight saving reads the way the person checking the list expects.
+  // Keyed on the CURRENT zone, so a detected one outside the curated list is
+  // still in the picker rather than silently absent from it.
   const zoneOptions = useMemo(
-    () => timeZoneOptions(defaultTimeZone, copy.intlLocale, new Date()),
-    [defaultTimeZone, copy.intlLocale],
+    () => timeZoneOptions(timeZone, copy.intlLocale, new Date()),
+    [timeZone, copy.intlLocale],
   );
 
   const resolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
@@ -174,8 +195,8 @@ export function CreateEventForm({
               <SelectField
                 name="timeZone"
                 options={zoneOptions}
-                defaultValue={defaultTimeZone}
-                onValueChange={setTimeZone}
+                defaultValue={timeZone}
+                onValueChange={setChosenTimeZone}
               />
             </ControlledField>
 

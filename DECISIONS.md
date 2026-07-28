@@ -693,6 +693,48 @@ small tables is not.
 
 ---
 
+## The timezone default, and how local development hid it
+
+### 57. Detecting the organizer's timezone is a browser job, and it was not
+
+`detectTimeZone()` was called from `src/app/new/page.tsx` — a **server**
+component. `Intl.DateTimeFormat().resolvedOptions().timeZone` there resolves
+the _server's_ zone, which is UTC on Vercel. Every event created in production
+defaulted to UTC while the picker looked perfectly reasonable, so an organizer
+who did not think to check it scheduled an 8 p.m. match that read as 3 p.m. in
+Bogotá.
+
+**It passed every test I ran because this machine is in America/Bogota**, which
+is also the fallback. Local and production agreed by coincidence, on a value
+that was right for the wrong reason. Confirmed by asking the deployed app
+rather than reasoning about it: production offered "Hora de UTC (GMT+0)".
+
+The fix has three parts, and the middle one is the part that would have been
+easy to miss:
+
+1. The server renders a fixed floor, `DEFAULT_TIME_ZONE`, and no longer
+   pretends to detect anything.
+2. The form resolves the real zone with `useSyncExternalStore` — server
+   snapshot returns the floor, client snapshot returns the device's zone. That
+   is precisely what the hook is for, and it avoids both a hydration mismatch
+   and a `setState` in an effect.
+3. **`SelectField` follows a changed `defaultValue` into the form store.**
+   Without this the control would display the detected zone while the store
+   still held the floor, and the form would submit Bogotá while the screen said
+   Madrid — a worse bug than the one being fixed, and invisible until you read
+   the row afterwards.
+
+Verified by making the server floor `Asia/Tokyo` and loading the page from a
+browser in Bogotá: the HTML said Tokyo, the rendered control said Bogotá, and
+the created row stored `America/Bogota` with `starts_at` at the correct +5
+offset.
+
+The lasting protection is a comment on `detectTimeZone` saying it is
+browser-only and why, because nothing about the call site made it obvious and
+the type system cannot tell a server component from a client one.
+
+---
+
 ## Things I chose not to build
 
 Beyond the section 7 list, which I did not touch:

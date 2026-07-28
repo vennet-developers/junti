@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { useFormContext } from "@stackmyth/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@stackmyth/select";
@@ -53,6 +53,28 @@ export function SelectField({
   // Make the field known to the store so it is validated and included in the
   // submitted values even when the user never touches it.
   form?.store.register(name);
+
+  /**
+   * Follow `defaultValue` when it actually changes.
+   *
+   * Normally it never does. It earns its place for a value only knowable after
+   * hydration: the create form resolves the organizer's real timezone once the
+   * browser is available, and without this the control would go on displaying
+   * the server-rendered one while the STORE held a third thing — the form would
+   * submit Bogotá while the screen said Madrid.
+   *
+   * `set-state-in-effect` is disabled deliberately. The rule is right that
+   * derived state usually belongs in render, but this also has to push the
+   * value into `@stackmyth/form`'s external store, and mutating that during
+   * render is worse than the setState the rule objects to.
+   */
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setValue(defaultValue);
+    form?.store.setValue(name, defaultValue);
+    // `form` is a fresh object each render; depending on it would loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultValue, name]);
 
   function handleChange(next: string) {
     setValue(next);

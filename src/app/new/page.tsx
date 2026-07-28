@@ -7,7 +7,7 @@ import { Text } from "@stackmyth/text";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { getViewerCopy } from "@/lib/locale";
-import { detectTimeZone } from "@/lib/time-zones";
+import { DEFAULT_TIME_ZONE } from "@/lib/format";
 
 import { CreateEventForm } from "./create-event-form";
 
@@ -43,11 +43,12 @@ export default async function NewEventPage() {
           <Text color="muted">{copy.createEvent.subheading}</Text>
         </Stack>
 
-        {/* The server cannot know the organizer's zone — it only ever sees
-            UTC on Vercel — so the form detects it in the browser and this is
-            just the floor if that fails. */}
+        {/* A fixed floor, NOT a guess. The server genuinely cannot know the
+            organizer's zone — asking Intl here returns the server's own, which
+            is UTC on Vercel — so the form detects the real one on mount and
+            this is only what the first paint shows. */}
         <CreateEventForm
-          defaultTimeZone={detectTimeZone()}
+          defaultTimeZone={DEFAULT_TIME_ZONE}
           defaultLocale={locale}
           eventTypes={eventTypes}
           policyOptionsByType={policyOptionsByType}
