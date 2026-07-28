@@ -213,13 +213,18 @@ function CreateEventFormBody({
    * the create button is pressed once. Tabbing through a form you have not
    * finished should not accuse you of anything.
    *
-   * STACKMYTH-GAP: there is no `reValidateMode`, so after that first press the
-   * messages only refresh on the next one — a corrected field cannot clear its
-   * own error as you type. `mode` is `private readonly` on the store, so it
-   * cannot be swapped at runtime either. See STACKMYTH-GAPS.md #15.
+   * `reValidateMode` is the second half: after that first press, each field
+   * re-checks as it is corrected, so an error clears the moment the field is
+   * fixed instead of surviving until the next press. Gap #15 — added to
+   * @stackmyth/form in 0.20.0 for exactly this form.
    */
   return (
-    <FormController resolver={resolver} defaultValues={defaultValues} mode="onSubmit">
+    <FormController
+      resolver={resolver}
+      defaultValues={defaultValues}
+      mode="onSubmit"
+      reValidateMode="onChange"
+    >
       {({ handleSubmit }) => (
         <form onSubmit={handleSubmit(submit)} noValidate>
           <Stack gap="5">

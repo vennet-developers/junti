@@ -17,6 +17,16 @@
 > suite went from 2621 to 2634 tests, all passing, with type-check, lint, a11y
 > coverage and all 78 package builds green.
 >
+> **Shipped in `0.20.0`**, which this app now consumes. Workarounds retired so
+> far: the composed disabled-Button-plus-Spinner in `SubmitButton` (now
+> `loading` + `loadingLabel`), and every form gained
+> `reValidateMode="onChange"`, so a corrected field clears its own error
+> without a second submit. Still standing by choice, not necessity:
+> `Notice` (it also works around the Card `tone` problem, gap #9) and the
+> composed `Popover` + `Calendar` date field (gap #11 — the ISO hidden value —
+> remains unfixed, and the two-field wall-clock model is what the server
+> stores).
+>
 > **One entry was wrong and has been withdrawn:** #3 said `Badge dot` silently
 > discards its children. It does, but deliberately — a test asserts it, and the
 > supported way to label a dot is `<Badge dot aria-label="…" />`, which the

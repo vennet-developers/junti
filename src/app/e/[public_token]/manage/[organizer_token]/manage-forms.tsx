@@ -80,6 +80,7 @@ export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
       resolver={participantResolver}
       defaultValues={{ displayName: "", attendance: "in" }}
       mode="onBlur"
+      reValidateMode="onChange"
     >
       {({ handleSubmit }) => (
         <form onSubmit={handleSubmit(submit)} noValidate>
@@ -215,7 +216,12 @@ export function EditEventForm({
   }
 
   return (
-    <FormController resolver={eventResolver} defaultValues={defaults} mode="onBlur">
+    <FormController
+      resolver={eventResolver}
+      defaultValues={defaults}
+      mode="onBlur"
+      reValidateMode="onChange"
+    >
       {({ handleSubmit }) => (
         <form onSubmit={handleSubmit(submit)} noValidate>
           <Stack gap="4">

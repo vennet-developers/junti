@@ -77,6 +77,7 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
             attendance: defaultAttendance,
           }}
           mode="onBlur"
+          reValidateMode="onChange"
         >
           {({ handleSubmit }) => (
             <form onSubmit={handleSubmit(submit)} noValidate>
