@@ -474,6 +474,86 @@ re-read [COSTS.md](./COSTS.md).
 
 ## Deploying to Vercel
 
+### Shipping a change
+
+**Pushing to `main` is the deploy.** Vercel is connected to the GitHub repo and
+builds every push; there is no CLI step and nothing to run by hand.
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm build   # the gate
+git push origin main                                     # this is the deploy
+```
+
+What Vercel does **not** do is run migrations. It runs `next build`, nothing
+else — so a schema change is a separate act, from your machine:
+
+```bash
+pnpm db:migrate
+```
+
+### The one thing to keep in mind: there is a single database
+
+Your laptop and production talk to the **same** Supabase project. There is no
+staging copy. Two consequences, and the second is the one that bites:
+
+- A migration you run locally has changed production **immediately**, before
+  any deploy exists.
+- A **preview deployment** — any branch you push — also points at the
+  production database, because the environment variables are set for all three
+  environments. A preview is not a sandbox. Treat anything it writes as real.
+
+### The order to do things in
+
+It depends entirely on whether the migration only **adds**:
+
+**Additive** — a new table, a new nullable column, a new index. Migrate first,
+then push. Old code ignores what it does not know about, and new code finds it
+already there. No window where anything is broken.
+
+```bash
+pnpm db:migrate && git push origin main
+```
+
+**Destructive** — dropping or renaming a column, or making an existing one
+`NOT NULL`. There is no safe single step: migrate first and the live old code
+hits a schema it does not expect; push first and the new code hits the old
+schema. Split it across two deploys instead:
+
+1. **Expand.** Add the new shape, backfill it, deploy code that writes both and
+   reads the new one. Nothing is removed yet.
+2. **Contract.** Once that is live and correct, a second migration drops the old
+   shape, and a second deploy removes the code that touched it.
+
+`drizzle/0003_catalogues.sql` and `0004_retire_kind_enums.sql` in this repo are
+exactly that pair: 0003 added `event_type_id` alongside `kind` and backfilled
+it; 0004 dropped `kind` afterwards.
+
+**Before any destructive migration, take a backup.** The free tier keeps none,
+so this is the only copy that will exist:
+
+```bash
+pnpm db:export
+```
+
+### Rolling back
+
+Code rolls back; schema does not.
+
+- **Code** — `git revert <sha> && git push`, or promote a previous deployment
+  from the Vercel dashboard.
+- **Schema** — Drizzle has no down-migrations here. Undoing one means writing
+  the reverse by hand, or restoring the dump from `db:export`. This asymmetry
+  is the real reason to prefer the expand/contract split above.
+
+### Changing an environment variable
+
+Editing one in Vercel does **not** affect the running deployment. Redeploy
+afterwards — an empty commit is enough, or use **Redeploy** in the dashboard.
+
+---
+
+### First-time setup
+
 1. Push the repository to GitHub.
 2. In Vercel: **Add New → Project**, import the repo. The framework is detected
    automatically; no build settings to change.
