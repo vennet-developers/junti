@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, use, useMemo, type ReactNode } from "react";
 
 import { getCopy, type Copy, type Locale } from "@/config/copy";
 
@@ -31,7 +31,7 @@ export function CopyProvider({ locale, children }: { locale: Locale; children: R
 }
 
 export function useCopy(): CopyContextValue {
-  const value = useContext(CopyContext);
+  const value = use(CopyContext);
 
   if (!value) {
     throw new Error("useCopy must be used inside <CopyProvider>. Check the nearest layout.");

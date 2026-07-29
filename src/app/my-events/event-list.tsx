@@ -2,12 +2,18 @@
 
 import { useMemo, useState } from "react";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@stackmyth/accordion";
 import { Badge } from "@stackmyth/badge";
 import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";
 import { CalendarIcon, MapPinIcon, SearchIcon } from "@stackmyth/icons";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@stackmyth/input-group";
-import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
+import { Box, Flex, Stack } from "@stackmyth/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
 
@@ -91,6 +97,9 @@ export function EventList({ events }: { events: EventListItem[] }) {
         </InputGroupAddon>
         <InputGroupInput
           type="search"
+          // xl, not lg: lg renders 43px inside an InputGroup — one pixel short
+          // of the 44px minimum. Measured, not guessed.
+          size="xl"
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           placeholder={copy.auth.searchPlaceholder}
@@ -98,7 +107,12 @@ export function EventList({ events }: { events: EventListItem[] }) {
         />
       </InputGroup>
 
-      <Tabs value={filter} onValueChange={(next) => setFilter(next as Filter)}>
+      {/*
+        `lg` is the largest Tabs offers at 0.23.0 and yields a 36px trigger —
+        short of the 44px minimum. `size="xl"` was added upstream for exactly
+        this and lands with the next release; switch this line then.
+      */}
+      <Tabs size="lg" value={filter} onValueChange={(next) => setFilter(next as Filter)}>
         <TabsList fullWidth>
           <TabsTrigger value="upcoming">{copy.auth.tabUpcoming}</TabsTrigger>
           <TabsTrigger value="past">{copy.auth.tabPast}</TabsTrigger>
@@ -184,27 +198,23 @@ function EventCard({ event }: { event: EventListItem }) {
           ) : null}
 
           {/*
-            A native <details>: the disclosure state, the keyboard handling and
-            the aria-expanded wiring all come free, and it works before
-            hydration. Stackmyth's Accordion is the richer component, but it
-            takes a controlled open state this card has no reason to own.
+            Accordion, not a native <details>: the skills name it as the
+            primitive for a disclosure and ban hand-rolled toggles. It also
+            costs nothing here — the native version needed thirty lines of
+            CSS to look right and gave an 18px tap target.
           */}
-          <details className="event-card-actions">
-            <summary aria-label={copy.auth.cardActionsLabel(event.title)}>
-              <Text as="span" variant="small" weight="medium">
-                {copy.common.options}
-              </Text>
-            </summary>
-
-            <Stack gap="3" pt="3">
-              <Divider />
-              <EventCardActions
-                eventId={event.id}
-                managePath={event.managePath}
-                whatsAppUrl={event.whatsAppUrl}
-              />
-            </Stack>
-          </details>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="actions">
+              <AccordionTrigger>{copy.common.options}</AccordionTrigger>
+              <AccordionContent>
+                <EventCardActions
+                  eventId={event.id}
+                  managePath={event.managePath}
+                  whatsAppUrl={event.whatsAppUrl}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Stack>
       </CardContent>
     </Card>

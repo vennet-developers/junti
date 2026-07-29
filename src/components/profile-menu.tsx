@@ -95,27 +95,30 @@ export function ProfileMenu({
         <Button
           type="button"
           variant="secondary"
-          size="md"
+          size="lg"
           aria-label={copy.auth.menuLabel}
-          // Shape lives in globals.css as `.profile-pill` — the padding it needs
-          // is deliberate and explained there.
-          className="profile-pill"
+          /*
+            A plain rect for now. The capsule this wants needs `shape="pill"`,
+            which Button gained upstream for this case — building it here would
+            mean overriding border-radius and padding from outside the
+            component, which the usage rules prohibit. Switch to shape="pill"
+            when the next release lands.
+          */
         >
-          <Flex gap="2" align="center">
-            <Avatar size="sm">
-              {/* AvatarImage removes itself if the URL fails, so the fallback shows. */}
-              {organizer.avatarUrl ? (
-                <AvatarImage src={organizer.avatarUrl} alt="" referrerPolicy="no-referrer" />
-              ) : null}
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <Text as="span" variant="small" weight="medium">
-              {organizer.displayName}
-            </Text>
-            <Box display="flex" flexShrink={0} color="var(--sm-text-secondary)">
-              <ChevronDownIcon size={16} aria-hidden="true" />
-            </Box>
-          </Flex>
+          {/* Button gaps and centres its own children — no Flex needed. */}
+          <Avatar size="sm">
+            {/* AvatarImage removes itself if the URL fails, so the fallback shows. */}
+            {organizer.avatarUrl ? (
+              <AvatarImage src={organizer.avatarUrl} alt="" referrerPolicy="no-referrer" />
+            ) : null}
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+          <Text as="span" variant="small" weight="medium">
+            {organizer.displayName}
+          </Text>
+          <Box display="flex" flexShrink={0} color="var(--sm-text-secondary)">
+            <ChevronDownIcon size={16} aria-hidden="true" />
+          </Box>
         </Button>
       </DropdownMenuTrigger>
 

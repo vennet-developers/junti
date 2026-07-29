@@ -67,70 +67,6 @@ body {
 }
 
 /*
-  The per-card actions disclosure on /my-events.
- 
-  A native <details> so the open state, keyboard handling and aria-expanded come
-  from the browser. Only the marker needs styling: the default triangle is
-  inconsistent across browsers and sits at a different baseline than the label.
-*/
-.event-card-actions > summary {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sm-space-1);
-  cursor: pointer;
-  color: var(--sm-text-secondary);
-  border-radius: var(--sm-radius-sm);
-  list-style: none;
-}
-
-.event-card-actions > summary::-webkit-details-marker {
-  display: none;
-}
-
-.event-card-actions > summary::after {
-  content: "";
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: translateY(-2px) rotate(45deg);
-  transition: transform 120ms ease;
-}
-
-.event-card-actions[open] > summary::after {
-  transform: translateY(1px) rotate(225deg);
-}
-
-.event-card-actions > summary:focus-visible {
-  outline: 2px solid var(--sm-bg-interactive);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .event-card-actions > summary::after {
-    transition: none;
-  }
-}
-
-/*
-  The wordmark in the signed-in header.
-
-  It is a link, so it would otherwise inherit the underline and accent colour
-  every other link gets. A brand mark that looks like a hyperlink reads as a
-  stray one, so only the focus ring survives.
-*/
-.sm-app-header__brand {
-  text-decoration: none;
-  color: inherit;
-  border-radius: var(--sm-radius-sm);
-}
-
-.sm-app-header__brand:focus-visible {
-  outline: 2px solid var(--sm-bg-interactive);
-  outline-offset: 4px;
-}
-
-/*
   The attendee avatar palette.
 
   Six classes rather than inline styles, because Stackmyth components take their
@@ -173,16 +109,14 @@ body {
 }
 
 /*
-  The account pill in the signed-in header.
+  next/link renders a plain <a>, which the browser underlines. A brand mark
+  that carries a hyperlink underline reads as a stray link.
 
-  A capsule with a circular avatar has to be padded deliberately: the button's
-  own horizontal padding is sized for text, so leaving it alone presses the
-  avatar flush against the rounded end. 4px on the left, top and bottom sets the
-  32px avatar concentric inside the 40px pill. The right side is wider on
-  purpose — a chevron is optically lighter than a photograph, so matching the
-  number reads as tighter, not as balanced.
+  This has to sit on the anchor: `text-decoration` from an ancestor is drawn
+  across its descendants, and a child setting `none` cannot erase it. Allowed
+  as a third-party integration override — next/link exposes no prop for it.
 */
-.profile-pill {
-  border-radius: var(--sm-radius-full);
-  padding: var(--sm-space-1) var(--sm-space-3) var(--sm-space-1) var(--sm-space-1);
+.brand-link {
+  text-decoration: none;
+  color: inherit;
 }

@@ -98,8 +98,15 @@ export default async function MyEventsPage({
             to be the last thing on the page, which meant an organizer with a
             dozen events scrolled past all of them to create the thirteenth.
           */}
-          <Button asChild size="md" fullWidth>
+          <Button asChild size="lg" fullWidth>
             <Link href={ROUTES.newEvent}>
+              {/*
+                A Flex here, unlike a plain Button. Button normally wraps its
+                children in `.sm-button__content`, which supplies the 8px gap —
+                but `asChild` clones the Link and that wrapper is never
+                rendered, so without this the icon and the label touch.
+                Verified in the DOM, not assumed.
+              */}
               <Flex gap="2" align="center" justify="center">
                 <PlusIcon size={16} aria-hidden="true" />
                 {copy.home.cta}
