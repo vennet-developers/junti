@@ -40,6 +40,18 @@ export const en: Copy = {
     changeLanguage: "Change language",
   },
 
+  /** Labels for the breadcrumb trail and the header's account control. */
+  nav: {
+    breadcrumbLabel: "Where you are",
+    home: "Home",
+    newEvent: "New event",
+    manage: "Organize",
+    evidence: "Receipt",
+    event: "Event",
+    signIn: "Sign in",
+    guestMenuLabel: "Sign in and preferences",
+  },
+
   home: {
     title: `${BRAND_NAME} — organize without chasing anyone`,
     heading: BRAND_NAME,
@@ -60,8 +72,6 @@ export const en: Copy = {
 
   createEvent: {
     title: "Create event",
-    attributionSignedIn: (name: string) => `This will be saved to your account, ${name}.`,
-    attributionSignedInHelp: "You will be able to edit it later, and duplicate it when it repeats.",
     attributionAnonTitle: "Sign in first?",
     attributionAnonHelp:
       "Without an account the event works the same, but you will not be able to edit it later or recover the link if you lose it.",

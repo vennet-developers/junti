@@ -78,7 +78,6 @@ export function EventCardActions({
           <Link href={`${ROUTES.newEvent}?from=${eventId}`}>{copy.auth.duplicateAndEdit}</Link>
         </Button>
       </Flex>
-
     </Stack>
   );
 }

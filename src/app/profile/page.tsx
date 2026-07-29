@@ -5,6 +5,7 @@ import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
@@ -46,6 +47,17 @@ export default async function ProfilePage() {
 
       <Container size="1" px="4" py="6">
         <Stack gap="6">
+          {/* My events is the root for an account holder — `/` only redirects
+              there — so the trail starts from it rather than from the landing
+              page they will never see again. */}
+          <PageBreadcrumb
+            label={copy.nav.breadcrumbLabel}
+            items={[
+              { label: copy.auth.myEventsLink, href: ROUTES.myEvents },
+              { label: copy.profile.link },
+            ]}
+          />
+
           <Stack gap="2">
             <Text as="h1" variant="h3">
               {copy.profile.heading}

@@ -45,6 +45,18 @@ export const es = {
     changeLanguage: "Cambiar idioma",
   },
 
+  /** Labels for the breadcrumb trail and the header's account control. */
+  nav: {
+    breadcrumbLabel: "Dónde estás",
+    home: "Inicio",
+    newEvent: "Nuevo evento",
+    manage: "Organizar",
+    evidence: "Comprobante",
+    event: "Evento",
+    signIn: "Entrar",
+    guestMenuLabel: "Entrar y preferencias",
+  },
+
   home: {
     title: `${BRAND_NAME} — organiza sin perseguir a nadie`,
     heading: BRAND_NAME,
@@ -65,8 +77,6 @@ export const es = {
 
   createEvent: {
     title: "Crear evento",
-    attributionSignedIn: (name: string) => `Se guardará en tu cuenta, ${name}.`,
-    attributionSignedInHelp: "Podrás editarlo después y duplicarlo cuando se repita.",
     attributionAnonTitle: "¿Entras primero?",
     attributionAnonHelp:
       "Sin cuenta el evento funciona igual, pero no vas a poder editarlo después ni recuperar el link si lo pierdes.",

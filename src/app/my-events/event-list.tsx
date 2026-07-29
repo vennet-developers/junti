@@ -2,12 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@stackmyth/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@stackmyth/accordion";
 import { Badge } from "@stackmyth/badge";
 import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";

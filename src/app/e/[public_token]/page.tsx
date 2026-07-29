@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { Container, Divider, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { AppHeader } from "@/components/app-header";
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { MoneySummary } from "@/components/money-summary";
 import { Notice } from "@/components/notice";
 import { RosterGroup } from "@/components/roster-list";
@@ -25,6 +26,8 @@ import {
   type RosterMember,
 } from "@/lib/roster";
 import { editCookieName } from "@/lib/rsvp-cookie";
+import { ROUTES } from "@/config/routes";
+import { participantPath } from "@/lib/urls";
 import { and, eq, or } from "drizzle-orm";
 
 import { JoinPanel } from "./join-panel";
@@ -66,7 +69,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   const copy = getCopy(locale);
 
   // The reader's zone when one is known, else the event's own.
-  const { timeZone: preferredTimeZone } = await resolvePreferences();
+  const { timeZone: preferredTimeZone, theme } = await resolvePreferences();
   const readerTimeZone = readingTimeZone(preferredTimeZone, eventRow.timeZone);
 
   const roster = await loadRoster(eventRow, locale);
@@ -145,31 +148,45 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   };
 
   return (
-    <Container size="1" px="4" py="6">
-      <Stack gap="6">
-        {/* Writes this device's zone into a cookie on a first visit, so the
+    <>
+      <AppHeader organizer={organizer} theme={theme} signInNext={participantPath(publicToken)} />
+
+      <Container size="1" px="4" py="6">
+        <Stack gap="6">
+          {/* Writes this device's zone into a cookie on a first visit, so the
             server can render every later paint on the right clock. */}
-        <TimeZoneSync hasPreference={preferredTimeZone !== null} />
+          <TimeZoneSync hasPreference={preferredTimeZone !== null} />
 
-        <Flex justify="end">
-          <LanguageSwitcher />
-        </Flex>
+          {/*
+          The event's own name is the last crumb, so somebody who arrived from
+          a WhatsApp link with no other context can still see what this screen
+          belongs to and get back out to the product.
+        */}
+          <PageBreadcrumb
+            label={copy.nav.breadcrumbLabel}
+            items={[
+              organizer
+                ? { label: copy.auth.myEventsLink, href: ROUTES.myEvents }
+                : { label: copy.nav.home, href: ROUTES.home },
+              { label: event.title },
+            ]}
+          />
 
-        <EventHeader
-          event={event}
-          attendingCount={roster.attending.length}
-          copy={copy}
-          readerTimeZone={readerTimeZone}
-        />
+          <EventHeader
+            event={event}
+            attendingCount={roster.attending.length}
+            copy={copy}
+            readerTimeZone={readerTimeZone}
+          />
 
-        {/* Only the "spots left" nudge lives here. When the event is FULL the
+          {/* Only the "spots left" nudge lives here. When the event is FULL the
             RSVP box says so itself, right where the consequence applies —
             saying it twice on one screen is noise. */}
-        {!event.isClosed && roster.openSlots !== null && roster.openSlots > 0 ? (
-          <Notice tone="info" title={copy.event.spotsLeft(roster.openSlots)} />
-        ) : null}
+          {!event.isClosed && roster.openSlots !== null && roster.openSlots > 0 ? (
+            <Notice tone="info" title={copy.event.spotsLeft(roster.openSlots)} />
+          ) : null}
 
-        {/*
+          {/*
           The RSVP box comes BEFORE the roster.
 
           Everyone arrives here from a WhatsApp link with one thing to do: say
@@ -178,49 +195,49 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
           phone that is most of a screen and a half of scrolling before you can
           act. Who else is coming is interesting; answering is the point.
         */}
-        {event.isClosed ? (
-          <Notice tone="warning" title={copy.event.closedNotice} />
-        ) : (
-          <JoinPanel
-            publicToken={publicToken}
-            mine={mine}
-            isFull={roster.openSlots !== null && roster.openSlots === 0}
-            account={
-              organizer
-                ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
-                : null
-            }
-          />
-        )}
-
-        {/* Immediately under the answer, because it is the rest of the same
-            act: you said you are coming, here is what is still missing. */}
-        {!event.isClosed && myPolicies.length > 0 ? (
-          <PolicyPanel publicToken={publicToken} items={myPolicies} />
-        ) : null}
-
-        <Divider />
-
-        <MoneySummary roster={roster} copy={copy} />
-
-        {showMoney ? <Divider /> : null}
-
-        <Stack gap="5">
-          <Text variant="h3">{copy.roster.heading}</Text>
-
-          {roster.members.length === 0 ? (
-            <Text color="muted">{copy.roster.empty}</Text>
+          {event.isClosed ? (
+            <Notice tone="warning" title={copy.event.closedNotice} />
           ) : (
-            <>
-              <RosterGroup
-                title={copy.roster.inTitle}
-                members={roster.confirmed}
-                currency={event.currency}
-                copy={copy}
-                showMoney={showMoney}
-              />
+            <JoinPanel
+              publicToken={publicToken}
+              mine={mine}
+              isFull={roster.openSlots !== null && roster.openSlots === 0}
+              account={
+                organizer
+                  ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
+                  : null
+              }
+            />
+          )}
 
-              {/*
+          {/* Immediately under the answer, because it is the rest of the same
+            act: you said you are coming, here is what is still missing. */}
+          {!event.isClosed && myPolicies.length > 0 ? (
+            <PolicyPanel publicToken={publicToken} items={myPolicies} />
+          ) : null}
+
+          <Divider />
+
+          <MoneySummary roster={roster} copy={copy} />
+
+          {showMoney ? <Divider /> : null}
+
+          <Stack gap="5">
+            <Text variant="h3">{copy.roster.heading}</Text>
+
+            {roster.members.length === 0 ? (
+              <Text color="muted">{copy.roster.empty}</Text>
+            ) : (
+              <>
+                <RosterGroup
+                  title={copy.roster.inTitle}
+                  members={roster.confirmed}
+                  currency={event.currency}
+                  copy={copy}
+                  showMoney={showMoney}
+                />
+
+                {/*
                 Collapsed, and below the confirmed list.
 
                 These people said they are coming and still hold a spot — they
@@ -229,59 +246,60 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
                 would hide the fact that they are counted against capacity.
                 Collapsed says both: present, and not the same thing.
               */}
-              {roster.pendingPolicy.length > 0 ? (
-                <Disclosure
-                  id="pending-policy"
-                  label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
-                >
-                  <Stack gap="3">
-                    <Text variant="small" color="muted">
-                      {copy.roster.pendingPolicyHelp}
-                    </Text>
-                    <RosterGroup
-                      title={copy.roster.pendingPolicyTitle}
-                      members={roster.pendingPolicy}
-                      currency={event.currency}
-                      copy={copy}
-                      showMoney={showMoney}
-                      renderNote={pendingNote}
-                    />
-                  </Stack>
-                </Disclosure>
-              ) : null}
+                {roster.pendingPolicy.length > 0 ? (
+                  <Disclosure
+                    id="pending-policy"
+                    label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
+                  >
+                    <Stack gap="3">
+                      <Text variant="small" color="muted">
+                        {copy.roster.pendingPolicyHelp}
+                      </Text>
+                      <RosterGroup
+                        title={copy.roster.pendingPolicyTitle}
+                        members={roster.pendingPolicy}
+                        currency={event.currency}
+                        copy={copy}
+                        showMoney={showMoney}
+                        renderNote={pendingNote}
+                      />
+                    </Stack>
+                  </Disclosure>
+                ) : null}
 
-              {roster.waitlisted.length > 0 ? (
-                <RosterGroup
-                  title={copy.roster.waitlistedTitle}
-                  members={roster.waitlisted}
-                  currency={event.currency}
-                  copy={copy}
-                  showMoney={false}
-                  numbered
-                />
-              ) : null}
-              {roster.maybe.length > 0 ? (
-                <RosterGroup
-                  title={copy.roster.maybeTitle}
-                  members={roster.maybe}
-                  currency={event.currency}
-                  copy={copy}
-                  showMoney={false}
-                />
-              ) : null}
-              {roster.notAttending.length > 0 ? (
-                <RosterGroup
-                  title={copy.roster.outTitle}
-                  members={roster.notAttending}
-                  currency={event.currency}
-                  copy={copy}
-                  showMoney={false}
-                />
-              ) : null}
-            </>
-          )}
+                {roster.waitlisted.length > 0 ? (
+                  <RosterGroup
+                    title={copy.roster.waitlistedTitle}
+                    members={roster.waitlisted}
+                    currency={event.currency}
+                    copy={copy}
+                    showMoney={false}
+                    numbered
+                  />
+                ) : null}
+                {roster.maybe.length > 0 ? (
+                  <RosterGroup
+                    title={copy.roster.maybeTitle}
+                    members={roster.maybe}
+                    currency={event.currency}
+                    copy={copy}
+                    showMoney={false}
+                  />
+                ) : null}
+                {roster.notAttending.length > 0 ? (
+                  <RosterGroup
+                    title={copy.roster.outTitle}
+                    members={roster.notAttending}
+                    currency={event.currency}
+                    copy={copy}
+                    showMoney={false}
+                  />
+                ) : null}
+              </>
+            )}
+          </Stack>
         </Stack>
-      </Stack>
-    </Container>
+      </Container>
+    </>
   );
 }

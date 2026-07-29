@@ -120,3 +120,35 @@ body {
   text-decoration: none;
   color: inherit;
 }
+
+/*
+  One crumb of the breadcrumb trail, capped in width.
+
+  An event title is free text and routinely longer than the screen: at 390px
+  "Partido de fútbol de los jueves en la cancha sintética de La 90" pushed the
+  trail onto three lines and left separators stranded at the end of one line
+  and the start of the next. The list wraps rather than overflows — that part
+  Stackmyth already handles — but a wrapped trail stops looking like a trail.
+
+  The cap is measured, not guessed. At 390px the trail has 358px to work with,
+  and the deepest one — "Inicio › <event> › Organizar" — spends 164px of that
+  on the two fixed crumbs, two separators and four gaps. That leaves 194px for
+  the title; 18ch lands at ~167px and keeps a margin for a longer word in
+  another language. Nothing is lost by truncating: the full title is the <h1>
+  directly underneath. A trail that does outgrow one line still wraps rather
+  than overflows, so the number failing is a cosmetic miss, not a break.
+
+  App CSS rather than a component prop because there is no prop for it, and
+  the alternative — measuring and cutting the string in JS — would guess at
+  the font metrics the browser already knows.
+*/
+.breadcrumb-crumb {
+  display: inline-block;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* Keeps the text baseline aligned with the separators, which are centred
+     flex items rather than inline text. */
+  vertical-align: bottom;
+}

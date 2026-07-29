@@ -20,6 +20,9 @@ importers:
       '@stackmyth/badge':
         specifier: ^0.24.2
         version: 0.24.2(@stackmyth/core@0.24.2(react@19.2.4))(react@19.2.4)
+      '@stackmyth/breadcrumb':
+        specifier: ^0.24.2
+        version: 0.24.2(@stackmyth/core@0.24.2(react@19.2.4))(react@19.2.4)
       '@stackmyth/button':
         specifier: ^0.24.2
         version: 0.24.2(@stackmyth/core@0.24.2(react@19.2.4))(react@19.2.4)
@@ -1165,6 +1168,12 @@ packages:
 
   '@stackmyth/badge@0.24.2':
     resolution: {integrity: sha512-PoEHEK6WhNLvx/qB5UzbPiPxWCerVWXoVW4s+fHe2SqnWdgFFSc97Di0ba/lTl2WmVCc2aDxsfUfgmKMu3x4Dw==, tarball: https://npm.pkg.github.com/download/@stackmyth/badge/0.24.2/cd57ebf4ee5c5006648aa17fb2a1d1d799761402}
+    peerDependencies:
+      '@stackmyth/core': '>=0.0.0'
+      react: '>=18.0.0'
+
+  '@stackmyth/breadcrumb@0.24.2':
+    resolution: {integrity: sha512-/impygb7MUDJ8E9vwQXbb9GbHbMmrtkMVVTyDh4Kj3sJTtiv9xetaEpza/G0w17Ue0pjezpkq03sc14ay6bHVQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/breadcrumb/0.24.2/11b1970fac828852eaec2840d2ab8a52c0ad9f98}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
@@ -3885,6 +3894,13 @@ snapshots:
 
   '@stackmyth/badge@0.24.2(@stackmyth/core@0.24.2(react@19.2.4))(react@19.2.4)':
     dependencies:
+      '@stackmyth/core': 0.24.2(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.1(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/breadcrumb@0.24.2(@stackmyth/core@0.24.2(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.1
       '@stackmyth/core': 0.24.2(react@19.2.4)
       '@stackmyth/event-bus': 0.1.1(react@19.2.4)
       react: 19.2.4

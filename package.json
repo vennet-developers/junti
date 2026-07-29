@@ -21,6 +21,7 @@
     "@stackmyth/alert": "^0.24.2",
     "@stackmyth/avatar": "^0.24.2",
     "@stackmyth/badge": "^0.24.2",
+    "@stackmyth/breadcrumb": "^0.24.2",
     "@stackmyth/button": "^0.24.2",
     "@stackmyth/calendar": "^0.24.2",
     "@stackmyth/card": "^0.24.2",

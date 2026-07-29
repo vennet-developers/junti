@@ -59,3 +59,4 @@ minimumReleaseAgeExclude:
   - '@stackmyth/classnames@0.1.1'
   - '@stackmyth/event-bus@0.1.1'
   - '@stackmyth/icons@0.1.1'
+  - '@stackmyth/breadcrumb@0.24.2'

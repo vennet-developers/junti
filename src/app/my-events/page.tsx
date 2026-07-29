@@ -89,6 +89,13 @@ export default async function MyEventsPage({
               arrives as a flag on the URL rather than with the action. */}
           {created === "1" ? <CreatedToast /> : null}
 
+          {/*
+            No breadcrumb here, and that is the trail being honest rather than
+            an omission. This screen is the root of the signed-in app — `/`
+            redirects to it — so the only crumb available is the page itself,
+            and a one-item trail just restates the heading below it. A "Home"
+            crumb above it would link to `/`, which bounces straight back here.
+          */}
           <Text as="h1" variant="h3">
             {copy.auth.myEventsHeading}
           </Text>

@@ -6,28 +6,31 @@ import { Button } from "@stackmyth/button";
 import { useFormContext } from "@stackmyth/form";
 import { Card, CardContent } from "@stackmyth/card";
 import { GoogleIcon } from "@stackmyth/icons";
-import { Box, Flex, Stack } from "@stackmyth/layout";
+import { Box, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
-import { PersonAvatar } from "@/components/person-avatar";
 import { ROUTES, signInPath } from "@/config/routes";
 import { saveDraft } from "@/lib/event-draft";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /**
- * Who the event about to be created will belong to.
+ * The offer to sign in before creating, for people who have not.
  *
  * It sits at the top of the form because attribution **cannot be fixed
  * afterwards**: an event created signed out has no owner, forever, and the only
- * moment that decision is visible is before the create button is pressed. The
- * page used to say nothing at all, so a session that had quietly expired
- * produced an unattributed event and no way to tell until it failed to appear
- * in My events.
+ * moment that decision is visible is before the create button is pressed.
  *
- * Signing out is never suggested here, and creating without an account stays
- * one tap away — the anonymous flow is the original product, not a degraded
- * one.
+ * Nothing renders for someone already signed in. There used to be a card
+ * confirming whose account the event would land in, from a time when no screen
+ * said who you were — a quietly expired session produced an unattributed event
+ * and no way to tell until it failed to appear in My events. The header now
+ * carries your name and photo on every page, so the card was restating what is
+ * already on screen, one line above, and pushing the first question of the form
+ * below the fold.
+ *
+ * Creating without an account stays one tap away — the anonymous flow is the
+ * original product, not a degraded one.
  */
 export function SignInPill({
   organizer,
@@ -55,29 +58,7 @@ export function SignInPill({
     if (values) saveDraft(values);
   }
 
-  if (organizer) {
-    return (
-      <Card surface="outlined">
-        <CardContent>
-          <Flex gap="3" align="center">
-            <Box flexShrink={0}>
-              <PersonAvatar src={organizer.avatarUrl} name={organizer.displayName} size="sm" />
-            </Box>
-            <Stack gap="0" minWidth="0">
-              <Text variant="small" weight="semibold">
-                {copy.createEvent.attributionSignedIn(organizer.displayName)}
-              </Text>
-              <Text variant="small" color="muted">
-                {copy.createEvent.attributionSignedInHelp}
-              </Text>
-            </Stack>
-          </Flex>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (dismissed) return null;
+  if (organizer || dismissed) return null;
 
   function signInWithGoogle() {
     parkDraft();

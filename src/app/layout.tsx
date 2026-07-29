@@ -21,6 +21,7 @@ import "@stackmyth/core/fonts/geist.css";
 
 import "@stackmyth/layout/layout.css";
 import "@stackmyth/text/text.css";
+import "@stackmyth/breadcrumb/breadcrumb.css";
 import "@stackmyth/button/button.css";
 import "@stackmyth/input/input.css";
 import "@stackmyth/input-group/input-group.css";
@@ -55,13 +56,7 @@ import "@stackmyth/form/form.css";
 
 import "./globals.css";
 
-import {
-  CheckCircleIcon,
-  InfoIcon,
-  TriangleAlertIcon,
-  XCircleIcon,
-  XIcon,
-} from "@stackmyth/icons";
+import { CheckCircleIcon, InfoIcon, TriangleAlertIcon, XCircleIcon, XIcon } from "@stackmyth/icons";
 import { Toaster } from "@stackmyth/toast";
 
 import { CopyProvider } from "@/components/copy-provider";

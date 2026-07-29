@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
-import { Container, Flex, Stack } from "@stackmyth/layout";
+import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { AppHeader } from "@/components/app-header";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { getViewerCopy } from "@/lib/locale";
 import { ROUTES } from "@/config/routes";
@@ -34,7 +34,7 @@ export default async function NewEventPage({
 
   // A stored or detected zone beats the floor: somebody who set Bogotá in their
   // profile while living in Madrid should not re-pick it on every event.
-  const { timeZone: preferredTimeZone } = await resolvePreferences();
+  const { timeZone: preferredTimeZone, theme } = await resolvePreferences();
   const organizer = await getOrganizer();
 
   /**
@@ -53,37 +53,46 @@ export default async function NewEventPage({
   ]);
 
   return (
-    <Container size="1" px="4" py="6">
-      <Stack gap="6">
-        <Flex justify="between" align="center">
-          <Text variant="small" color="muted">
-            <Link href={ROUTES.home}>{copy.common.back}</Link>
-          </Text>
-          <LanguageSwitcher />
-        </Flex>
+    <>
+      <AppHeader organizer={organizer} theme={theme} signInNext={ROUTES.newEvent} />
 
-        <Stack gap="2">
-          <Text variant="h1">{copy.createEvent.heading}</Text>
-          <Text color="muted">{copy.createEvent.subheading}</Text>
+      <Container size="1" px="4" py="6">
+        <Stack gap="6">
+          {/* The trail root differs by who is asking: an account holder came
+              from their events, everybody else from the landing page. */}
+          <PageBreadcrumb
+            label={copy.nav.breadcrumbLabel}
+            items={[
+              organizer
+                ? { label: copy.auth.myEventsLink, href: ROUTES.myEvents }
+                : { label: copy.nav.home, href: ROUTES.home },
+              { label: copy.nav.newEvent },
+            ]}
+          />
+
+          <Stack gap="2">
+            <Text variant="h1">{copy.createEvent.heading}</Text>
+            <Text color="muted">{copy.createEvent.subheading}</Text>
+          </Stack>
+
+          {/* A fixed floor, NOT a guess. The server genuinely cannot know the
+              organizer's zone — asking Intl here returns the server's own,
+              which is UTC on Vercel — so the form detects the real one on
+              mount and this is only what the first paint shows. */}
+          <CreateEventForm
+            defaultTimeZone={preferredTimeZone ?? DEFAULT_TIME_ZONE}
+            defaultLocale={locale}
+            eventTypes={eventTypes}
+            policyOptionsByType={policyOptionsByType}
+            organizer={
+              organizer
+                ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
+                : null
+            }
+            prefill={prefill}
+          />
         </Stack>
-
-        {/* A fixed floor, NOT a guess. The server genuinely cannot know the
-            organizer's zone — asking Intl here returns the server's own, which
-            is UTC on Vercel — so the form detects the real one on mount and
-            this is only what the first paint shows. */}
-        <CreateEventForm
-          defaultTimeZone={preferredTimeZone ?? DEFAULT_TIME_ZONE}
-          defaultLocale={locale}
-          eventTypes={eventTypes}
-          policyOptionsByType={policyOptionsByType}
-          organizer={
-            organizer
-              ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
-              : null
-          }
-          prefill={prefill}
-        />
-      </Stack>
-    </Container>
+      </Container>
+    </>
   );
 }

@@ -23,6 +23,10 @@ export default function Loading() {
 
       <Container size="1" px="4" py="6">
         <Stack gap="6" aria-hidden="true">
+          {/* The breadcrumb line, so the heading below does not jump up a row
+              when the real trail arrives. */}
+          <Skeleton width="150px" height="18px" borderRadius="var(--sm-radius-sm)" />
+
           <Stack gap="2">
             <Skeleton width="40%" height="30px" borderRadius="var(--sm-radius-md)" />
             <Skeleton width="75%" height="18px" borderRadius="var(--sm-radius-sm)" />

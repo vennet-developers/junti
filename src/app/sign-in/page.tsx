@@ -4,8 +4,11 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { AppHeader } from "@/components/app-header";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
+import { resolvePreferences } from "@/lib/preferences";
 import { getCurrentUser } from "@/lib/supabase/server";
 
 import { SignInForm } from "./sign-in-form";
@@ -33,19 +36,32 @@ export default async function SignInPage({
   if (await getCurrentUser()) redirect(redirectTo);
 
   const { copy } = await getViewerCopy();
+  const { theme } = await resolvePreferences();
 
   return (
-    <Container size="1" px="4" py="7">
-      <Stack gap="6">
-        <Stack gap="2">
-          <Text as="h1" variant="h2">
-            {copy.auth.signInHeading}
-          </Text>
-          <Text color="muted">{copy.auth.signInSubheading}</Text>
-        </Stack>
+    <>
+      {/* Signed out by definition — the redirect above catches anyone who is
+          not. The guest control still earns its place here for the language
+          and appearance it carries. */}
+      <AppHeader organizer={null} theme={theme} />
 
-        <SignInForm redirectTo={redirectTo} />
-      </Stack>
-    </Container>
+      <Container size="1" px="4" py="7">
+        <Stack gap="6">
+          <PageBreadcrumb
+            label={copy.nav.breadcrumbLabel}
+            items={[{ label: copy.nav.home, href: ROUTES.home }, { label: copy.auth.signInTitle }]}
+          />
+
+          <Stack gap="2">
+            <Text as="h1" variant="h2">
+              {copy.auth.signInHeading}
+            </Text>
+            <Text color="muted">{copy.auth.signInSubheading}</Text>
+          </Stack>
+
+          <SignInForm redirectTo={redirectTo} />
+        </Stack>
+      </Container>
+    </>
   );
 }

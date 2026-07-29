@@ -22,6 +22,22 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+
+  /**
+   * Lets the dev server be reached as 127.0.0.1 as well as localhost.
+   *
+   * Cookies are scoped by host, and the two are different hosts to the browser
+   * — so opening 127.0.0.1 is a signed-out view of the same running app, which
+   * is the only practical way to check the guest header, the anonymous RSVP
+   * flow or the sign-in page while staying signed in on localhost.
+   *
+   * Without this Next blocks `/_next/*` as cross-origin in development, the
+   * client bundle never loads, and the page renders but does not hydrate —
+   * which looks exactly like a broken component rather than a blocked request.
+   *
+   * Development only: Next ignores this in a production build.
+   */
+  allowedDevOrigins: ["127.0.0.1"],
 };
 
 export default nextConfig;
