@@ -95,10 +95,19 @@ export function ProfileMenu({
         <Button
           type="button"
           variant="secondary"
-          size="lg"
+          /*
+            `sm`, not `lg`, because this app runs at --sm-density-factor 1.4.
+            Every control's padding is multiplied by that, so `sm` already
+            clears the 44px touch target here — it measures 50.8px — while
+            `lg` came out at 62px, and a 32px avatar inside a 62px capsule
+            reads as a small photo adrift in a large button rather than as
+            one object. At `sm` the avatar fills 63% of the height.
+          */
+          size="sm"
           aria-label={copy.auth.menuLabel}
-          // `pill` tightens the leading padding so the avatar sits concentric
-          // in the capsule's end, instead of flush against it.
+          // `pill` rounds the ends and pulls the leading padding in to match
+          // the vertical padding, so the avatar sits concentric in the
+          // capsule's rounded end instead of flush against it.
           shape="pill"
         >
           {/* Button gaps and centres its own children — no Flex needed. */}

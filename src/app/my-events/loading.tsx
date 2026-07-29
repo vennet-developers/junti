@@ -16,7 +16,11 @@ export default function Loading() {
         <Container size="1" px="4">
           <Flex justify="between" align="center" gap="3" py="3">
             <Skeleton width="64px" height="28px" borderRadius="var(--sm-radius-md)" />
-            <Skeleton width="145px" height="42px" borderRadius="var(--sm-radius-full)" />
+            {/* Measured against the real trigger, so the header does not
+                resize when the menu replaces this: 144x51 at this app's
+                density. The width assumes a two-word name and is the one
+                number here that cannot be exact for everyone. */}
+            <Skeleton width="145px" height="51px" borderRadius="var(--sm-radius-full)" />
           </Flex>
         </Container>
       </Box>
