@@ -111,3 +111,21 @@ body {
     transition: none;
   }
 }
+
+/*
+  The wordmark in the signed-in header.
+
+  It is a link, so it would otherwise inherit the underline and accent colour
+  every other link gets. A brand mark that looks like a hyperlink reads as a
+  stray one, so only the focus ring survives.
+*/
+.sm-app-header__brand {
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--sm-radius-sm);
+}
+
+.sm-app-header__brand:focus-visible {
+  outline: 2px solid var(--sm-bg-interactive);
+  outline-offset: 4px;
+}

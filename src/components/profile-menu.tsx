@@ -188,8 +188,16 @@ export function ProfileMenu({
             <Text variant="small" color="muted">
               {copy.appearance.label}
             </Text>
+            {/*
+              `outline` rather than the default: it gives each segment a border,
+              so the row reads as one control with a chosen option instead of
+              three loose icons. The default variant marks the pressed item with
+              a tinted background alone, which in light mode is a grey so close
+              to the menu surface that "which one is on?" needs a second look.
+            */}
             <ToggleGroup
               type="single"
+              variant="outline"
               value={theme ?? "system"}
               onValueChange={chooseTheme}
               size="sm"

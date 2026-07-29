@@ -31,14 +31,22 @@ export function AppHeader({ organizer, theme }: { organizer: Organizer; theme: T
       <Container size="1" px="4">
         <Flex justify="between" align="center" gap="3" py="3">
           {/*
-            `as={Link}` rather than a nested anchor: Text has no `asChild`, but
-            it does forward `as` and `href`, so the wordmark is a real link with
-            Text's typography and none of its link colouring — a brand mark that
-            turned blue would read as a stray hyperlink.
+            Link on the outside, Text within — NOT `<Text as={Link}>`.
+            @stackmyth/text is a client component, and handing a client
+            component another component as a prop means passing a function
+            across the server boundary, which React refuses at render time.
+            Nesting is the shape that works: the anchor is the real link and
+            Text only styles what is inside it.
+
+            `variant="h4"` for the size, `as="span"` for the semantics — the
+            page's own <h1> is the heading, and a wordmark that also claimed
+            one would give every screen two.
           */}
-          <Text as={Link} href={ROUTES.myEvents} variant="h4" weight="bold" color="default">
-            {BRAND_NAME}
-          </Text>
+          <Link href={ROUTES.myEvents} className="sm-app-header__brand">
+            <Text as="span" variant="h4" weight="bold" color="default">
+              {BRAND_NAME}
+            </Text>
+          </Link>
 
           <ProfileMenu organizer={organizer} theme={theme} />
         </Flex>
