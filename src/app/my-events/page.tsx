@@ -8,6 +8,7 @@ import { Container, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
+import { CreatedToast } from "@/components/created-toast";
 import { ROUTES, signInPath } from "@/config/routes";
 import { loadEventTypes } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
@@ -28,7 +29,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function MyEventsPage() {
+export default async function MyEventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ created?: string }>;
+}) {
+  const { created } = await searchParams;
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.myEvents));
 
@@ -79,6 +85,10 @@ export default async function MyEventsPage() {
 
       <Container size="1" px="4" py="6">
         <Stack gap="5">
+          {/* Creation redirects here for account holders, so the confirmation
+              arrives as a flag on the URL rather than with the action. */}
+          {created === "1" ? <CreatedToast /> : null}
+
           <Text as="h1" variant="h3">
             {copy.auth.myEventsHeading}
           </Text>

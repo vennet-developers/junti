@@ -179,6 +179,8 @@ export const es = {
     submitting: "Enviando…",
     yourRsvp: (name: string) => `Estás registrado como ${name}.`,
     changeMine: "Cambiar mi respuesta",
+    saved: "Listo, quedaste en la lista.",
+    savedEditing: "Actualizamos tu respuesta.",
     waitlistedNotice:
       "El cupo está lleno, así que quedaste en lista de espera. Si alguien cancela, el organizador te avisa y te sube.",
     willBeWaitlisted:
@@ -314,6 +316,7 @@ export const es = {
     editNotYours:
       "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos.",
     editEventSaved: "Cambios guardados.",
+    addParticipantSaved: "Lo agregamos a la lista.",
     shareSection: "Links",
     splitWarningTitle: "Ojo con las cuentas",
     splitWarningBody: (name: string, confirmed: string, current: string) =>

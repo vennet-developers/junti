@@ -39,6 +39,7 @@ import "@stackmyth/dialog/dialog.css";
 import "@stackmyth/dropdown-menu/dropdown-menu.css";
 import "@stackmyth/tabs/tabs.css";
 import "@stackmyth/toggle/toggle.css";
+import "@stackmyth/toast/toast.css";
 import "@stackmyth/list-item/list-item.css";
 import "@stackmyth/empty-state/empty-state.css";
 import "@stackmyth/stat/stat.css";
@@ -54,7 +55,17 @@ import "@stackmyth/form/form.css";
 
 import "./globals.css";
 
+import {
+  CheckCircleIcon,
+  InfoIcon,
+  TriangleAlertIcon,
+  XCircleIcon,
+  XIcon,
+} from "@stackmyth/icons";
+import { Toaster } from "@stackmyth/toast";
+
 import { CopyProvider } from "@/components/copy-provider";
+
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
 import { getCopy } from "@/config/copy";
 import { getViewerCopy } from "@/lib/locale";
@@ -105,7 +116,36 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     */
     <html lang={getCopy(locale).intlLocale} data-mode={theme ?? undefined}>
       <body>
-        <CopyProvider locale={locale}>{children}</CopyProvider>
+        <CopyProvider locale={locale}>
+          {children}
+
+          {/*
+            One toast host for the whole app.
+
+            Top, not the library's default bottom: every form here ends in a
+            full-width submit button, and at 390px a bottom toast lands on the
+            control you just pressed. The offset clears the signed-in header.
+
+            Icons are not built in — the component ships icon-free on purpose —
+            so the variants get theirs here, once, and a success toast looks the
+            same wherever it came from.
+          */}
+          <Toaster
+            position="top-center"
+            offset="5rem"
+            duration={5000}
+            richColors
+            maxToasts={3}
+            showCloseButton
+            icons={{
+              success: <CheckCircleIcon aria-hidden="true" />,
+              error: <XCircleIcon aria-hidden="true" />,
+              warning: <TriangleAlertIcon aria-hidden="true" />,
+              info: <InfoIcon aria-hidden="true" />,
+              close: <XIcon aria-hidden="true" />,
+            }}
+          />
+        </CopyProvider>
       </body>
     </html>
   );

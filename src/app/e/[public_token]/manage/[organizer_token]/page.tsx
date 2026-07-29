@@ -12,6 +12,7 @@ import { Disclosure } from "@/components/disclosure";
 import { Notice } from "@/components/notice";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { RosterGroup } from "@/components/roster-list";
+import { CreatedToast } from "@/components/created-toast";
 import { getCopy } from "@/config/copy";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
@@ -172,10 +173,13 @@ export default async function ManagePage({
         />
 
         {justCreated ? (
-          <Stack gap="2">
-            <Text variant="h3">{copy.eventCreated.heading}</Text>
+          <>
+            {/* "Your event is created" floats — it is a fact about a moment.
+                "Keep these two links" stays on the page, because losing them
+                is unrecoverable and a message that expires cannot carry that. */}
+            <CreatedToast />
             <Text color="muted">{copy.eventCreated.subheading}</Text>
-          </Stack>
+          </>
         ) : null}
 
         {/* Expanded only right after creation, when the links ARE the task.

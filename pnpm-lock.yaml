@@ -113,6 +113,9 @@ importers:
       '@stackmyth/time-picker':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(@stackmyth/popover@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@stackmyth/toast':
+        specifier: ^0.22.0
+        version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/toggle':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)
@@ -1374,6 +1377,13 @@ packages:
       '@stackmyth/icons': '>=0.0.0'
       '@stackmyth/popover': '>=0.0.0'
       react: '>=18.0.0'
+
+  '@stackmyth/toast@0.22.0':
+    resolution: {integrity: sha512-ZQ2VfPimzBpBbaQemf75JElfTXlsbwJNjFlGWPPPSSHof/VS3RlKjlRZRoKKrSaXjV+adGOGePbp6smcZZJhYA==, tarball: https://npm.pkg.github.com/download/@stackmyth/toast/0.22.0/85fdd1bd8e33b8f182caa156965113abaeea4c5c}
+    peerDependencies:
+      '@stackmyth/core': '>=0.0.0'
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
 
   '@stackmyth/toggle@0.22.0':
     resolution: {integrity: sha512-r0QXtPtm7RKwZEssobuw19RjLgfRnkiTnAdAZjy6Cgo5I031mWC115lsTcmDPQ8AuWLJKB310h2hMrmyrpSxkg==, tarball: https://npm.pkg.github.com/download/@stackmyth/toggle/0.22.0/2cf7b84fba392ad6b97e8e37980e9362170e85f2}
@@ -4098,6 +4108,14 @@ snapshots:
       '@stackmyth/icons': 0.1.0(react@19.2.4)
       '@stackmyth/popover': 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
+
+  '@stackmyth/toast@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.22.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@stackmyth/toggle@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)':
     dependencies:

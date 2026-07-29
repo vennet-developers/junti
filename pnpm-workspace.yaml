@@ -55,3 +55,4 @@ minimumReleaseAgeExclude:
   - '@stackmyth/dropdown-menu@0.22.0'
   - '@stackmyth/tabs@0.22.0'
   - '@stackmyth/toggle@0.22.0'
+  - '@stackmyth/toast@0.22.0'

@@ -172,6 +172,8 @@ export const en: Copy = {
     submitting: "Sending…",
     yourRsvp: (name: string) => `You are on the list as ${name}.`,
     changeMine: "Change my answer",
+    saved: "Done — you are on the list.",
+    savedEditing: "Your answer is updated.",
     waitlistedNotice:
       "The event is full, so you are on the waitlist. If someone drops out, the organizer will move you up and let you know.",
     willBeWaitlisted:
@@ -306,6 +308,7 @@ export const en: Copy = {
       "This event was created without one, so its details are fixed. Everything else — payments, people, the waitlist, closing it — still works from this link.",
     editNotYours: "This event belongs to another account, so only that one can change its details.",
     editEventSaved: "Changes saved.",
+    addParticipantSaved: "Added to the list.",
     shareSection: "Links",
     splitWarningTitle: "Careful with the numbers",
     splitWarningBody: (name: string, confirmed: string, current: string) =>

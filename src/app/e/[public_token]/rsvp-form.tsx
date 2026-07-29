@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
 import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import {
   ControlledField,
@@ -62,6 +63,15 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
     startTransition(async () => {
       const result = await submitRsvp(publicToken, { errors: {} }, formData);
       setServerState(result);
+
+      // Nothing confirmed the save before this: the page just re-rendered and
+      // you had to find yourself in the roster to know it worked.
+      //
+      // Not toasted when waitlisted — the Alert below says so at length, and
+      // that consequence outlives a toast. One message per outcome.
+      if (!result.waitlisted && Object.keys(result.errors).length === 0) {
+        toast.success(editing ? copy.rsvp.savedEditing : copy.rsvp.saved);
+      }
     });
   }
 

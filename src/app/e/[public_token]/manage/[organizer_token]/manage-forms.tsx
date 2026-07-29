@@ -4,8 +4,8 @@ import { useMemo, useState, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
-import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
+import { toast } from "@stackmyth/toast";
 
 import { DateTimeField } from "@/components/date-time-field";
 import {
@@ -68,8 +68,12 @@ export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
         toFormData(data),
       );
       setServerState(result);
-      // Remount on success so the name field clears, ready for the next person.
-      if (result.ok) setFormKey((key) => key + 1);
+
+      if (result.ok) {
+        // Remount so the name field clears, ready for the next person.
+        setFormKey((key) => key + 1);
+        toast.success(copy.manage.addParticipantSaved);
+      }
     });
   }
 
@@ -211,6 +215,11 @@ export function EditEventForm({
     startTransition(async () => {
       const result = await editEvent(publicToken, organizerToken, { errors: {} }, toFormData(data));
       setServerState(result);
+
+      // Field errors stay by their fields; only the confirmation floats. This
+      // form is long enough that an inline "saved" at the top would land off
+      // screen from the button that caused it.
+      if (result.ok) toast.success(copy.manage.editEventSaved);
     });
   }
 
@@ -223,11 +232,6 @@ export function EditEventForm({
     >
       <Form onValid={submit}>
         <Stack gap="4">
-          {serverState.ok ? (
-            <Text color="primary" role="status">
-              {copy.manage.editEventSaved}
-            </Text>
-          ) : null}
           <FormError message={serverState.errors._form} />
 
           <FormField name="title">

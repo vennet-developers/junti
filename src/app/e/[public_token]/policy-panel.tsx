@@ -10,6 +10,7 @@ import { FileUpload } from "@stackmyth/file-upload";
 import { Input } from "@stackmyth/input";
 import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import { Notice } from "@/components/notice";
@@ -155,6 +156,11 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
         setPrepared(null);
         setChosen([]);
         setNote("");
+
+        // The badge on this item flips to "submitted" and the explanation below
+        // it stays, so the toast only has to confirm that the upload landed —
+        // the part that used to be invisible while the file was in flight.
+        toast.success(copy.policies.submittedNotice);
       }
     });
   }

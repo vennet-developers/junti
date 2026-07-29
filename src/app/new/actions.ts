@@ -136,5 +136,12 @@ export async function createEvent(
    */
   // redirect() throws to unwind, so it must be outside the try/catch above and
   // is never reached on a validation failure.
-  redirect(organizer ? ROUTES.myEvents : `${managePath(publicToken, organizerToken)}?created=1`);
+  // Both destinations carry ?created=1: the confirmation has to survive the
+  // redirect, and until now the account-holder path arrived with no feedback at
+  // all — the event just appeared in the list.
+  redirect(
+    organizer
+      ? `${ROUTES.myEvents}?created=1`
+      : `${managePath(publicToken, organizerToken)}?created=1`,
+  );
 }

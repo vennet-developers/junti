@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 
 import Link from "next/link";
 
 import { Button } from "@stackmyth/button";
 import { Box, Flex, Stack } from "@stackmyth/layout";
-import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import { ROUTES } from "@/config/routes";
@@ -38,13 +38,16 @@ export function EventCardActions({
 }) {
   const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<string | null>(null);
 
   function duplicate() {
-    setMessage(null);
     startTransition(async () => {
       const result = await duplicateEvent(eventId);
-      setMessage(result.error ?? copy.auth.duplicatedNotice);
+
+      // Both outcomes float. The card is one of a list and the message used to
+      // appear underneath it, which pushed every card below it down — a layout
+      // shift to say something that stops being true in four seconds.
+      if (result.error) toast.error(result.error);
+      else toast.success(copy.auth.duplicatedNotice);
     });
   }
 
@@ -76,11 +79,6 @@ export function EventCardActions({
         </Button>
       </Flex>
 
-      {message ? (
-        <Text variant="small" color="muted" role="status">
-          {message}
-        </Text>
-      ) : null}
     </Stack>
   );
 }

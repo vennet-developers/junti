@@ -6,10 +6,10 @@ import { Button } from "@stackmyth/button";
 import { Stack } from "@stackmyth/layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@stackmyth/select";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import { ControlledField, FormError } from "@/components/form-shell";
-import { Notice } from "@/components/notice";
 import { LOCALES, getCopy } from "@/config/copy";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 
@@ -67,14 +67,20 @@ export function ProfileForm({
     formData.set("timeZone", timeZone);
 
     startTransition(async () => {
-      setState(await saveProfile({ errors: {} }, formData));
+      const result = await saveProfile({ errors: {} }, formData);
+      setState(result);
+
+      // Field errors stay inline, next to the field that caused them. Only the
+      // "it worked" half becomes a toast: there is nothing left to look at on
+      // this page once it has, and an inline banner would push the form down
+      // to say so.
+      if (result.ok) toast.success(copy.profile.saved);
     });
   }
 
   return (
     <form onSubmit={submit} noValidate>
       <Stack gap="5">
-        {state.ok ? <Notice tone="info" title={copy.profile.saved} /> : null}
         <FormError message={state.errors._form} />
 
         <ControlledField
