@@ -65,7 +65,19 @@ export function RosterGroup({
           {copy.roster.emptyGroup}
         </Text>
       ) : (
-        <List as="ul" divided>
+        /*
+          Dividers stay here, unlike the landing page: these rows carry a name,
+          an amount and a sticker each, and the rule is what keeps a long list
+          scannable.
+
+          `junti-rows` squares the row corners so the rule is straight. A
+          divided list draws its separator as a border-top on the row itself,
+          and a border on a rounded box curls up at both ends — at this brand's
+          13px radius that curl is plainly visible. Rows in a divided list are
+          segments of one list, not separate cards, so they have no business
+          being rounded in the first place.
+        */
+        <List as="ul" divided className="junti-rows">
           {members.map((member, index) => {
             const note = renderNote?.(member);
 

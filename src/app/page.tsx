@@ -80,7 +80,14 @@ export default async function HomePage() {
             <Text variant="h3" fontFamily="var(--junti-display)">
               {copy.home.howItWorksTitle}
             </Text>
-            <List as="ol" divided>
+            {/*
+              No dividers. Four numbered steps already read as a sequence — the
+              numerals do the separating, and a rule between each one only adds
+              lines to a page whose whole idea is daylight on cream paper. It
+              also stops this block from stacking four horizontal rules directly
+              above the disclaimer card's own border.
+            */}
+            <List as="ol">
               {copy.home.steps.map((step: string, index: number) => (
                 <ListItem key={step}>
                   <ListItemContent>
