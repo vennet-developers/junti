@@ -52,6 +52,7 @@
     "@stackmyth/text": "^0.22.0",
     "@stackmyth/textarea": "^0.22.0",
     "@stackmyth/time-picker": "^0.22.0",
+    "@stackmyth/toggle": "^0.22.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
     "drizzle-orm": "^0.45.2",

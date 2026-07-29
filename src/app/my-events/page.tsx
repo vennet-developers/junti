@@ -3,11 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Button } from "@stackmyth/button";
-import { CalendarIcon, PlusIcon } from "@stackmyth/icons";
-import { Box, Container, Flex, Stack } from "@stackmyth/layout";
+import { PlusIcon } from "@stackmyth/icons";
+import { Container, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { ProfileMenu } from "@/components/profile-menu";
+import { AppHeader } from "@/components/app-header";
 import { ROUTES, signInPath } from "@/config/routes";
 import { loadEventTypes } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
@@ -74,39 +74,32 @@ export default async function MyEventsPage() {
   }));
 
   return (
-    <Container size="1" px="4" py="6">
-      <Stack gap="5">
-        <Flex justify="between" align="center" gap="3">
-          <Flex gap="2" align="center" minWidth="0">
-            <Box flexShrink={0} display="flex" color="var(--sm-text-secondary)">
-              <CalendarIcon size={22} aria-hidden="true" />
-            </Box>
-            <Text as="h1" variant="h3">
-              {copy.auth.myEventsHeading}
-            </Text>
-          </Flex>
+    <>
+      <AppHeader organizer={organizer} theme={theme} />
 
-          <Box flexShrink={0}>
-            <ProfileMenu organizer={organizer} theme={theme} />
-          </Box>
-        </Flex>
+      <Container size="1" px="4" py="6">
+        <Stack gap="5">
+          <Text as="h1" variant="h3">
+            {copy.auth.myEventsHeading}
+          </Text>
 
-        {/*
-          The primary action sits above the list rather than under it. It used
-          to be the last thing on the page, which meant an organizer with a
-          dozen events scrolled past all of them to create the thirteenth.
-        */}
-        <Button asChild size="md" fullWidth>
-          <Link href={ROUTES.newEvent}>
-            <Flex gap="2" align="center" justify="center">
-              <PlusIcon size={16} aria-hidden="true" />
-              {copy.home.cta}
-            </Flex>
-          </Link>
-        </Button>
+          {/*
+            The primary action sits above the list rather than under it. It used
+            to be the last thing on the page, which meant an organizer with a
+            dozen events scrolled past all of them to create the thirteenth.
+          */}
+          <Button asChild size="md" fullWidth>
+            <Link href={ROUTES.newEvent}>
+              <Flex gap="2" align="center" justify="center">
+                <PlusIcon size={16} aria-hidden="true" />
+                {copy.home.cta}
+              </Flex>
+            </Link>
+          </Button>
 
-        <EventList events={items} />
-      </Stack>
-    </Container>
+          <EventList events={items} />
+        </Stack>
+      </Container>
+    </>
   );
 }

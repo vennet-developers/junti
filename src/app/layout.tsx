@@ -38,6 +38,7 @@ import "@stackmyth/alert/alert.css";
 import "@stackmyth/dialog/dialog.css";
 import "@stackmyth/dropdown-menu/dropdown-menu.css";
 import "@stackmyth/tabs/tabs.css";
+import "@stackmyth/toggle/toggle.css";
 import "@stackmyth/list-item/list-item.css";
 import "@stackmyth/empty-state/empty-state.css";
 import "@stackmyth/stat/stat.css";

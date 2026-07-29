@@ -54,3 +54,4 @@ minimumReleaseAgeExclude:
   - '@stackmyth/manifests@0.2.0'
   - '@stackmyth/dropdown-menu@0.22.0'
   - '@stackmyth/tabs@0.22.0'
+  - '@stackmyth/toggle@0.22.0'

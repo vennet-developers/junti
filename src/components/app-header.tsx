@@ -1,0 +1,48 @@
+import Link from "next/link";
+
+import { Box, Container, Flex } from "@stackmyth/layout";
+import { Text } from "@stackmyth/text";
+
+import { ProfileMenu } from "@/components/profile-menu";
+import { BRAND_NAME } from "@/config/brand";
+import { ROUTES } from "@/config/routes";
+import type { Organizer } from "@/lib/organizer";
+import type { Theme } from "@/lib/preferences";
+
+/**
+ * The bar every signed-in page starts with: the wordmark on the left, the
+ * person on the right.
+ *
+ * It exists so those two things stop being re-invented per page. Before this,
+ * `/my-events` and `/profile` each had their own arrangement of a name, an
+ * avatar, a language switcher and a sign-out button, and they had drifted into
+ * looking like two different products.
+ *
+ * The wordmark links to `/my-events` rather than `/`, because for somebody
+ * signed in that IS home — `/` only redirects there anyway.
+ *
+ * Full-bleed by design: the border runs edge to edge while the contents line up
+ * with the page's own container, which is what stops the rule from looking like
+ * it belongs to the card underneath it.
+ */
+export function AppHeader({ organizer, theme }: { organizer: Organizer; theme: Theme | null }) {
+  return (
+    <Box as="header" borderBottom="1px solid var(--sm-border-default)">
+      <Container size="1" px="4">
+        <Flex justify="between" align="center" gap="3" py="3">
+          {/*
+            `as={Link}` rather than a nested anchor: Text has no `asChild`, but
+            it does forward `as` and `href`, so the wordmark is a real link with
+            Text's typography and none of its link colouring — a brand mark that
+            turned blue would read as a stray hyperlink.
+          */}
+          <Text as={Link} href={ROUTES.myEvents} variant="h4" weight="bold" color="default">
+            {BRAND_NAME}
+          </Text>
+
+          <ProfileMenu organizer={organizer} theme={theme} />
+        </Flex>
+      </Container>
+    </Box>
+  );
+}

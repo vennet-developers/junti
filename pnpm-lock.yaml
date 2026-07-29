@@ -113,6 +113,9 @@ importers:
       '@stackmyth/time-picker':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(@stackmyth/popover@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@stackmyth/toggle':
+        specifier: ^0.22.0
+        version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)
       '@supabase/ssr':
         specifier: ^0.12.3
         version: 0.12.3(@supabase/supabase-js@2.110.8)
@@ -1370,6 +1373,12 @@ packages:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/icons': '>=0.0.0'
       '@stackmyth/popover': '>=0.0.0'
+      react: '>=18.0.0'
+
+  '@stackmyth/toggle@0.22.0':
+    resolution: {integrity: sha512-r0QXtPtm7RKwZEssobuw19RjLgfRnkiTnAdAZjy6Cgo5I031mWC115lsTcmDPQ8AuWLJKB310h2hMrmyrpSxkg==, tarball: https://npm.pkg.github.com/download/@stackmyth/toggle/0.22.0/2cf7b84fba392ad6b97e8e37980e9362170e85f2}
+    peerDependencies:
+      '@stackmyth/core': '>=0.0.1'
       react: '>=18.0.0'
 
   '@standard-schema/spec@1.1.0':
@@ -4088,6 +4097,12 @@ snapshots:
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       '@stackmyth/icons': 0.1.0(react@19.2.4)
       '@stackmyth/popover': 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/toggle@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.22.0(react@19.2.4)
       react: 19.2.4
 
   '@standard-schema/spec@1.1.0': {}

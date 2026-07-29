@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { OrganizerBadge } from "@/components/organizer-badge";
+import { AppHeader } from "@/components/app-header";
 import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
-import { loadStoredPreferences } from "@/lib/preferences";
+import { loadStoredPreferences, resolvePreferences } from "@/lib/preferences";
 
 import { ProfileForm } from "./profile-form";
 
@@ -34,7 +33,7 @@ export default async function ProfilePage() {
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.profile));
 
-  const { copy } = await getViewerCopy();
+  const { copy, theme } = await resolvePreferences();
 
   // The stored record, NOT the effective cookie: the form has to show what the
   // account actually chose, and "follow my browser" must render as that rather
@@ -42,26 +41,21 @@ export default async function ProfilePage() {
   const stored = await loadStoredPreferences(organizer.id);
 
   return (
-    <Container size="1" px="4" py="6">
-      <Stack gap="6">
-        <Flex justify="between" align="center" gap="3" wrap="wrap">
-          <OrganizerBadge organizer={organizer} />
-          <Text variant="small" color="muted">
-            <Link href={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
-          </Text>
-        </Flex>
+    <>
+      <AppHeader organizer={organizer} theme={theme} />
 
-        <Divider />
+      <Container size="1" px="4" py="6">
+        <Stack gap="6">
+          <Stack gap="2">
+            <Text as="h1" variant="h3">
+              {copy.profile.heading}
+            </Text>
+            <Text color="muted">{copy.profile.subheading}</Text>
+          </Stack>
 
-        <Stack gap="2">
-          <Text as="h1" variant="h2">
-            {copy.profile.heading}
-          </Text>
-          <Text color="muted">{copy.profile.subheading}</Text>
+          <ProfileForm initialLocale={stored.locale} initialTimeZone={stored.timeZone} />
         </Stack>
-
-        <ProfileForm initialLocale={stored.locale} initialTimeZone={stored.timeZone} />
-      </Stack>
-    </Container>
+      </Container>
+    </>
   );
 }
