@@ -107,12 +107,9 @@ export function EventList({ events }: { events: EventListItem[] }) {
         />
       </InputGroup>
 
-      {/*
-        `lg` is the largest Tabs offers at 0.23.0 and yields a 36px trigger —
-        short of the 44px minimum. `size="xl"` was added upstream for exactly
-        this and lands with the next release; switch this line then.
-      */}
-      <Tabs size="lg" value={filter} onValueChange={(next) => setFilter(next as Filter)}>
+      {/* xl for the touch target, not the type scale: it is the first Tabs
+          size whose trigger clears 44px. */}
+      <Tabs size="xl" value={filter} onValueChange={(next) => setFilter(next as Filter)}>
         <TabsList fullWidth>
           <TabsTrigger value="upcoming">{copy.auth.tabUpcoming}</TabsTrigger>
           <TabsTrigger value="past">{copy.auth.tabPast}</TabsTrigger>

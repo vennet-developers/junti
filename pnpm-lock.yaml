@@ -9,116 +9,116 @@ importers:
   .:
     dependencies:
       '@stackmyth/accordion':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/alert':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/avatar':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/badge':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/button':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/calendar':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/card':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/checkbox':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/classnames':
         specifier: ^0.1.0
         version: 0.1.0
       '@stackmyth/core':
-        specifier: ^0.23.0
-        version: 0.23.0(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(react@19.2.4)
       '@stackmyth/date-picker':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/calendar@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/popover@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/calendar@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/popover@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@stackmyth/dialog':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/dropdown-menu':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/empty-state':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/field':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/label@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/label@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@stackmyth/file-upload':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/form':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/icons':
         specifier: ^0.1.0
         version: 0.1.0(react@19.2.4)
       '@stackmyth/input':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/field@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/label@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/field@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/label@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/input-group':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/label':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/layout':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/list-item':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/popover':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/progress':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/radio-group':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/select':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/skeleton':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/spinner':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/stat':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/switch':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/tabs':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/layout@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/layout@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@stackmyth/text':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/textarea':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/time-picker':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(@stackmyth/popover@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(@stackmyth/popover@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@stackmyth/toast':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/toggle':
-        specifier: ^0.23.0
-        version: 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+        specifier: ^0.24.0
+        version: 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@supabase/ssr':
         specifier: ^0.12.3
         version: 0.12.3(@supabase/supabase-js@2.110.8)
@@ -1143,52 +1143,52 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@stackmyth/accordion@0.23.0':
-    resolution: {integrity: sha512-vqFwKzfTUWt0rrKP2MKaE98x/OT2bQZbNCNKajla0bKIOQ1xrPgN5S8d6nTdM37b5KuMuTK66o+9g9rgF7Bzcg==, tarball: https://npm.pkg.github.com/download/@stackmyth/accordion/0.23.0/e89789e1319edc10561cd6e300365ef9abd5b8de}
+  '@stackmyth/accordion@0.24.0':
+    resolution: {integrity: sha512-bxNGxMOEqMJdF+RPltCfNnwZQHmu380yWclMBl3kZmPK4iYkLy1TfXiVjJyAG+CpTk6VgaWJBFuLHNTM9ZG4gA==, tarball: https://npm.pkg.github.com/download/@stackmyth/accordion/0.24.0/1964dfddec7c0bec0ad08e59365193438e572f08}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/icons': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/alert@0.23.0':
-    resolution: {integrity: sha512-To0NhRF7JcqYMO+HpA7FTDb2F+eOLXdayot9G4mcIzQEXE8RxCOq5q7a3yw1eH0XBz0yub9LKSWaZO63b7+row==, tarball: https://npm.pkg.github.com/download/@stackmyth/alert/0.23.0/d6419d6d3b0aa92a23753fbf148f086fa26ad569}
+  '@stackmyth/alert@0.24.0':
+    resolution: {integrity: sha512-4AClDqm19cPtwW2Knwi1+wyWnA/yAwOK23xlTjBzyCfXN4yZfI1MBC5bLXDdCxKzIw7ohZf0djm0ZD1PKMJuDQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/alert/0.24.0/c3d9a5fe6c2b465c4cb12ec3088295b3d6549d7e}
     peerDependencies:
       '@stackmyth/core': '>=0.0.1'
       '@stackmyth/icons': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/avatar@0.23.0':
-    resolution: {integrity: sha512-tvazX/ITDB0EXQveoT3C+DCahUw3qM54c1JjYCpwzY0nqKaPVC1vGvElfji323V8d6izTvmpyvw2iAJOE23hMw==, tarball: https://npm.pkg.github.com/download/@stackmyth/avatar/0.23.0/d8fe4f52b2462c88943b298169dfcd271b57c55b}
+  '@stackmyth/avatar@0.24.0':
+    resolution: {integrity: sha512-M2dHZi60H/esriPm9zAr5lBo7l3Rb8IJbwUdoDPpsIiclRye8T0ZVyoJQ7jSzx4d+M9ef9VzHGCMY4Rs/dly+A==, tarball: https://npm.pkg.github.com/download/@stackmyth/avatar/0.24.0/3d8b351b5f48b13ee0a1a1d080267a8aaf3ee421}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/badge@0.23.0':
-    resolution: {integrity: sha512-opfKnVHiz+xeLlMGqrO1jDeYpvss8wHnrefPFNcYVj/4r1RSDDToct/7uDkFMYM99zKfUaZ89NW2vyrf+AWD3A==, tarball: https://npm.pkg.github.com/download/@stackmyth/badge/0.23.0/4c2bcbad858717a8e82c3456dd83c1251d1fa647}
+  '@stackmyth/badge@0.24.0':
+    resolution: {integrity: sha512-Imz5IXjRac98FwQSDgYBeFNO6QJ/iSczOWn+ofZOHQMu6qzXHOwD7ysT+zDYolaLwrX8IJJWWwOS1OKX5Zm2Hw==, tarball: https://npm.pkg.github.com/download/@stackmyth/badge/0.24.0/4f870630f89598ba9ba0efbcb4798db4ced90bb6}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/button@0.23.0':
-    resolution: {integrity: sha512-Pe5AKcN6SDmfzV6biKtWF1Tztwd8oAVBy4JEyB9NICpQMALa8TJfzuK2kxzEu4zHGoLeypTaFArGBvsAo8CdBQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/button/0.23.0/8c18c2691302927e46c61e6922872044f30394df}
+  '@stackmyth/button@0.24.0':
+    resolution: {integrity: sha512-b50XrD1mj+BeUG2i+KTgMviRSkAugQNS06dNy29wSjIbJlYfIi+xZ2kWfrlac2OXKoJOD0IjcJ3rDAd77rUd6A==, tarball: https://npm.pkg.github.com/download/@stackmyth/button/0.24.0/26045a92793b12ee281db93e7d8e403d08c3c7b9}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/calendar@0.23.0':
-    resolution: {integrity: sha512-l37bqgBS+p+q4854MXGYVXWZJ1Vme2zeo/TeIqUKulrINMt83qXP6I5tNoIc+MdhZzluJ5XgluDiGbxEP16AIg==, tarball: https://npm.pkg.github.com/download/@stackmyth/calendar/0.23.0/0dbc185ba9819e8e8d8f85bb350effccc68c6dba}
+  '@stackmyth/calendar@0.24.0':
+    resolution: {integrity: sha512-+y8NsmpRqbsX4RfkyQG8bwf5FO+aJjWVpVSgLD2x4GHl4q4k0rZc/AO5gN5vZKiE6PP3AOLd99kqUIqK3S2E7w==, tarball: https://npm.pkg.github.com/download/@stackmyth/calendar/0.24.0/a033e90198b499a6d037d17043e3b5454dc12ee2}
     peerDependencies:
       '@stackmyth/core': '>=0.0.1'
       react: '>=18.0.0'
 
-  '@stackmyth/card@0.23.0':
-    resolution: {integrity: sha512-IPA55wC4tkFJRdWZzyrgJoZvrHpd8Ti5qxxGQ4dlwzz+tU2d3u8YnlhkPSFT99dHDZoYoOKENKyhyBCxLMjYJg==, tarball: https://npm.pkg.github.com/download/@stackmyth/card/0.23.0/f6b357acd364d0996d200913b019512d41f51f3d}
+  '@stackmyth/card@0.24.0':
+    resolution: {integrity: sha512-9S4wO+LFETJC1YqnEm9nnqPrXxIW5GrsY3KT4kUI+aiw45KEAE8pI1jmQTzmYbic8+umit29W40GnzUY0DINcg==, tarball: https://npm.pkg.github.com/download/@stackmyth/card/0.24.0/36b5f2ef9d3eb47ac31fc38162ce4178d223d74a}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/checkbox@0.23.0':
-    resolution: {integrity: sha512-OTlUej5BMGslAXYFguTdCd3Q/V+f4pQQ5Q53oMCBfHkE/ftMYpaCGwZgofO4egd8l3OLguzJRWHQLitty052vw==, tarball: https://npm.pkg.github.com/download/@stackmyth/checkbox/0.23.0/1b56643dc51d3a9c935014ba834f621549d0ef14}
+  '@stackmyth/checkbox@0.24.0':
+    resolution: {integrity: sha512-KiSkAAGbqOMrJHUHeHReo5uFYco1kDtR48n76IluIYJ3wB3XR376l7PGGvPZGvhcJD/72NudhxTQm/i76OR7aA==, tarball: https://npm.pkg.github.com/download/@stackmyth/checkbox/0.24.0/e5a567871337698f134b725fcd1a296eef109319}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
@@ -1196,35 +1196,35 @@ packages:
   '@stackmyth/classnames@0.1.0':
     resolution: {integrity: sha512-hGZJKbAZiMlFoTqPnLkoUVGuqwB9ya+4IL18e3BZ88XFs+PdmyloraumSiD6ytg+zjjDXgn5zaYEnkwQTDBObg==, tarball: https://npm.pkg.github.com/download/@stackmyth/classnames/0.1.0/8b2ab579c0b68d4b0d30d816b7cc5a4af51cc07b}
 
-  '@stackmyth/core@0.23.0':
-    resolution: {integrity: sha512-EBWMLmFW0Nmp/yo1vwG5wngpeMi7duYc7WDxy6hZ4tzsIC/pvdGYJ2v2/rsKmVc83SKYOBrQKgpBQIytI9KBQQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/core/0.23.0/01a33c97b792c02ad68a419119feb2b7eaa8ee36}
+  '@stackmyth/core@0.24.0':
+    resolution: {integrity: sha512-OSM+q09dHZjcQ/9ja5ziMNVzmRmF9C3zFnezZVZSMtnzqOZVrfJmRTgZg829U1z8schF/vj8CEhDJ+DXPo6CrQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/core/0.24.0/76f603664e7468d13e8443f40c6cef1899c0a5ec}
     peerDependencies:
       react: '>=18.0.0'
 
-  '@stackmyth/date-picker@0.23.0':
-    resolution: {integrity: sha512-9od9ot9Ij2MdvI9E3cVHHwo4OAAkp67g6rlVTsXK9jEX1q8tiYP3J9T3+m+OGYuHlU+xb2ToWrYOePHJ6pvdiA==, tarball: https://npm.pkg.github.com/download/@stackmyth/date-picker/0.23.0/ff13abef11f67ea43afffcf0e4718c5979fdbc1a}
+  '@stackmyth/date-picker@0.24.0':
+    resolution: {integrity: sha512-I+/5uCtARKw+vk2QDhqWDFVAYqRfxRwuk76jhaJH/Eyz/N6hLSKf4TJi/dIdQv2SRMyrPu3QmCsx8QsIQporaA==, tarball: https://npm.pkg.github.com/download/@stackmyth/date-picker/0.24.0/83fae6794f231a48c78bca513133d8d7f0adddf1}
     peerDependencies:
       '@stackmyth/calendar': '>=0.0.0'
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/popover': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/dialog@0.23.0':
-    resolution: {integrity: sha512-EqUg6JdofqIVmfdKNnO7T5g94/GEeTV4vptOf0Wxal/o2gjWvU0VQu7kCMs6U/M9wQvj88ckJKSrXFywUxu0mA==, tarball: https://npm.pkg.github.com/download/@stackmyth/dialog/0.23.0/6e54c2398c7116cf4dabae5d77e84047d889805f}
+  '@stackmyth/dialog@0.24.0':
+    resolution: {integrity: sha512-+XI15X6SHQU/CTwh0stpoFN8yysdMw8dYbgaUwAsskOPu/p+dniW2w+uqtRFgaKms8X/XbzBuW/HWpWi2D9Q5w==, tarball: https://npm.pkg.github.com/download/@stackmyth/dialog/0.24.0/e180647f9f77c4309b6f5c1f53500046f4182247}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@stackmyth/dropdown-menu@0.23.0':
-    resolution: {integrity: sha512-GFj8kYzQ6xzEW4o+HTyjCNb5VjJx6suDtiuyfe6HAEEIUw9CAEbFfU8v99JFY6nue0IVnpFgePqPW3IjZ0bT4w==, tarball: https://npm.pkg.github.com/download/@stackmyth/dropdown-menu/0.23.0/5fd1fc291926afb9116b4d4be646917162480f4c}
+  '@stackmyth/dropdown-menu@0.24.0':
+    resolution: {integrity: sha512-bX70U2oM+cKpFGIWSXnBMGbGV05apPZFvRxvgO88Q2nPQEOr9bCHZtrjobxs7/q+9C/JkBNgjM8nUxHsA+/Axg==, tarball: https://npm.pkg.github.com/download/@stackmyth/dropdown-menu/0.24.0/9e25d6713b1421db7567afb6e38068ec432e689b}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@stackmyth/empty-state@0.23.0':
-    resolution: {integrity: sha512-o7A2C+S21TGjUiHL8iFIL9+JL1WRefSmkEMVorUy45urvFIIoalZucQWAgbwk/CP5hTWN2FJR1A+TigDOTgw+Q==, tarball: https://npm.pkg.github.com/download/@stackmyth/empty-state/0.23.0/2f2a72605f5b900ace70e7813d6dd76c1ebb6daf}
+  '@stackmyth/empty-state@0.24.0':
+    resolution: {integrity: sha512-Q5VHlTO1e1VF7Oigk0SciRz4s4hmB0EOdMDojsS4rpDbBUOqpjpW0sy5SsjcT/rejr8RYy5XskmecZbfXsiAow==, tarball: https://npm.pkg.github.com/download/@stackmyth/empty-state/0.24.0/d744c8e2d7b36483ce22ff879c99d81ec2b010d3}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
@@ -1234,21 +1234,21 @@ packages:
     peerDependencies:
       react: '>=18.0.0'
 
-  '@stackmyth/field@0.23.0':
-    resolution: {integrity: sha512-1PU9OqdwrHtcY9M37TpBDQUKdkYuGacqDgTJlKhVEub7LdFHIwnpinM1DEQXqYSKfCossy6+dMKCu8U9Y3/ghQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/field/0.23.0/3dd386b7a1cbf067274d97f0807a171386a33ca5}
+  '@stackmyth/field@0.24.0':
+    resolution: {integrity: sha512-hHVZ8BdB38fkXhcciPh4SqZikzmp0Nodr4vPHsXkwkoXi+xPAIlmO4SbwYVijlzZ4HZ5ktt01bvNCLi8ouoM/g==, tarball: https://npm.pkg.github.com/download/@stackmyth/field/0.24.0/d51c4693cc811fbfe4aaa8a783e183ee8f7b7369}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/label': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/file-upload@0.23.0':
-    resolution: {integrity: sha512-2yMHGPbMt1u7ST/Ha9LAcHDFGJFKBLkP7o2sWQWev+y+upYAu84LHpuZwWCDxNHL/0N3QBuhY9YdHO5QzhrVYA==, tarball: https://npm.pkg.github.com/download/@stackmyth/file-upload/0.23.0/92ad57c8ac2dd12a67cd774cb6459d8c8a8b903c}
+  '@stackmyth/file-upload@0.24.0':
+    resolution: {integrity: sha512-Qhpah/wQ+mYJLewxvOgk7LVFkGq/QwOqZCPiD8kq5Qrp60qvIsP/f+61owREMqYBnPvur3DtwH33F96TKyfOxQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/file-upload/0.24.0/30d35ba96cbc3b1b88ea7b02987891c48d4039eb}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/form@0.23.0':
-    resolution: {integrity: sha512-mkpqa2Funk0yBfsjAxgSgYfUOBf+s734M7OgZBbme0PJj+PlYkRbj7bv+dpG4M0z+2YznnXpO3OkyL/kzAY1uA==, tarball: https://npm.pkg.github.com/download/@stackmyth/form/0.23.0/bd84f0bf2b196770fc30b94a2e8f0b23931b12b5}
+  '@stackmyth/form@0.24.0':
+    resolution: {integrity: sha512-i6iAHlYZq6Y0tlINY2Tc/eXkMt+GUCKEz4IpJ7OsfKjl7GHVv7XIlNfNXG7ExICwwGHATMOZzMaU5C0YY1045A==, tarball: https://npm.pkg.github.com/download/@stackmyth/form/0.24.0/0a38b1ffec5d611eae3f9261fe483cf5a6225e73}
     peerDependencies:
       '@stackmyth/core': '>=0.14.0'
       react: '>=18.0.0'
@@ -1258,34 +1258,34 @@ packages:
     peerDependencies:
       react: '>=18.0.0'
 
-  '@stackmyth/input-group@0.23.0':
-    resolution: {integrity: sha512-zZFCD2Zqen2h3xf0dv2eYgA2jt2aCiivVJMv6PIDCX5oxvP6erOU6YniV8Mw6HsPMGY9PKn8PE5yFkTy+us18g==, tarball: https://npm.pkg.github.com/download/@stackmyth/input-group/0.23.0/b3fa50ecfd654e4c87e568fa84269d0490c0ae47}
+  '@stackmyth/input-group@0.24.0':
+    resolution: {integrity: sha512-lxnwOLgvHUyHbzJrQIAvUXz9aE4LgAX1Vdw9nratd7yCq2CBaWnWa4WxPTbWmW9/k8X5JdN2vNwiBUG1/gAr5g==, tarball: https://npm.pkg.github.com/download/@stackmyth/input-group/0.24.0/1cf0f5af9904fe0d60357b2285e57ed3df24d834}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/input@0.23.0':
-    resolution: {integrity: sha512-6RwQ5Ye/38dVXQiXrw6liiGRffjK0JxlgGBF2U9hSx+l2oShSKIjr3jZ7m2N0nUtqU2cGGVF0TTheBiPi5XjSw==, tarball: https://npm.pkg.github.com/download/@stackmyth/input/0.23.0/375658b3bcd40e2268a4b4065a7ed51d6ff0b5bc}
+  '@stackmyth/input@0.24.0':
+    resolution: {integrity: sha512-1TCI4WC/tUrI4HZ0lkmsHAueqq3Ajcxbywvsay+fd9aE2dGymdJaPqYL+/shWK/MSd2EPr41H2U4/Yx/najWVA==, tarball: https://npm.pkg.github.com/download/@stackmyth/input/0.24.0/7eaea6c0f07cd5c6b15aed0e7fc1e75250d10fb7}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/field': '>=0.0.0'
       '@stackmyth/icons': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/label@0.23.0':
-    resolution: {integrity: sha512-a5d/6095weyI4oVFUZ5YjRnGWzWS8l1UVK/OzO+unSL5xs6goGorHTbIzvFXp2KLftps+9pOj3jAuD1xJADfnQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/label/0.23.0/b07b9cd9c4ee9595b5f19bebc04d61e93d72fd10}
+  '@stackmyth/label@0.24.0':
+    resolution: {integrity: sha512-FVvlBj1IvDYSSx+pHg1ndwnUDscHCrvld763VWHgymGcqwv7swxFgnwlf1XV5VGZr7qXCF3NZD1vbTqzDUNOmg==, tarball: https://npm.pkg.github.com/download/@stackmyth/label/0.24.0/b891ce1a5f75c29f6f080e0b94ee7537a1ea4783}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/layout@0.23.0':
-    resolution: {integrity: sha512-cyw9D9r22fXEyKURBW1lR0/m6APpKMAz2ktMdPBn4MVvKfqV7YqdzMR8SZu/xiAW0SLcAcKHHe9yMRLdNCqsrA==, tarball: https://npm.pkg.github.com/download/@stackmyth/layout/0.23.0/f3065e748674a32e032e9c2ff4784bc3c006563a}
+  '@stackmyth/layout@0.24.0':
+    resolution: {integrity: sha512-ITZCRcXEtvwnnlGLRpoefDO+g1JeK7S44jnjuc3bcSkfS7l8alnZhQ3tsD9cINfIj8bmRVeeWdHZ0NTy4vPapA==, tarball: https://npm.pkg.github.com/download/@stackmyth/layout/0.24.0/ec08ddcef6469e1dbfb1f993ad60835669d96698}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/list-item@0.23.0':
-    resolution: {integrity: sha512-qf+KGJdy60ox1vsDjaGTdHlqA/mwiS6uT6VulJTry2tIHaC0Z/CHm4Owl/mvJ806NLR/y3aAvs9yQdpsOv4R2w==, tarball: https://npm.pkg.github.com/download/@stackmyth/list-item/0.23.0/08656eaf6f90bb181385e1422261917758345847}
+  '@stackmyth/list-item@0.24.0':
+    resolution: {integrity: sha512-qN0V3tEVrIOm/xX4VqKySfKvfb1ce5KFAAgsVFYDCDZ3kvOqD4WwdUd/M9O3kxknSLMa4l5glumHCzkG0J9Sug==, tarball: https://npm.pkg.github.com/download/@stackmyth/list-item/0.24.0/b1d06d8c6b23552f5c18d0a92b981701d38c826c}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
@@ -1295,8 +1295,8 @@ packages:
     peerDependencies:
       react: '>=18.0.0'
 
-  '@stackmyth/popover@0.23.0':
-    resolution: {integrity: sha512-IGdydlmy2ESCdHdWRLSniSevBzwvyb7T4tEENP2LDHfuc8Pd/M0T7QnHwnp3eZlehglFmExdcqPQqNCdSgQwJg==, tarball: https://npm.pkg.github.com/download/@stackmyth/popover/0.23.0/63b9c84ac941f709960213b2904a6d3c29e36c49}
+  '@stackmyth/popover@0.24.0':
+    resolution: {integrity: sha512-vpNdWDD5d/uNPBIFQa+uqHwXO8TeRyk1pku+XiUDGyG/QnETj0wHTW/o92hKUrQT+Ywo/a8zQZevEvauwE4rAg==, tarball: https://npm.pkg.github.com/download/@stackmyth/popover/0.24.0/fed565c332e52887c4aa6bf08f644698f80c11ae}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
@@ -1308,85 +1308,85 @@ packages:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/progress@0.23.0':
-    resolution: {integrity: sha512-J9eM6HpRuzqTvyzSZYGMUU05ftULiCDYQzZBAQdXqMp6yt7F/VyyflCG9XVC+l7liwkHD3KMPaWcQ7+VPEEznw==, tarball: https://npm.pkg.github.com/download/@stackmyth/progress/0.23.0/f45161a67f0f1ee0cbdcea64d6b968efe4ad225e}
+  '@stackmyth/progress@0.24.0':
+    resolution: {integrity: sha512-fceFo8pBqUT8B9cyrgjs4YffSgza43nQierWam4L6tkquNSIVoBMzrxm+6RuC7TqO7CY0Mp/Yu6vuNZGFvJ5OA==, tarball: https://npm.pkg.github.com/download/@stackmyth/progress/0.24.0/1f41aa7192df66c102a5ffefeda53a3098a444e7}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/radio-group@0.23.0':
-    resolution: {integrity: sha512-MqyY0nCfgH0AwT8ZzfOSbFsHaH33pJOiHW+WBUKDobf2TcwK6fAfS5Su3cKqvnAT/Zai9ah1c49Wr5Dd8Pzcng==, tarball: https://npm.pkg.github.com/download/@stackmyth/radio-group/0.23.0/e973311c57b575baf015e8dffaa5630b68080ced}
+  '@stackmyth/radio-group@0.24.0':
+    resolution: {integrity: sha512-tnv9MUio3nxLR1iGWP6Ke7MHX1bdU3SwJPRFQnvt+CZ1jp5ck6tQmQysokw5as0A8krRtcfFRe3EaCpA+LVq5g==, tarball: https://npm.pkg.github.com/download/@stackmyth/radio-group/0.24.0/6ee57d4653bf0ddcf7ade651c062a744fe8e8780}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/select@0.23.0':
-    resolution: {integrity: sha512-pl4MoJpg6LnDxAYXG3dfG66fEyEXEkfwIiDYuaZaZ3BismniW7RHs8bg2+ep9pUJSCTqMXpJpKarnrKQ4QyC+w==, tarball: https://npm.pkg.github.com/download/@stackmyth/select/0.23.0/903e00323f4be86da46e8b7a2280386011a0bfa9}
+  '@stackmyth/select@0.24.0':
+    resolution: {integrity: sha512-wfiMwlq027i8ppA6qB7nUgzc0pm6UQXGsnU7InoBYZ4ukxqJX/GmIiWYktNecf3t9eMgC7zcIMIBgYZz7nfd2g==, tarball: https://npm.pkg.github.com/download/@stackmyth/select/0.24.0/fd45ac24c86445d43c99bb7271bb25d07a3d3087}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/icons': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/skeleton@0.23.0':
-    resolution: {integrity: sha512-7qw70jhVpf4Pq9qUpLxc1Le9S1n9njvW4/ca84CUea0MUJPdNuPHQoSbFxefeFuysUjpDTLrcjU8C0Zfk1Bc9g==, tarball: https://npm.pkg.github.com/download/@stackmyth/skeleton/0.23.0/be3a4ce9ef18c69927cd8091810713228afa19bf}
+  '@stackmyth/skeleton@0.24.0':
+    resolution: {integrity: sha512-xYrnsIdA1uMA0EstDl1gY2Z+efax82TBDBYdO/ej/NOdB4eZTzQmld+aOjGejUr8d+hZhRE2Bt+ANGhIbHd5uw==, tarball: https://npm.pkg.github.com/download/@stackmyth/skeleton/0.24.0/8010b2d2828043b0a71862c0e9859fb53b1c34e7}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/spinner@0.23.0':
-    resolution: {integrity: sha512-SDubY1vnRKLvJsva2I5MyAMy88jmwhDctArsQMuvS36npN7evdAFGYl+QMp7JA/muCCmaXuCvLnQak5bD1G4Ww==, tarball: https://npm.pkg.github.com/download/@stackmyth/spinner/0.23.0/2ee19bc415273bb5d99d9955911d5f443f8d8c11}
+  '@stackmyth/spinner@0.24.0':
+    resolution: {integrity: sha512-5fIiMv5MpnMSYsOUvGlUKoEo3KPQ6RaX0WHq9zBJev2uhdf7UF3dpAhCXJWo9Dh136if34Ivip1YEVyJU5TeCA==, tarball: https://npm.pkg.github.com/download/@stackmyth/spinner/0.24.0/bccba9e4a76d3b19ca3b6850c36cf149c7dd690a}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/stat@0.23.0':
-    resolution: {integrity: sha512-TJ+/1TLN+hfB+abt4Jc0KT5XZ+FrPFIpstgrQI1SgHN3iDvsaNnAIP8JRKyfg3DWTQiFKp40Mx5nxqHYu1FGOA==, tarball: https://npm.pkg.github.com/download/@stackmyth/stat/0.23.0/65a4ad6070f6ce618b5259f6832c581f091cd4e6}
+  '@stackmyth/stat@0.24.0':
+    resolution: {integrity: sha512-4Uo+/dkdVwMekNJI+noGzIF79jYoJoNMIzSAldqiOV7CyRmiHpfQgIRrIJnWKVLthCz5hxWv/yxd4DoO2GBHBw==, tarball: https://npm.pkg.github.com/download/@stackmyth/stat/0.24.0/01615b7998dcb85cdf2ac429231aeceed0249818}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/switch@0.23.0':
-    resolution: {integrity: sha512-meuSRKBRvvoezdxJt0dOVtTzwuYOoxcKuVu6FLnRdvElesnAUTB967SAW1CboUeHhLc243ERxm2+NBsh76fK3w==, tarball: https://npm.pkg.github.com/download/@stackmyth/switch/0.23.0/5fe14d2a4e507e6791ace8de36a32fbe87003c25}
+  '@stackmyth/switch@0.24.0':
+    resolution: {integrity: sha512-3985KYX1sSc2gXpRVxOFnqzazLERr/N1OAeoyLt/TKRGrKozTi7KWH4grYtvs/Z8Ly2P/O1a0p6h8A1wccKEvQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/switch/0.24.0/9cca297ae507d4fd281748b7c823a66f4f9b1661}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/tabs@0.23.0':
-    resolution: {integrity: sha512-6105AsI+Ab2VLt0ZLzO1UZmy5QMJ/Bet+S/JrqXkWVxBnLSFq/Kbl9ZOm9HJ7h4mw4M5K6YyMZd34zvltml59A==, tarball: https://npm.pkg.github.com/download/@stackmyth/tabs/0.23.0/96d14fac9547099e611eb4609c33cf4ecc661144}
+  '@stackmyth/tabs@0.24.0':
+    resolution: {integrity: sha512-VignbRmR7/wFSp+JxNaxlOYxxfQNuo+ztl/oZdOLqk2l8VWe3EldUod0l+g56M0huYP9gGmPzRp5Ozi7f86CLg==, tarball: https://npm.pkg.github.com/download/@stackmyth/tabs/0.24.0/db289a5bcec34cd81dd07131a5414ea069028b71}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/layout': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/text@0.23.0':
-    resolution: {integrity: sha512-VSo5GDvVdK7NUUgdEaUS047eUxQ2HKv8wV9Y7EXNxxWaQAmU6OrDFiOjtBihYYBdPrQJIcjlV2N5NKxcc+eCLQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/text/0.23.0/740ae94d5c2c956d5206577fa9d605797e9bfbfb}
+  '@stackmyth/text@0.24.0':
+    resolution: {integrity: sha512-NgVpPqBsO4Pg3FFfE+WTbRXP31xQ3O48tPfRt4ilf4aWQpyPozh5Oh9rZSaS0WydYSQjTiVekBFsCO/1wIG5kQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/text/0.24.0/55f06a62fef531f7d8b50db8602b800eb60da9f9}
     peerDependencies:
       '@stackmyth/core': '>=0.0.1'
       react: '>=18.0.0'
 
-  '@stackmyth/textarea@0.23.0':
-    resolution: {integrity: sha512-GYhJ4zUMgYreR8JuDiRO6rFXUgSIvxvsDkmBb7yCWhsiaEIn/TF4bsqMplEHFTelJ2NpWYXlWkierRMAYJ1EgA==, tarball: https://npm.pkg.github.com/download/@stackmyth/textarea/0.23.0/5d441b8d8a22b75498f1fdc624f871c290988ef4}
+  '@stackmyth/textarea@0.24.0':
+    resolution: {integrity: sha512-hYlv02eTDoTlmarxVSQGgIVCtyk3aGUmqY0MBe0o2p9t+3NOjKfqGzXF2SzmBoTgaF3HLbBvHx2fERWJDB4WQA==, tarball: https://npm.pkg.github.com/download/@stackmyth/textarea/0.24.0/0916b9ab53fb784d9f61853cdb4f85b24523447a}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/time-picker@0.23.0':
-    resolution: {integrity: sha512-MEgolbuUBwyW208mke4PnE+3bFLZtSKvVaHCe1wsJaVkvtNr3ljC328WsaMZ4DYn5LFiS9Lz4IUWbHlTlYZhuw==, tarball: https://npm.pkg.github.com/download/@stackmyth/time-picker/0.23.0/103c11f6293cf0e0aeeedfdc48b94584701bccde}
+  '@stackmyth/time-picker@0.24.0':
+    resolution: {integrity: sha512-Hhyz9f++bzs0LU52pyDxEV7IaMfyG0UZK9eYFviPeXXSv+lMuGcQwaqT3NwJOw2TLMhO1qBXeEudsn1aKmwwJA==, tarball: https://npm.pkg.github.com/download/@stackmyth/time-picker/0.24.0/b9f51fcfe2b7ec23815c6dbc0f6ecc640e3768b9}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       '@stackmyth/icons': '>=0.0.0'
       '@stackmyth/popover': '>=0.0.0'
       react: '>=18.0.0'
 
-  '@stackmyth/toast@0.23.0':
-    resolution: {integrity: sha512-0rLivQnqHJiiOTVMDwXFYEpkHWEt6FKUxVGMQHYLq3YiqgmXXPWQhHaCC2DF1fkEA4aGUTRBplkqVGfaUZU6Gw==, tarball: https://npm.pkg.github.com/download/@stackmyth/toast/0.23.0/d6cf61e4214bb522073b374ff58011a0438cba5e}
+  '@stackmyth/toast@0.24.0':
+    resolution: {integrity: sha512-jsRJfJDyRLvOd5RGS9oLYtv2KQBrW7X9Pa4nsgxBo65De0miD6UUogA+EjU0h2p0otbTOVNRAk1F/04A5YCrcw==, tarball: https://npm.pkg.github.com/download/@stackmyth/toast/0.24.0/dc2980747f254475c5756af60516fa51ae7c06ea}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
-  '@stackmyth/toggle@0.23.0':
-    resolution: {integrity: sha512-23nIBdG7FxkZsDAAZ1n5hhqdQ6VINj0+KEZppehtBXxvgRyfKWN21/hQZBXOK9nZENfoLMpRLPI64O32eWTf3w==, tarball: https://npm.pkg.github.com/download/@stackmyth/toggle/0.23.0/1a00138f4dd3d540eaa9bcbe0b8e7c0ad2bf7a9e}
+  '@stackmyth/toggle@0.24.0':
+    resolution: {integrity: sha512-vGZAP9NX44VppS6AdlP16zwNULHm6g5PgwJDnKYUqZm4e0iNhUjOL0cSF50EPgixCqSmMhPdGppwQrpvXHoELQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/toggle/0.24.0/fe90eb95276f402c67c7984a30fed669d6d9ff86}
     peerDependencies:
       '@stackmyth/core': '>=0.0.1'
       react: '>=18.0.0'
@@ -3861,119 +3861,119 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@stackmyth/accordion@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/accordion@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       '@stackmyth/icons': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/alert@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/alert@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       '@stackmyth/icons': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/avatar@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/avatar@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/badge@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/badge@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/button@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/button@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/calendar@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/calendar@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/card@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/card@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/checkbox@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/checkbox@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      '@stackmyth/primitives': 0.1.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+      '@stackmyth/primitives': 0.1.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
   '@stackmyth/classnames@0.1.0': {}
 
-  '@stackmyth/core@0.23.0(react@19.2.4)':
+  '@stackmyth/core@0.24.0(react@19.2.4)':
     dependencies:
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/date-picker@0.23.0(@stackmyth/calendar@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/popover@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/date-picker@0.24.0(@stackmyth/calendar@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/popover@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@stackmyth/calendar': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+      '@stackmyth/calendar': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      '@stackmyth/popover': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@stackmyth/popover': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/dialog@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/dialog@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
-
-  '@stackmyth/dropdown-menu@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
-  '@stackmyth/empty-state@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/dropdown-menu@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
+  '@stackmyth/empty-state@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
   '@stackmyth/event-bus@0.1.0(react@19.2.4)':
     dependencies:
       react: 19.2.4
 
-  '@stackmyth/field@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/label@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/field@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/label@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/label': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/label': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/file-upload@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/file-upload@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/form@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/form@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
 
@@ -3981,146 +3981,146 @@ snapshots:
     dependencies:
       react: 19.2.4
 
-  '@stackmyth/input-group@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/input-group@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/input@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/field@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/label@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/input@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/field@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/label@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      '@stackmyth/field': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/label@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@stackmyth/field': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/label@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@stackmyth/icons': 0.1.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/label@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/label@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/layout@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/layout@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/list-item@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/list-item@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
   '@stackmyth/manifests@0.2.0(react@19.2.4)':
     dependencies:
       react: 19.2.4
 
-  '@stackmyth/popover@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/popover@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
-  '@stackmyth/primitives@0.1.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/primitives@0.1.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/progress@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/progress@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/radio-group@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/radio-group@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      '@stackmyth/layout': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
-      '@stackmyth/primitives': 0.1.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
+      '@stackmyth/layout': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
+      '@stackmyth/primitives': 0.1.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/select@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/select@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      '@stackmyth/icons': 0.1.0(react@19.2.4)
-      '@stackmyth/primitives': 0.1.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/skeleton@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/spinner@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/stat@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/switch@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/tabs@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/layout@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      '@stackmyth/layout': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/text@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/textarea@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/core': 0.23.0(react@19.2.4)
-      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
-      react: 19.2.4
-
-  '@stackmyth/time-picker@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(@stackmyth/popover@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
-    dependencies:
-      '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       '@stackmyth/icons': 0.1.0(react@19.2.4)
-      '@stackmyth/popover': 0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@stackmyth/primitives': 0.1.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
-  '@stackmyth/toast@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/skeleton@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/spinner@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/stat@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/switch@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/tabs@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/layout@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      '@stackmyth/layout': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/text@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/textarea@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/time-picker@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(@stackmyth/icons@0.1.0(react@19.2.4))(@stackmyth/popover@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.24.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      '@stackmyth/icons': 0.1.0(react@19.2.4)
+      '@stackmyth/popover': 0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/toast@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
-  '@stackmyth/toggle@0.23.0(@stackmyth/core@0.23.0(react@19.2.4))(react@19.2.4)':
+  '@stackmyth/toggle@0.24.0(@stackmyth/core@0.24.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
-      '@stackmyth/core': 0.23.0(react@19.2.4)
+      '@stackmyth/core': 0.24.0(react@19.2.4)
       react: 19.2.4
 
   '@standard-schema/spec@1.1.0': {}

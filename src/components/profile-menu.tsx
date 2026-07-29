@@ -97,13 +97,9 @@ export function ProfileMenu({
           variant="secondary"
           size="lg"
           aria-label={copy.auth.menuLabel}
-          /*
-            A plain rect for now. The capsule this wants needs `shape="pill"`,
-            which Button gained upstream for this case — building it here would
-            mean overriding border-radius and padding from outside the
-            component, which the usage rules prohibit. Switch to shape="pill"
-            when the next release lands.
-          */
+          // `pill` tightens the leading padding so the avatar sits concentric
+          // in the capsule's end, instead of flush against it.
+          shape="pill"
         >
           {/* Button gaps and centres its own children — no Flex needed. */}
           <Avatar size="sm">
