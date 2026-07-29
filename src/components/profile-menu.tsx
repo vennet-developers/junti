@@ -97,21 +97,9 @@ export function ProfileMenu({
           variant="secondary"
           size="md"
           aria-label={copy.auth.menuLabel}
-          /*
-            A capsule with a circular avatar has to be padded on purpose. The
-            button's own horizontal padding is sized for text, so leaving it
-            alone pressed the avatar flush against the rounded end.
-
-            4px on the left, top and bottom sets the 32px avatar concentric
-            inside the 40px pill — the circle sits IN the capsule's end rather
-            than against it. The right side is wider on purpose: a chevron is
-            optically lighter than a photograph, so matching the number would
-            read as tighter, not as symmetric.
-          */
-          style={{
-            borderRadius: "var(--sm-radius-full)",
-            padding: "var(--sm-space-1) var(--sm-space-3) var(--sm-space-1) var(--sm-space-1)",
-          }}
+          // Shape lives in globals.css as `.profile-pill` — the padding it needs
+          // is deliberate and explained there.
+          className="profile-pill"
         >
           <Flex gap="2" align="center">
             <Avatar size="sm">

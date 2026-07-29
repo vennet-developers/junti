@@ -14,38 +14,27 @@ import { Text } from "@stackmyth/text";
  */
 
 /**
- * The palette the hash picks from, as background/foreground PAIRS.
+ * How many colours the palette offers.
  *
- * `Avatar`'s `color` sets the background only, and the fallback text keeps
- * whatever it inherits. Setting the background alone shipped briefly and was
- * unreadable in dark mode: `--sm-<state>-soft` is a light tint in light mode
- * and a very dark one in dark mode (`--sm-success-soft` is #052e16), so dark
- * initials sat on a nearly identical dark disc.
- *
- * Each `soft` token already has a `soft-text` sibling designed to be legible
- * on it, in both modes. Using the pair is what makes the stack invert
- * correctly instead of merely changing colour.
+ * The colours themselves live in globals.css as `.attendee-avatar--1…6`, each
+ * setting the two custom properties the Avatar reads — its background and its
+ * fallback text. They belong there rather than here because Stackmyth
+ * components take their appearance from props and tokens, never from `style=`,
+ * and a class can carry a token pair that an inline colour cannot.
  */
-const COLORS = [
-  { bg: "var(--sm-info-soft)", text: "var(--sm-info-soft-text)" },
-  { bg: "var(--sm-success-soft)", text: "var(--sm-success-soft-text)" },
-  { bg: "var(--sm-warning-soft)", text: "var(--sm-warning-soft-text)" },
-  { bg: "var(--sm-error-soft)", text: "var(--sm-error-soft-text)" },
-  { bg: "var(--sm-accent-soft)", text: "var(--sm-accent-soft-text)" },
-  { bg: "var(--sm-primary-soft)", text: "var(--sm-primary-soft-text)" },
-] as const;
+const PALETTE_SIZE = 6;
 
 /**
  * FNV-1a, 32-bit. Any stable hash would do — this one is short, has no
  * dependencies and spreads short strings well, which is what a first name is.
  */
-function paletteFor(name: string): (typeof COLORS)[number] {
+function paletteClassFor(name: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < name.length; i++) {
     hash ^= name.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  return COLORS[hash % COLORS.length]!;
+  return `attendee-avatar--${(hash % PALETTE_SIZE) + 1}`;
 }
 
 function initialsOf(name: string): string {
@@ -85,17 +74,13 @@ export function AttendeeStack({
   return (
     <Flex gap="2" align="center">
       <AvatarGroup>
-        {names.map((name, index) => {
-          const palette = paletteFor(name);
-
-          return (
-            // The name is the identity here, and two guests can share one. The
-            // index keeps React's list keys unique without pretending otherwise.
-            <Avatar key={`${name}-${index}`} size="sm" color={palette.bg} bordered>
-              <AvatarFallback style={{ color: palette.text }}>{initialsOf(name)}</AvatarFallback>
-            </Avatar>
-          );
-        })}
+        {names.map((name, index) => (
+          // The name is the identity here, and two guests can share one. The
+          // index keeps React's list keys unique without pretending otherwise.
+          <Avatar key={`${name}-${index}`} size="sm" bordered className={paletteClassFor(name)}>
+            <AvatarFallback>{initialsOf(name)}</AvatarFallback>
+          </Avatar>
+        ))}
       </AvatarGroup>
 
       {remaining > 0 ? (
