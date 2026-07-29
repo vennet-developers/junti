@@ -14,6 +14,8 @@ import {
   policySubmissions,
 } from "@/db/schema";
 import type { EventRow, ParticipantRow, PaymentRow } from "@/db/schema";
+
+import { attendingCountSql, firstAttendeesSql } from "./roster-select";
 import {
   partitionByCompliance,
   pendingReviewCount,
@@ -410,9 +412,6 @@ export interface OrganizerEventSummary {
   firstAttendees: string[];
 }
 
-/** How many names the avatar stack shows before collapsing into "+N". */
-const AVATAR_STACK_SIZE = 3;
-
 export async function loadOrganizerEvents(organizerId: string): Promise<OrganizerEventSummary[]> {
   const rows = await db
     .select({
@@ -427,24 +426,10 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
       isPast: sql<boolean>`${events.startsAt} < now()`,
       publicToken: events.publicToken,
       organizerToken: events.organizerToken,
-      attendingCount: sql<number>`(
-        select count(*)::int from ${participants}
-        where ${participants.eventId} = ${events.id}
-          and ${participants.attendance} = 'in'
-      )`,
-      // Served by participants_event_created_idx, so the limit is applied by
-      // the index rather than by sorting the whole roster.
-      firstAttendees: sql<string[]>`(
-        select coalesce(array_agg(name), '{}')
-        from (
-          select ${participants.displayName} as name
-          from ${participants}
-          where ${participants.eventId} = ${events.id}
-            and ${participants.attendance} = 'in'
-          order by ${participants.createdAt} asc
-          limit ${AVATAR_STACK_SIZE}
-        ) first_few
-      )`,
+      // Both live in roster-select.ts, which documents why they are written
+      // with literal names and which a test renders to SQL to keep them honest.
+      attendingCount: attendingCountSql,
+      firstAttendees: firstAttendeesSql,
     })
     .from(events)
     .where(eq(events.organizerId, organizerId))
