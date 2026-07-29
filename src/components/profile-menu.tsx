@@ -122,11 +122,13 @@ export function ProfileMenu({
         <DropdownMenuSeparator />
 
         {/*
-          A router push rather than a <Link>: DropdownMenuItem renders a div and
-          has no `asChild`, so there is no anchor to hand a href to. The cost is
-          that cmd-click cannot open the profile in a new tab — acceptable for a
-          menu entry, and the alternative (an anchor nested inside the item)
-          gives two overlapping click targets for one action.
+          STACKMYTH-GAP: DropdownMenuItem renders a <div role="menuitem"> and
+          exposes no `asChild`, so there is no anchor to hand an href to — even
+          though DropdownMenuTrigger, one component away in the same package,
+          does have it. A router push is the least-bad substitute; the cost is
+          that cmd-click cannot open the profile in a new tab. The alternative,
+          nesting an <a> inside the item, gives two overlapping click targets
+          for one action. See STACKMYTH-GAPS.md #17.
         */}
         <DropdownMenuItem onSelect={() => router.push(ROUTES.profile)}>
           <Flex gap="2" align="center">

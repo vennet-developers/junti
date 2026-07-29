@@ -1,11 +1,12 @@
 # Stackmyth — friction log
 
-> **Status: every entry in this log is now resolved at source.**
+> **Status: the original sixteen are resolved. One new entry (#17) is open.**
 >
 > Fifteen gaps fixed across three releases, one entry withdrawn as intended
-> behaviour (#3). This app consumes `@stackmyth/*` **0.22.0** and
-> `@stackmyth/manifests` **0.2.0**, and every status below was verified
-> against the installed artifacts, not the repo.
+> behaviour (#3), and one found later while building against 0.22.0 (#17).
+> This app consumes `@stackmyth/*` **0.22.0** and `@stackmyth/manifests`
+> **0.2.0**, and every status below was verified against the installed
+> artifacts, not the repo.
 >
 > | Release | Gaps fixed |
 > | ------- | ---------- |
@@ -32,7 +33,9 @@
 
 Feedback from a consumer with **zero prior familiarity** with the stack, building
 a real (small) app against it over one build. Written as it happened, not
-cleaned up afterwards. Ordered roughly by how much time each one cost.
+cleaned up afterwards. Entries 1–16 are ordered roughly by how much time each
+one cost; #17 was found later and is appended rather than slotted in, so the
+numbering keeps meaning something.
 
 Version under test: `@stackmyth/*` **0.19.1** (`icons`/`classnames`/`manifests`
 `0.1.0`), React 19.2.4, Next.js 16.2.12 (App Router, Turbopack).
@@ -641,6 +644,43 @@ pnpm view @stackmyth/number-input version  # 404 — does not
 
 Until one exists, the discovery step has to start from the registry rather than
 from `node_modules`.
+
+---
+
+## 17. `DropdownMenuItem` cannot become a link
+
+> **Status: open at 0.22.0.** `DropdownMenuItemProps` extends
+> `HTMLAttributes<HTMLDivElement>` with `disabled`, `inset`, `destructive` and
+> `onSelect` — no `asChild`. Verified in the installed `dropdown-menu.d.ts`.
+
+**What I was building.** The account menu behind the profile pill on
+`/my-events`: my profile, language, appearance, sign out. Three of those four
+are actions. One — "my profile" — is navigation.
+
+**What happened.** `DropdownMenuItem` renders a `<div role="menuitem">` and
+exposes no `asChild`, so there is no anchor to give an `href` to. The
+asymmetry is inside the same package: **`DropdownMenuTrigger` has `asChild`**
+(it is how the pill wraps a `Button`), and the item next to it does not.
+
+The workarounds are both worse than a link:
+
+1. `onSelect={() => router.push(…)}` — what this app does. Works, and loses
+   everything an anchor gives for free: cmd/middle-click to open in a new tab,
+   the destination in the status bar, "copy link address", and the browser's
+   own handling if JavaScript has not loaded.
+2. Nesting an `<a>` inside the item — two overlapping click targets for one
+   action, and a `menuitem` whose accessible child is a `link`.
+
+**What I would have wanted.** `asChild` on `DropdownMenuItem`, exactly as on
+`DropdownMenuTrigger`. The Slot machinery is already in `@stackmyth/core` and
+already used one component away.
+
+**Not just this component.** Reading the manifests for the packages this app
+touches, `asChild` exists on `Button` and `DropdownMenuTrigger` and nowhere
+else — `ContextMenu`, `NavigationMenu`, `ListItem`, `Tabs` and `Command` all
+render fixed elements too. Menus and navigation lists are *where links live*,
+so this reads less like an oversight in one component than like a prop that
+was added where it was first needed and never generalised.
 
 ---
 
