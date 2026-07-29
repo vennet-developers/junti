@@ -71,7 +71,9 @@ export default async function NewEventPage({
           />
 
           <Stack gap="2">
-            <Text variant="h1">{copy.createEvent.heading}</Text>
+            <Text variant="h1" fontFamily="var(--junti-display)">
+              {copy.createEvent.heading}
+            </Text>
             <Text color="muted">{copy.createEvent.subheading}</Text>
           </Stack>
 

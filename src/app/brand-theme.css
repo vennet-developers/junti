@@ -1,0 +1,533 @@
+/*
+ * Junti · the brand as a Stackmyth theme.
+ *
+ * This file is the ONLY place brand literals live. Everything downstream —
+ * components, pages, the app's own CSS — reads `--sm-*` tokens and therefore
+ * inherits the brand for free. That is the whole point of theming a design
+ * system rather than restyling its components: no component is overridden
+ * here, and adding a screen cannot drift from the identity.
+ *
+ * ── Why this file is UNLAYERED ────────────────────────────────────────────
+ *
+ * Core ships its default palette inside `@layer themes`, in four blocks and in
+ * this order: `:root` (light), a `prefers-color-scheme: dark` block, then
+ * `[data-mode=dark]` and `[data-mode=light]` for a forced choice. All four have
+ * the same specificity, so source order decides between them.
+ *
+ * Layered rules always lose to unlayered ones regardless of specificity, so
+ * declaring this file outside any layer is what guarantees it wins over every
+ * one of those four blocks — including the forced ones, which would otherwise
+ * beat a `:root` of ours purely by coming later in core's own file. It also
+ * means the outcome does not depend on import order, which is the kind of
+ * thing that works until someone reorders the imports.
+ *
+ * ── Why the mapping is written once ───────────────────────────────────────
+ *
+ * The `--sm-*` mapping below is declared a single time, in terms of
+ * `var(--junti-*)`. The mode blocks that follow redefine only the `--junti-*`
+ * palette, never the mapping.
+ *
+ * That works because a custom property holding a `var()` is substituted at
+ * computed-value time on the element that uses it: `--sm-bg-surface` resolves
+ * against whatever `--junti-papel` is on `<html>` at that moment. Swap the
+ * palette and all 55 semantic tokens follow. Writing the mapping four times
+ * would be four places for it to drift.
+ *
+ * ── What the brand kit specifies, and what is derived ─────────────────────
+ *
+ * Specified in junti-tokens.css: surfaces, ink, the two oranges, the five
+ * state pairs, radii, fonts. Those are copied exactly.
+ *
+ * Derived here, because the kit is silent and the product needs them — each is
+ * marked DERIVED at its declaration:
+ *   · hover steps for every interactive fill
+ *   · saturated fills for the states (the kit only gives pastel chapitas)
+ *   · a soft orange pair
+ *   · a red family — the brand has no red at all, and forms need one
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1 · The palette (light) and the mapping onto Stackmyth
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --junti-papel: #faf7f2; /* page. Never pure white — brand rule. */
+  --junti-tarjeta: #ffffff; /* cards, fields: LIGHTER than the page */
+  --junti-borde: #e4ded4;
+  --junti-borde-fuerte: #d6cfc3;
+
+  /* ── Ink ──────────────────────────────────────────────────────────────── */
+  --junti-tinta: #09090b;
+  --junti-texto: #57534e;
+  --junti-texto-suave: #6b655c;
+  --junti-texto-tenue: #8a8378;
+
+  /* ── Brand ────────────────────────────────────────────────────────────── */
+  --junti-naranja: #ff7a3d; /* the chapa, accents. Tinta on top, only. */
+  --junti-naranja-texto: #d9541f; /* links and orange text ON papel (contrast) */
+
+  /*
+    Fixed, mode-independent ink and paper.
+
+    The chapa is an orange badge with near-black letters and a cream dot in
+    BOTH modes — "modo oscuro · chapa naranja, punto crema". So its colours
+    cannot come from --junti-tinta / --junti-papel, which invert. Anything
+    painted on orange reaches for these.
+  */
+  --junti-tinta-fija: #09090b;
+  --junti-papel-fijo: #faf7f2;
+
+  /* ── The primary action ───────────────────────────────────────────────── */
+  /*
+    Ink in light, orange in dark — a brand rule, not a preference: "En modo
+    claro el boton primario es tinta; el naranja se reserva para la marca. En
+    modo oscuro el boton primario si es naranja."
+  */
+  --junti-accion: var(--junti-tinta);
+  --junti-accion-texto: var(--junti-papel-fijo);
+  --junti-accion-hover: #2a2622; /* DERIVED — warm lift on ink */
+
+  /* ── Warm neutral chip ────────────────────────────────────────────────── */
+  /* Secondary buttons, the account capsule, unpressed segments. */
+  --junti-chip: #ede8e0;
+  --junti-chip-hover: #e4ded4;
+
+  /* ── States · pastel chapita pairs, straight from the kit ─────────────── */
+  --junti-viene-bg: #dff5e4;
+  --junti-viene-fg: #0f7a3d;
+  --junti-talvez-bg: #fbebc8;
+  --junti-talvez-fg: #8a5a00;
+  --junti-noviene-bg: #ede8e0;
+  --junti-noviene-fg: #57534e;
+  --junti-espera-bg: #eae4fb;
+  --junti-espera-fg: #5b3fb5;
+  /* "Debe" is the orange chapa itself with ink on top — the one state that is
+     a solid fill rather than a pastel. */
+  --junti-debe-bg: #ff7a3d;
+  --junti-debe-fg: #09090b;
+
+  /*
+    DERIVED — saturated state fills.
+
+    The kit specifies states only as pastel chapitas, because that is how the
+    product shows them. But components take FILL + ON-FILL pairs too (a filled
+    Badge, an Alert), and leaving those at Stackmyth's defaults would drop
+    stock blue and red into a palette that contains neither. Each fill is the
+    chapita's own text colour, so a filled state stays in the family it came
+    from, with paper on top.
+  */
+  --junti-viene-fill: #0f7a3d;
+  --junti-talvez-fill: #8a5a00;
+  --junti-espera-fill: #5b3fb5;
+
+  /*
+    DERIVED — a red family.
+
+    The brand has no red anywhere: nothing in the kit is destructive, because
+    nothing in the brand's world is. Forms disagree — a rejected field and a
+    sign-out need a colour that reads as "stop" — so this is a warm crimson
+    chosen to sit on cream without being mistaken for the brand orange, which
+    is the failure mode that mattered: "debe" is orange, and an error must not
+    look like an unpaid guest.
+  */
+  --junti-error-bg: #fbe9e6;
+  --junti-error-fg: #a3231b;
+  --junti-error-fill: #a3231b;
+
+  /* DERIVED — a soft orange, for accent chips. The kit gives orange only as a
+     solid. */
+  --junti-naranja-suave: #ffede3;
+  --junti-naranja-suave-texto: #b8460f;
+
+  /* ── Typography ───────────────────────────────────────────────────────── */
+  /* Display carries the chapa, titles, times and amounts — nothing else.
+     Instrument Sans carries the entire product and is never set at 800:
+     "el peso extremo es territorio de la chapa". */
+  --junti-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --junti-ui: "Instrument Sans", system-ui, sans-serif;
+
+  /* ═════════════════════════════════════════════════════════════════════════
+     The mapping. Declared once; the mode blocks below only swap the palette.
+     Covers all 55 tokens core redefines under [data-mode=*], so none of its
+     defaults can leak back in when a mode is forced.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* Action — interactive */
+  --sm-bg-interactive: var(--junti-accion);
+  --sm-bg-interactive-hover: var(--junti-accion-hover);
+  --sm-text-inverse: var(--junti-accion-texto);
+  --sm-border-interactive: var(--junti-accion);
+  --sm-border-focus: var(--junti-accion);
+
+  /* Secondary */
+  --sm-secondary: var(--junti-chip);
+  --sm-secondary-text: var(--junti-tinta);
+  --sm-secondary-hover: var(--junti-chip-hover);
+
+  /* Accent — this is where the brand orange lives, and the only place it does.
+     Ink on top, always: the kit forbids anything else over orange. */
+  --sm-accent: var(--junti-naranja);
+  --sm-accent-text: var(--junti-tinta-fija);
+  --sm-accent-hover: var(--junti-naranja-texto);
+
+  /* Neutral */
+  --sm-neutral: var(--junti-chip);
+  --sm-neutral-text: var(--junti-tinta);
+  --sm-neutral-hover: var(--junti-chip-hover);
+
+  /* Semantic basics */
+  --sm-bg-surface: var(--junti-papel);
+  --sm-bg-surface-raised: var(--junti-tarjeta);
+  --sm-border-default: var(--junti-borde);
+  --sm-border-subtle: var(--junti-borde);
+  --sm-text-primary: var(--junti-tinta);
+  --sm-text-secondary: var(--junti-texto);
+  --sm-text-brand: var(--junti-naranja-texto);
+
+  /* Flat aliases. Core defines these as indirections in its own :root, but it
+     also re-declares them literally under [data-mode=*] — so they have to be
+     restated here or a forced mode would serve stock zinc for them. */
+  --sm-primary: var(--junti-accion);
+  --sm-primary-text: var(--junti-accion-texto);
+  --sm-primary-hover: var(--junti-accion-hover);
+  --sm-surface: var(--junti-papel);
+  --sm-surface-raised: var(--junti-tarjeta);
+  --sm-surface-border: var(--junti-borde);
+  --sm-surface-text: var(--junti-tinta);
+
+  /*
+    States.
+
+    Green means exactly one thing in this product — confirmed, or paid — so
+    `success` is the only green and nothing else may borrow it.
+
+    `info` is the waitlist purple, not blue, because the brand contains no
+    blue: the one "informational" state it defines is "en espera".
+  */
+  --sm-info: var(--junti-espera-fill);
+  --sm-info-text: var(--junti-papel-fijo);
+  --sm-success: var(--junti-viene-fill);
+  --sm-success-text: var(--junti-papel-fijo);
+  --sm-warning: var(--junti-talvez-fill);
+  --sm-warning-text: var(--junti-papel-fijo);
+  --sm-error: var(--junti-error-fill);
+  --sm-error-text: var(--junti-papel-fijo);
+
+  /* Soft — action */
+  --sm-primary-soft: var(--junti-chip);
+  --sm-primary-soft-text: var(--junti-tinta);
+  --sm-secondary-soft: var(--junti-chip);
+  --sm-secondary-soft-text: var(--junti-texto);
+  --sm-accent-soft: var(--junti-naranja-suave);
+  --sm-accent-soft-text: var(--junti-naranja-suave-texto);
+  --sm-neutral-soft: var(--junti-noviene-bg);
+  --sm-neutral-soft-text: var(--junti-noviene-fg);
+
+  /* Soft — state. These ARE the chapita pairs, so a soft Badge or Alert is
+     already the brand's sticker without any component being touched.
+     `--sm-<state>-accent` is defined by core as an indirection through these,
+     so on-surface icons and borders inherit the brand hues for free. */
+  --sm-info-soft: var(--junti-espera-bg);
+  --sm-info-soft-text: var(--junti-espera-fg);
+  --sm-success-soft: var(--junti-viene-bg);
+  --sm-success-soft-text: var(--junti-viene-fg);
+  --sm-warning-soft: var(--junti-talvez-bg);
+  --sm-warning-soft-text: var(--junti-talvez-fg);
+  --sm-error-soft: var(--junti-error-bg);
+  --sm-error-soft-text: var(--junti-error-fg);
+
+  /* Warm surface scale. Core ships this for "editorial / brand-forward"
+     contexts and computes it in OKLCH; the brand already IS warm, so these
+     become the paper family rather than a tinted alternative to it. */
+  --sm-surface-warm-50: var(--junti-papel);
+  --sm-surface-warm-100: var(--junti-chip);
+  --sm-surface-warm-200: var(--junti-borde-fuerte);
+  --sm-ink-warm-900: var(--junti-tinta);
+
+  /*
+    Not in core's forced list, so it is set once here.
+
+    @stackmyth/breadcrumb colours its separators with
+    `var(--sm-text-disabled)`, a token core does not define — an undefined
+    var() with no fallback is invalid at computed-value time, which for
+    `color` means the separator silently inherits the text colour and renders
+    at full strength. Defining it fixes the separators and gives the app a
+    real disabled ink.
+  */
+  --sm-text-disabled: var(--junti-texto-tenue);
+
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  /*
+    Two radii carry the whole product: 13px on anything you touch, 20px on
+    anything that contains.
+
+    Mapped by which token each component actually reads, verified in the
+    shipped CSS rather than assumed: button, input, select, textarea,
+    input-group, toggle and badge all use `--sm-radius-sm`; tabs uses `-md`;
+    card, dialog and accordion use `-lg`.
+  */
+  --sm-radius-sm: 13px;
+  --sm-radius-md: 13px;
+  --sm-radius-lg: 20px;
+  --sm-radius-interactive: 13px;
+  --sm-radius-container: 20px;
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
+  --sm-font-family: var(--junti-ui);
+
+  /*
+    The brand's display scale: 46 hero · 28 event name · 20 subtitle ·
+    16 body · 13 label. Four steps, so h2 and h3 land on the same one — the
+    brand has a single "big title" size and the app uses both variants for it.
+  */
+  --sm-text-h1-size: 2.875rem; /* 46px — hero, landing only */
+  --sm-text-h2-size: 1.75rem; /* 28px — event name */
+  --sm-text-h3-size: 1.75rem; /* 28px — page titles */
+  --sm-text-h4-size: 1.25rem; /* 20px */
+  --sm-text-lead-size: 1.25rem; /* 20px — subtitle */
+  --sm-text-p-size: 1rem; /* 16px — body */
+  --sm-text-small-size: 0.8125rem; /* 13px — labels */
+
+  /*
+    Links are orange, not the info hue. @stackmyth/text defaults its link
+    colour to `var(--sm-info)`, which under this theme would make every link
+    the waitlist purple. The brand is explicit: "Naranja texto #D9541F ·
+    Links y texto naranja sobre papel".
+
+    ACCESSIBILITY DEVIATION — measured, not assumed.
+
+    #D9541F on papel is 3.75:1. That clears WCAG AA for large text (3:1) but
+    not for text at body size (4.5:1), and links here are body size. The kit
+    labels the token "(contraste)", so passing was plainly the intent.
+
+    --junti-enlace is the same hue one step down: 4.60:1 on papel, 4.92:1 on a
+    card. Only the link token uses it; --sm-text-brand keeps the brand's own
+    #D9541F for headings and accents, where the large-text threshold applies
+    and the specified colour is correct.
+  */
+  --junti-enlace: #b6541a;
+  --sm-text-color-link: var(--junti-enlace);
+  --sm-text-color-link-hover: var(--junti-naranja-texto);
+
+  /*
+    Field borders, and the second measured deviation.
+
+    The kit puts #E4DED4 on "listas y campos". Against papel that is 1.25:1,
+    and WCAG 2.2 SC 1.4.11 asks 3:1 for the visual boundary that identifies a
+    control. Nothing else identifies these: an input's fill is #FFFFFF on
+    #FAF7F2 paper — 1.19:1 — so the border is the only thing saying "type
+    here".
+
+    So the split follows what the criterion actually covers: --sm-border-default
+    keeps the brand's soft #E4DED4 for dividers and card edges, which are
+    decoration, while --sm-input-border alone goes to a warm grey that reaches
+    3.12:1 on papel and 3.33:1 on a card. Same family, one step firmer, applied
+    only where a person has to find a field.
+  */
+  --junti-borde-campo: #928c83;
+
+  /*
+    Every field, on card white with a border a person can find.
+
+    The kit lists #FFFFFF under "Tarjeta · Listas y campos" — fields are card
+    surfaces, not page surfaces. Stackmyth defaults each of them to
+    `--sm-bg-surface`, which under this theme is the cream page, so an input
+    disappeared into the paper it sat on.
+
+    Reached one component-token at a time on purpose. There is no single "field
+    background" token to set, and moving `--sm-bg-surface` instead would repaint
+    the entire page white — which the brand forbids outright.
+  */
+  --sm-input-bg: var(--junti-tarjeta);
+  --sm-textarea-bg: var(--junti-tarjeta);
+  --sm-input-group-bg: var(--junti-tarjeta);
+  --sm-select-trigger-bg: var(--junti-tarjeta);
+  /* Popovers are cards too, and a menu on page-cream over a page-cream page has
+     no edge at all. */
+  --sm-select-content-bg: var(--junti-tarjeta);
+
+  /* The same firm edge, for the controls that name their own border token.
+     Textarea and select otherwise fall back to --sm-border-default and would
+     be the only fields at 1.25:1. */
+  --sm-input-border: var(--junti-borde-campo);
+  --sm-textarea-border: var(--junti-borde-campo);
+  --sm-select-trigger-border: var(--junti-borde-campo);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2 · Dark, when the operating system asks for it
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --junti-papel: #09090b;
+    --junti-tarjeta: #17171a;
+    --junti-borde: #2a2a30;
+    --junti-borde-fuerte: #3f3f46;
+
+    --junti-tinta: #faf7f2;
+    --junti-texto: #a8a29a;
+    --junti-texto-suave: #8a8378;
+    --junti-texto-tenue: #71717a;
+
+    /* Orange needs no darkening against near-black, so text orange and chapa
+       orange converge here — the kit says so. */
+    --junti-naranja-texto: #ff7a3d;
+
+    /* The primary action becomes the brand orange, with ink on top. */
+    --junti-accion: var(--junti-naranja);
+    --junti-accion-texto: var(--junti-tinta-fija);
+    --junti-accion-hover: #ff9463; /* DERIVED — orange lifts, it cannot darken
+                                      into a near-black background */
+
+    --junti-chip: rgba(250, 247, 242, 0.08);
+    --junti-chip-hover: rgba(250, 247, 242, 0.14);
+
+    /* Chapitas invert: 14% wash behind the state's own colour as the text. */
+    --junti-viene-bg: rgba(74, 222, 128, 0.14);
+    --junti-viene-fg: #4ade80;
+    --junti-talvez-bg: rgba(251, 191, 36, 0.14);
+    --junti-talvez-fg: #fbbf24;
+    --junti-noviene-bg: rgba(250, 247, 242, 0.08);
+    --junti-noviene-fg: #a8a29a;
+    --junti-espera-bg: rgba(167, 139, 250, 0.16);
+    --junti-espera-fg: #a78bfa;
+
+    /* Fills brighten so paper-on-fill stays legible. */
+    --junti-viene-fill: #4ade80;
+    --junti-talvez-fill: #fbbf24;
+    --junti-espera-fill: #a78bfa;
+
+    --junti-error-bg: rgba(248, 113, 113, 0.16);
+    --junti-error-fg: #f87171;
+    --junti-error-fill: #f87171;
+
+    --junti-naranja-suave: rgba(255, 122, 61, 0.16);
+    --junti-naranja-suave-texto: #ff7a3d;
+
+    /* Brightened fills carry ink, not paper — inverted from light mode. */
+    --sm-info-text: var(--junti-tinta-fija);
+    --sm-success-text: var(--junti-tinta-fija);
+    --sm-warning-text: var(--junti-tinta-fija);
+    --sm-error-text: var(--junti-tinta-fija);
+
+    /* The two accessibility-tuned values, dark. Orange needs no darkening on
+       near-black (7.68:1 as-is), so the link is simply the brand orange; the
+       field border lifts to 3.08:1 against papel. */
+    --junti-enlace: var(--junti-naranja);
+    --junti-borde-campo: #605e5a;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3 · Dark, chosen explicitly
+
+   Same values as the media block. It cannot be shared with it: a media query
+   answers the operating system, this answers the person, and the person wins
+   even on a machine set to light.
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-mode="dark"] {
+  --junti-papel: #09090b;
+  --junti-tarjeta: #17171a;
+  --junti-borde: #2a2a30;
+  --junti-borde-fuerte: #3f3f46;
+
+  --junti-tinta: #faf7f2;
+  --junti-texto: #a8a29a;
+  --junti-texto-suave: #8a8378;
+  --junti-texto-tenue: #71717a;
+
+  --junti-naranja-texto: #ff7a3d;
+
+  --junti-accion: var(--junti-naranja);
+  --junti-accion-texto: var(--junti-tinta-fija);
+  --junti-accion-hover: #ff9463;
+
+  --junti-chip: rgba(250, 247, 242, 0.08);
+  --junti-chip-hover: rgba(250, 247, 242, 0.14);
+
+  --junti-viene-bg: rgba(74, 222, 128, 0.14);
+  --junti-viene-fg: #4ade80;
+  --junti-talvez-bg: rgba(251, 191, 36, 0.14);
+  --junti-talvez-fg: #fbbf24;
+  --junti-noviene-bg: rgba(250, 247, 242, 0.08);
+  --junti-noviene-fg: #a8a29a;
+  --junti-espera-bg: rgba(167, 139, 250, 0.16);
+  --junti-espera-fg: #a78bfa;
+
+  --junti-viene-fill: #4ade80;
+  --junti-talvez-fill: #fbbf24;
+  --junti-espera-fill: #a78bfa;
+
+  --junti-error-bg: rgba(248, 113, 113, 0.16);
+  --junti-error-fg: #f87171;
+  --junti-error-fill: #f87171;
+
+  --junti-naranja-suave: rgba(255, 122, 61, 0.16);
+  --junti-naranja-suave-texto: #ff7a3d;
+
+  --sm-info-text: var(--junti-tinta-fija);
+  --sm-success-text: var(--junti-tinta-fija);
+  --sm-warning-text: var(--junti-tinta-fija);
+  --sm-error-text: var(--junti-tinta-fija);
+
+  /* The two accessibility-tuned values, dark. Orange needs no darkening on
+     near-black (7.68:1 as-is), so the link is simply the brand orange; the
+     field border lifts to 3.08:1 against papel. */
+  --junti-enlace: var(--junti-naranja);
+  --junti-borde-campo: #605e5a;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4 · Light, chosen explicitly
+
+   Last, so it wins on a machine set to dark. Restates the light palette
+   because block 2 may already have replaced it.
+   ═══════════════════════════════════════════════════════════════════════ */
+[data-mode="light"] {
+  --junti-papel: #faf7f2;
+  --junti-tarjeta: #ffffff;
+  --junti-borde: #e4ded4;
+  --junti-borde-fuerte: #d6cfc3;
+
+  --junti-tinta: #09090b;
+  --junti-texto: #57534e;
+  --junti-texto-suave: #6b655c;
+  --junti-texto-tenue: #8a8378;
+
+  --junti-naranja-texto: #d9541f;
+
+  --junti-accion: var(--junti-tinta);
+  --junti-accion-texto: var(--junti-papel-fijo);
+  --junti-accion-hover: #2a2622;
+
+  --junti-chip: #ede8e0;
+  --junti-chip-hover: #e4ded4;
+
+  --junti-viene-bg: #dff5e4;
+  --junti-viene-fg: #0f7a3d;
+  --junti-talvez-bg: #fbebc8;
+  --junti-talvez-fg: #8a5a00;
+  --junti-noviene-bg: #ede8e0;
+  --junti-noviene-fg: #57534e;
+  --junti-espera-bg: #eae4fb;
+  --junti-espera-fg: #5b3fb5;
+
+  --junti-viene-fill: #0f7a3d;
+  --junti-talvez-fill: #8a5a00;
+  --junti-espera-fill: #5b3fb5;
+
+  --junti-error-bg: #fbe9e6;
+  --junti-error-fg: #a3231b;
+  --junti-error-fill: #a3231b;
+
+  --junti-naranja-suave: #ffede3;
+  --junti-naranja-suave-texto: #b8460f;
+
+  --sm-info-text: var(--junti-papel-fijo);
+  --sm-success-text: var(--junti-papel-fijo);
+  --sm-warning-text: var(--junti-papel-fijo);
+  --sm-error-text: var(--junti-papel-fijo);
+
+  --junti-enlace: #b6541a;
+  --junti-borde-campo: #928c83;
+}

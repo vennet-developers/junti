@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #EDE8E0; }
+  a { color: #D9541F; text-decoration: none; }
+  a:hover { color: #09090B; }
+</style>
+</helmet>
+
+<div style="background:#EDE8E0;color:#09090B;font-family:'Instrument Sans',system-ui,sans-serif;padding:56px 56px 80px">
+  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:44px;letter-spacing:-0.045em;margin:0 0 8px">Assets para exportar</h1>
+  <p style="font-size:17px;color:#57534E;margin:0 0 40px;max-width:640px">Cada pieza aislada, lista para capturar en alta resolución. Fondo transparente donde corresponde.</p>
+
+  <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start">
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">chapa-principal</span>
+      <div id="a-chapa" style="padding:24px;display:inline-block">
+        <div style="transform:rotate(-4deg);background:#FF7A3D;border-radius:26px;padding:22px 44px 26px;display:inline-block">
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#09090B;line-height:1;display:block">junti<span style="color:#FAF7F2">.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">chapa-inversa</span>
+      <div id="a-chapa-inv" style="padding:24px;display:inline-block">
+        <div style="transform:rotate(-4deg);background:#09090B;border-radius:26px;padding:22px 44px 26px;display:inline-block">
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#FAF7F2;line-height:1;display:block">junti<span style="color:#FF7A3D">.</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">wordmark-tinta</span>
+      <div id="a-word-tinta" style="padding:24px;display:inline-block">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#09090B;line-height:1;display:block">junti<span style="color:#FF7A3D">.</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">wordmark-crema</span>
+      <div id="a-word-crema" style="padding:24px;background:#09090B;border-radius:12px;display:inline-block">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#FAF7F2;line-height:1;display:block">junti<span style="color:#FF7A3D">.</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">icono-app-naranja</span>
+      <div id="a-icon-naranja" style="width:256px;height:256px;border-radius:60px;background:#FF7A3D;display:grid;place-items:center">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:150px;letter-spacing:-0.06em;color:#09090B;line-height:1;transform:rotate(-4deg)">j<span style="color:#FAF7F2">.</span></span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">icono-app-tinta</span>
+      <div id="a-icon-tinta" style="width:256px;height:256px;border-radius:60px;background:#09090B;display:grid;place-items:center">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:150px;letter-spacing:-0.06em;color:#FAF7F2;line-height:1;transform:rotate(-4deg)">j<span style="color:#FF7A3D">.</span></span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280}}"></script>
+</body>
+</html>

@@ -73,7 +73,7 @@ export function EventHeader({ event, attendingCount, copy, readerTimeZone }: Eve
           heading semantically — `as="h1"` keeps the document outline correct
           while `variant` carries only the size.
         */}
-        <Text as="h1" variant="h2">
+        <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
           {event.title}
         </Text>
       </Stack>
@@ -81,7 +81,13 @@ export function EventHeader({ event, attendingCount, copy, readerTimeZone }: Eve
       <Stack gap="3">
         <DetailRow icon={<CalendarIcon size={18} />} label={copy.event.whenLabel}>
           <Stack gap="0">
-            <Text>{when.primary}</Text>
+            {/* The time is display type, alongside titles and amounts — the
+                three things the brand sets in Bricolage. The secondary line
+                below stays in the interface face: it is a clarification, not
+                a headline. */}
+            <Text fontFamily="var(--junti-display)" weight="bold">
+              {when.primary}
+            </Text>
             {/* Only when the reader is somewhere else. Both times, both
                 places — a converted time without its zone is how a group ends
                 up disagreeing about when the match is. */}

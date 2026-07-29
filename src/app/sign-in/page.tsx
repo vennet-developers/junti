@@ -53,7 +53,7 @@ export default async function SignInPage({
           />
 
           <Stack gap="2">
-            <Text as="h1" variant="h2">
+            <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
               {copy.auth.signInHeading}
             </Text>
             <Text color="muted">{copy.auth.signInSubheading}</Text>

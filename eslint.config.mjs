@@ -12,6 +12,14 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    /*
+      Design source, not app source. `source/visual-identity` holds the brand
+      deliverables as they were handed over — the interactive brand document
+      and the bundled runtime its export tool ships with it. None of it is
+      imported by the app or shipped in the bundle, and linting somebody
+      else's build output produces ten findings nobody can act on.
+    */
+    "source/**",
   ]),
 ]);
 

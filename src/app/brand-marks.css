@@ -1,0 +1,160 @@
+/*
+ * The two constructions the brand builds by hand: the chapa and the chapita.
+ *
+ * Everything else in this app is a Stackmyth component wearing the theme. These
+ * two are here because the identity asks for something no component prop can
+ * express — a rotation — and because the logo is not an image: it is the word
+ * "junti." inside a badge, which the brand kit says to rebuild as text plus a
+ * rounded rectangle rather than ship as a PNG.
+ *
+ * Text, not an <img>, is deliberate:
+ *   · it is selectable, searchable and read aloud as the brand name
+ *   · it stays sharp at any density, and the kit's PNGs are raster at 4x
+ *   · the wordmark tracks the theme, which a flat image cannot
+ * The PNGs stay in /public/brand for the places a file is required — the app
+ * icon, the favicon, anything pasted into a third-party tool.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   La chapa · the logo
+
+   Construction, straight from the brand document: rotation −4°, radius
+   0.30 x the chapa's height, inner air 0.30em at the sides and 0.18em / 0.22em
+   top and bottom. Every unit is `em`, so the whole mark scales from one
+   font-size and the radius stays proportional at any size — which is the only
+   way "radius = 0.30 x height" can hold true for a mark used at 20px and at
+   96px.
+   ═══════════════════════════════════════════════════════════════════════ */
+.junti-chapa {
+  display: inline-block;
+  /* −4°, and never to the right. A brand rule with a "no hacer" beside it. */
+  transform: rotate(-4deg);
+  background: var(--junti-naranja);
+  border-radius: 0.3em;
+  padding: 0.18em 0.3em 0.22em;
+  font-family: var(--junti-display);
+  /* 800 is the chapa's weight and the chapa's alone — the interface face is
+     never set this heavy. */
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  /* Fixed ink, not --junti-tinta: the chapa is orange in both modes, so its
+     letters must not invert with the theme. */
+  color: var(--junti-tinta-fija);
+}
+
+/*
+  The dot is a nested Text, and Text sets its own body line-height (1.6). One
+  descendant at 1.6 stretches the badge's line box and the mark comes out ~1.85em
+  tall instead of the 1.40em its padding describes — which quietly breaks the
+  radius, because "0.30em" is only proportional to the height if the height is
+  what the construction says it is.
+
+  Measured against the brand's own PNG, the real mark is 1024 x 544 at exactly
+  4.00 degrees with a ~100px corner: a radius of 0.18 x its height. At 1.40em
+  tall, 0.30em lands on 0.21 x height — a hair rounder, and the value the kit
+  itself ships. The brand document's prose says "radius = 0.30 x height", which
+  would be a third rounder again; the artifact wins over the sentence.
+*/
+.junti-chapa * {
+  line-height: 1;
+}
+
+/*
+  The full stop. It is the brand's punctuation — "ya está" — and the kit
+  forbids removing it or greying it out, so it gets its own colour rather than
+  inheriting one that a theme could mute.
+*/
+.junti-chapa__punto {
+  color: var(--junti-papel-fijo);
+}
+
+/*
+  Somewhere to put a leaning badge.
+
+  `transform` paints outside the layout box without enlarging it, so a rotated
+  chapa is taller on screen than the line it sits on: at −4° a 28px badge about
+  72px wide reaches roughly 2.5px past its box, top and bottom. Left alone, its
+  corners cross the header's bottom rule.
+
+  `display: flex` makes the anchor size to the mark instead of to a text
+  line-box, and the block padding buys back the overflow — so the badge leans
+  inside the header instead of out of it. The brand asks for clear space equal
+  to the chapa's height; in a phone header that would mean an 84px bar, so this
+  is the honest compromise: the mark is never crowded horizontally (the account
+  capsule is at the far edge) and it never touches an edge vertically.
+*/
+.chapa-slot {
+  display: inline-flex;
+  align-items: center;
+  padding-block: 3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   La chapita · state stickers
+
+   These wrap a Stackmyth Badge rather than replace it. The pastel pairs are
+   already correct without touching anything, because the theme maps every
+   `--sm-<state>-soft` pair onto the kit's own chapita colours — so a
+   `<Badge variant="success" soft>` IS the "viene" sticker.
+
+   What the component cannot do is lean. The brand is unambiguous that states
+   are stickers at −3°, so the rotation and the sticker's proportions come from
+   here and nothing else does.
+   ═══════════════════════════════════════════════════════════════════════ */
+.junti-chapita {
+  transform: rotate(-3deg);
+
+  /*
+    Badge's own tokens, set per-instance. This is the library's theming
+    mechanism, not a paint override: the component reads these, and the same
+    technique already colours the attendee avatars.
+  */
+  --sm-badge-radius: 9px;
+  --sm-badge-font-size-md: 14px;
+  --sm-badge-font-size-sm: 14px;
+  --sm-badge-font-weight: 600;
+
+  /*
+    STACKMYTH-GAP: padding is the one part of the sticker Badge hardcodes
+    (`0.25rem 0.625rem`) with no token to reach it, and it does not scale with
+    `--sm-density-factor` either. The brand's sticker is 8px / 13px — visibly
+    roomier, which is the difference between a label and something stuck on.
+    Declared here because the alternative is reimplementing Badge to change two
+    numbers. Worth a `--sm-badge-padding` upstream.
+  */
+  padding: 8px 13px;
+}
+
+/*
+  "Debe" — the one state that is a solid orange chapa with ink on it, not a
+  pastel.
+
+  Badge has no `accent` variant, so this scopes the warning pair to the brand
+  orange on the element and uses `variant="warning"`. Scoping Stackmyth's own
+  tokens to a subtree is the sanctioned way to reach a colour the variant list
+  does not carry — nothing about the component is restyled, it is handed
+  different values for the tokens it already reads.
+
+  Orange rather than red on purpose: someone who has not paid yet is not an
+  error. Red in this app means a rejected field, and the two must not look
+  alike.
+*/
+.junti-chapita--debe {
+  --sm-warning: var(--junti-debe-bg);
+  --sm-warning-text: var(--junti-debe-fg);
+  --sm-warning-soft: var(--junti-debe-bg);
+  --sm-warning-soft-text: var(--junti-debe-fg);
+}
+
+/*
+  A row of stickers needs a little more air than a row of labels: each one
+  leans, so their corners reach into the gap. Without this the corner of one
+  chapita touches the next at 390px.
+*/
+.junti-chapita-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  align-items: center;
+}

@@ -126,7 +126,7 @@ export const es = {
     subheading: "Guarda estos dos links. Son la única forma de volver a entrar.",
     participantLinkLabel: "Link para invitados",
     participantLinkHelp:
-      "Este es el que compartes. Deja confirmar asistencia y ver quién debe cuánto.",
+      "Este es el que compartes. Con él dicen si vienen y ven quién debe cuánto.",
     organizerLinkLabel: "Tu link de organizador",
     organizerLinkHelp:
       "Guárdalo bien y no lo compartas. Con él marcas pagos, agregas gente y cierras el evento.",
@@ -138,7 +138,8 @@ export const es = {
 
   event: {
     closedBadge: "Cerrado",
-    closedNotice: "Este evento está cerrado. Ya no se puede confirmar ni cambiar asistencia.",
+    closedNotice:
+      "Este evento está cerrado. Ya nadie puede decir si viene ni cambiar su respuesta.",
     notFoundTitle: "No encontramos este evento",
     notFoundBody: "El link puede estar incompleto o el evento pudo haber sido eliminado.",
     noLocation: "Sin lugar definido",
@@ -178,7 +179,7 @@ export const es = {
   },
 
   rsvp: {
-    heading: "Confirma tu asistencia",
+    heading: "Dinos si vienes",
     headingEditing: "Cambia tu respuesta",
     nameLabel: "Tu nombre",
     namePlaceholder: "Cómo te dicen tus amigos",
@@ -187,7 +188,7 @@ export const es = {
     submit: "Confirmar",
     submitEditing: "Actualizar mi respuesta",
     submitting: "Enviando…",
-    yourRsvp: (name: string) => `Estás registrado como ${name}.`,
+    yourRsvp: (name: string) => `Estás en la lista como ${name}.`,
     changeMine: "Cambiar mi respuesta",
     saved: "Listo, quedaste en la lista.",
     savedEditing: "Actualizamos tu respuesta.",
@@ -278,12 +279,12 @@ export const es = {
     heading: "Cuentas",
     owesLabel: "Debe",
     collectedLabel: "Recaudado",
-    outstandingLabel: "Pendiente",
+    outstandingLabel: "Falta",
     totalLabel: "Total del evento",
     perPersonLabel: "Por persona",
     paid: "Pagó",
-    pending: "Pendiente",
-    waived: "Exonerado",
+    pending: "Debe",
+    waived: "Sin cobro",
     noCost: "Este evento no tiene costo.",
     splitAmong: (n: number) =>
       n === 1 ? "Repartido entre 1 persona" : `Repartido entre ${n} personas`,
@@ -305,8 +306,8 @@ export const es = {
       `Se elimina a ${name} del evento junto con su registro de pago. Esto no se puede deshacer.`,
     removeConfirmAction: "Sí, quitar",
     markPaid: "Marcar como pagado",
-    markPending: "Marcar como pendiente",
-    markWaived: "Exonerar",
+    markPending: "Marcar que debe",
+    markWaived: "No le cobro",
     paymentMethodLabel: "Método",
     paymentMethodPlaceholder: "nequi, efectivo, transferencia",
     promote: "Subir al evento",

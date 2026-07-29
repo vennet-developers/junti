@@ -22,7 +22,9 @@ export function MoneySummary({ roster, copy }: { roster: RosterView; copy: Copy 
   if (attendingCount === 0) {
     return (
       <Stack gap="2">
-        <Text variant="h3">{copy.money.heading}</Text>
+        <Text variant="h3" fontFamily="var(--junti-display)">
+          {copy.money.heading}
+        </Text>
         <Text variant="small" color="muted">
           {copy.money.nobodyIn}
         </Text>
@@ -37,7 +39,9 @@ export function MoneySummary({ roster, copy }: { roster: RosterView; copy: Copy 
 
   return (
     <Stack gap="4">
-      <Text variant="h3">{copy.money.heading}</Text>
+      <Text variant="h3" fontFamily="var(--junti-display)">
+        {copy.money.heading}
+      </Text>
 
       {/*
         Stat renders its value at 32px — the same size as the page title. Two of
@@ -49,7 +53,13 @@ export function MoneySummary({ roster, copy }: { roster: RosterView; copy: Copy 
         <Stat
           label={copy.money.collectedLabel}
           value={
-            <Text as="span" variant="h4" weight="bold" whiteSpace="nowrap">
+            <Text
+              as="span"
+              variant="h4"
+              weight="bold"
+              whiteSpace="nowrap"
+              fontFamily="var(--junti-display)"
+            >
               {money(collectedMinor)}
             </Text>
           }
@@ -57,7 +67,13 @@ export function MoneySummary({ roster, copy }: { roster: RosterView; copy: Copy 
         <Stat
           label={copy.money.outstandingLabel}
           value={
-            <Text as="span" variant="h4" weight="bold" whiteSpace="nowrap">
+            <Text
+              as="span"
+              variant="h4"
+              weight="bold"
+              whiteSpace="nowrap"
+              fontFamily="var(--junti-display)"
+            >
               {money(outstandingMinor)}
             </Text>
           }

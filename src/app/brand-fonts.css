@@ -1,0 +1,75 @@
+/*
+ * The two brand faces, self-hosted.
+ *
+ * Both are SIL Open Font License, which is what makes packaging them legal —
+ * the brand kit says so and links the sources. Self-hosted rather than loaded
+ * from the Google CDN for three reasons that all matter here:
+ *
+ *   1. No third-party request on first paint. Every visitor arrives from a
+ *      WhatsApp link on mobile data; a CDN round trip before the wordmark can
+ *      render is the one delay the brand cannot afford, since the wordmark IS
+ *      the logo.
+ *   2. No render-blocking stylesheet from another origin, and nothing to leak
+ *      a visitor's IP to a third party.
+ *   3. It replaces Geist, which Stackmyth self-hosts the same way — so this is
+ *      the shape the app already had, pointed at different files.
+ *
+ * Both faces are VARIABLE, so one file covers every weight the brand uses:
+ * Bricolage carries 700-800 (and an optical-size axis that adjusts letterfit
+ * from 12 to 96px on its own), Instrument Sans carries 400-600. Four files
+ * total, 148 KB, because latin and latin-ext are split — Spanish accents live
+ * in latin, so latin-ext only downloads if a name needs it.
+ *
+ * The unicode-range values are copied verbatim from Google's own stylesheet
+ * rather than hand-written: they are what makes the split work, and guessing
+ * at them is how a page ends up silently missing a glyph.
+ */
+
+/* ── Bricolage Grotesque · display, 700-800 ──────────────────────────────── */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  /* A range, not a value: one variable file answers both weights. */
+  font-weight: 700 800;
+  font-display: swap;
+  src: url("/fonts/bricolage-grotesque-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal;
+  font-weight: 700 800;
+  font-display: swap;
+  src: url("/fonts/bricolage-grotesque-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* ── Instrument Sans · interface, 400-600 ───────────────────────────────── */
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/instrument-sans-latin.woff2") format("woff2");
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Instrument Sans";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/instrument-sans-latin-ext.woff2") format("woff2");
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+    U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}

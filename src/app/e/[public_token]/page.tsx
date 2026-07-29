@@ -223,7 +223,9 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
           {showMoney ? <Divider /> : null}
 
           <Stack gap="5">
-            <Text variant="h3">{copy.roster.heading}</Text>
+            <Text variant="h3" fontFamily="var(--junti-display)">
+              {copy.roster.heading}
+            </Text>
 
             {roster.members.length === 0 ? (
               <Text color="muted">{copy.roster.empty}</Text>

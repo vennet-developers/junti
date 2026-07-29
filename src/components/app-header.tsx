@@ -1,11 +1,10 @@
 import Link from "next/link";
 
 import { Box, Container, Flex } from "@stackmyth/layout";
-import { Text } from "@stackmyth/text";
 
+import { Chapa } from "@/components/chapa";
 import { GuestMenu } from "@/components/guest-menu";
 import { ProfileMenu } from "@/components/profile-menu";
-import { BRAND_NAME } from "@/config/brand";
 import { ROUTES } from "@/config/routes";
 import type { Organizer } from "@/lib/organizer";
 import type { Theme } from "@/lib/preferences";
@@ -46,28 +45,24 @@ export function AppHeader({
       <Container size="1" px="4">
         <Flex justify="between" align="center" gap="3" py="3">
           {/*
-            Link on the outside, Text within — NOT `<Text as={Link}>`.
-            @stackmyth/text is a client component, and handing a client
-            component another component as a prop means passing a function
-            across the server boundary, which React refuses at render time.
-            Nesting is the shape that works: the anchor is the real link and
-            Text only styles what is inside it.
+            The chapa is the logo, and this is the one place it appears — the
+            brand allows a single chapa per screen.
 
-            `variant="h4"` for the size, `as="span"` for the semantics — the
-            page's own <h1> is the heading, and a wordmark that also claimed
-            one would give every screen two.
+            The `brand-link` class neutralises next/link's anchor underline. It
+            cannot be done from inside: `text-decoration` set by an ancestor is
+            drawn across its descendants, and a child declaring `none` does not
+            remove it — that is a CSS rule, not an oversight. An underline
+            crossing the badge would read as a mistake.
 
-            The `brand-link` class neutralises next/link's anchor underline.
-            It cannot be done from the Text inside: `text-decoration` set by an
-            ancestor is inherited as a drawn line, and a descendant declaring
-            `none` does not remove it — that is a CSS rule, not an oversight.
-            Overriding a third-party component's own default is one of the
-            sanctioned reasons for app CSS.
+            `chapa-slot` reserves the height the rotated badge actually
+            occupies. A rotated box overflows its layout box, and without the
+            reservation the corners of the chapa reach past the header's own
+            rule.
           */}
-          <Link href={organizer ? ROUTES.myEvents : ROUTES.home} className="brand-link">
-            <Text as="span" variant="h4" weight="bold" color="default">
-              {BRAND_NAME}
-            </Text>
+          {/* No aria-label: the chapa renders the word "junti." as real text,
+              so the link already has an accessible name. */}
+          <Link href={organizer ? ROUTES.myEvents : ROUTES.home} className="brand-link chapa-slot">
+            <Chapa />
           </Link>
 
           {organizer ? (

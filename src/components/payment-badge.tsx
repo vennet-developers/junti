@@ -9,14 +9,28 @@ import type { PaymentStatus } from "@/domain/types";
 // because the roster wants the word visible, not a dot at all.
 // See STACKMYTH-GAPS.md #3 (withdrawn, kept with correction).
 
-const STATUS_VARIANT = {
-  confirmed: { variant: "success", soft: false },
-  pending: { variant: "warning", soft: true },
-  waived: { variant: "secondary", soft: true },
+/*
+  Every state in this brand is a sticker: same proportions, a lean of −3°, a
+  pastel behind dark text. The theme already maps each `--sm-<state>-soft` pair
+  onto the kit's own chapita colours, so the variant does the colouring and the
+  `junti-chapita` class only adds what a Badge cannot express — the lean.
+
+  Paid is green, and green means nothing else in this product. Owing is the
+  orange chapa, NOT red: someone who has not paid yet is not an error, and red
+  here is reserved for a rejected field. `junti-chapita--debe` scopes the
+  warning pair to the brand orange so `variant="warning"` paints it.
+
+  No charge is the warm grey — a fact about the event, not a state of the
+  person.
+*/
+const STATUS_STICKER = {
+  confirmed: { variant: "success", soft: true, extra: "" },
+  pending: { variant: "warning", soft: false, extra: " junti-chapita--debe" },
+  waived: { variant: "secondary", soft: true, extra: "" },
 } as const;
 
 export function PaymentBadge({ status, copy }: { status: PaymentStatus; copy: Copy }) {
-  const config = STATUS_VARIANT[status];
+  const sticker = STATUS_STICKER[status];
 
   const label = {
     confirmed: copy.money.paid,
@@ -25,7 +39,12 @@ export function PaymentBadge({ status, copy }: { status: PaymentStatus; copy: Co
   }[status];
 
   return (
-    <Badge variant={config.variant} size="sm" soft={config.soft}>
+    <Badge
+      variant={sticker.variant}
+      size="sm"
+      soft={sticker.soft}
+      className={`junti-chapita${sticker.extra}`}
+    >
       {label}
     </Badge>
   );

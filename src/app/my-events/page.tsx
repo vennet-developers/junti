@@ -96,7 +96,7 @@ export default async function MyEventsPage({
             and a one-item trail just restates the heading below it. A "Home"
             crumb above it would link to `/`, which bounces straight back here.
           */}
-          <Text as="h1" variant="h3">
+          <Text as="h1" variant="h3" fontFamily="var(--junti-display)">
             {copy.auth.myEventsHeading}
           </Text>
 

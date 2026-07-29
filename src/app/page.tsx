@@ -55,7 +55,9 @@ export default async function HomePage() {
             the heading has to say what it does.
           */}
           <Stack gap="2">
-            <Text variant="h1">{copy.home.subheading}</Text>
+            <Text variant="h1" fontFamily="var(--junti-display)">
+              {copy.home.subheading}
+            </Text>
           </Stack>
 
           <Text>{copy.home.pitch}</Text>
@@ -75,7 +77,9 @@ export default async function HomePage() {
           <Divider />
 
           <Stack gap="3">
-            <Text variant="h3">{copy.home.howItWorksTitle}</Text>
+            <Text variant="h3" fontFamily="var(--junti-display)">
+              {copy.home.howItWorksTitle}
+            </Text>
             <List as="ol" divided>
               {copy.home.steps.map((step: string, index: number) => (
                 <ListItem key={step}>

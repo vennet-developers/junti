@@ -59,7 +59,7 @@ export default async function ProfilePage() {
           />
 
           <Stack gap="2">
-            <Text as="h1" variant="h3">
+            <Text as="h1" variant="h3" fontFamily="var(--junti-display)">
               {copy.profile.heading}
             </Text>
             <Text color="muted">{copy.profile.subheading}</Text>

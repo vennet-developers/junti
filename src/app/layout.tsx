@@ -17,7 +17,13 @@ import type { Metadata, Viewport } from "next";
 // and dark both work with zero configuration and zero network requests.
 // See DECISIONS.md — "No Stackmyth theme file".
 import "@stackmyth/core/core.vars.css";
-import "@stackmyth/core/fonts/geist.css";
+
+/*
+  The brand's own faces, replacing the Geist import that used to sit here.
+  Geist is gone rather than overridden: nothing renders in it any more, and
+  leaving the import would ship a font nobody sees.
+*/
+import "./brand-fonts.css";
 
 import "@stackmyth/layout/layout.css";
 import "@stackmyth/text/text.css";
@@ -54,6 +60,17 @@ import "@stackmyth/calendar/calendar.css";
 import "@stackmyth/time-picker/time-picker.css";
 import "@stackmyth/form/form.css";
 
+/*
+  The brand theme goes AFTER every package stylesheet, not next to core's.
+
+  Each package inlines its own `--sm-<component>-*` tokens in a layer of its
+  own, and none of them redefines a global token — verified, not assumed — so
+  next to core would work today. Last is where it keeps working: a package that
+  someday ships a global default cannot land on top of the identity from here.
+*/
+import "./brand-theme.css";
+import "./brand-marks.css";
+
 import "./globals.css";
 
 import { CheckCircleIcon, InfoIcon, TriangleAlertIcon, XCircleIcon, XIcon } from "@stackmyth/icons";
@@ -86,8 +103,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  /*
+    Paper and ink, so the browser chrome continues the page instead of ending
+    it. Pure white is specifically forbidden by the brand, and it was what sat
+    here — a white strip above a cream page reads as a rendering bug.
+
+    Literals rather than tokens because this is a metadata string, not CSS: it
+    never reaches a stylesheet, so there is no custom property to resolve.
+    Kept in step with --junti-papel by hand.
+  */
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#faf7f2" },
     { media: "(prefers-color-scheme: dark)", color: "#09090b" },
   ],
 };

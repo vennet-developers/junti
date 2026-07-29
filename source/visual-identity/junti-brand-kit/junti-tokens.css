@@ -1,0 +1,76 @@
+/* Junti · tokens de marca · v2 (modo claro por defecto) */
+:root {
+  /* Superficies */
+  --junti-papel:        #FAF7F2;
+  --junti-tarjeta:      #FFFFFF;
+  --junti-borde:        #E4DED4;
+  --junti-borde-fuerte: #D6CFC3;
+
+  /* Tinta */
+  --junti-tinta:        #09090B;
+  --junti-texto:        #57534E;
+  --junti-texto-suave:  #6B655C;
+  --junti-texto-tenue:  #8A8378;
+
+  /* Marca */
+  --junti-naranja:      #FF7A3D; /* chapa, acentos, fondos */
+  --junti-naranja-texto:#D9541F; /* links y texto sobre papel */
+
+  /* Estados (fondo / texto) */
+  --junti-viene-bg:     #DFF5E4;  --junti-viene-fg:    #0F7A3D;
+  --junti-talvez-bg:    #FBEBC8;  --junti-talvez-fg:   #8A5A00;
+  --junti-debe-bg:      #FF7A3D;  --junti-debe-fg:     #09090B;
+  --junti-noviene-bg:   #EDE8E0;  --junti-noviene-fg:  #57534E;
+  --junti-espera-bg:    #EAE4FB;  --junti-espera-fg:   #5B3FB5;
+
+  /* Tipografía */
+  --junti-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --junti-ui:      'Instrument Sans', system-ui, sans-serif;
+
+  /* Radios */
+  --junti-r-chapa: 0.30em; /* proporcional al alto de la chapa */
+  --junti-r-card:  20px;
+  --junti-r-input: 13px;
+}
+
+[data-theme="dark"] {
+  --junti-papel:        #09090B;
+  --junti-tarjeta:      #17171A;
+  --junti-borde:        #2A2A30;
+  --junti-borde-fuerte: #3F3F46;
+  --junti-tinta:        #FAF7F2;
+  --junti-texto:        #A8A29A;
+  --junti-texto-suave:  #8A8378;
+  --junti-texto-tenue:  #71717A;
+  --junti-naranja-texto:#FF7A3D;
+  --junti-viene-bg:     rgba(74,222,128,0.14);  --junti-viene-fg:   #4ADE80;
+  --junti-talvez-bg:    rgba(251,191,36,0.14);  --junti-talvez-fg:  #FBBF24;
+  --junti-noviene-bg:   rgba(250,247,242,0.08); --junti-noviene-fg: #A8A29A;
+  --junti-espera-bg:    rgba(167,139,250,0.16); --junti-espera-fg:  #A78BFA;
+}
+
+/* La chapa (logo) */
+.junti-chapa {
+  display: inline-block;
+  transform: rotate(-4deg);
+  background: var(--junti-naranja);
+  border-radius: 0.30em;
+  padding: 0.18em 0.30em 0.22em;
+  font-family: var(--junti-display);
+  font-weight: 800;
+  letter-spacing: -0.055em;
+  line-height: 1;
+  color: var(--junti-tinta-fija, #09090B);
+}
+.junti-chapa .punto { color: #FAF7F2; }
+
+/* Chapita de estado */
+.junti-estado {
+  display: inline-block;
+  transform: rotate(-3deg);
+  font-family: var(--junti-ui);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 13px;
+  border-radius: 9px;
+}
