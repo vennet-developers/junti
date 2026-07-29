@@ -14,25 +14,32 @@ import { Text } from "@stackmyth/text";
  */
 
 /**
- * The palette the hash picks from. `Avatar`'s `color` takes any CSS colour and
- * applies it as the background, so these are the soft state tokens — light
- * enough for the dark initials to stay legible, and already theme-aware, so the
- * stack inverts correctly in dark mode without a second palette here.
+ * The palette the hash picks from, as background/foreground PAIRS.
+ *
+ * `Avatar`'s `color` sets the background only, and the fallback text keeps
+ * whatever it inherits. Setting the background alone shipped briefly and was
+ * unreadable in dark mode: `--sm-<state>-soft` is a light tint in light mode
+ * and a very dark one in dark mode (`--sm-success-soft` is #052e16), so dark
+ * initials sat on a nearly identical dark disc.
+ *
+ * Each `soft` token already has a `soft-text` sibling designed to be legible
+ * on it, in both modes. Using the pair is what makes the stack invert
+ * correctly instead of merely changing colour.
  */
 const COLORS = [
-  "var(--sm-info-soft)",
-  "var(--sm-success-soft)",
-  "var(--sm-warning-soft)",
-  "var(--sm-error-soft)",
-  "var(--sm-accent-soft)",
-  "var(--sm-primary-soft)",
+  { bg: "var(--sm-info-soft)", text: "var(--sm-info-soft-text)" },
+  { bg: "var(--sm-success-soft)", text: "var(--sm-success-soft-text)" },
+  { bg: "var(--sm-warning-soft)", text: "var(--sm-warning-soft-text)" },
+  { bg: "var(--sm-error-soft)", text: "var(--sm-error-soft-text)" },
+  { bg: "var(--sm-accent-soft)", text: "var(--sm-accent-soft-text)" },
+  { bg: "var(--sm-primary-soft)", text: "var(--sm-primary-soft-text)" },
 ] as const;
 
 /**
  * FNV-1a, 32-bit. Any stable hash would do — this one is short, has no
  * dependencies and spreads short strings well, which is what a first name is.
  */
-function colorFor(name: string): (typeof COLORS)[number] {
+function paletteFor(name: string): (typeof COLORS)[number] {
   let hash = 0x811c9dc5;
   for (let i = 0; i < name.length; i++) {
     hash ^= name.charCodeAt(i);
@@ -78,13 +85,17 @@ export function AttendeeStack({
   return (
     <Flex gap="2" align="center">
       <AvatarGroup>
-        {names.map((name, index) => (
-          // The name is the identity here, and two guests can share one. The
-          // index keeps React's list keys unique without pretending otherwise.
-          <Avatar key={`${name}-${index}`} size="sm" color={colorFor(name)} bordered>
-            <AvatarFallback>{initialsOf(name)}</AvatarFallback>
-          </Avatar>
-        ))}
+        {names.map((name, index) => {
+          const palette = paletteFor(name);
+
+          return (
+            // The name is the identity here, and two guests can share one. The
+            // index keeps React's list keys unique without pretending otherwise.
+            <Avatar key={`${name}-${index}`} size="sm" color={palette.bg} bordered>
+              <AvatarFallback style={{ color: palette.text }}>{initialsOf(name)}</AvatarFallback>
+            </Avatar>
+          );
+        })}
       </AvatarGroup>
 
       {remaining > 0 ? (
