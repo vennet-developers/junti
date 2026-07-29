@@ -522,6 +522,14 @@ export const userPreferences = pgTable("user_preferences", {
   /** IANA identifier for reading times, or NULL to follow the device. */
   timeZone: text("time_zone"),
 
+  /**
+   * "light" | "dark", or NULL to follow the operating system.
+   *
+   * Text rather than an enum for the same reason as `locale`: a third value
+   * (a high-contrast theme, say) should be a deploy, not a migration.
+   */
+  theme: text("theme"),
+
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

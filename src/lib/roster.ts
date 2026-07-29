@@ -389,10 +389,29 @@ export interface OrganizerEventSummary {
   createdAt: Date;
   location: string | null;
   isClosed: boolean;
+  /**
+   * Whether the event has already started, decided by the DATABASE clock.
+   *
+   * Not computed in the page and not in the browser: doing it in a component
+   * makes "now" a render-time value, so a client re-render can silently
+   * disagree with the server's first paint for anything starting near this
+   * instant. One clock, evaluated once, travelling with the row.
+   */
+  isPast: boolean;
   publicToken: string;
   organizerToken: string;
   attendingCount: number;
+  /**
+   * The first few people who said they are coming, oldest first, for the
+   * avatar stack on the history card. Capped in SQL rather than trimmed here:
+   * a card shows three faces and a "+N", so fetching every name of every event
+   * to throw them away would grow with the roster for no visible gain.
+   */
+  firstAttendees: string[];
 }
+
+/** How many names the avatar stack shows before collapsing into "+N". */
+const AVATAR_STACK_SIZE = 3;
 
 export async function loadOrganizerEvents(organizerId: string): Promise<OrganizerEventSummary[]> {
   const rows = await db
@@ -405,12 +424,26 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
       createdAt: events.createdAt,
       location: events.location,
       closedAt: events.closedAt,
+      isPast: sql<boolean>`${events.startsAt} < now()`,
       publicToken: events.publicToken,
       organizerToken: events.organizerToken,
       attendingCount: sql<number>`(
         select count(*)::int from ${participants}
         where ${participants.eventId} = ${events.id}
           and ${participants.attendance} = 'in'
+      )`,
+      // Served by participants_event_created_idx, so the limit is applied by
+      // the index rather than by sorting the whole roster.
+      firstAttendees: sql<string[]>`(
+        select coalesce(array_agg(name), '{}')
+        from (
+          select ${participants.displayName} as name
+          from ${participants}
+          where ${participants.eventId} = ${events.id}
+            and ${participants.attendance} = 'in'
+          order by ${participants.createdAt} asc
+          limit ${AVATAR_STACK_SIZE}
+        ) first_few
       )`,
     })
     .from(events)
@@ -426,9 +459,11 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
     createdAt: row.createdAt,
     location: row.location,
     isClosed: row.closedAt !== null,
+    isPast: row.isPast,
     publicToken: row.publicToken,
     organizerToken: row.organizerToken,
     attendingCount: row.attendingCount,
+    firstAttendees: row.firstAttendees ?? [],
   }));
 }
 

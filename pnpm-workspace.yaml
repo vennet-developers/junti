@@ -52,3 +52,5 @@ minimumReleaseAgeExclude:
   - '@stackmyth/textarea@0.20.0 || 0.21.0 || 0.22.0'
   - '@stackmyth/time-picker@0.20.0 || 0.21.0 || 0.22.0'
   - '@stackmyth/manifests@0.2.0'
+  - '@stackmyth/dropdown-menu@0.22.0'
+  - '@stackmyth/tabs@0.22.0'

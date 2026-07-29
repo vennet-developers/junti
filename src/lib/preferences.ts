@@ -37,14 +37,30 @@ import { isValidTimeZone } from "./time-zones";
 
 export const LOCALE_COOKIE = "locale";
 export const TIME_ZONE_COOKIE = "tz";
+export const THEME_COOKIE = "theme";
 
 /** A year. These are preferences, not sessions. */
 export const PREFERENCE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+/**
+ * A forced appearance, or NULL to follow the operating system.
+ *
+ * There is no "system" value stored anywhere: absence IS system. Modelling it
+ * as a third string would create two ways to say the same thing and a question
+ * about which wins.
+ */
+export type Theme = "light" | "dark";
+
+export function isTheme(value: unknown): value is Theme {
+  return value === "light" || value === "dark";
+}
 
 export interface StoredPreferences {
   /** NULL means "follow my browser". */
   locale: Locale | null;
   timeZone: string | null;
+  /** NULL means "follow my operating system". */
+  theme: Theme | null;
 }
 
 /** Where the language came from, which decides whether an event may override it. */
@@ -53,6 +69,12 @@ export type LocaleSource = "preference" | "browser" | "fallback";
 export interface ResolvedPreferences {
   locale: Locale;
   localeSource: LocaleSource;
+  /**
+   * The forced appearance, or null to let the OS decide. Rendered onto <html>
+   * server-side, which is what keeps a dark-mode reader from being flashed a
+   * white page on first paint.
+   */
+  theme: Theme | null;
   /**
    * The zone to READ times in. Null when nothing has established one, which
    * leaves each event rendering in its own zone — the safe fallback, since it
@@ -81,12 +103,15 @@ export async function resolvePreferences(): Promise<ResolvedPreferences> {
 
   const cookieLocale = readCookieLocale(cookieStore.get(LOCALE_COOKIE)?.value);
   const timeZone = readCookieTimeZone(cookieStore.get(TIME_ZONE_COOKIE)?.value);
+  const themeValue = cookieStore.get(THEME_COOKIE)?.value;
+  const theme = isTheme(themeValue) ? themeValue : null;
 
   if (cookieLocale) {
     return {
       locale: cookieLocale,
       localeSource: "preference",
       timeZone,
+      theme,
       copy: getCopy(cookieLocale),
     };
   }
@@ -95,13 +120,20 @@ export async function resolvePreferences(): Promise<ResolvedPreferences> {
   const fromHeader = localeFromAcceptLanguage(headerStore.get("accept-language"));
 
   if (fromHeader) {
-    return { locale: fromHeader, localeSource: "browser", timeZone, copy: getCopy(fromHeader) };
+    return {
+      locale: fromHeader,
+      localeSource: "browser",
+      timeZone,
+      theme,
+      copy: getCopy(fromHeader),
+    };
   }
 
   return {
     locale: DEFAULT_LOCALE,
     localeSource: "fallback",
     timeZone,
+    theme,
     copy: getCopy(DEFAULT_LOCALE),
   };
 }
@@ -119,7 +151,11 @@ export function readingTimeZone(preferred: string | null, eventTimeZone: string)
 /** A signed-in person's stored settings, or nulls when they have none. */
 export async function loadStoredPreferences(userId: string): Promise<StoredPreferences> {
   const [row] = await db
-    .select({ locale: userPreferences.locale, timeZone: userPreferences.timeZone })
+    .select({
+      locale: userPreferences.locale,
+      timeZone: userPreferences.timeZone,
+      theme: userPreferences.theme,
+    })
     .from(userPreferences)
     .where(eq(userPreferences.userId, userId))
     .limit(1);
@@ -127,6 +163,7 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
   return {
     locale: isLocale(row?.locale) ? row.locale : null,
     timeZone: row?.timeZone && isValidTimeZone(row.timeZone) ? row.timeZone : null,
+    theme: isTheme(row?.theme) ? row.theme : null,
   };
 }
 
@@ -137,10 +174,15 @@ export async function saveStoredPreferences(
 ): Promise<void> {
   await db
     .insert(userPreferences)
-    .values({ userId, locale: next.locale, timeZone: next.timeZone })
+    .values({ userId, locale: next.locale, timeZone: next.timeZone, theme: next.theme })
     .onConflictDoUpdate({
       target: userPreferences.userId,
-      set: { locale: next.locale, timeZone: next.timeZone, updatedAt: new Date() },
+      set: {
+        locale: next.locale,
+        timeZone: next.timeZone,
+        theme: next.theme,
+        updatedAt: new Date(),
+      },
     });
 }
 
@@ -181,6 +223,7 @@ export async function applyStoredPreferences(userId: string): Promise<void> {
   const stored = await loadStoredPreferences(userId);
 
   await writePreferenceCookie(LOCALE_COOKIE, stored.locale);
+  await writePreferenceCookie(THEME_COOKIE, stored.theme);
 
   // The timezone cookie is also where browser detection lands, so it is only
   // cleared when the person actually asked to follow their browser.

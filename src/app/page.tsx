@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
@@ -11,6 +12,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
 import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
+import { getOrganizer } from "@/lib/organizer";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { copy } = await getViewerCopy();
@@ -22,6 +24,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
+  /*
+    A signed-in organizer has no use for the pitch: they came back to look at
+    their events, so send them there. Anonymous visitors — the whole WhatsApp
+    group following a link, or somebody arriving for the first time — get the
+    landing page unchanged.
+
+    This is why /` is in the proxy matcher now: the session cookie has to be
+    refreshed before this check, or an organizer whose token had expired would
+    silently be treated as a stranger and land on the pitch instead.
+  */
+  if (await getOrganizer()) redirect(ROUTES.myEvents);
+
   const { copy } = await getViewerCopy();
 
   return (

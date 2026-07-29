@@ -65,3 +65,49 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/*
+  The per-card actions disclosure on /my-events.
+ 
+  A native <details> so the open state, keyboard handling and aria-expanded come
+  from the browser. Only the marker needs styling: the default triangle is
+  inconsistent across browsers and sits at a different baseline than the label.
+*/
+.event-card-actions > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sm-space-1);
+  cursor: pointer;
+  color: var(--sm-text-secondary);
+  border-radius: var(--sm-radius-sm);
+  list-style: none;
+}
+
+.event-card-actions > summary::-webkit-details-marker {
+  display: none;
+}
+
+.event-card-actions > summary::after {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 120ms ease;
+}
+
+.event-card-actions[open] > summary::after {
+  transform: translateY(1px) rotate(225deg);
+}
+
+.event-card-actions > summary:focus-visible {
+  outline: 2px solid var(--sm-bg-interactive);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-card-actions > summary::after {
+    transition: none;
+  }
+}

@@ -70,6 +70,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /*
+     *   /                 the landing page, which redirects an organizer to
+     *                     their events — so it has to know about the session
      *   /my-events        the history, requires a session
      *   /profile          language and timezone settings
      *   /sign-in          the sign-in page, redirects away when already in
@@ -79,6 +81,7 @@ export const config = {
      *
      * Not matched, on purpose: /api and all static assets.
      */
+    "/",
     "/my-events/:path*",
     "/profile",
     "/sign-in",

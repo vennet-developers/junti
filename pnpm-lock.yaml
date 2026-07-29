@@ -44,6 +44,9 @@ importers:
       '@stackmyth/dialog':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@stackmyth/dropdown-menu':
+        specifier: ^0.22.0
+        version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/empty-state':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)
@@ -98,6 +101,9 @@ importers:
       '@stackmyth/switch':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)
+      '@stackmyth/tabs':
+        specifier: ^0.22.0
+        version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(@stackmyth/layout@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@stackmyth/text':
         specifier: ^0.22.0
         version: 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)
@@ -1204,6 +1210,13 @@ packages:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
 
+  '@stackmyth/dropdown-menu@0.22.0':
+    resolution: {integrity: sha512-3XQqpngrYhk19BkfgzJ/RGePALQ6/SX93KxDxhEKL/lgQtVR0QQ6cgkaTATv953wLsp83lhHetorF2Tf1GkRvA==, tarball: https://npm.pkg.github.com/download/@stackmyth/dropdown-menu/0.22.0/346ab5ce9ba515e013931e19a5341274a86110cb}
+    peerDependencies:
+      '@stackmyth/core': '>=0.0.0'
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+
   '@stackmyth/empty-state@0.22.0':
     resolution: {integrity: sha512-X56J4JtMlvTLcgazul3FgRzH7OujdNyYyrOWZ5WAPnlxi13sNN0UtaS56VmJR+T7svOObEzcFha4/WTri7k3sg==, tarball: https://npm.pkg.github.com/download/@stackmyth/empty-state/0.22.0/4322d5f5a86cb2885caad323d3ee09c5fefe2072}
     peerDependencies:
@@ -1330,6 +1343,13 @@ packages:
     resolution: {integrity: sha512-rAON21Iw0P2yifyWn6vTMxi1dccBc4YAj0BRxhvRJpo0rCIztDsttx6+W+Kh7XPIdWQr73rakSkgG8BLMZN6SQ==, tarball: https://npm.pkg.github.com/download/@stackmyth/switch/0.22.0/a0058d7ed1c1d6d46442f3b11131b769b846cde0}
     peerDependencies:
       '@stackmyth/core': '>=0.0.0'
+      react: '>=18.0.0'
+
+  '@stackmyth/tabs@0.22.0':
+    resolution: {integrity: sha512-MEKryxv/oU/rto5Pg8VYjsWBEK29QvOkEqCbMPkzdodT6knK/wvCEts4yA/M6JJKJHNLbAgywLGeUkLdQbtBfA==, tarball: https://npm.pkg.github.com/download/@stackmyth/tabs/0.22.0/9e87286a0c37703708b0c5f75717968c65b78d77}
+    peerDependencies:
+      '@stackmyth/core': '>=0.0.0'
+      '@stackmyth/layout': '>=0.0.0'
       react: '>=18.0.0'
 
   '@stackmyth/text@0.22.0':
@@ -3900,6 +3920,14 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
+  '@stackmyth/dropdown-menu@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.22.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
+
   '@stackmyth/empty-state@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@stackmyth/classnames': 0.1.0
@@ -4030,6 +4058,14 @@ snapshots:
     dependencies:
       '@stackmyth/core': 0.22.0(react@19.2.4)
       '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      react: 19.2.4
+
+  '@stackmyth/tabs@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(@stackmyth/layout@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.0
+      '@stackmyth/core': 0.22.0(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.0(react@19.2.4)
+      '@stackmyth/layout': 0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
   '@stackmyth/text@0.22.0(@stackmyth/core@0.22.0(react@19.2.4))(react@19.2.4)':

@@ -6,6 +6,7 @@ import { isLocale, type Locale } from "@/config/copy";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import {
+  loadStoredPreferences,
   LOCALE_COOKIE,
   saveStoredPreferences,
   TIME_ZONE_COOKIE,
@@ -56,7 +57,12 @@ export async function saveProfile(
     timeZone = rawTimeZone;
   }
 
-  await saveStoredPreferences(organizer.id, { locale, timeZone });
+  // The theme lives in the same row but is set from the profile menu, not from
+  // this form. Read it back and pass it through, or saving language would
+  // silently reset somebody's dark mode.
+  const stored = await loadStoredPreferences(organizer.id);
+
+  await saveStoredPreferences(organizer.id, { locale, timeZone, theme: stored.theme });
 
   await writePreferenceCookie(LOCALE_COOKIE, locale);
 

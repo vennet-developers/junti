@@ -36,6 +36,8 @@ import "@stackmyth/card/card.css";
 import "@stackmyth/badge/badge.css";
 import "@stackmyth/alert/alert.css";
 import "@stackmyth/dialog/dialog.css";
+import "@stackmyth/dropdown-menu/dropdown-menu.css";
+import "@stackmyth/tabs/tabs.css";
 import "@stackmyth/list-item/list-item.css";
 import "@stackmyth/empty-state/empty-state.css";
 import "@stackmyth/stat/stat.css";
@@ -55,6 +57,7 @@ import { CopyProvider } from "@/components/copy-provider";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
 import { getCopy } from "@/config/copy";
 import { getViewerCopy } from "@/lib/locale";
+import { resolvePreferences } from "@/lib/preferences";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { locale } = await getViewerCopy();
@@ -89,10 +92,17 @@ export const viewport: Viewport = {
  * language would be served to a reader who picked the other.
  */
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const { locale } = await getViewerCopy();
+  const { locale, theme } = await resolvePreferences();
 
   return (
-    <html lang={getCopy(locale).intlLocale}>
+    /*
+      `data-mode` is what Stackmyth's palette reads to force an appearance.
+      Omitting the attribute is not "no theme" — it is "follow the OS", which
+      core.vars.css already handles with a `prefers-color-scheme` block. Setting
+      it here, on the server, is what prevents the white flash a client-side
+      theme toggle produces on every first paint.
+    */
+    <html lang={getCopy(locale).intlLocale} data-mode={theme ?? undefined}>
       <body>
         <CopyProvider locale={locale}>{children}</CopyProvider>
       </body>

@@ -2,29 +2,25 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
-import { Card, CardContent } from "@stackmyth/card";
-import { EmptyState } from "@stackmyth/empty-state";
-import { CalendarIcon } from "@stackmyth/icons";
-import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { CalendarIcon, PlusIcon } from "@stackmyth/icons";
+import { Box, Container, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { OrganizerBadge } from "@/components/organizer-badge";
-import { shortEventTime } from "@/lib/event-time";
-import { formatDate, formatEventDateTime } from "@/lib/format";
+import { ProfileMenu } from "@/components/profile-menu";
 import { ROUTES, signInPath } from "@/config/routes";
-import { getViewerCopy } from "@/lib/locale";
+import { loadEventTypes } from "@/lib/catalog";
+import { shortEventTime } from "@/lib/event-time";
+import { formatEventDateTime } from "@/lib/format";
 import { getOrganizer } from "@/lib/organizer";
+import { resolvePreferences } from "@/lib/preferences";
 import { loadOrganizerEvents } from "@/lib/roster";
 import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
 
-import { EventCardActions } from "./event-card-actions";
-import { SignOutButton } from "./sign-out-button";
+import { EventList, type EventListItem } from "./event-list";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { copy } = await getViewerCopy();
+  const { copy } = await resolvePreferences();
 
   return {
     title: copy.auth.myEventsTitle,
@@ -36,7 +32,7 @@ export default async function MyEventsPage() {
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.myEvents));
 
-  const { copy } = await getViewerCopy();
+  const { copy, locale, theme } = await resolvePreferences();
 
   // Newest first — see loadOrganizerEvents.
   const events = await loadOrganizerEvents(organizer.id);
@@ -44,96 +40,72 @@ export default async function MyEventsPage() {
   // Absolute, because the share message is pasted into WhatsApp.
   const base = await origin();
 
+  // One lookup for the whole list: the catalogue is a handful of rows, and the
+  // alternative is a join repeating the same labels on every event.
+  const typeLabels = new Map(
+    (await loadEventTypes(locale)).map((type) => [type.id, type.label] as const),
+  );
+
+  /*
+    Everything the client needs, already formatted — dates in particular. Each
+    event renders in its own zone and in the reader's language, both of which
+    the server knows; sending Date objects instead would ship `Intl` formatting
+    and the timezone list to the browser to arrive at the same strings.
+  */
+  const items: EventListItem[] = events.map((event) => ({
+    id: event.id,
+    title: event.title,
+    when: formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale),
+    startsAtMs: event.startsAt.getTime(),
+    isPast: event.isPast,
+    location: event.location,
+    typeLabel: typeLabels.get(event.eventTypeId) ?? null,
+    isClosed: event.isClosed,
+    attendingCount: event.attendingCount,
+    firstAttendees: event.firstAttendees,
+    managePath: managePath(event.publicToken, event.organizerToken),
+    whatsAppUrl: whatsAppShareUrl(
+      copy.share.whatsAppMessage(
+        event.title,
+        shortEventTime(event.startsAt, event.timeZone, copy),
+        `${base}${participantPath(event.publicToken)}`,
+      ),
+    ),
+  }));
+
   return (
     <Container size="1" px="4" py="6">
-      <Stack gap="6">
-        <Flex justify="between" align="center" gap="3" wrap="wrap">
-          <OrganizerBadge organizer={organizer} />
-          <Flex gap="2" align="center">
-            <Text variant="small" color="muted">
-              <Link href={ROUTES.profile}>{copy.profile.link}</Link>
+      <Stack gap="5">
+        <Flex justify="between" align="center" gap="3">
+          <Flex gap="2" align="center" minWidth="0">
+            <Box flexShrink={0} display="flex" color="var(--sm-text-secondary)">
+              <CalendarIcon size={22} aria-hidden="true" />
+            </Box>
+            <Text as="h1" variant="h3">
+              {copy.auth.myEventsHeading}
             </Text>
-            <LanguageSwitcher />
-            <SignOutButton />
           </Flex>
+
+          <Box flexShrink={0}>
+            <ProfileMenu organizer={organizer} theme={theme} />
+          </Box>
         </Flex>
 
-        <Divider />
+        {/*
+          The primary action sits above the list rather than under it. It used
+          to be the last thing on the page, which meant an organizer with a
+          dozen events scrolled past all of them to create the thirteenth.
+        */}
+        <Button asChild size="md" fullWidth>
+          <Link href={ROUTES.newEvent}>
+            <Flex gap="2" align="center" justify="center">
+              <PlusIcon size={16} aria-hidden="true" />
+              {copy.home.cta}
+            </Flex>
+          </Link>
+        </Button>
 
-        <Flex justify="between" align="baseline" gap="2">
-          <Text as="h1" variant="h2">
-            {copy.auth.myEventsHeading}
-          </Text>
-          <Text variant="small" color="muted">
-            {events.length}
-          </Text>
-        </Flex>
-
-        {events.length === 0 ? (
-          <EmptyState
-            icon={<CalendarIcon size={28} />}
-            title={copy.auth.myEventsEmpty}
-            description={copy.auth.myEventsEmptyHelp}
-            action={
-              <Button asChild size="md">
-                <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
-              </Button>
-            }
-          />
-        ) : (
-          <>
-            <Stack gap="3">
-              {events.map((event) => (
-                <Card surface="outlined" key={event.id}>
-                  <CardContent>
-                    <Stack gap="3">
-                      <Flex justify="between" align="start" gap="3">
-                        <Box minWidth="0">
-                          <Stack gap="1">
-                            <Text weight="semibold">{event.title}</Text>
-                            <Text variant="small" color="muted">
-                              {formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale)}
-                            </Text>
-                          </Stack>
-                        </Box>
-                        <Box flexShrink={0}>
-                          {event.isClosed ? (
-                            <Badge variant="error" size="sm" soft>
-                              {copy.event.closedBadge}
-                            </Badge>
-                          ) : null}
-                        </Box>
-                      </Flex>
-
-                      <Text variant="small" color="muted">
-                        {copy.auth.attendingCount(event.attendingCount)} ·{" "}
-                        {copy.auth.createdOn(
-                          formatDate(event.createdAt, event.timeZone, copy.intlLocale),
-                        )}
-                      </Text>
-
-                      <EventCardActions
-                        eventId={event.id}
-                        managePath={managePath(event.publicToken, event.organizerToken)}
-                        whatsAppUrl={whatsAppShareUrl(
-                          copy.share.whatsAppMessage(
-                            event.title,
-                            shortEventTime(event.startsAt, event.timeZone, copy),
-                            `${base}${participantPath(event.publicToken)}`,
-                          ),
-                        )}
-                      />
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
-            </Stack>
-
-            <Button asChild size="lg" fullWidth>
-              <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
-            </Button>
-          </>
-        )}
+        <EventList events={items} />
       </Stack>
     </Container>
   );
