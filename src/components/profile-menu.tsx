@@ -41,9 +41,9 @@ import { setTheme } from "@/lib/theme-actions";
  * {@link GuestMenu} — the two are the same control in two states and must not
  * diverge. In short: this holds a segmented control, which is not a menu
  * command, and a phone needs a real close button because a full-width panel
- * covers the capsule that opened it. `width="min(100vw, 26rem)"` is what makes
- * it full-screen on a phone and a 416px drawer on a desktop, with no breakpoint
- * hook and nothing to mismatch during hydration.
+ * covers the capsule that opened it. It fills the viewport on a phone and caps
+ * at 416px from 768px up — see `.junti-drawer` for why that ceiling is a media
+ * query rather than a width cap.
  *
  * The destinations are real anchors now. As menu items they could not be:
  * DropdownMenuItem renders a div and exposes no `asChild`, so cmd-click could
@@ -139,7 +139,7 @@ export function ProfileMenu({
         </Button>
       </DialogTrigger>
 
-      <DialogContent placement="right" width="min(100vw, 26rem)">
+      <DialogContent placement="right" width="100%" className="junti-drawer">
         <DialogHeader bordered>
           <Flex justify="between" align="start" gap="3">
             <Flex gap="3" align="center" minWidth="0">

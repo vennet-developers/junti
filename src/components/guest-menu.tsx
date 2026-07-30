@@ -41,10 +41,12 @@ import { setTheme } from "@/lib/theme-actions";
  * mattering most on a phone, where a full-width panel covers the capsule that
  * opened it.
  *
- * `width="min(100vw, 26rem)"` is what makes it full-screen on a phone and a
- * 416px drawer on a desktop, with no breakpoint hook and no JavaScript: at
- * 390px the `100vw` term wins. Nothing here can mismatch during hydration,
- * which matters for a control the server renders.
+ * It is the whole viewport on a phone and a 416px panel from 768px up. The width
+ * is 100% and the ceiling is a media query in `.junti-drawer` — not a `min()`
+ * cap, which is what this was first and which was wrong on real hardware: 26rem
+ * is 416px, and that sits inside the range of actual phone widths, so a 430px
+ * iPhone kept a strip of page down its edge. No breakpoint hook either way, so
+ * nothing here can mismatch during hydration.
  *
  * Most people who see this never sign in — they opened a WhatsApp link — so
  * language lives here rather than only on `/profile`, which a guest has no way
@@ -110,7 +112,7 @@ export function GuestMenu({
         </Button>
       </DialogTrigger>
 
-      <DialogContent placement="right" width="min(100vw, 26rem)">
+      <DialogContent placement="right" width="100%" className="junti-drawer">
         <DialogHeader bordered>
           <Flex justify="between" align="center" gap="3">
             <DialogTitle>{copy.nav.guestMenuLabel}</DialogTitle>
