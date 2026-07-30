@@ -37,6 +37,9 @@ import { Stat } from "@stackmyth/stat";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
+import { GuestMenu } from "@/components/guest-menu";
+import { ProfileMenu } from "@/components/profile-menu";
+
 /**
  * Renders one of each primitive the app will actually use. If this page looks
  * right at 390px, the stack is usable; if a component is missing a prop or
@@ -254,6 +257,42 @@ export function SmokeClient() {
             Cargando…
           </Text>
         </Flex>
+
+        <Divider />
+
+        {/*
+          The account drawer, in both states.
+
+          It is a drawer whether or not there is a session — only the contents
+          differ — and neither state is reachable from a page you can just open:
+          the signed-out one needs no session, the signed-in one needs a real
+          one, and no single page shows both. So both live here, which is what
+          this page is for.
+
+          The organizer below is fabricated on purpose. Nothing in the drawer
+          reads a session; the header decides which of the two to render and
+          hands the account down as props, so a literal exercises the same code
+          the app runs.
+        */}
+        <Stack gap="3">
+          <Text variant="h3">Account drawer</Text>
+          <Text variant="small" color="muted">
+            Both open as a right-hand drawer: full width on a phone, 416px from 768px up. Signed out
+            offers sign-in, language and appearance; signed in offers the destinations, appearance
+            and sign-out.
+          </Text>
+          <Flex gap="3" wrap="wrap" align="center">
+            <GuestMenu theme={null} />
+            <ProfileMenu
+              organizer={{
+                displayName: "Ivan Avila",
+                email: "ivan@vennet.dev",
+                avatarUrl: null,
+              }}
+              theme={null}
+            />
+          </Flex>
+        </Stack>
       </Stack>
     </Container>
   );
