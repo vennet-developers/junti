@@ -144,8 +144,18 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
         setState({ errors: { evidence: copy.errors.evidenceRequired } });
         return;
       }
-      // Always JPEG — `downscaleImage` re-encodes whatever came in.
-      formData.set("evidence", new File([prepared], "receipt.jpg", { type: "image/jpeg" }));
+      /*
+        The blob carries its own type: `downscaleImage` re-encodes to WebP where
+        the browser can, JPEG where it cannot. Reading it off the blob rather
+        than naming a format here is what stops the two from drifting — the
+        server sniffs the bytes anyway, so a mislabelled file would be served
+        under the wrong content type rather than rejected.
+      */
+      const extension = prepared.type === "image/webp" ? "webp" : "jpg";
+      formData.set(
+        "evidence",
+        new File([prepared], `receipt.${extension}`, { type: prepared.type }),
+      );
     }
 
     startTransition(async () => {

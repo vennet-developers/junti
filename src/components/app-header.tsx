@@ -48,20 +48,25 @@ export function AppHeader({
             The chapa is the logo, and this is the one place it appears — the
             brand allows a single chapa per screen.
 
-            The `brand-link` class neutralises next/link's anchor underline. It
-            cannot be done from inside: `text-decoration` set by an ancestor is
-            drawn across its descendants, and a child declaring `none` does not
-            remove it — that is a CSS rule, not an oversight. An underline
-            crossing the badge would read as a mistake.
+            88px wide. That clears the kit's 80px floor — below it the badge
+            stops being legible and the "j" takes over — and lands the mark at
+            51.3px tall, which is the account capsule's own height beside it.
+            The two things in this bar are the same size on purpose.
 
-            `chapa-slot` reserves the height the rotated badge actually
-            occupies. A rotated box overflows its layout box, and without the
-            reservation the corners of the chapa reach past the header's own
-            rule.
+            `brand-link` keeps next/link's anchor underline off it. That cannot
+            be done from inside: `text-decoration` set by an ancestor is drawn
+            across its descendants, and a child declaring `none` does not remove
+            it. An underline crossing the badge would read as a mistake.
+
+            No height reservation any more. The mark used to be text rotated by
+            CSS, which paints outside its layout box and reached past the
+            header's rule; the kit's vector carries the rotation inside its own
+            viewBox, so the box it occupies is the box it draws in.
+
+            No aria-label either: the vector carries `role="img"` and
+            `aria-label="junti."`, and the img's alt names the link.
           */}
-          {/* No aria-label: the chapa renders the word "junti." as real text,
-              so the link already has an accessible name. */}
-          <Link href={organizer ? ROUTES.myEvents : ROUTES.home} className="brand-link chapa-slot">
+          <Link href={organizer ? ROUTES.myEvents : ROUTES.home} className="brand-link">
             <Chapa />
           </Link>
 

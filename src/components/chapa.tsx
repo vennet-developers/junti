@@ -1,5 +1,3 @@
-import { Text } from "@stackmyth/text";
-
 import { BRAND_NAME } from "@/config/brand";
 
 /**
@@ -7,61 +5,70 @@ import { BRAND_NAME } from "@/config/brand";
  *
  * There is no separate symbol in this identity: the logo is the product's name
  * inside a leaning orange badge, closed by a full stop that means "ya está".
- * So this renders text, not an image — see brand-marks.css for why.
  *
- * `size` is a font-size, and the whole mark is built from it in `em`: the badge
- * grows, its corner radius stays proportional, the air inside it holds. One
- * number moves the entire construction.
+ * It is the brand kit's own vector, not text styled to look like it. That was
+ * the earlier approach and the kit retired it — "el logo NO necesita la fuente:
+ * ya está vectorizado". Two things come from the change:
+ *
+ *   · **No font dependency.** The wordmark IS the logo, and it used to wait on
+ *     Bricolage Grotesque. With `font-display: swap` that means the most
+ *     important element on the page painted in a fallback face first and then
+ *     jumped. A vector paints with the first frame.
+ *   · **The official geometry, exactly.** The rotation, the corner radius and
+ *     the air inside the badge stop being numbers this app re-derives — which
+ *     mattered, because the kit's prose and its artwork disagree about the
+ *     corner radius (the README says 0.295 of the height; the SVG says 0.191).
+ *     Shipping the artwork sidesteps the question.
+ *
+ * The glyphs are outlines, so nothing here depends on a font being installed
+ * anywhere — in a browser, in Figma, or at a printer.
+ */
+
+/**
+ * Below this the full badge stops being legible and the "j" takes over. The
+ * kit sets the threshold on WIDTH: "hasta 79 px la j recortada; de 80 px de
+ * ancho en adelante la chapa."
+ */
+export const CHAPA_MIN_WIDTH = 80;
+
+/**
+ * The full badge. `width` is the mark's rendered width — keep it at or above
+ * {@link CHAPA_MIN_WIDTH}, and use {@link Monograma} below that.
  *
  * **One chapa per screen.** A brand rule with a "no hacer" beside it, and the
  * reason the header is the only caller: two badges on one screen and neither
- * reads as the logo. Anywhere else that needs the brand small — a favicon, an
- * avatar, anything under 20px tall — takes the "j." monogram instead, which is
- * what {@link Monograma} is for.
+ * reads as the logo.
  */
-export function Chapa({ size = "1.25rem" }: { size?: string }) {
-  return (
-    /*
-      `fontSize` is a Text prop, not a `style=` — the component turns its own
-      props into styles, which is the sanctioned way to vary one. The class
-      carries only what no prop can express: the rotation, the badge, the air.
+export function Chapa({ width = 88 }: { width?: number }) {
+  /*
+    A plain <img>, not next/image. The optimizer is for photographs it can
+    resize and re-encode; this is a 3 KB vector whose whole point is that one
+    file renders at every size, so routing it through would add a request and
+    change nothing about the bytes.
 
-      The name and the dot are separate elements because the dot is cream on
-      orange while the letters are ink, and the kit forbids ever letting the dot
-      take the letters' colour.
-    */
-    <Text
-      as="span"
-      className="junti-chapa"
-      fontSize={size}
-      /*
-        The logo is lowercase. "Mayúscula inicial" is on the brand's list of
-        things not to do, and BRAND_NAME is "Junti" because that is how the
-        name is written in prose — titles, metadata, a sentence. Transforming
-        here keeps both true from one constant.
-      */
-      textTransform="lowercase"
-    >
-      {BRAND_NAME}
-      <Text as="span" className="junti-chapa__punto">
-        .
-      </Text>
-    </Text>
+    Width and height come from the kit's 302x176 viewBox, so the box is correct
+    before the file arrives and nothing shifts around it while it loads.
+  */
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/brand/junti-chapa-principal.svg"
+      alt={BRAND_NAME}
+      width={width}
+      height={Math.round((width * 176) / 302)}
+    />
   );
 }
 
 /**
- * The "j." monogram, for anywhere the full chapa would fall under 20px.
+ * The "j" monogram, for anywhere the full badge would fall under 80px wide.
  *
- * Same rule as the chapa about the dot: separate, cream, never muted.
+ * A separate mark rather than a shrunken chapa: the kit crops the j and its dot
+ * out of the badge, with the stem running off the top edge.
  */
-export function Monograma({ size = "1rem" }: { size?: string }) {
+export function Monograma({ size = 32 }: { size?: number }) {
   return (
-    <Text as="span" className="junti-chapa" fontSize={size} textTransform="lowercase">
-      j
-      <Text as="span" className="junti-chapa__punto">
-        .
-      </Text>
-    </Text>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/brand/junti-icono-app-naranja.svg" alt={BRAND_NAME} width={size} height={size} />
   );
 }
