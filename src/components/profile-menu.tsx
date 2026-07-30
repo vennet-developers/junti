@@ -1,18 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@stackmyth/avatar";
 import { Button } from "@stackmyth/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@stackmyth/dropdown-menu";
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@stackmyth/dialog";
 import {
   CalendarIcon,
   ChevronDownIcon,
@@ -21,8 +23,9 @@ import {
   MoonIcon,
   SunIcon,
   UserIcon,
+  XIcon,
 } from "@stackmyth/icons";
-import { Box, Flex, Stack } from "@stackmyth/layout";
+import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
@@ -32,16 +35,24 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { setTheme } from "@/lib/theme-actions";
 
 /**
- * The account menu: who you are, where you can go, how it should look.
+ * The account panel: who you are, where you can go, how it should look.
  *
- * Four entries and no more. An earlier version also carried the language
- * choice, which put six tappable things and three headings behind a photo — it
- * read like a settings page that had escaped. Language lives on `/profile`,
- * beside the timezone, which is the screen for preferences that need
- * explaining. The menu keeps only what you want on the way somewhere else.
+ * A drawer rather than a dropdown, for the reasons set out in
+ * {@link GuestMenu} — the two are the same control in two states and must not
+ * diverge. In short: this holds a segmented control, which is not a menu
+ * command, and a phone needs a real close button because a full-width panel
+ * covers the capsule that opened it. `width="min(100vw, 26rem)"` is what makes
+ * it full-screen on a phone and a 416px drawer on a desktop, with no breakpoint
+ * hook and nothing to mismatch during hydration.
  *
- * Appearance is the exception that earns its place: it is a look-at-it-now
- * choice, so it stays, as one row of three rather than a list of radios.
+ * The destinations are real anchors now. As menu items they could not be:
+ * DropdownMenuItem renders a div and exposes no `asChild`, so cmd-click could
+ * never open one in a new tab (STACKMYTH-GAP #17). Outside a menu, `Button
+ * asChild` + next/link gives a genuine link with a genuine href.
+ *
+ * Language is not here. It lives on `/profile` beside the timezone, which is
+ * the screen for preferences that need explaining; appearance stays because it
+ * is a look-at-it-now choice.
  */
 export function ProfileMenu({
   organizer,
@@ -53,6 +64,7 @@ export function ProfileMenu({
 }) {
   const { copy } = useCopy();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const initials =
@@ -68,7 +80,7 @@ export function ProfileMenu({
     // force — so ignore it rather than silently falling back to "system".
     if (!next) return;
 
-    // "system" is this menu's word for "no stored preference". The server
+    // "system" is this panel's word for "no stored preference". The server
     // stores null, and null is what lets `prefers-color-scheme` take over.
     startTransition(() => void setTheme(next === "system" ? null : next));
   }
@@ -84,14 +96,14 @@ export function ProfileMenu({
   }
 
   const appearances = [
-    { value: "light", label: copy.appearance.light, icon: <SunIcon size={16} /> },
-    { value: "dark", label: copy.appearance.dark, icon: <MoonIcon size={16} /> },
-    { value: "system", label: copy.appearance.system, icon: <MonitorIcon size={16} /> },
+    { value: "light", label: copy.appearance.light, icon: <SunIcon size={18} /> },
+    { value: "dark", label: copy.appearance.dark, icon: <MoonIcon size={18} /> },
+    { value: "system", label: copy.appearance.system, icon: <MonitorIcon size={18} /> },
   ];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button
           type="button"
           variant="secondary"
@@ -125,100 +137,119 @@ export function ProfileMenu({
             <ChevronDownIcon size={16} aria-hidden="true" />
           </Box>
         </Button>
-      </DropdownMenuTrigger>
+      </DialogTrigger>
 
-      <DropdownMenuContent align="end" width="15rem">
-        <DropdownMenuLabel>
-          <Stack gap="0">
-            <Text variant="small" weight="semibold">
-              {organizer.displayName}
-            </Text>
-            {organizer.email ? (
+      <DialogContent placement="right" width="min(100vw, 26rem)">
+        <DialogHeader bordered>
+          <Flex justify="between" align="start" gap="3">
+            <Flex gap="3" align="center" minWidth="0">
+              <Box flexShrink={0}>
+                <Avatar size="md">
+                  {organizer.avatarUrl ? (
+                    <AvatarImage src={organizer.avatarUrl} alt="" referrerPolicy="no-referrer" />
+                  ) : null}
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+              </Box>
+              <Stack gap="0" minWidth="0">
+                <DialogTitle>{organizer.displayName}</DialogTitle>
+                {organizer.email ? (
+                  <Text variant="small" color="muted">
+                    {organizer.email}
+                  </Text>
+                ) : null}
+              </Stack>
+            </Flex>
+
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                iconOnly
+                aria-label={copy.common.close}
+              >
+                <XIcon size={20} aria-hidden="true" />
+              </Button>
+            </DialogClose>
+          </Flex>
+        </DialogHeader>
+
+        <DialogBody>
+          <Stack gap="5">
+            <Stack gap="2">
+              {/* Real links. `justify="start"` so a full-width button reads as a
+                  row of navigation rather than a centred call to action. */}
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start">
+                <Link href={ROUTES.myEvents}>
+                  <Flex gap="3" align="center">
+                    <CalendarIcon size={18} aria-hidden="true" />
+                    {copy.auth.myEventsLink}
+                  </Flex>
+                </Link>
+              </Button>
+
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start">
+                <Link href={ROUTES.profile}>
+                  <Flex gap="3" align="center">
+                    <UserIcon size={18} aria-hidden="true" />
+                    {copy.profile.link}
+                  </Flex>
+                </Link>
+              </Button>
+            </Stack>
+
+            <Divider />
+
+            <Stack gap="2">
               <Text variant="small" color="muted">
-                {organizer.email}
+                {copy.appearance.label}
               </Text>
-            ) : null}
-          </Stack>
-        </DropdownMenuLabel>
+              {/*
+                A segmented control rather than three rows: the choice is
+                mutually exclusive, the options are short, and comparing them
+                side by side is the whole point. `outline` gives each segment a
+                border so the row reads as one control with a chosen option —
+                the default variant marks the pressed item with a tint that in
+                light mode sits too close to the surface to spot.
+              */}
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={theme ?? "system"}
+                onValueChange={chooseTheme}
+                size="lg"
+                disabled={pending}
+              >
+                {appearances.map((option) => (
+                  <Toggle key={option.value} value={option.value} aria-label={option.label}>
+                    {option.icon}
+                  </Toggle>
+                ))}
+              </ToggleGroup>
+            </Stack>
 
-        <DropdownMenuSeparator />
+            <Divider />
 
-        {/*
-          STACKMYTH-GAP: DropdownMenuItem renders a <div role="menuitem"> and
-          exposes no `asChild`, so there is no anchor to hand an href to — even
-          though DropdownMenuTrigger, one component away in the same package,
-          does have it. A router push is the least-bad substitute; the cost is
-          that cmd-click cannot open these in a new tab. The alternative,
-          nesting an <a> inside the item, gives two overlapping click targets
-          for one action. See STACKMYTH-GAPS.md #17.
-        */}
-        <DropdownMenuItem onSelect={() => router.push(ROUTES.myEvents)}>
-          <Flex gap="2" align="center">
-            <Box display="flex" flexShrink={0}>
-              <CalendarIcon size={16} aria-hidden="true" />
-            </Box>
-            {copy.auth.myEventsLink}
-          </Flex>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onSelect={() => router.push(ROUTES.profile)}>
-          <Flex gap="2" align="center">
-            <Box display="flex" flexShrink={0}>
-              <UserIcon size={16} aria-hidden="true" />
-            </Box>
-            {copy.profile.link}
-          </Flex>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        {/*
-          A segmented control rather than three radio rows: the choice is
-          mutually exclusive, the options are short, and comparing them side by
-          side is the whole point. The icon carries the meaning; the label is
-          the accessible name and the visible one, which keeps it honest at
-          390px.
-        */}
-        <Box px="2" py="2">
-          <Stack gap="2">
-            <Text variant="small" color="muted">
-              {copy.appearance.label}
-            </Text>
-            {/*
-              `outline` rather than the default: it gives each segment a border,
-              so the row reads as one control with a chosen option instead of
-              three loose icons. The default variant marks the pressed item with
-              a tinted background alone, which in light mode is a grey so close
-              to the menu surface that "which one is on?" needs a second look.
-            */}
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              value={theme ?? "system"}
-              onValueChange={chooseTheme}
-              size="sm"
+            {/* Not a link: signing out is an action with a side effect, and it
+                has to finish before the redirect. */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              fullWidth
+              justify="start"
               disabled={pending}
+              onClick={signOut}
             >
-              {appearances.map((option) => (
-                <Toggle key={option.value} value={option.value} aria-label={option.label}>
-                  {option.icon}
-                </Toggle>
-              ))}
-            </ToggleGroup>
+              <Flex gap="3" align="center" color="var(--sm-error-accent)">
+                <LogOutIcon size={18} aria-hidden="true" />
+                {copy.auth.signOut}
+              </Flex>
+            </Button>
           </Stack>
-        </Box>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem destructive disabled={pending} onSelect={signOut}>
-          <Flex gap="2" align="center">
-            <Box display="flex" flexShrink={0}>
-              <LogOutIcon size={16} aria-hidden="true" />
-            </Box>
-            {copy.auth.signOut}
-          </Flex>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

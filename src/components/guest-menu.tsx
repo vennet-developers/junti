@@ -1,29 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import Link from "next/link";
+import { useState, useTransition } from "react";
 
 import { Avatar, AvatarFallback } from "@stackmyth/avatar";
 import { Button } from "@stackmyth/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@stackmyth/dropdown-menu";
-// No sign-in glyph ships in the set — LogOutIcon has no counterpart — so the
-// neutral arrow carries it. UserPlusIcon would have read as "create an
-// account", which is a different offer.
-import {
-  ArrowRightIcon,
-  ChevronDownIcon,
-  MonitorIcon,
-  MoonIcon,
-  SunIcon,
-  UserIcon,
-} from "@stackmyth/icons";
-import { Box, Flex, Stack } from "@stackmyth/layout";
+  Dialog,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@stackmyth/dialog";
+import { ChevronDownIcon, MonitorIcon, MoonIcon, SunIcon, UserIcon, XIcon } from "@stackmyth/icons";
+import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
@@ -36,31 +28,38 @@ import { setTheme } from "@/lib/theme-actions";
 /**
  * The header control for someone without an account.
  *
- * It is the same capsule as the signed-in one — same size, same shape, an
- * anonymous avatar where the photo goes — so the header keeps one silhouette
- * whether or not you are signed in, and the bar does not reflow when a session
- * appears.
+ * The capsule is the same one the signed-in header shows — same size, same
+ * shape, an anonymous avatar where the photo goes — so the bar keeps one
+ * silhouette and does not reflow the moment a session appears.
  *
- * It is a menu rather than a plain "Sign in" link because language and
- * appearance used to live in the page body, above the heading, and the header
- * takes that spot now. Most people here never sign in at all — they opened a
- * WhatsApp link — so folding those two into a link would have taken the
- * language switch away from exactly the readers most likely to need it. Signing
- * in is still the first item and the only one with a full-width button.
+ * It opens a **drawer, not a menu**, and that is a correction rather than a
+ * style choice. This panel holds two segmented controls, and a `role="menu"` is
+ * for commands: a screen reader announcing "menu" and then finding a group of
+ * radio-like toggles inside is being told the wrong thing about what it is. A
+ * dialog is what a small settings surface actually is, and it brings a focus
+ * trap, Escape, a scroll lock and a real close button for free — the last one
+ * mattering most on a phone, where a full-width panel covers the capsule that
+ * opened it.
  *
- * Language sits here and not on `/profile` (where it lives for account
- * holders), because a guest has no profile to go to.
+ * `width="min(100vw, 26rem)"` is what makes it full-screen on a phone and a
+ * 416px drawer on a desktop, with no breakpoint hook and no JavaScript: at
+ * 390px the `100vw` term wins. Nothing here can mismatch during hydration,
+ * which matters for a control the server renders.
+ *
+ * Most people who see this never sign in — they opened a WhatsApp link — so
+ * language lives here rather than only on `/profile`, which a guest has no way
+ * to reach.
  */
 export function GuestMenu({
   theme,
-  /** Where to return after signing in — the page the menu was opened from. */
+  /** Where to return after signing in — the page the drawer was opened from. */
   next,
 }: {
   theme: "light" | "dark" | null;
   next?: string;
 }) {
   const { copy, locale } = useCopy();
-  const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function chooseTheme(value: string) {
@@ -76,14 +75,14 @@ export function GuestMenu({
   }
 
   const appearances = [
-    { value: "light", label: copy.appearance.light, icon: <SunIcon size={16} /> },
-    { value: "dark", label: copy.appearance.dark, icon: <MoonIcon size={16} /> },
-    { value: "system", label: copy.appearance.system, icon: <MonitorIcon size={16} /> },
+    { value: "light", label: copy.appearance.light, icon: <SunIcon size={18} /> },
+    { value: "dark", label: copy.appearance.dark, icon: <MoonIcon size={18} /> },
+    { value: "system", label: copy.appearance.system, icon: <MonitorIcon size={18} /> },
   ];
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button
           type="button"
           variant="secondary"
@@ -96,8 +95,7 @@ export function GuestMenu({
               `delayMs={0}` because there is no image to wait for. The default
               600ms exists so a fallback does not flash while a photo loads —
               with no AvatarImage in the tree that timer only guarantees an
-              empty circle for the first 600ms of every page load, and the
-              fallback cannot render server-side at all until it elapses.
+              empty circle for the first 600ms of every page load.
             */}
             <AvatarFallback delayMs={0}>
               <UserIcon size={16} aria-hidden="true" />
@@ -110,77 +108,91 @@ export function GuestMenu({
             <ChevronDownIcon size={16} aria-hidden="true" />
           </Box>
         </Button>
-      </DropdownMenuTrigger>
+      </DialogTrigger>
 
-      <DropdownMenuContent align="end" width="15rem">
-        {/*
-          A menu item rather than a Button, so it keeps the roving focus and
-          the type-ahead the rest of the menu has. The router push mirrors what
-          the signed-in menu does with its links — see the STACKMYTH-GAP note
-          in profile-menu.tsx for why these are not anchors.
-        */}
-        <DropdownMenuItem onSelect={() => router.push(signInPath(next ?? ROUTES.myEvents))}>
-          <Flex gap="2" align="center">
-            <Box display="flex" flexShrink={0}>
-              <ArrowRightIcon size={16} aria-hidden="true" />
-            </Box>
-            {copy.nav.signIn}
+      <DialogContent placement="right" width="min(100vw, 26rem)">
+        <DialogHeader bordered>
+          <Flex justify="between" align="center" gap="3">
+            <DialogTitle>{copy.nav.guestMenuLabel}</DialogTitle>
+            {/* asChild so the close is a real Button at the touch floor rather
+                than the component's own small glyph. */}
+            <DialogClose asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                iconOnly
+                aria-label={copy.common.close}
+              >
+                <XIcon size={20} aria-hidden="true" />
+              </Button>
+            </DialogClose>
           </Flex>
-        </DropdownMenuItem>
+        </DialogHeader>
 
-        <DropdownMenuSeparator />
-
-        <Box px="2" py="2">
-          <Stack gap="2">
-            <Text variant="small" color="muted">
-              {copy.common.language}
-            </Text>
+        <DialogBody>
+          <Stack gap="5">
             {/*
-              Each language names itself. "English" is legible to someone who
-              cannot read the Spanish beside it, which a translated "Inglés"
-              would not be — the same reasoning the standalone switcher used.
+              A real anchor, not a router push. The old menu had to fake this:
+              DropdownMenuItem renders a div and exposes no `asChild`, so
+              cmd-click could not open it in a new tab (STACKMYTH-GAP #17).
+              Outside a menu that constraint is gone.
             */}
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              value={locale}
-              onValueChange={chooseLocale}
-              size="sm"
-              disabled={pending}
-            >
-              {LOCALES.map((option: Locale) => (
-                <Toggle key={option} value={option}>
-                  {getCopy(option).localeName}
-                </Toggle>
-              ))}
-            </ToggleGroup>
-          </Stack>
-        </Box>
+            <Button asChild size="lg" fullWidth>
+              <Link href={signInPath(next ?? ROUTES.myEvents)}>{copy.nav.signIn}</Link>
+            </Button>
 
-        <DropdownMenuSeparator />
+            <Divider />
 
-        <Box px="2" py="2">
-          <Stack gap="2">
-            <Text variant="small" color="muted">
-              {copy.appearance.label}
-            </Text>
-            <ToggleGroup
-              type="single"
-              variant="outline"
-              value={theme ?? "system"}
-              onValueChange={chooseTheme}
-              size="sm"
-              disabled={pending}
-            >
-              {appearances.map((option) => (
-                <Toggle key={option.value} value={option.value} aria-label={option.label}>
-                  {option.icon}
-                </Toggle>
-              ))}
-            </ToggleGroup>
+            <Stack gap="2">
+              <Text variant="small" color="muted">
+                {copy.common.language}
+              </Text>
+              {/*
+                Each language names itself. "English" is legible to someone who
+                cannot read the Spanish beside it, which a translated "Inglés"
+                would not be.
+              */}
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={locale}
+                onValueChange={chooseLocale}
+                /* `lg` here, unlike the old menu's `sm`: in a drawer there is
+                   room, and 44px is the floor this app holds everywhere. */
+                size="lg"
+                disabled={pending}
+              >
+                {LOCALES.map((option: Locale) => (
+                  <Toggle key={option} value={option}>
+                    {getCopy(option).localeName}
+                  </Toggle>
+                ))}
+              </ToggleGroup>
+            </Stack>
+
+            <Stack gap="2">
+              <Text variant="small" color="muted">
+                {copy.appearance.label}
+              </Text>
+              <ToggleGroup
+                type="single"
+                variant="outline"
+                value={theme ?? "system"}
+                onValueChange={chooseTheme}
+                size="lg"
+                disabled={pending}
+              >
+                {appearances.map((option) => (
+                  <Toggle key={option.value} value={option.value} aria-label={option.label}>
+                    {option.icon}
+                  </Toggle>
+                ))}
+              </ToggleGroup>
+            </Stack>
           </Stack>
-        </Box>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }

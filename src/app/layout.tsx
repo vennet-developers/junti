@@ -43,7 +43,6 @@ import "@stackmyth/card/card.css";
 import "@stackmyth/badge/badge.css";
 import "@stackmyth/alert/alert.css";
 import "@stackmyth/dialog/dialog.css";
-import "@stackmyth/dropdown-menu/dropdown-menu.css";
 import "@stackmyth/tabs/tabs.css";
 import "@stackmyth/toggle/toggle.css";
 import "@stackmyth/toast/toast.css";
@@ -57,6 +56,7 @@ import "@stackmyth/accordion/accordion.css";
 import "@stackmyth/avatar/avatar.css";
 import "@stackmyth/popover/popover.css";
 import "@stackmyth/calendar/calendar.css";
+import "@stackmyth/date-picker/date-picker.css";
 import "@stackmyth/time-picker/time-picker.css";
 import "@stackmyth/form/form.css";
 

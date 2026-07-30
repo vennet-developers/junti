@@ -2,13 +2,10 @@
 
 import { useId, useState } from "react";
 
-import { Button } from "@stackmyth/button";
-import { Calendar } from "@stackmyth/calendar";
+import { DatePicker } from "@stackmyth/date-picker";
 import { FieldError } from "@stackmyth/field";
 import { useFieldErrors, useFormContext } from "@stackmyth/form";
-import { CalendarIcon } from "@stackmyth/icons";
 import { Flex, Stack } from "@stackmyth/layout";
-import { Popover, PopoverContent, PopoverTrigger } from "@stackmyth/popover";
 import { TimePicker } from "@stackmyth/time-picker";
 
 import { useCopy } from "./copy-provider";
@@ -19,11 +16,18 @@ import { useCopy } from "./copy-provider";
  * Replaces `<Input type="datetime-local">`, which rendered the browser's own
  * control — the one element in the app that ignored the design system.
  *
- * The date half is composed from `Popover` + `Calendar` rather than using
- * `DatePicker`, because `DatePicker`'s `locale` prop only formats its trigger
- * label and never reaches the `Calendar` inside, which is hardcoded to
- * `"en-US"`. A Spanish app would show an English calendar with no way to fix
- * it. See STACKMYTH-GAPS.md #12.
+ * Both halves are the library's own field components. The date used to be
+ * hand-composed from `Popover` + `Calendar`, because `DatePicker` formatted its
+ * trigger with the given `locale` but hardcoded the `Calendar` inside to
+ * `"en-US"` — a Spanish app got an English calendar with no way to fix it
+ * (STACKMYTH-GAPS.md #12). That is fixed at source: the locale reaches the
+ * calendar, so the composition is gone.
+ *
+ * Using it also settles the appearance. The hand-rolled trigger was a
+ * `Button variant="outline"`, and an outline button is transparent by
+ * definition — so the one control on the form that should have looked like a
+ * field showed the page through it. A field component paints a field surface,
+ * with no override needed anywhere.
  *
  * The value reaches the form store as two wall-clock strings, `YYYY-MM-DD` and
  * `HH:mm`, which the server joins and interprets in the event's own timezone.
@@ -53,6 +57,14 @@ function fromDateInputValue(value: string | undefined): Date | null {
   // Local time so the calendar highlights the right cell.
   return new Date(Number(year), Number(month) - 1, Number(day));
 }
+
+/** How the chosen day reads on the trigger: "vie, 31 ago 2026". */
+const LABEL_FORMAT: Intl.DateTimeFormatOptions = {
+  weekday: "short",
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+};
 
 /** Midnight today, local — the earliest selectable day when creating an event. */
 function startOfToday(): Date {
@@ -89,16 +101,8 @@ export function DateTimeField({
   const { copy } = useCopy();
   const intlLocale = copy.intlLocale;
 
-  const labelFormat = new Intl.DateTimeFormat(intlLocale, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-
   const [date, setDate] = useState<Date | null>(() => fromDateInputValue(defaultDate));
   const [time, setTime] = useState<string | null>(defaultTime ?? null);
-  const [open, setOpen] = useState(false);
 
   const form = useFormContext();
 
@@ -109,12 +113,11 @@ export function DateTimeField({
   const dateErrors = useFieldErrors(dateName);
   const timeErrors = useFieldErrors(timeName);
 
-  function handleSelect(value: Date | { from: Date | undefined; to?: Date } | Date[] | undefined) {
-    // mode="single" always yields a Date or undefined.
-    const next = value instanceof Date ? value : null;
+  function handleSelect(next: Date | null) {
     setDate(next);
+    // Still two wall-clock strings in the store. The server joins them and
+    // reads them in the event's own zone — see toDateInputValue.
     form?.store.setValue(dateName, next ? toDateInputValue(next) : "");
-    setOpen(false);
   }
 
   function handleTime(next: string | null) {
@@ -125,34 +128,23 @@ export function DateTimeField({
   return (
     <Stack gap="2">
       <Flex gap="2" wrap="wrap" align="center">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger>
-            <Button
-              type="button"
-              id={dateId}
-              variant="outline"
-              size="lg"
-              justify="start"
-              aria-label={copy.createEvent.fields.startsAtDateLabel}
-            >
-              <CalendarIcon size={16} />
-              {date ? labelFormat.format(date) : copy.createEvent.fields.startsAtDatePlaceholder}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" sideOffset={6}>
-            <Calendar
-              mode="single"
-              selected={date ?? undefined}
-              onSelect={handleSelect}
-              locale={intlLocale}
-              /* Monday, in both languages this ships in: Spanish-speaking
-                 countries and the UK start the week there. */
-              weekStartsOn={1}
-              fromDate={allowPast ? undefined : startOfToday()}
-              showOutsideDays
-            />
-          </PopoverContent>
-        </Popover>
+        <DatePicker
+          id={dateId}
+          size="lg"
+          value={date}
+          onValueChange={handleSelect}
+          locale={intlLocale}
+          /* Same shape the hand-rolled trigger formatted itself. */
+          formatOptions={LABEL_FORMAT}
+          placeholder={copy.createEvent.fields.startsAtDatePlaceholder}
+          aria-label={copy.createEvent.fields.startsAtDateLabel}
+          /* Monday, in both languages this ships in: Spanish-speaking
+             countries and the UK start the week there. */
+          weekStartsOn={1}
+          fromDate={allowPast ? undefined : startOfToday()}
+          showOutsideDays
+          clearable={false}
+        />
 
         <TimePicker
           value={time}

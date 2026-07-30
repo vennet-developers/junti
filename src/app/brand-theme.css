@@ -342,16 +342,24 @@
   --sm-textarea-bg: var(--junti-tarjeta);
   --sm-input-group-bg: var(--junti-tarjeta);
   --sm-select-trigger-bg: var(--junti-tarjeta);
+  /* The date and time triggers are fields too — they read as one row with the
+     select above them, and a picker that shows the page through it was the one
+     control on the form that did not look like a field. */
+  --sm-date-picker-trigger-bg: var(--junti-tarjeta);
+  --sm-time-picker-trigger-bg: var(--junti-tarjeta);
   /* Popovers are cards too, and a menu on page-cream over a page-cream page has
      no edge at all. */
   --sm-select-content-bg: var(--junti-tarjeta);
+  --sm-calendar-bg: var(--junti-tarjeta);
 
   /* The same firm edge, for the controls that name their own border token.
-     Textarea and select otherwise fall back to --sm-border-default and would
-     be the only fields at 1.25:1. */
+     Each of these otherwise falls back to --sm-border-default and would be the
+     only field at 1.25:1. */
   --sm-input-border: var(--junti-borde-campo);
   --sm-textarea-border: var(--junti-borde-campo);
   --sm-select-trigger-border: var(--junti-borde-campo);
+  --sm-date-picker-trigger-border: var(--junti-borde-campo);
+  --sm-time-picker-trigger-border: var(--junti-borde-campo);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
