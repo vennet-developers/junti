@@ -53,20 +53,19 @@ export function PageBreadcrumb({ label, items }: { label: string; items: Crumb[]
                   <BreadcrumbPage className="breadcrumb-crumb">{item.label}</BreadcrumbPage>
                 ) : (
                   /*
-                    `href` is given to BreadcrumbLink as well as to the Link it
-                    wraps, and both are load-bearing. Under `asChild` the
-                    component clones its child with `href: <its own href>` — so
-                    passing it only to the inner Link means the clone overwrites
-                    it with `undefined` and the crumb renders as a dead anchor.
-                    Handing it to both is the shape that survives the clone.
+                    asChild so the anchor is next/link's: a client-side
+                    transition, and no <a> nested inside another. The class is
+                    merged with the component's own rather than replacing it, so
+                    the crumb keeps its link styling and gains the width cap.
 
-                    asChild at all so the anchor is next/link's: a client-side
-                    transition, and no <a> nested inside another.
+                    `href` lives on the Link alone. It used to be repeated on
+                    BreadcrumbLink as well, because the clone wrote its own
+                    `undefined` over the child's value and the crumb rendered as
+                    a dead anchor. Fixed at source in 0.24.3 — the child's href
+                    wins when the component was not given one — so the
+                    duplication is gone.
                   */
-                  <BreadcrumbLink asChild href={item.href}>
-                    {/* `asChild` merges this class with the component's own
-                        rather than replacing it, so the crumb keeps its link
-                        styling and gains the width cap. */}
+                  <BreadcrumbLink asChild>
                     <Link href={item.href} className="breadcrumb-crumb">
                       {item.label}
                     </Link>

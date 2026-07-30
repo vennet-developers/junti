@@ -70,14 +70,14 @@ export function RosterGroup({
           an amount and a sticker each, and the rule is what keeps a long list
           scannable.
 
-          `junti-rows` squares the row corners so the rule is straight. A
-          divided list draws its separator as a border-top on the row itself,
-          and a border on a rounded box curls up at both ends — at this brand's
-          13px radius that curl is plainly visible. Rows in a divided list are
-          segments of one list, not separate cards, so they have no business
-          being rounded in the first place.
+          Nothing else is needed to keep the rule straight. The separator is a
+          border-top on the row, and a border follows the corner radius of the
+          box it sits on — which bent it visibly at this brand's 13px. 0.24.3
+          clears the row's leading corners inside the library, so a local class
+          squaring them here would only be restating what the component now
+          does.
         */
-        <List as="ul" divided className="junti-rows">
+        <List as="ul" divided>
           {members.map((member, index) => {
             const note = renderNote?.(member);
 
