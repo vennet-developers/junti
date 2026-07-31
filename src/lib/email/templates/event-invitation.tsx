@@ -44,10 +44,7 @@ export function EventInvitationEmail({
   const copy = getCopy(isLocale(locale) ? locale : DEFAULT_LOCALE).emails.eventInvitation;
 
   return (
-    <EmailLayout
-      preview={copy.preview(values.organizerName, values.eventTitle)}
-      origin={origin}
-    >
+    <EmailLayout preview={copy.preview(values.organizerName, values.eventTitle)} origin={origin}>
       <Section>
         <Text style={emailText.heading}>{copy.heading(values.organizerName)}</Text>
 

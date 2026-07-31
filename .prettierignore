@@ -2,4 +2,13 @@
 node_modules
 drizzle
 backups
-package-lock.json
+
+# The lockfile is written by pnpm, not by a human, and pnpm's format is not
+# Prettier's. Left to itself `pnpm format` rewrites all seven thousand lines of
+# it — single quotes to double, blank lines stripped — and the next `pnpm
+# install` writes them all back. That is a permanent diff nobody can win, sitting
+# on top of the one file where a spurious change is hardest to review.
+#
+# This said `package-lock.json` until now, from before the project moved to pnpm,
+# which is exactly why nothing caught it.
+pnpm-lock.yaml

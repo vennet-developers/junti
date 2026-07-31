@@ -41,7 +41,6 @@ function toFormData(data: Record<string, unknown>): FormData {
   return formData;
 }
 
-
 export function EditEventForm({
   publicToken,
   organizerToken,

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  SHARE_MESSAGE_MAX_LENGTH,
-  renderShareMessage,
-  shareMessageProblem,
-} from "./share-message";
+import { SHARE_MESSAGE_MAX_LENGTH, renderShareMessage, shareMessageProblem } from "./share-message";
 
 const VALUES = {
   title: "Fútbol de los jueves",
