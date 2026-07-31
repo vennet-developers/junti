@@ -44,6 +44,14 @@ import "@stackmyth/card/card.css";
 import "@stackmyth/badge/badge.css";
 import "@stackmyth/alert/alert.css";
 import "@stackmyth/dialog/dialog.css";
+/*
+  The dropdown's stylesheet outlived the dropdown that used it, and then the
+  next one arrived without it. The account menu was a `DropdownMenu` until it
+  became a drawer; this import left with it, so the `…` on an event card
+  rendered its items as unstyled text on nothing. Exactly the failure gap #1
+  describes: CSS that is missing does not error, it just looks broken.
+*/
+import "@stackmyth/dropdown-menu/dropdown-menu.css";
 import "@stackmyth/tabs/tabs.css";
 import "@stackmyth/toggle/toggle.css";
 import "@stackmyth/toast/toast.css";

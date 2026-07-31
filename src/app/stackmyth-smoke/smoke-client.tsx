@@ -37,11 +37,76 @@ import { Stat } from "@stackmyth/stat";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
+import { EventList, type EventListItem } from "@/app/my-events/event-list";
 import { useCopy } from "@/components/copy-provider";
 import { GuestMenu } from "@/components/guest-menu";
 import { LanguageCombobox } from "@/components/language-combobox";
 import { ProfileMenu } from "@/components/profile-menu";
 import { LOCALES, getCopy } from "@/config/copy";
+import { paletteIndexFor } from "@/lib/palette";
+
+/**
+ * Three events covering what the card has to say: upcoming and priced, a
+ * second of the same kind so the shared band colour is visible, and one that
+ * has happened and was free.
+ *
+ * Everything arrives pre-formatted because that is how the real page sends it
+ * — dates and money are rendered on the server, where the language and the
+ * event's zone live.
+ */
+const SMOKE_EVENTS: EventListItem[] = [
+  {
+    id: "smoke-1",
+    title: "Fútbol de los jueves",
+    when: "jue, 7 ago, 8:00 p. m.",
+    startsAtMs: Date.parse("2026-08-07T20:00:00-05:00"),
+    isPast: false,
+    location: "Cancha La 90",
+    typeLabel: "Partido",
+    cost: "$ 25.000",
+    costPerPerson: true,
+    isClosed: false,
+    colorIndex: paletteIndexFor("match"),
+    attendingCount: 8,
+    firstAttendees: ["Camila", "Andrés", "Juli"],
+    managePath: "#",
+    whatsAppUrl: "#",
+  },
+  {
+    id: "smoke-2",
+    title: "Fútbol de los jueves",
+    when: "jue, 14 ago, 8:00 p. m.",
+    startsAtMs: Date.parse("2026-08-14T20:00:00-05:00"),
+    isPast: false,
+    location: "Cancha La 90",
+    typeLabel: "Partido",
+    cost: "$ 25.000",
+    costPerPerson: true,
+    isClosed: true,
+    colorIndex: paletteIndexFor("match"),
+    attendingCount: 12,
+    firstAttendees: ["Sara", "Nico"],
+    managePath: "#",
+    whatsAppUrl: "#",
+  },
+  {
+    id: "smoke-3",
+    title: "Cumpleaños de Mati",
+    when: "sáb, 12 jul, 3:00 p. m.",
+    startsAtMs: Date.parse("2026-07-12T15:00:00-05:00"),
+    isPast: true,
+    location: null,
+    typeLabel: "Fiesta infantil",
+    cost: "Gratis",
+    costPerPerson: false,
+    isClosed: false,
+    colorIndex: paletteIndexFor("kids_party"),
+    attendingCount: 0,
+    firstAttendees: [],
+    managePath: "#",
+    whatsAppUrl: "#",
+  },
+];
 
 /**
  * Renders one of each primitive the app will actually use. If this page looks
@@ -297,6 +362,21 @@ export function SmokeClient() {
               theme={null}
             />
           </Flex>
+        </Stack>
+
+        {/*
+          The event cards, which `/my-events` needs a session to reach.
+
+          Three fabricated events rather than one, because the card's whole
+          job is to be scanned in a stack: the band colour is hashed from the
+          event type, so two of a kind sharing a stripe and a past one dropping
+          to grey are only visible next to each other. The actions are live —
+          they act on ids that do not exist, which is the one thing not to
+          press here.
+        */}
+        <Stack gap="3">
+          <Text variant="h3">Event cards</Text>
+          <EventList events={SMOKE_EVENTS} />
         </Stack>
 
         {/*

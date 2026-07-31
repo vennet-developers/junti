@@ -12,7 +12,8 @@ import { CreatedToast } from "@/components/created-toast";
 import { ROUTES, signInPath } from "@/config/routes";
 import { loadEventTypes } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
-import { formatEventDateTime } from "@/lib/format";
+import { formatEventDateTime, formatMoney } from "@/lib/format";
+import { paletteIndexFor } from "@/lib/palette";
 import { getOrganizer } from "@/lib/organizer";
 import { resolvePreferences } from "@/lib/preferences";
 import { loadOrganizerEvents } from "@/lib/roster";
@@ -66,7 +67,21 @@ export default async function MyEventsPage({
     isPast: event.isPast,
     location: event.location,
     typeLabel: typeLabels.get(event.eventTypeId) ?? null,
+    /*
+      Formatted here for the same reason the dates are: the currency and the
+      reader's language both live on the server, and sending minor units plus a
+      currency code would ship `Intl.NumberFormat` to the browser to arrive at
+      this exact string. A free event says so rather than showing nothing —
+      "no price" and "price not loaded" look identical on a card.
+    */
+    cost:
+      event.costMode === "none" || event.costAmountMinor === null
+        ? copy.money.free
+        : formatMoney(event.costAmountMinor, event.currency, copy.intlLocale),
+    /** True only when that amount is per head, which the card says out loud. */
+    costPerPerson: event.costMode === "per_person",
     isClosed: event.isClosed,
+    colorIndex: paletteIndexFor(event.eventTypeId),
     attendingCount: event.attendingCount,
     firstAttendees: event.firstAttendees,
     managePath: managePath(event.publicToken, event.organizerToken),

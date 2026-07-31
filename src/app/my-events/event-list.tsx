@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@stackmyth/accordion";
 import { Badge } from "@stackmyth/badge";
 import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";
@@ -32,7 +31,12 @@ export interface EventListItem {
   isPast: boolean;
   location: string | null;
   typeLabel: string | null;
+  /** Already formatted, currency and all — or the word for "free". */
+  cost: string;
+  costPerPerson: boolean;
   isClosed: boolean;
+  /** 0–5, hashed from the event type so a kind of event keeps its colour. */
+  colorIndex: number;
   attendingCount: number;
   firstAttendees: string[];
   managePath: string;
@@ -135,27 +139,99 @@ export function EventList({ events }: { events: EventListItem[] }) {
 }
 
 /**
- * A single event at a glance: what, when, who, where.
+ * The bands, in the brand's own tones.
  *
- * The actions live behind a details toggle. Four buttons per card turned a list
- * of five events into a page you had to scroll to count them; collapsed, the
- * whole history fits on one screen and the actions are one tap away.
+ * These are the five pastel pairs the identity actually ships — the chapitas,
+ * plus the soft orange derived for it — rather than Stackmyth's generic
+ * `--sm-*-soft` steps, which are the same idea in somebody else's palette. The
+ * orange leads because it is the brand's, and the list is read top down.
+ *
+ * Each pair is a background with the text colour meant to sit on it, and both
+ * are redefined for dark mode in `brand-theme.css`, so a band inverts with the
+ * page instead of staying a bright strip on a dark card.
+ *
+ * Colour here says "kind of event", never "state" — the state has a badge two
+ * lines below, and the two must not be read as the same signal. Which is why
+ * past events leave this palette entirely.
+ */
+const BANDS = [
+  { background: "var(--junti-naranja-suave)", text: "var(--junti-naranja-suave-texto)" },
+  { background: "var(--junti-espera-bg)", text: "var(--junti-espera-fg)" },
+  { background: "var(--junti-talvez-bg)", text: "var(--junti-talvez-fg)" },
+  { background: "var(--junti-viene-bg)", text: "var(--junti-viene-fg)" },
+  { background: "var(--junti-error-bg)", text: "var(--junti-error-fg)" },
+] as const;
+
+/**
+ * A single event at a glance: what, when, who, where, how much.
+ *
+ * **A coloured band, a body, and a footer split by a torn line.** The band
+ * carries the two things you scan a history for — what kind of event it was
+ * and when — and its colour is the kind, so a season of Thursday football
+ * reads as one stripe running down the list. Past events drop to a grey band:
+ * on a list that is mostly history, "already happened" is worth a colour of
+ * its own more than a sixth hue is.
+ *
+ * **The two actions you use every week are visible.** Sharing and managing sit
+ * in the footer beside the price; duplicating lives behind the `…`. That
+ * replaced a disclosure holding all four, which charged a tap before anything
+ * on the card could be done — see {@link EventCardActions}.
+ *
+ * The card sets `padding="0"` and the regions pad themselves, because a band
+ * that stops short of the card's edge is a stripe rather than a header.
  */
 function EventCard({ event }: { event: EventListItem }) {
   const { copy } = useCopy();
 
+  /*
+    Past events leave the palette for the brand's chip grey. The band still
+    exists — the card would lose its shape without one — but it stops competing
+    with the ones ahead of you, and on a history that is mostly past that is
+    worth more than a sixth hue.
+
+    A named brand token, and not the `--sm-bg-muted` this reached for first:
+    that token does not exist, and an undefined custom property makes the whole
+    declaration invalid, so the band rendered transparent. Caught by measuring
+    the colour, which is the only way that kind of typo announces itself.
+  */
+  const band = event.isPast
+    ? { background: "var(--junti-chip)", text: "var(--junti-texto)" }
+    : BANDS[event.colorIndex % BANDS.length];
+
   return (
-    <Card surface="outlined">
+    <Card surface="outlined" padding="0">
+      <Box className="event-band" backgroundColor={band.background} color={band.text} px="5" py="3">
+        <Flex justify="between" align="center" gap="3">
+          <Box minWidth="0">
+            <Text variant="small" weight="semibold">
+              {event.typeLabel ?? copy.auth.eventFallbackLabel}
+            </Text>
+          </Box>
+          <Box flexShrink={0}>
+            <Text variant="small" weight="medium">
+              {event.when}
+            </Text>
+          </Box>
+        </Flex>
+      </Box>
+
+      {/*
+        Every region pads itself, because `padding="0"` on the Card sets both
+        `--sm-card-padding` and `--sm-card-content-padding` — one prop for two
+        boxes. Zeroing it to let the band reach the card's edge left the title
+        one pixel off the border while the band's own label sat 20px in: two
+        left edges inside a single card.
+
+        So the card is three bands of the same `5` inset — colour, body, stub —
+        and one full-width rule between the last two. Everything that starts a
+        line starts at 20px from the left; everything that ends one ends 20px
+        from the right, the badge and the `…` included.
+      */}
       <CardContent>
-        <Stack gap="3">
+        <Stack gap="3" px="5" py="4">
           <Flex justify="between" align="start" gap="3">
             <Box minWidth="0">
-              <Stack gap="1">
-                <Text weight="semibold">{event.title}</Text>
-                <Text variant="small" color="muted">
-                  {event.when}
-                </Text>
-              </Stack>
+              <Text weight="semibold">{event.title}</Text>
             </Box>
 
             <Box flexShrink={0}>
@@ -163,20 +239,13 @@ function EventCard({ event }: { event: EventListItem }) {
                 <Badge variant="error" size="sm" soft>
                   {copy.event.closedBadge}
                 </Badge>
-              ) : event.typeLabel ? (
-                <Badge variant="info" size="sm" soft>
-                  {event.typeLabel}
+              ) : (
+                <Badge variant={event.isPast ? "secondary" : "success"} size="sm" soft>
+                  {event.isPast ? copy.auth.statusPast : copy.auth.statusUpcoming}
                 </Badge>
-              ) : null}
+              )}
             </Box>
           </Flex>
-
-          <AttendeeStack
-            names={event.firstAttendees}
-            total={event.attendingCount}
-            emptyLabel={copy.auth.nobodyYet}
-            moreLabel={copy.auth.moreParticipants}
-          />
 
           {event.location ? (
             <Flex gap="2" align="center">
@@ -189,25 +258,70 @@ function EventCard({ event }: { event: EventListItem }) {
             </Flex>
           ) : null}
 
-          {/*
-            Accordion, not a native <details>: the skills name it as the
-            primitive for a disclosure and ban hand-rolled toggles. It also
-            costs nothing here — the native version needed thirty lines of
-            CSS to look right and gave an 18px tap target.
-          */}
-          <Accordion type="single" collapsible>
-            <AccordionItem value="actions">
-              <AccordionTrigger>{copy.common.options}</AccordionTrigger>
-              <AccordionContent>
-                <EventCardActions
-                  eventId={event.id}
-                  managePath={event.managePath}
-                  whatsAppUrl={event.whatsAppUrl}
-                />
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+          <AttendeeStack
+            names={event.firstAttendees}
+            total={event.attendingCount}
+            emptyLabel={copy.auth.nobodyYet}
+            moreLabel={copy.auth.moreParticipants}
+          />
         </Stack>
+
+        {/*
+          Dashed rather than the solid `Divider`, which draws its line with a
+          background colour and so has no style to change. A `Box` border is a
+          supported prop taking a token, which keeps the tear out of the
+          stylesheet.
+
+          Edge to edge, outside the padded regions on either side of it: a rule
+          that stops 20px short is a divider between two paragraphs, and one
+          that crosses the whole card is a perforation. The stub below it is
+          the part you act on.
+        */}
+        <Box borderTop="1px dashed var(--sm-border-default)" />
+
+        {/*
+          The stub wraps rather than squeezes. Price, two buttons and the `…`
+          need 333px; a 390px phone gives the card 318. Every way of closing
+          those fifteen pixels made something worse — an icon-only "manage" you
+          have to learn, a size below the touch floor, a third action buried —
+          so on the narrowest screens the actions take a line of their own,
+          still ending flush right. Wider than that it is one row, which is
+          what it is on the desktop the list was designed at.
+        */}
+        <Flex justify="between" align="center" gap="3" px="5" py="4" wrap="wrap">
+          {/*
+            One line, not two. The amount and "per person" stacked left of a
+            row of buttons made the footer lean — a two-line block against a
+            one-line one, centred against each other and level with neither.
+            Inline, both sides are single rows sharing a centre line.
+
+            Which is why the qualifier is the short form: "Por persona" beside
+            a price simply wrapped, and put the second line back. `nowrap`
+            keeps it honest — if it ever stops fitting it will show, rather
+            than quietly rebuilding the stack this was meant to remove.
+          */}
+          <Flex gap="2" align="baseline" minWidth="0" wrap="nowrap">
+            <Text weight="semibold">{event.cost}</Text>
+            {event.costPerPerson ? (
+              <Text variant="small" color="muted">
+                {copy.money.perPersonShort}
+              </Text>
+            ) : null}
+          </Flex>
+
+          {/* `auto` so the actions take the whole line once they wrap onto
+              one, which is what keeps them ending where the badge above them
+              does instead of floating in the middle. */}
+          <Box flexShrink={0} flexGrow={1} display="flex" justifySelf="end">
+            <Flex justify="end" width="100%">
+              <EventCardActions
+                eventId={event.id}
+                managePath={event.managePath}
+                whatsAppUrl={event.whatsAppUrl}
+              />
+            </Flex>
+          </Box>
+        </Flex>
       </CardContent>
     </Card>
   );

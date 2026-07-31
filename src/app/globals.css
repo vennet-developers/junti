@@ -164,6 +164,50 @@ body {
 }
 
 /*
+  A dropdown menu sized for a thumb.
+
+  The library ships `--sm-dropdown-item-height: 2rem` — 32px, against the 44px
+  floor this app holds everywhere else — and, unlike every control that gets
+  its padding from `--sm-density-factor`, the menu does not scale with it. On a
+  phone that is a row you aim at rather than tap.
+
+  So the density factor is applied here by hand, which is why the 2rem is
+  written out again: a custom property cannot be defined in terms of itself, so
+  there is no way to say "whatever the library ships, times 1.4". If the
+  library's default moves, this number has to follow — the comment is the only
+  thing tying them together.
+
+  Phones only. On a pointer device 32px is a comfortable menu row and a 45px
+  one reads as a list of buttons, so the desktop menu is left alone. Same 768px
+  boundary the drawer uses.
+*/
+@media (max-width: 767px) {
+  .menu-touch {
+    --sm-dropdown-item-height: calc(2rem * var(--sm-density-factor));
+    --sm-dropdown-item-padding-x: var(--sm-space-3);
+    --sm-dropdown-min-width: 14rem;
+  }
+}
+
+/*
+  The coloured band across the top of an event card.
+
+  The band sets its own text colour — it is one of six palette pairs, or grey
+  once the event has happened — and `Text` does not inherit colour: it resolves
+  `--sm-text-color-base`, which defaults to the page's primary text and would
+  paint dark type on whichever colour the band happens to be.
+
+  Pointing that property at `currentColor` is what makes the pair travel:
+  the `Box` sets `color` through a supported prop, every `Text` inside picks it
+  up, and the light and dark values still come from the tokens rather than from
+  anything written here. `color` alone could not do it, and `style=` on a
+  Stackmyth component is not something this app does.
+*/
+.event-band {
+  --sm-text-color-base: currentColor;
+}
+
+/*
   A combobox dropdown that has to clear a dialog.
 
   The list portals to the document — into the drawer's panel it would be

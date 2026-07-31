@@ -283,10 +283,14 @@ export const es = {
     outstandingLabel: "Falta",
     totalLabel: "Total del evento",
     perPersonLabel: "Por persona",
+    /** El mismo dato al lado de un precio, donde "Por persona" ya no cabe en la línea. */
+    perPersonShort: "c/u",
     paid: "Pagó",
     pending: "Debe",
     waived: "Sin cobro",
     noCost: "Este evento no tiene costo.",
+    /** El mismo hecho que `noCost`, del tamaño de una etiqueta en una tarjeta. */
+    free: "Gratis",
     splitAmong: (n: number) =>
       n === 1 ? "Repartido entre 1 persona" : `Repartido entre ${n} personas`,
     nobodyIn: "Nadie ha confirmado todavía, así que aún no hay nada que repartir.",
@@ -381,6 +385,15 @@ export const es = {
     tabUpcoming: "Próximos",
     tabPast: "Pasados",
     tabAll: "Todos",
+    /*
+      Singulares, para la insignia de una tarjeta. Las pestañas de arriba
+      cuentan varios eventos y por eso van en plural; un evento solo no es
+      "Pasados".
+    */
+    statusUpcoming: "Próximo",
+    statusPast: "Pasado",
+    /** Cuando el evento no tiene tipo en el catálogo: la banda igual necesita decir algo. */
+    eventFallbackLabel: "Evento",
     newEventShort: "Nuevo",
     noMatches: (term: string) => `Ningún evento coincide con “${term}”.`,
     noUpcoming: "No tienes eventos próximos.",

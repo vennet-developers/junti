@@ -13,7 +13,7 @@ import {
   policyEvidence,
   policySubmissions,
 } from "@/db/schema";
-import type { EventRow, ParticipantRow, PaymentRow } from "@/db/schema";
+import type { CostMode, EventRow, ParticipantRow, PaymentRow } from "@/db/schema";
 
 import { attendingCountSql, firstAttendeesSql } from "./roster-select";
 import {
@@ -402,6 +402,11 @@ export interface OrganizerEventSummary {
   isPast: boolean;
   publicToken: string;
   organizerToken: string;
+  /** How the event is charged, if at all — 'none' when it is free. */
+  costMode: CostMode;
+  /** Minor units of `currency`. Null when `costMode` is 'none'. */
+  costAmountMinor: number | null;
+  currency: string;
   attendingCount: number;
   /**
    * The first few people who said they are coming, oldest first, for the
@@ -426,6 +431,9 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
       isPast: sql<boolean>`${events.startsAt} < now()`,
       publicToken: events.publicToken,
       organizerToken: events.organizerToken,
+      costMode: events.costMode,
+      costAmountMinor: events.costAmountMinor,
+      currency: events.currency,
       // Both live in roster-select.ts, which documents why they are written
       // with literal names and which a test renders to SQL to keep them honest.
       attendingCount: attendingCountSql,
@@ -447,6 +455,9 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
     isPast: row.isPast,
     publicToken: row.publicToken,
     organizerToken: row.organizerToken,
+    costMode: row.costMode,
+    costAmountMinor: row.costAmountMinor,
+    currency: row.currency,
     attendingCount: row.attendingCount,
     firstAttendees: row.firstAttendees ?? [],
   }));

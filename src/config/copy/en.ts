@@ -277,10 +277,14 @@ export const en: Copy = {
     outstandingLabel: "Still owed",
     totalLabel: "Event total",
     perPersonLabel: "Each",
+    /** The same fact beside a price, where the label has to share the line. */
+    perPersonShort: "each",
     paid: "Paid",
     pending: "Owes",
     waived: "No charge",
     noCost: "This event is free.",
+    /** The same fact as `noCost`, at the size of a label on a card. */
+    free: "Free",
     splitAmong: (n: number) => (n === 1 ? "Split between 1 person" : `Split between ${n} people`),
     nobodyIn: "Nobody has confirmed yet, so there is nothing to split.",
     progressLabel: (collected: string, total: string) => `${collected} of ${total}`,
@@ -374,6 +378,14 @@ export const en: Copy = {
     tabUpcoming: "Upcoming",
     tabPast: "Past",
     tabAll: "All",
+    /*
+      Singular, for the badge on one card. The tabs above count several events
+      and are plural for that reason; one event is not "Past events".
+    */
+    statusUpcoming: "Upcoming",
+    statusPast: "Past",
+    /** When the event has no catalogue type: the band still has to say something. */
+    eventFallbackLabel: "Event",
     newEventShort: "New",
     noMatches: (term: string) => `No event matches “${term}”.`,
     noUpcoming: "You have no upcoming events.",

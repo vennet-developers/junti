@@ -2,6 +2,8 @@ import { Avatar, AvatarFallback, AvatarGroup } from "@stackmyth/avatar";
 import { Flex } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { paletteIndexFor } from "@/lib/palette";
+
 /**
  * The overlapping faces on an event card.
  *
@@ -14,27 +16,17 @@ import { Text } from "@stackmyth/text";
  */
 
 /**
- * How many colours the palette offers.
+ * The colour, as a class.
  *
- * The colours themselves live in globals.css as `.attendee-avatar--1…6`, each
- * setting the two custom properties the Avatar reads — its background and its
+ * The hash is shared with the event cards — see `paletteIndexFor` — while the
+ * colours themselves live in globals.css as `.attendee-avatar--1…6`, each
+ * setting the two custom properties the Avatar reads: its background and its
  * fallback text. They belong there rather than here because Stackmyth
  * components take their appearance from props and tokens, never from `style=`,
  * and a class can carry a token pair that an inline colour cannot.
  */
-const PALETTE_SIZE = 6;
-
-/**
- * FNV-1a, 32-bit. Any stable hash would do — this one is short, has no
- * dependencies and spreads short strings well, which is what a first name is.
- */
 function paletteClassFor(name: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < name.length; i++) {
-    hash ^= name.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return `attendee-avatar--${(hash % PALETTE_SIZE) + 1}`;
+  return `attendee-avatar--${paletteIndexFor(name) + 1}`;
 }
 
 function initialsOf(name: string): string {
