@@ -359,15 +359,13 @@ export const es = {
       sitio y de app, en una sola línea: «© <año> Vennet SAS. <Producto> es un
       producto de Vennet. Todos los derechos reservados.»
 
-      Partida en tres para que «Vennet» pueda ser el enlace sin construir la
-      frase por concatenación — el orden de las palabras no es el mismo en
-      todos los idiomas, y una oración armada con fragmentos solo sale bien en
-      aquel para el que se escribió.
+      Una sola cadena: el enlace lo lleva la marca de Vennet encima, así que
+      la frase no tiene que partirse para hospedarlo — y una oración armada
+      por concatenación solo sale bien en el idioma para el que se escribió.
     */
-    legalBefore: (year: number) => `© ${year} Vennet SAS. ${BRAND_NAME} es un producto de`,
-    /* Arranca con el punto que cierra la frase anterior: el enlace es la
-       última palabra de esa oración, no la primera de esta. */
-    legalAfter: ". Todos los derechos reservados.",
+    legal: (year: number) =>
+      `© ${year} Vennet SAS. ${BRAND_NAME} es un producto de Vennet. Todos los derechos reservados.`,
+    /** Nombre accesible del enlace que envuelve la marca. */
     vennetLabel: "Vennet",
   },
 

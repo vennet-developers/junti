@@ -348,13 +348,12 @@ export const en: Copy = {
   footer: {
     /*
       The legal line Vennet's brand manual prescribes for the site and app
-      footer, on a single line. Split in three so "Vennet" can be the link
-      without assembling the sentence by concatenation.
+      footer, on a single line — one string, because the mark above it carries
+      the link, so the sentence never has to be split to host one.
     */
-    legalBefore: (year: number) => `© ${year} Vennet SAS. ${BRAND_NAME} is a`,
-    /* Leading space, not a full stop: here the link is an adjective inside
-       the sentence ("a Vennet product"), where Spanish ends it. */
-    legalAfter: " product. All rights reserved.",
+    legal: (year: number) =>
+      `© ${year} Vennet SAS. ${BRAND_NAME} is a Vennet product. All rights reserved.`,
+    /** Accessible name for the link wrapping the mark. */
     vennetLabel: "Vennet",
   },
 

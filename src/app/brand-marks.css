@@ -68,3 +68,52 @@
   --sm-warning-soft: var(--junti-debe-bg);
   --sm-warning-soft-text: var(--junti-debe-fg);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   La marca de Vennet · the house's mark in the footer
+
+   Vennet's smile is a single stroked curve with its colour baked into the
+   artwork, so it ships in two finishes and the page picks one. Not a filter and
+   not a recolour: a logo repainted by its host is no longer the logo.
+
+   The selection mirrors how this app decides everything else about appearance —
+   `data-mode` on <html> when the reader forced one, `prefers-color-scheme`
+   otherwise. Written in that order so a forced light theme on a dark OS gets
+   the ink mark, which a bare media query would get wrong.
+   ═══════════════════════════════════════════════════════════════════════ */
+.vennet-mark {
+  display: inline-flex;
+  /* The link is the logo; an underline across a drawn mark reads as a mistake. */
+  text-decoration: none;
+  /* Quiet by default — it is a credit, not a call to action — and full strength
+     on hover and on keyboard focus. */
+  opacity: 0.75;
+  transition: opacity var(--sm-transition);
+}
+
+.vennet-mark:hover,
+.vennet-mark:focus-visible {
+  opacity: 1;
+}
+
+.vennet-mark__art--dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode="light"]) .vennet-mark__art--light {
+    display: none;
+  }
+
+  :root:not([data-mode="light"]) .vennet-mark__art--dark {
+    display: inline;
+  }
+}
+
+:root[data-mode="dark"] .vennet-mark__art--light {
+  display: none;
+}
+
+:root[data-mode="dark"] .vennet-mark__art--dark {
+  display: inline;
+}
