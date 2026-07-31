@@ -26,6 +26,23 @@ import { DialogContent } from "@stackmyth/dialog";
  * widths (iPhone Pro Max 430px, Pixel 412px) — a cap would leave those phones
  * a strip of page down the edge, which is why the phone branch is "100%".
  *
+ * **On a phone the sheet is the whole viewport, and the height says so.** For
+ * a top sheet the library reads `size` as a height, and the default `md` is
+ * 50dvh — the panel ended half way down the screen with its own inner
+ * scrollbar while the page sat unusable behind the other half. That is the
+ * height the right-hand placement always got for free from `height: 100%`.
+ *
+ * `height="100dvh"` rather than `size="full"`, which also reaches 100dvh: the
+ * `full` variant is a full-bleed surface, and it zeroes the padding, border
+ * and radius along with it — the title and the close button ended up against
+ * the glass. The `height` prop is written inline, so it beats the class-level
+ * 50dvh and leaves everything else alone. `dvh`, not `vh`, because mobile
+ * browsers shrink the viewport as their chrome retracts and `vh` keeps
+ * measuring the taller one, hanging the last row below the fold.
+ *
+ * Nothing is passed on the desktop branch: for a side panel `size` means
+ * WIDTH, and the height is already 100%.
+ *
  * `useIsMobile` reads `matchMedia` after hydration, which is fine here for a
  * reason worth stating: the panel renders nothing until it is opened, and
  * opening requires a tap, which requires hydration. There is no SSR frame in
@@ -37,11 +54,19 @@ import { DialogContent } from "@stackmyth/dialog";
  * gesture must be decisively vertical (more Y than X, past a threshold) so
  * horizontal scrolling inside the panel never closes it by accident.
  *
+ * It also has to keep its hands off text. A drag inside an input is how you
+ * place a caret and select — the drawer now carries a sign-in field, and
+ * before it did, every target in here was a button where a drag meant nothing
+ * else. Gestures starting on an entry field are left to the field.
+ *
  * Dismissal arrives as an `onDismiss` callback rather than through a dialog
  * context, because the library does not export one — both menus already own
  * their `open` state, so they simply hand the setter down.
  */
 const SWIPE_DISMISS_PX = 60;
+
+/** Where a drag means "select text", not "push the sheet away". */
+const TEXT_ENTRY_SELECTOR = "input, textarea, [contenteditable]";
 
 export function DrawerContent({
   onDismiss,
@@ -56,7 +81,18 @@ export function DrawerContent({
 
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     const touch = event.touches[0];
-    if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
+    if (!touch) return;
+
+    // Started on a field: leave the whole gesture alone. Recorded as null
+    // rather than simply skipped, so a previous start cannot linger and turn
+    // this touch's release into a dismissal.
+    const target = event.target as Element | null;
+    if (target?.closest?.(TEXT_ENTRY_SELECTOR)) {
+      touchStart.current = null;
+      return;
+    }
+
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
@@ -81,6 +117,7 @@ export function DrawerContent({
       {...props}
       placement={isMobile ? "top" : "right"}
       width={isMobile ? "100%" : "26rem"}
+      height={isMobile ? "100dvh" : undefined}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     />

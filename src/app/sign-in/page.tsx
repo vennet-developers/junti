@@ -6,12 +6,11 @@ import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { SignInForm } from "@/components/sign-in-form";
 import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { resolvePreferences } from "@/lib/preferences";
 import { getCurrentUser } from "@/lib/supabase/server";
-
-import { SignInForm } from "./sign-in-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { copy } = await getViewerCopy();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useId, useState, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Field, FieldError, FieldLabel } from "@stackmyth/field";
@@ -24,9 +24,15 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
  *   password to invent, lose or leak.
  *
  * Both land on /auth/callback, which exchanges the code for a session.
+ *
+ * Rendered on `/sign-in` and inside {@link GuestMenu}'s drawer, which is why
+ * the email field's id comes from `useId` rather than being written out: on
+ * the sign-in page itself both are mounted at once, and two elements sharing
+ * an id would leave one label pointing at the other's input.
  */
 export function SignInForm({ redirectTo }: { redirectTo: string }) {
   const { copy } = useCopy();
+  const emailId = useId();
   const [pending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -97,9 +103,9 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
       <form onSubmit={signInWithEmail} noValidate>
         <Stack gap="4">
           <Field invalid={Boolean(error)}>
-            <FieldLabel htmlFor="sign-in-email">{copy.auth.emailLabel}</FieldLabel>
+            <FieldLabel htmlFor={emailId}>{copy.auth.emailLabel}</FieldLabel>
             <Input
-              id="sign-in-email"
+              id={emailId}
               name="email"
               type="email"
               inputMode="email"
