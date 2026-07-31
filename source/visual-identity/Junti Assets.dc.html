@@ -1,103 +1,456 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-<meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  body { margin: 0; background: #EDE8E0; }
-  a { color: #D9541F; text-decoration: none; }
-  a:hover { color: #09090B; }
-</style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta charset="utf-8" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          body {
+            margin: 0;
+            background: #ede8e0;
+          }
+          a {
+            color: #d9541f;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #09090b;
+          }
+        </style>
+      </helmet>
 
-<div style="background:#EDE8E0;color:#09090B;font-family:'Instrument Sans',system-ui,sans-serif;padding:48px 48px 80px">
-  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;letter-spacing:-0.045em;margin:0 0 8px">Assets para exportar</h1>
-  <p style="font-size:16px;color:#57534E;margin:0 0 40px;max-width:660px">Cada pieza aislada con fondo transparente. El tablero a cuadros marca la transparencia y no se captura.</p>
+      <div
+        style="
+          background: #ede8e0;
+          color: #09090b;
+          font-family: &quot;Instrument Sans&quot;, system-ui, sans-serif;
+          padding: 48px 48px 80px;
+        "
+      >
+        <h1
+          style="
+            font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+            font-weight: 800;
+            font-size: 40px;
+            letter-spacing: -0.045em;
+            margin: 0 0 8px;
+          "
+        >
+          Assets para exportar
+        </h1>
+        <p style="font-size: 16px; color: #57534e; margin: 0 0 40px; max-width: 660px">
+          Cada pieza aislada con fondo transparente. El tablero a cuadros marca la transparencia y
+          no se captura.
+        </p>
 
-  <div style="display:flex;flex-wrap:wrap;gap:36px;align-items:flex-start">
+        <div style="display: flex; flex-wrap: wrap; gap: 36px; align-items: flex-start">
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >chapa-principal</span
+            >
+            <div
+              style="
+                background-color: #ffffff;
+                background-image:
+                  linear-gradient(
+                    45deg,
+                    #e4ded4 25%,
+                    transparent 25%,
+                    transparent 75%,
+                    #e4ded4 75%
+                  ),
+                  linear-gradient(45deg, #e4ded4 25%, transparent 25%, transparent 75%, #e4ded4 75%);
+                background-size: 16px 16px;
+                background-position:
+                  0 0,
+                  8px 8px;
+                border-radius: 12px;
+                display: inline-block;
+              "
+            >
+              <div id="a-chapa" style="padding: 20px; display: inline-block">
+                <div
+                  style="
+                    transform: rotate(-4deg);
+                    background: #ff7a3d;
+                    border-radius: 26px;
+                    padding: 22px 44px 26px;
+                    display: inline-block;
+                  "
+                >
+                  <span
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 88px;
+                      letter-spacing: -0.055em;
+                      color: #09090b;
+                      line-height: 1;
+                      display: block;
+                    "
+                    >junti<span style="color: #faf7f2">.</span></span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">chapa-principal</span>
-      <div style="background-color:#FFFFFF;background-image:linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%),linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:12px;display:inline-block">
-        <div id="a-chapa" style="padding:20px;display:inline-block">
-          <div style="transform:rotate(-4deg);background:#FF7A3D;border-radius:26px;padding:22px 44px 26px;display:inline-block">
-            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#09090B;line-height:1;display:block">junti<span style="color:#FAF7F2">.</span></span>
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >chapa-inversa</span
+            >
+            <div
+              style="
+                background-color: #ffffff;
+                background-image:
+                  linear-gradient(
+                    45deg,
+                    #e4ded4 25%,
+                    transparent 25%,
+                    transparent 75%,
+                    #e4ded4 75%
+                  ),
+                  linear-gradient(45deg, #e4ded4 25%, transparent 25%, transparent 75%, #e4ded4 75%);
+                background-size: 16px 16px;
+                background-position:
+                  0 0,
+                  8px 8px;
+                border-radius: 12px;
+                display: inline-block;
+              "
+            >
+              <div id="a-chapa-inv" style="padding: 20px; display: inline-block">
+                <div
+                  style="
+                    transform: rotate(-4deg);
+                    background: #09090b;
+                    border-radius: 26px;
+                    padding: 22px 44px 26px;
+                    display: inline-block;
+                  "
+                >
+                  <span
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 88px;
+                      letter-spacing: -0.055em;
+                      color: #faf7f2;
+                      line-height: 1;
+                      display: block;
+                    "
+                    >junti<span style="color: #ff7a3d">.</span></span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >wordmark-tinta</span
+            >
+            <div
+              style="
+                background-color: #ffffff;
+                background-image:
+                  linear-gradient(
+                    45deg,
+                    #e4ded4 25%,
+                    transparent 25%,
+                    transparent 75%,
+                    #e4ded4 75%
+                  ),
+                  linear-gradient(45deg, #e4ded4 25%, transparent 25%, transparent 75%, #e4ded4 75%);
+                background-size: 16px 16px;
+                background-position:
+                  0 0,
+                  8px 8px;
+                border-radius: 12px;
+                display: inline-block;
+              "
+            >
+              <div id="a-word-tinta" style="padding: 20px; display: inline-block">
+                <span
+                  style="
+                    font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                    font-weight: 800;
+                    font-size: 88px;
+                    letter-spacing: -0.055em;
+                    color: #09090b;
+                    line-height: 1;
+                    display: block;
+                  "
+                  >junti<span style="color: #ff7a3d">.</span></span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >wordmark-crema</span
+            >
+            <div
+              style="
+                background-color: #4a4a52;
+                background-image:
+                  linear-gradient(
+                    45deg,
+                    #3a3a42 25%,
+                    transparent 25%,
+                    transparent 75%,
+                    #3a3a42 75%
+                  ),
+                  linear-gradient(45deg, #3a3a42 25%, transparent 25%, transparent 75%, #3a3a42 75%);
+                background-size: 16px 16px;
+                background-position:
+                  0 0,
+                  8px 8px;
+                border-radius: 12px;
+                display: inline-block;
+              "
+            >
+              <div id="a-word-crema" style="padding: 20px; display: inline-block">
+                <span
+                  style="
+                    font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                    font-weight: 800;
+                    font-size: 88px;
+                    letter-spacing: -0.055em;
+                    color: #faf7f2;
+                    line-height: 1;
+                    display: block;
+                  "
+                  >junti<span style="color: #ff7a3d">.</span></span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >icono-app-naranja</span
+            >
+            <div
+              id="a-icon-naranja"
+              style="
+                width: 256px;
+                height: 256px;
+                border-radius: 77px;
+                background: #ff7a3d;
+                overflow: hidden;
+                position: relative;
+              "
+            >
+              <span
+                style="
+                  position: absolute;
+                  left: 45px;
+                  top: -187px;
+                  font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                  font-weight: 800;
+                  font-size: 430px;
+                  letter-spacing: -0.055em;
+                  line-height: 1;
+                  transform: rotate(-4deg);
+                  transform-origin: 34% 66%;
+                  color: #09090b;
+                  white-space: nowrap;
+                "
+                >j<span style="color: #faf7f2">.</span></span
+              >
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >icono-app-tinta</span
+            >
+            <div
+              id="a-icon-tinta"
+              style="
+                width: 256px;
+                height: 256px;
+                border-radius: 77px;
+                background: #09090b;
+                overflow: hidden;
+                position: relative;
+              "
+            >
+              <span
+                style="
+                  position: absolute;
+                  left: 45px;
+                  top: -187px;
+                  font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                  font-weight: 800;
+                  font-size: 430px;
+                  letter-spacing: -0.055em;
+                  line-height: 1;
+                  transform: rotate(-4deg);
+                  transform-origin: 34% 66%;
+                  color: #faf7f2;
+                  white-space: nowrap;
+                "
+                >j<span style="color: #ff7a3d">.</span></span
+              >
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >icono-app-papel</span
+            >
+            <div
+              id="a-icon-papel"
+              style="
+                width: 256px;
+                height: 256px;
+                border-radius: 77px;
+                background: #faf7f2;
+                overflow: hidden;
+                position: relative;
+              "
+            >
+              <span
+                style="
+                  position: absolute;
+                  left: 45px;
+                  top: -187px;
+                  font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                  font-weight: 800;
+                  font-size: 430px;
+                  letter-spacing: -0.055em;
+                  line-height: 1;
+                  transform: rotate(-4deg);
+                  transform-origin: 34% 66%;
+                  color: #09090b;
+                  white-space: nowrap;
+                "
+                >j<span style="color: #ff7a3d">.</span></span
+              >
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 12px">
+            <span
+              style="
+                font-size: 13px;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: #8a8378;
+                font-weight: 600;
+              "
+              >marca-j-tinta</span
+            >
+            <div
+              style="
+                background-color: #ffffff;
+                background-image:
+                  linear-gradient(
+                    45deg,
+                    #e4ded4 25%,
+                    transparent 25%,
+                    transparent 75%,
+                    #e4ded4 75%
+                  ),
+                  linear-gradient(45deg, #e4ded4 25%, transparent 25%, transparent 75%, #e4ded4 75%);
+                background-size: 16px 16px;
+                background-position:
+                  0 0,
+                  8px 8px;
+                border-radius: 12px;
+                display: inline-block;
+              "
+            >
+              <div
+                id="a-marca-j"
+                style="width: 256px; height: 256px; overflow: hidden; position: relative"
+              >
+                <span
+                  style="
+                    position: absolute;
+                    left: 45px;
+                    top: -187px;
+                    font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                    font-weight: 800;
+                    font-size: 430px;
+                    letter-spacing: -0.055em;
+                    line-height: 1;
+                    transform: rotate(-4deg);
+                    transform-origin: 34% 66%;
+                    color: #09090b;
+                    white-space: nowrap;
+                  "
+                  >j<span style="color: #ff7a3d">.</span></span
+                >
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">chapa-inversa</span>
-      <div style="background-color:#FFFFFF;background-image:linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%),linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:12px;display:inline-block">
-        <div id="a-chapa-inv" style="padding:20px;display:inline-block">
-          <div style="transform:rotate(-4deg);background:#09090B;border-radius:26px;padding:22px 44px 26px;display:inline-block">
-            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#FAF7F2;line-height:1;display:block">junti<span style="color:#FF7A3D">.</span></span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">wordmark-tinta</span>
-      <div style="background-color:#FFFFFF;background-image:linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%),linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:12px;display:inline-block">
-        <div id="a-word-tinta" style="padding:20px;display:inline-block">
-          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#09090B;line-height:1;display:block">junti<span style="color:#FF7A3D">.</span></span>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">wordmark-crema</span>
-      <div style="background-color:#4A4A52;background-image:linear-gradient(45deg,#3A3A42 25%,transparent 25%,transparent 75%,#3A3A42 75%),linear-gradient(45deg,#3A3A42 25%,transparent 25%,transparent 75%,#3A3A42 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:12px;display:inline-block">
-        <div id="a-word-crema" style="padding:20px;display:inline-block">
-          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:88px;letter-spacing:-0.055em;color:#FAF7F2;line-height:1;display:block">junti<span style="color:#FF7A3D">.</span></span>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">icono-app-naranja</span>
-      <div id="a-icon-naranja" style="width:256px;height:256px;border-radius:77px;background:#FF7A3D;overflow:hidden;position:relative">
-        <span style="position:absolute;left:45px;top:-187px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:430px;letter-spacing:-0.055em;line-height:1;transform:rotate(-4deg);transform-origin:34% 66%;color:#09090B;white-space:nowrap">j<span style="color:#FAF7F2">.</span></span>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">icono-app-tinta</span>
-      <div id="a-icon-tinta" style="width:256px;height:256px;border-radius:77px;background:#09090B;overflow:hidden;position:relative">
-        <span style="position:absolute;left:45px;top:-187px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:430px;letter-spacing:-0.055em;line-height:1;transform:rotate(-4deg);transform-origin:34% 66%;color:#FAF7F2;white-space:nowrap">j<span style="color:#FF7A3D">.</span></span>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">icono-app-papel</span>
-      <div id="a-icon-papel" style="width:256px;height:256px;border-radius:77px;background:#FAF7F2;overflow:hidden;position:relative">
-        <span style="position:absolute;left:45px;top:-187px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:430px;letter-spacing:-0.055em;line-height:1;transform:rotate(-4deg);transform-origin:34% 66%;color:#09090B;white-space:nowrap">j<span style="color:#FF7A3D">.</span></span>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <span style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#8A8378;font-weight:600">marca-j-tinta</span>
-      <div style="background-color:#FFFFFF;background-image:linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%),linear-gradient(45deg,#E4DED4 25%,transparent 25%,transparent 75%,#E4DED4 75%);background-size:16px 16px;background-position:0 0,8px 8px;border-radius:12px;display:inline-block">
-        <div id="a-marca-j" style="width:256px;height:256px;overflow:hidden;position:relative">
-          <span style="position:absolute;left:45px;top:-187px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:430px;letter-spacing:-0.055em;line-height:1;transform:rotate(-4deg);transform-origin:34% 66%;color:#09090B;white-space:nowrap">j<span style="color:#FF7A3D">.</span></span>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280}}"></script>
-</body>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280}}'></script>
+  </body>
 </html>

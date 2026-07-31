@@ -10,7 +10,6 @@ import {
   Dialog,
   DialogBody,
   DialogClose,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -30,6 +29,7 @@ import { Text } from "@stackmyth/text";
 import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
 import { useCopy } from "@/components/copy-provider";
+import { DrawerContent } from "@/components/drawer-content";
 import { ROUTES } from "@/config/routes";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { setTheme } from "@/lib/theme-actions";
@@ -41,9 +41,8 @@ import { setTheme } from "@/lib/theme-actions";
  * {@link GuestMenu} — the two are the same control in two states and must not
  * diverge. In short: this holds a segmented control, which is not a menu
  * command, and a phone needs a real close button because a full-width panel
- * covers the capsule that opened it. It fills the viewport on a phone and caps
- * at 416px from 768px up — see `.junti-drawer` for why that ceiling is a media
- * query rather than a width cap.
+ * covers the capsule that opened it. It fills the viewport on a phone and is a
+ * 416px panel from 768px up — the split lives in {@link DrawerContent}.
  *
  * The destinations are real anchors now. As menu items they could not be:
  * DropdownMenuItem renders a div and exposes no `asChild`, so cmd-click could
@@ -139,7 +138,7 @@ export function ProfileMenu({
         </Button>
       </DialogTrigger>
 
-      <DialogContent placement="right" width="100%" className="junti-drawer">
+      <DrawerContent onDismiss={() => setOpen(false)}>
         <DialogHeader bordered>
           <Flex justify="between" align="start" gap="3">
             <Flex gap="3" align="center" minWidth="0">
@@ -249,7 +248,7 @@ export function ProfileMenu({
             </Button>
           </Stack>
         </DialogBody>
-      </DialogContent>
+      </DrawerContent>
     </Dialog>
   );
 }

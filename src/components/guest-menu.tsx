@@ -9,7 +9,6 @@ import {
   Dialog,
   DialogBody,
   DialogClose,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -20,6 +19,7 @@ import { Text } from "@stackmyth/text";
 import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
 import { useCopy } from "@/components/copy-provider";
+import { DrawerContent } from "@/components/drawer-content";
 import { LOCALES, getCopy, type Locale } from "@/config/copy";
 import { ROUTES, signInPath } from "@/config/routes";
 import { setLocale } from "@/lib/locale-actions";
@@ -41,12 +41,8 @@ import { setTheme } from "@/lib/theme-actions";
  * mattering most on a phone, where a full-width panel covers the capsule that
  * opened it.
  *
- * It is the whole viewport on a phone and a 416px panel from 768px up. The width
- * is 100% and the ceiling is a media query in `.junti-drawer` — not a `min()`
- * cap, which is what this was first and which was wrong on real hardware: 26rem
- * is 416px, and that sits inside the range of actual phone widths, so a 430px
- * iPhone kept a strip of page down its edge. No breakpoint hook either way, so
- * nothing here can mismatch during hydration.
+ * It is the whole viewport on a phone and a 416px panel from 768px up — the
+ * split, and why it cannot be a CSS cap, is documented in {@link DrawerContent}.
  *
  * Most people who see this never sign in — they opened a WhatsApp link — so
  * language lives here rather than only on `/profile`, which a guest has no way
@@ -112,7 +108,7 @@ export function GuestMenu({
         </Button>
       </DialogTrigger>
 
-      <DialogContent placement="right" width="100%" className="junti-drawer">
+      <DrawerContent onDismiss={() => setOpen(false)}>
         <DialogHeader bordered>
           <Flex justify="between" align="center" gap="3">
             <DialogTitle>{copy.nav.guestMenuLabel}</DialogTitle>
@@ -194,7 +190,7 @@ export function GuestMenu({
             </Stack>
           </Stack>
         </DialogBody>
-      </DialogContent>
+      </DrawerContent>
     </Dialog>
   );
 }

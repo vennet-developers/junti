@@ -8,10 +8,10 @@
 > **0.2.0**, and every status below was verified against the installed
 > artifacts, not the repo.
 >
-> | Release | Gaps fixed |
-> | ------- | ---------- |
-> | 0.20.0  | #4 (`loadingLabel`), #5 (`Select name`), #6 (`Alert live`), #12 (`DatePicker locale`), #15 (`reValidateMode`) |
-> | 0.21.0  | #11 (`valueFormat="date"`) |
+> | Release | Gaps fixed                                                                                                                                                                                                                                                    |
+> | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | 0.20.0  | #4 (`loadingLabel`), #5 (`Select name`), #6 (`Alert live`), #12 (`DatePicker locale`), #15 (`reValidateMode`)                                                                                                                                                 |
+> | 0.21.0  | #11 (`valueFormat="date"`)                                                                                                                                                                                                                                    |
 > | 0.22.0  | #1 (css self-contained), #2+#16 (manifests populated + `require()` fixed), #7 (RSC-safe pure packages), #8 (`Container`/`Section` LayoutProps), #9 (state accent tokens), #10 (`<Form>` element), #13 (documented), #14 (Stack aliases + SelectValue devWarn) |
 >
 > Workarounds retired in this app as each release landed: the composed
@@ -678,7 +678,7 @@ already used one component away.
 **Not just this component.** Reading the manifests for the packages this app
 touches, `asChild` exists on `Button` and `DropdownMenuTrigger` and nowhere
 else — `ContextMenu`, `NavigationMenu`, `ListItem`, `Tabs` and `Command` all
-render fixed elements too. Menus and navigation lists are *where links live*,
+render fixed elements too. Menus and navigation lists are _where links live_,
 so this reads less like an oversight in one component than like a prop that
 was added where it was first needed and never generalised.
 

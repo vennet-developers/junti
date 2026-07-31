@@ -1,52 +1,61 @@
 /* Junti · tokens de marca · v2 (modo claro por defecto) */
 :root {
   /* Superficies */
-  --junti-papel:        #FAF7F2;
-  --junti-tarjeta:      #FFFFFF;
-  --junti-borde:        #E4DED4;
-  --junti-borde-fuerte: #D6CFC3;
+  --junti-papel: #faf7f2;
+  --junti-tarjeta: #ffffff;
+  --junti-borde: #e4ded4;
+  --junti-borde-fuerte: #d6cfc3;
 
   /* Tinta */
-  --junti-tinta:        #09090B;
-  --junti-texto:        #57534E;
-  --junti-texto-suave:  #6B655C;
-  --junti-texto-tenue:  #8A8378;
+  --junti-tinta: #09090b;
+  --junti-texto: #57534e;
+  --junti-texto-suave: #6b655c;
+  --junti-texto-tenue: #8a8378;
 
   /* Marca */
-  --junti-naranja:      #FF7A3D; /* chapa, acentos, fondos */
-  --junti-naranja-texto:#D9541F; /* links y texto sobre papel */
+  --junti-naranja: #ff7a3d; /* chapa, acentos, fondos */
+  --junti-naranja-texto: #d9541f; /* links y texto sobre papel */
 
   /* Estados (fondo / texto) */
-  --junti-viene-bg:     #DFF5E4;  --junti-viene-fg:    #0F7A3D;
-  --junti-talvez-bg:    #FBEBC8;  --junti-talvez-fg:   #8A5A00;
-  --junti-debe-bg:      #FF7A3D;  --junti-debe-fg:     #09090B;
-  --junti-noviene-bg:   #EDE8E0;  --junti-noviene-fg:  #57534E;
-  --junti-espera-bg:    #EAE4FB;  --junti-espera-fg:   #5B3FB5;
+  --junti-viene-bg: #dff5e4;
+  --junti-viene-fg: #0f7a3d;
+  --junti-talvez-bg: #fbebc8;
+  --junti-talvez-fg: #8a5a00;
+  --junti-debe-bg: #ff7a3d;
+  --junti-debe-fg: #09090b;
+  --junti-noviene-bg: #ede8e0;
+  --junti-noviene-fg: #57534e;
+  --junti-espera-bg: #eae4fb;
+  --junti-espera-fg: #5b3fb5;
 
   /* Tipografía */
-  --junti-display: 'Bricolage Grotesque', system-ui, sans-serif;
-  --junti-ui:      'Instrument Sans', system-ui, sans-serif;
+  --junti-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --junti-ui: "Instrument Sans", system-ui, sans-serif;
 
   /* Radios */
-  --junti-r-chapa: 0.30em; /* proporcional al alto de la chapa */
-  --junti-r-card:  20px;
+  --junti-r-chapa: 0.3em; /* proporcional al alto de la chapa */
+  --junti-r-card: 20px;
   --junti-r-input: 13px;
 }
 
 [data-theme="dark"] {
-  --junti-papel:        #09090B;
-  --junti-tarjeta:      #17171A;
-  --junti-borde:        #2A2A30;
-  --junti-borde-fuerte: #3F3F46;
-  --junti-tinta:        #FAF7F2;
-  --junti-texto:        #A8A29A;
-  --junti-texto-suave:  #8A8378;
-  --junti-texto-tenue:  #71717A;
-  --junti-naranja-texto:#FF7A3D;
-  --junti-viene-bg:     rgba(74,222,128,0.14);  --junti-viene-fg:   #4ADE80;
-  --junti-talvez-bg:    rgba(251,191,36,0.14);  --junti-talvez-fg:  #FBBF24;
-  --junti-noviene-bg:   rgba(250,247,242,0.08); --junti-noviene-fg: #A8A29A;
-  --junti-espera-bg:    rgba(167,139,250,0.16); --junti-espera-fg:  #A78BFA;
+  --junti-papel: #09090b;
+  --junti-tarjeta: #17171a;
+  --junti-borde: #2a2a30;
+  --junti-borde-fuerte: #3f3f46;
+  --junti-tinta: #faf7f2;
+  --junti-texto: #a8a29a;
+  --junti-texto-suave: #8a8378;
+  --junti-texto-tenue: #71717a;
+  --junti-naranja-texto: #ff7a3d;
+  --junti-viene-bg: rgba(74, 222, 128, 0.14);
+  --junti-viene-fg: #4ade80;
+  --junti-talvez-bg: rgba(251, 191, 36, 0.14);
+  --junti-talvez-fg: #fbbf24;
+  --junti-noviene-bg: rgba(250, 247, 242, 0.08);
+  --junti-noviene-fg: #a8a29a;
+  --junti-espera-bg: rgba(167, 139, 250, 0.16);
+  --junti-espera-fg: #a78bfa;
 }
 
 /* La chapa (logo) */
@@ -54,15 +63,17 @@
   display: inline-block;
   transform: rotate(-4deg);
   background: var(--junti-naranja);
-  border-radius: 0.30em;
-  padding: 0.18em 0.30em 0.22em;
+  border-radius: 0.3em;
+  padding: 0.18em 0.3em 0.22em;
   font-family: var(--junti-display);
   font-weight: 800;
   letter-spacing: -0.055em;
   line-height: 1;
-  color: var(--junti-tinta-fija, #09090B);
+  color: var(--junti-tinta-fija, #09090b);
 }
-.junti-chapa .punto { color: #FAF7F2; }
+.junti-chapa .punto {
+  color: #faf7f2;
+}
 
 /* Chapita de estado */
 .junti-estado {

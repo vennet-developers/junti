@@ -1,160 +1,635 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-<meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="./image-slot.js"></script>
-<style>
-  body { margin: 0; background: #EDE8E0; }
-  a { color: #D9541F; text-decoration: none; }
-  a:hover { color: #09090B; }
-</style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta charset="utf-8" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        <script src="./image-slot.js"></script>
+        <style>
+          body {
+            margin: 0;
+            background: #ede8e0;
+          }
+          a {
+            color: #d9541f;
+            text-decoration: none;
+          }
+          a:hover {
+            color: #09090b;
+          }
+        </style>
+      </helmet>
 
-<div style="background:#EDE8E0;color:#09090B;font-family:'Instrument Sans',system-ui,sans-serif;padding:56px 56px 100px">
-
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:16px">
-    <div>
-      <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:52px;letter-spacing:-0.045em;margin:0 0 12px;line-height:1">La marca en el mundo real</h1>
-      <p style="font-size:18px;line-height:1.5;color:#57534E;margin:0;max-width:640px;text-wrap:pretty">Seis piezas con el logo ya compuesto. Arrastra tus fotos a los recuadros — cada uno trae la búsqueda sugerida en Pexels. Puedes reencuadrar con doble clic.</p>
-    </div>
-    <a href="https://www.pexels.com/es-es/" target="_blank" style="display:inline-flex;align-items:center;gap:8px;border:1.5px solid #D6CFC3;color:#09090B;font-weight:600;font-size:15px;padding:12px 18px;border-radius:11px;white-space:nowrap">Abrir Pexels ↗</a>
-  </div>
-  <p style="font-size:14px;color:#8A8378;margin:0 0 48px">Las fotos de Pexels son de uso libre, sin atribución obligatoria. Igual conviene guardar el nombre del autor.</p>
-
-  <div style="display:flex;flex-direction:column;gap:64px">
-
-    <!-- 1 · Valla en la calle -->
-    <div>
-      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:16px">
-        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;background:#09090B;color:#FAF7F2;border-radius:8px;padding:5px 10px">01</span>
-        <span style="font-size:20px;font-weight:600">Valla en la calle</span>
-        <span style="font-size:14px;color:#8A8378">Buscar en Pexels: <strong style="color:#57534E">billboard city night</strong> · <strong style="color:#57534E">valla publicitaria</strong></span>
-      </div>
-      <div style="position:relative;width:100%;aspect-ratio:16/9;border-radius:20px;overflow:hidden;background:#D6CFC3">
-        <image-slot id="mk-valla" shape="rect" placeholder="Foto de una valla o pared urbana de noche"></image-slot>
-        <div style="position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px">
-          <img src="junti-brand-kit/svg/junti-chapa-principal.svg" alt="junti." style="width:38%;display:block;filter:drop-shadow(0 30px 70px rgba(0,0,0,0.5))">
-          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:30px;letter-spacing:-0.03em;color:#FAF7F2;line-height:1.15;text-align:center;text-shadow:0 4px 22px rgba(0,0,0,0.75)">Organiza sin perseguir a nadie.</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 2 · Teléfono en la cancha -->
-    <div style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-items:stretch">
-      <div>
-        <div style="margin-bottom:16px">
-          <div style="display:flex;align-items:baseline;gap:14px">
-            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;background:#09090B;color:#FAF7F2;border-radius:8px;padding:5px 10px">02</span>
-            <span style="font-size:20px;font-weight:600;white-space:nowrap">En la cancha</span>
+      <div
+        style="
+          background: #ede8e0;
+          color: #09090b;
+          font-family: &quot;Instrument Sans&quot;, system-ui, sans-serif;
+          padding: 56px 56px 100px;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+          "
+        >
+          <div>
+            <h1
+              style="
+                font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                font-weight: 800;
+                font-size: 52px;
+                letter-spacing: -0.045em;
+                margin: 0 0 12px;
+                line-height: 1;
+              "
+            >
+              La marca en el mundo real
+            </h1>
+            <p
+              style="
+                font-size: 18px;
+                line-height: 1.5;
+                color: #57534e;
+                margin: 0;
+                max-width: 640px;
+                text-wrap: pretty;
+              "
+            >
+              Seis piezas con el logo ya compuesto. Arrastra tus fotos a los recuadros — cada uno
+              trae la búsqueda sugerida en Pexels. Puedes reencuadrar con doble clic.
+            </p>
           </div>
-          <div style="font-size:14px;color:#8A8378;margin-top:8px">Pexels: <strong style="color:#57534E">futbol amigos noche</strong></div>
+          <a
+            href="https://www.pexels.com/es-es/"
+            target="_blank"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              border: 1.5px solid #d6cfc3;
+              color: #09090b;
+              font-weight: 600;
+              font-size: 15px;
+              padding: 12px 18px;
+              border-radius: 11px;
+              white-space: nowrap;
+            "
+            >Abrir Pexels ↗</a
+          >
         </div>
-        <div style="position:relative;width:100%;height:520px;border-radius:20px;overflow:hidden;background:#D6CFC3">
-          <image-slot id="mk-cancha" shape="rect" placeholder="Grupo jugando fútbol, cancha de noche"></image-slot>
-          <div style="position:absolute;left:0;right:0;bottom:0;height:52%;pointer-events:none;background:linear-gradient(to top,rgba(9,9,11,0.86),rgba(9,9,11,0.35) 55%,transparent)"></div>
-          <img src="junti-brand-kit/svg/junti-chapa-principal.svg" alt="junti." style="position:absolute;left:32px;top:28px;height:62px;display:block;pointer-events:none;filter:drop-shadow(0 12px 26px rgba(0,0,0,0.5))">
-          <div style="position:absolute;left:36px;right:36px;bottom:34px;pointer-events:none">
-            <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-0.04em;color:#FAF7F2;text-wrap:balance">Van 8 de 12.<br>Faltan 3 por pagar.</div>
-            <div style="font-size:17px;color:rgba(250,247,242,0.7);margin-top:12px">Manda el link y ya.</div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <div style="margin-bottom:16px">
-          <div style="display:flex;align-items:baseline;gap:14px">
-            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;background:#09090B;color:#FAF7F2;border-radius:8px;padding:5px 10px">03</span>
-            <span style="font-size:20px;font-weight:600;white-space:nowrap">Ícono en pantalla</span>
-          </div>
-          <div style="font-size:14px;color:#8A8378;margin-top:8px">Pexels: <strong style="color:#57534E">hand holding phone</strong></div>
-        </div>
-        <div style="position:relative;width:100%;height:520px;border-radius:20px;overflow:hidden;background:#D6CFC3">
-          <image-slot id="mk-mano" shape="rect" placeholder="Mano sosteniendo un teléfono. Pexels: hand holding phone"></image-slot>
-          <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:flex-start;justify-content:flex-end;padding:28px">
-            <div style="background:rgba(250,247,242,0.94);backdrop-filter:blur(8px);border-radius:20px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 18px 40px rgba(0,0,0,0.3)">
-              <img src="junti-brand-kit/svg/junti-icono-app-naranja.svg" alt="Junti" style="width:64px;height:64px;display:block;border-radius:19px">
-              <div>
-                <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px;letter-spacing:-0.03em;line-height:1">junti</div>
-                <div style="font-size:14px;color:#6B655C;margin-top:3px">Fútbol en La 85 · 3 nuevos</div>
+        <p style="font-size: 14px; color: #8a8378; margin: 0 0 48px">
+          Las fotos de Pexels son de uso libre, sin atribución obligatoria. Igual conviene guardar
+          el nombre del autor.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 64px">
+          <!-- 1 · Valla en la calle -->
+          <div>
+            <div style="display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px">
+              <span
+                style="
+                  font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                  font-weight: 800;
+                  font-size: 15px;
+                  background: #09090b;
+                  color: #faf7f2;
+                  border-radius: 8px;
+                  padding: 5px 10px;
+                "
+                >01</span
+              >
+              <span style="font-size: 20px; font-weight: 600">Valla en la calle</span>
+              <span style="font-size: 14px; color: #8a8378"
+                >Buscar en Pexels: <strong style="color: #57534e">billboard city night</strong> ·
+                <strong style="color: #57534e">valla publicitaria</strong></span
+              >
+            </div>
+            <div
+              style="
+                position: relative;
+                width: 100%;
+                aspect-ratio: 16/9;
+                border-radius: 20px;
+                overflow: hidden;
+                background: #d6cfc3;
+              "
+            >
+              <image-slot
+                id="mk-valla"
+                shape="rect"
+                placeholder="Foto de una valla o pared urbana de noche"
+              ></image-slot>
+              <div
+                style="
+                  position: absolute;
+                  inset: 0;
+                  pointer-events: none;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  gap: 34px;
+                "
+              >
+                <img
+                  src="junti-brand-kit/svg/junti-chapa-principal.svg"
+                  alt="junti."
+                  style="
+                    width: 38%;
+                    display: block;
+                    filter: drop-shadow(0 30px 70px rgba(0, 0, 0, 0.5));
+                  "
+                />
+                <span
+                  style="
+                    font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                    font-weight: 700;
+                    font-size: 30px;
+                    letter-spacing: -0.03em;
+                    color: #faf7f2;
+                    line-height: 1.15;
+                    text-align: center;
+                    text-shadow: 0 4px 22px rgba(0, 0, 0, 0.75);
+                  "
+                  >Organiza sin perseguir a nadie.</span
+                >
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- 4 · Stickers -->
-    <div>
-      <div style="display:flex;align-items:baseline;gap:14px;margin-bottom:16px">
-        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;background:#09090B;color:#FAF7F2;border-radius:8px;padding:5px 10px">04</span>
-        <span style="font-size:20px;font-weight:600">Stickers pegados</span>
-        <span style="font-size:14px;color:#8A8378">Pexels: <strong style="color:#57534E">laptop stickers</strong> · <strong style="color:#57534E">nevera portatil</strong> · <strong style="color:#57534E">guitar case</strong></span>
-      </div>
-      <div style="position:relative;width:100%;aspect-ratio:2/1;border-radius:20px;overflow:hidden;background:#D6CFC3">
-        <image-slot id="mk-stickers" shape="rect" placeholder="Superficie donde pegar stickers: portátil, nevera, maleta"></image-slot>
-        <div style="position:absolute;inset:0;pointer-events:none">
-          <img src="junti-brand-kit/svg/junti-chapa-principal.svg" alt="junti." style="position:absolute;left:12%;top:26%;width:26%;transform:rotate(-3deg);filter:drop-shadow(0 6px 14px rgba(0,0,0,0.35))">
-          <span style="position:absolute;left:44%;top:56%;transform:rotate(4deg);font-size:20px;font-weight:600;color:#0F7A3D;background:#DFF5E4;padding:10px 17px;border-radius:11px;box-shadow:0 6px 14px rgba(0,0,0,0.3)">Ya pagué.</span>
-          <span style="position:absolute;left:66%;top:24%;transform:rotate(-6deg);font-size:20px;font-weight:600;color:#FAF7F2;background:#09090B;padding:10px 17px;border-radius:11px;box-shadow:0 6px 14px rgba(0,0,0,0.3)">Yo llevo el balón.</span>
-          <img src="junti-brand-kit/svg/junti-icono-app-naranja.svg" alt="Junti" style="position:absolute;left:36%;top:16%;width:9%;transform:rotate(7deg);border-radius:16%;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.35))">
-        </div>
-      </div>
-    </div>
+          <!-- 2 · Teléfono en la cancha -->
+          <div
+            style="
+              display: grid;
+              grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+              gap: 28px;
+              align-items: stretch;
+            "
+          >
+            <div>
+              <div style="margin-bottom: 16px">
+                <div style="display: flex; align-items: baseline; gap: 14px">
+                  <span
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 15px;
+                      background: #09090b;
+                      color: #faf7f2;
+                      border-radius: 8px;
+                      padding: 5px 10px;
+                    "
+                    >02</span
+                  >
+                  <span style="font-size: 20px; font-weight: 600; white-space: nowrap"
+                    >En la cancha</span
+                  >
+                </div>
+                <div style="font-size: 14px; color: #8a8378; margin-top: 8px">
+                  Pexels: <strong style="color: #57534e">futbol amigos noche</strong>
+                </div>
+              </div>
+              <div
+                style="
+                  position: relative;
+                  width: 100%;
+                  height: 520px;
+                  border-radius: 20px;
+                  overflow: hidden;
+                  background: #d6cfc3;
+                "
+              >
+                <image-slot
+                  id="mk-cancha"
+                  shape="rect"
+                  placeholder="Grupo jugando fútbol, cancha de noche"
+                ></image-slot>
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    height: 52%;
+                    pointer-events: none;
+                    background: linear-gradient(
+                      to top,
+                      rgba(9, 9, 11, 0.86),
+                      rgba(9, 9, 11, 0.35) 55%,
+                      transparent
+                    );
+                  "
+                ></div>
+                <img
+                  src="junti-brand-kit/svg/junti-chapa-principal.svg"
+                  alt="junti."
+                  style="
+                    position: absolute;
+                    left: 32px;
+                    top: 28px;
+                    height: 62px;
+                    display: block;
+                    pointer-events: none;
+                    filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.5));
+                  "
+                />
+                <div
+                  style="
+                    position: absolute;
+                    left: 36px;
+                    right: 36px;
+                    bottom: 34px;
+                    pointer-events: none;
+                  "
+                >
+                  <div
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 40px;
+                      line-height: 1;
+                      letter-spacing: -0.04em;
+                      color: #faf7f2;
+                      text-wrap: balance;
+                    "
+                  >
+                    Van 8 de 12.<br />Faltan 3 por pagar.
+                  </div>
+                  <div style="font-size: 17px; color: rgba(250, 247, 242, 0.7); margin-top: 12px">
+                    Manda el link y ya.
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style="margin-bottom: 16px">
+                <div style="display: flex; align-items: baseline; gap: 14px">
+                  <span
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 15px;
+                      background: #09090b;
+                      color: #faf7f2;
+                      border-radius: 8px;
+                      padding: 5px 10px;
+                    "
+                    >03</span
+                  >
+                  <span style="font-size: 20px; font-weight: 600; white-space: nowrap"
+                    >Ícono en pantalla</span
+                  >
+                </div>
+                <div style="font-size: 14px; color: #8a8378; margin-top: 8px">
+                  Pexels: <strong style="color: #57534e">hand holding phone</strong>
+                </div>
+              </div>
+              <div
+                style="
+                  position: relative;
+                  width: 100%;
+                  height: 520px;
+                  border-radius: 20px;
+                  overflow: hidden;
+                  background: #d6cfc3;
+                "
+              >
+                <image-slot
+                  id="mk-mano"
+                  shape="rect"
+                  placeholder="Mano sosteniendo un teléfono. Pexels: hand holding phone"
+                ></image-slot>
+                <div
+                  style="
+                    position: absolute;
+                    inset: 0;
+                    pointer-events: none;
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: flex-end;
+                    padding: 28px;
+                  "
+                >
+                  <div
+                    style="
+                      background: rgba(250, 247, 242, 0.94);
+                      backdrop-filter: blur(8px);
+                      border-radius: 20px;
+                      padding: 16px;
+                      display: flex;
+                      align-items: center;
+                      gap: 14px;
+                      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+                    "
+                  >
+                    <img
+                      src="junti-brand-kit/svg/junti-icono-app-naranja.svg"
+                      alt="Junti"
+                      style="width: 64px; height: 64px; display: block; border-radius: 19px"
+                    />
+                    <div>
+                      <div
+                        style="
+                          font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                          font-weight: 700;
+                          font-size: 20px;
+                          letter-spacing: -0.03em;
+                          line-height: 1;
+                        "
+                      >
+                        junti
+                      </div>
+                      <div style="font-size: 14px; color: #6b655c; margin-top: 3px">
+                        Fútbol en La 85 · 3 nuevos
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <!-- 5 y 6 · Post y camiseta -->
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:28px;align-items:start">
-      <div>
-        <div style="margin-bottom:16px">
-          <div style="display:flex;align-items:baseline;gap:14px">
-            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;background:#09090B;color:#FAF7F2;border-radius:8px;padding:5px 10px">05</span>
-            <span style="font-size:20px;font-weight:600;white-space:nowrap">Post 1:1</span>
+          <!-- 4 · Stickers -->
+          <div>
+            <div style="display: flex; align-items: baseline; gap: 14px; margin-bottom: 16px">
+              <span
+                style="
+                  font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                  font-weight: 800;
+                  font-size: 15px;
+                  background: #09090b;
+                  color: #faf7f2;
+                  border-radius: 8px;
+                  padding: 5px 10px;
+                "
+                >04</span
+              >
+              <span style="font-size: 20px; font-weight: 600">Stickers pegados</span>
+              <span style="font-size: 14px; color: #8a8378"
+                >Pexels: <strong style="color: #57534e">laptop stickers</strong> ·
+                <strong style="color: #57534e">nevera portatil</strong> ·
+                <strong style="color: #57534e">guitar case</strong></span
+              >
+            </div>
+            <div
+              style="
+                position: relative;
+                width: 100%;
+                aspect-ratio: 2/1;
+                border-radius: 20px;
+                overflow: hidden;
+                background: #d6cfc3;
+              "
+            >
+              <image-slot
+                id="mk-stickers"
+                shape="rect"
+                placeholder="Superficie donde pegar stickers: portátil, nevera, maleta"
+              ></image-slot>
+              <div style="position: absolute; inset: 0; pointer-events: none">
+                <img
+                  src="junti-brand-kit/svg/junti-chapa-principal.svg"
+                  alt="junti."
+                  style="
+                    position: absolute;
+                    left: 12%;
+                    top: 26%;
+                    width: 26%;
+                    transform: rotate(-3deg);
+                    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+                  "
+                />
+                <span
+                  style="
+                    position: absolute;
+                    left: 44%;
+                    top: 56%;
+                    transform: rotate(4deg);
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #0f7a3d;
+                    background: #dff5e4;
+                    padding: 10px 17px;
+                    border-radius: 11px;
+                    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+                  "
+                  >Ya pagué.</span
+                >
+                <span
+                  style="
+                    position: absolute;
+                    left: 66%;
+                    top: 24%;
+                    transform: rotate(-6deg);
+                    font-size: 20px;
+                    font-weight: 600;
+                    color: #faf7f2;
+                    background: #09090b;
+                    padding: 10px 17px;
+                    border-radius: 11px;
+                    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+                  "
+                  >Yo llevo el balón.</span
+                >
+                <img
+                  src="junti-brand-kit/svg/junti-icono-app-naranja.svg"
+                  alt="Junti"
+                  style="
+                    position: absolute;
+                    left: 36%;
+                    top: 16%;
+                    width: 9%;
+                    transform: rotate(7deg);
+                    border-radius: 16%;
+                    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+                  "
+                />
+              </div>
+            </div>
           </div>
-          <div style="font-size:14px;color:#8A8378;margin-top:8px">Pexels: <strong style="color:#57534E">amigos brindando</strong></div>
-        </div>
-        <div style="width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#FAF7F2;display:flex;flex-direction:column">
-          <div style="position:relative;flex:0 0 60%;min-height:0">
-            <image-slot id="mk-post" shape="rect" placeholder="Amigos en un plan. Pexels: friends celebrating"></image-slot>
-          </div>
-          <div style="flex:1;min-height:0;padding:24px 28px 26px;background:#FAF7F2;display:flex;flex-direction:column;justify-content:space-between;gap:14px">
-            <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:27px;line-height:1.05;letter-spacing:-0.04em;text-wrap:balance">El que organiza también merece descansar.</div>
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-              <span style="font-size:15px;color:#6B655C">Crea el plan, manda el link, ya está.</span>
-              <img src="junti-brand-kit/svg/junti-chapa-principal.svg" alt="junti." style="height:44px;display:block">
+
+          <!-- 5 y 6 · Post y camiseta -->
+          <div
+            style="
+              display: grid;
+              grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+              gap: 28px;
+              align-items: start;
+            "
+          >
+            <div>
+              <div style="margin-bottom: 16px">
+                <div style="display: flex; align-items: baseline; gap: 14px">
+                  <span
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 15px;
+                      background: #09090b;
+                      color: #faf7f2;
+                      border-radius: 8px;
+                      padding: 5px 10px;
+                    "
+                    >05</span
+                  >
+                  <span style="font-size: 20px; font-weight: 600; white-space: nowrap"
+                    >Post 1:1</span
+                  >
+                </div>
+                <div style="font-size: 14px; color: #8a8378; margin-top: 8px">
+                  Pexels: <strong style="color: #57534e">amigos brindando</strong>
+                </div>
+              </div>
+              <div
+                style="
+                  width: 100%;
+                  aspect-ratio: 1;
+                  border-radius: 20px;
+                  overflow: hidden;
+                  background: #faf7f2;
+                  display: flex;
+                  flex-direction: column;
+                "
+              >
+                <div style="position: relative; flex: 0 0 60%; min-height: 0">
+                  <image-slot
+                    id="mk-post"
+                    shape="rect"
+                    placeholder="Amigos en un plan. Pexels: friends celebrating"
+                  ></image-slot>
+                </div>
+                <div
+                  style="
+                    flex: 1;
+                    min-height: 0;
+                    padding: 24px 28px 26px;
+                    background: #faf7f2;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    gap: 14px;
+                  "
+                >
+                  <div
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 27px;
+                      line-height: 1.05;
+                      letter-spacing: -0.04em;
+                      text-wrap: balance;
+                    "
+                  >
+                    El que organiza también merece descansar.
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      justify-content: space-between;
+                      gap: 16px;
+                    "
+                  >
+                    <span style="font-size: 15px; color: #6b655c"
+                      >Crea el plan, manda el link, ya está.</span
+                    >
+                    <img
+                      src="junti-brand-kit/svg/junti-chapa-principal.svg"
+                      alt="junti."
+                      style="height: 44px; display: block"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div style="margin-bottom: 16px">
+                <div style="display: flex; align-items: baseline; gap: 14px">
+                  <span
+                    style="
+                      font-family: &quot;Bricolage Grotesque&quot;, sans-serif;
+                      font-weight: 800;
+                      font-size: 15px;
+                      background: #09090b;
+                      color: #faf7f2;
+                      border-radius: 8px;
+                      padding: 5px 10px;
+                    "
+                    >06</span
+                  >
+                  <span style="font-size: 20px; font-weight: 600; white-space: nowrap"
+                    >Camiseta del parche</span
+                  >
+                </div>
+                <div style="font-size: 14px; color: #8a8378; margin-top: 8px">
+                  Pexels: <strong style="color: #57534e">camiseta negra maqueta</strong> ·
+                  <strong style="color: #57534e">t-shirt mockup</strong>
+                </div>
+              </div>
+              <div
+                style="
+                  position: relative;
+                  width: 100%;
+                  aspect-ratio: 4/3.4;
+                  border-radius: 20px;
+                  overflow: hidden;
+                  background: #d6cfc3;
+                "
+              >
+                <image-slot
+                  id="mk-camiseta"
+                  shape="rect"
+                  placeholder="Camiseta oscura lisa, de frente"
+                ></image-slot>
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 9%;
+                    pointer-events: none;
+                    display: flex;
+                    justify-content: center;
+                  "
+                >
+                  <img
+                    src="junti-brand-kit/svg/junti-wordmark-crema.svg"
+                    alt="junti."
+                    style="
+                      width: 22%;
+                      display: block;
+                      filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.55));
+                    "
+                  />
+                </div>
+              </div>
+              <p style="font-size: 14px; line-height: 1.5; color: #8a8378; margin: 14px 0 0">
+                Sobre tela, el wordmark crema sin chapa: una sola tinta, bordado o serigrafía
+                barata. La chapa completa se reserva para el pecho izquierdo en piezas más grandes.
+              </p>
             </div>
           </div>
         </div>
       </div>
-
-      <div>
-        <div style="margin-bottom:16px">
-          <div style="display:flex;align-items:baseline;gap:14px">
-            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;background:#09090B;color:#FAF7F2;border-radius:8px;padding:5px 10px">06</span>
-            <span style="font-size:20px;font-weight:600;white-space:nowrap">Camiseta del parche</span>
-          </div>
-          <div style="font-size:14px;color:#8A8378;margin-top:8px">Pexels: <strong style="color:#57534E">camiseta negra maqueta</strong> · <strong style="color:#57534E">t-shirt mockup</strong></div>
-        </div>
-        <div style="position:relative;width:100%;aspect-ratio:4/3.4;border-radius:20px;overflow:hidden;background:#D6CFC3">
-          <image-slot id="mk-camiseta" shape="rect" placeholder="Camiseta oscura lisa, de frente"></image-slot>
-          <div style="position:absolute;left:0;right:0;bottom:9%;pointer-events:none;display:flex;justify-content:center">
-            <img src="junti-brand-kit/svg/junti-wordmark-crema.svg" alt="junti." style="width:22%;display:block;filter:drop-shadow(0 2px 10px rgba(0,0,0,0.55))">
-          </div>
-        </div>
-        <p style="font-size:14px;line-height:1.5;color:#8A8378;margin:14px 0 0">Sobre tela, el wordmark crema sin chapa: una sola tinta, bordado o serigrafía barata. La chapa completa se reserva para el pecho izquierdo en piezas más grandes.</p>
-      </div>
-    </div>
-
-  </div>
-</div>
-</x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280}}"></script>
-</body>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280}}'></script>
+  </body>
 </html>

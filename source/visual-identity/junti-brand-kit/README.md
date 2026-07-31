@@ -7,6 +7,7 @@ significa "ya esta". Modo claro por defecto; el modo oscuro usa la misma chapa.
 ## Contenido
 
 ### svg/ — vector puro, sin dependencia de fuentes
+
 Los glifos estan convertidos a contornos, asi que estos archivos se ven
 identicos en cualquier navegador, en Figma, en Illustrator y en imprenta.
 No hay que instalar ninguna fuente ni convertir texto a curvas.
@@ -22,6 +23,7 @@ No hay que instalar ninguna fuente ni convertir texto a curvas.
     junti-marca-j-crema.svg        La j recortada sin baldosa, crema
 
 ### png/ — 4x con fondo transparente
+
     junti-chapa-principal.png      1184 x 704
     junti-chapa-inversa.png        1184 x 704
     junti-wordmark-tinta.png        832 x 512
@@ -32,6 +34,7 @@ No hay que instalar ninguna fuente ni convertir texto a curvas.
     junti-marca-j-tinta.png        1024 x 1024  (transparente, sin baldosa)
 
 ### webp/ — los mismos PNG, sin perder un pixel
+
 Generados con `cwebp -lossless -exact`, asi que son identicos pixel a pixel al
 PNG del que salen (verificado decodificando y comparando: 0 bytes distintos de
 3.334.144). Pesan un 82% menos en conjunto: 329 KB de PNG contra 56 KB.
@@ -49,6 +52,7 @@ siendo .ico y el apple-touch-icon sigue siendo PNG porque iOS no acepta WebP
 ahi. El manifest de Android si pide WebP primero y cae a PNG.
 
 ### favicon/ — solo la j y el punto
+
     favicon.ico                    16 + 32 + 48, version naranja (la de siempre)
     favicon-tinta.ico              idem sobre tinta
     favicon-papel.ico              idem sobre papel
@@ -65,10 +69,12 @@ En HTML:
     <link rel="apple-touch-icon" sizes="180x180" href="/junti-favicon-180.png">
 
 ### junti-tokens.css
+
 Variables de color, tipografia y radios para modo claro y oscuro,
 mas las clases .junti-chapa y .junti-estado.
 
 ## Geometria del logo
+
     Rotacion       -4 grados, nunca a la derecha
     Radio chapa    0,295 x alto de la chapa
     Radio baldosa  0,30 x el lado (77 sobre 256)
@@ -76,6 +82,7 @@ mas las clases .junti-chapa y .junti-estado.
     Icono          recorte de la j y el punto: el asta sale por el borde superior
 
 ## Tipografia
+
 Ambas gratuitas, licencia SIL Open Font License.
 
 - Display / titulares: **Bricolage Grotesque** 700 y 800
@@ -91,6 +98,7 @@ Carga por CDN:
 El logo NO necesita la fuente: ya esta vectorizado.
 
 ## Reglas rapidas
+
 - Una sola chapa por pantalla. Rotacion siempre -4 grados.
 - El punto final nunca se quita ni se pone gris.
 - En modo claro el boton primario es tinta (#09090B); el naranja se reserva
@@ -101,6 +109,7 @@ El logo NO necesita la fuente: ya esta vectorizado.
 - Escala: hasta 79 px la j recortada; de 80 px de ancho en adelante la chapa.
 
 ## Tono de voz
+
 Tuteo, frases de menos de doce palabras, verbos de accion. Nunca culpar al
 invitado ni presionar al organizador.
 

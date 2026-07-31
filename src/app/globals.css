@@ -122,31 +122,6 @@ body {
 }
 
 /*
-  The account drawer: the whole viewport on a phone, a panel on anything wider.
-
-  This was `width="min(100vw, 26rem)"`, which was wrong in a way that only shows
-  on real hardware. 26rem is 416px, and that lands inside the range of actual
-  phone widths — an iPhone Pro Max reports 430 CSS px, a Pixel 412, plenty of
-  Androids 412-430. On any of those the cap won and a 14-24px strip of page stayed
-  visible down the edge. A width cap cannot express "phone versus not"; only a
-  media query can.
-
-  So the width is 100% inline and the ceiling arrives here, above the library's
-  own mobile boundary of 768px — the same one `useIsMobile` defaults to.
-
-  No `!important`, and that is not luck. The component sets `width` inline, which
-  a stylesheet could not reach, but `max-width` it sets from a class inside
-  `@layer` — and an unlayered rule beats a layered one whatever the specificity.
-  `max-width` also wins over `width` by definition, so the inline 100% yields to
-  it without a fight.
-*/
-@media (min-width: 768px) {
-  .junti-drawer {
-    max-width: 26rem;
-  }
-}
-
-/*
   One crumb of the breadcrumb trail, capped in width.
 
   An event title is free text and routinely longer than the screen: at 390px
