@@ -27,6 +27,7 @@
     "@stackmyth/card": "^0.24.6",
     "@stackmyth/checkbox": "^0.24.6",
     "@stackmyth/classnames": "^0.1.1",
+    "@stackmyth/combobox": "^0.24.6",
     "@stackmyth/core": "^0.24.6",
     "@stackmyth/date-picker": "^0.24.6",
     "@stackmyth/dialog": "^0.24.6",

@@ -718,6 +718,57 @@ same latent conflict. `--sm-dialog-content-gap` looks like the next one.
 
 ---
 
+## 19. `Combobox` inside `Dialog` has no working default
+
+> **Status: open at 0.24.6.** Reproduced in this app's account drawer at both
+> breakpoints; each claim below was measured in the browser, not inferred.
+
+**What I was building.** A language picker in the account drawer — a dialog —
+so that adding a third and fourth language does not turn a row of toggles into
+two wrapped lines.
+
+**What happened.** The composition has two defaults and both are wrong, in
+opposite directions.
+
+1. **Portalled to the document** (the default) the list renders _under_ the
+   dialog. The scale puts `--sm-z-dropdown` at 1000 and `--sm-z-modal` at 1400,
+   so the control opens and nothing appears.
+2. **Portalled into the panel** with `container`, which reads as the prop for
+   exactly this, the list is positioned against the wrong origin. The panel is
+   animated with a `transform`, which makes it the containing block for
+   `position: fixed` descendants, so the list inherits the panel's coordinates
+   as an offset. At 1280px the drawer sits at x=864 and the list rendered at
+   x=1750 — off screen. On a phone the panel starts at x=0, so the same bug
+   renders correctly and the composition looks fine until somebody opens a
+   laptop.
+
+There is also a keyboard conflict. `ComboboxInput` handles Escape with
+`preventDefault()` but not `stopPropagation()`, and `DialogContent` listens on
+`document`, so one Escape closed the list _and_ the drawer around it — the
+innermost-layer-first rule that every other dismissable surface follows.
+
+**The workarounds.** The app portals to the document, raises the list to the
+`tooltip` step of the z scale through `--sm-combobox-z`, and wraps the control
+in a `div` whose `onKeyDown` swallows Escape while `aria-expanded` is true.
+Three pieces of app code to make two components sit inside each other.
+
+**What I would have wanted.** The library knows when a combobox is inside a
+dialog — the dialog has a context, the combobox is rendered within it. Any of:
+a `--sm-combobox-z-in-modal` default applied through that context; a `container`
+that positions correctly against a transformed ancestor (measure the trigger in
+viewport coordinates and correct by the container's own rect); or simply
+`stopPropagation` on the Escape the combobox already handles. The last one is a
+one-line change and removes a third of this entry.
+
+**Where this repeats.** `Select`, `DropdownMenu`, `Popover` and `DatePicker`
+all portal a layer. Every one of them inside a `Dialog` has the same two
+defaults and the same Escape conflict, so this is a composition rule the
+library is missing rather than a bug in `Combobox`. The manifest's
+`composesInside` for combobox lists `Field`, `Box`, `Flex` and `PopoverContent`
+— `Dialog` is not there, which reads as accurate rather than as an oversight.
+
+---
+
 ## What worked well, unprompted
 
 Stating this because a gaps file that is only complaints is not honest feedback.

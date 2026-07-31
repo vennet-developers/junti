@@ -19,10 +19,9 @@ import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
 import { useCopy } from "@/components/copy-provider";
 import { DrawerContent } from "@/components/drawer-content";
+import { LanguageChoice } from "@/components/language-choice";
 import { SignInForm } from "@/components/sign-in-form";
-import { LOCALES, getCopy, type Locale } from "@/config/copy";
 import { ROUTES } from "@/config/routes";
-import { setLocale } from "@/lib/locale-actions";
 import { setTheme } from "@/lib/theme-actions";
 
 /**
@@ -61,7 +60,7 @@ export function GuestMenu({
   theme: "light" | "dark" | null;
   next?: string;
 }) {
-  const { copy, locale } = useCopy();
+  const { copy } = useCopy();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -70,11 +69,6 @@ export function GuestMenu({
     // three is always in force, so a deselect is not a state this has.
     if (!value) return;
     startTransition(() => void setTheme(value === "system" ? null : value));
-  }
-
-  function chooseLocale(value: string) {
-    if (!value || value === locale) return;
-    startTransition(() => void setLocale(value));
   }
 
   const appearances = [
@@ -154,32 +148,7 @@ export function GuestMenu({
 
             <Divider />
 
-            <Stack gap="2">
-              <Text variant="small" color="muted">
-                {copy.common.language}
-              </Text>
-              {/*
-                Each language names itself. "English" is legible to someone who
-                cannot read the Spanish beside it, which a translated "Inglés"
-                would not be.
-              */}
-              <ToggleGroup
-                type="single"
-                variant="outline"
-                value={locale}
-                onValueChange={chooseLocale}
-                /* `lg` here, unlike the old menu's `sm`: in a drawer there is
-                   room, and 44px is the floor this app holds everywhere. */
-                size="lg"
-                disabled={pending}
-              >
-                {LOCALES.map((option: Locale) => (
-                  <Toggle key={option} value={option}>
-                    {getCopy(option).localeName}
-                  </Toggle>
-                ))}
-              </ToggleGroup>
-            </Stack>
+            <LanguageChoice />
 
             <Stack gap="2">
               <Text variant="small" color="muted">

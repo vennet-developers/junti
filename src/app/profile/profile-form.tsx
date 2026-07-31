@@ -10,6 +10,7 @@ import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import { ControlledField, FormError } from "@/components/form-shell";
+import { LanguageCombobox } from "@/components/language-combobox";
 import { LOCALES, getCopy } from "@/config/copy";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 
@@ -23,12 +24,27 @@ import { saveProfile, type ProfileState } from "./actions";
  * value turns it on, choosing the automatic option turns it off. One piece of
  * state rather than a checkbox that can disagree with a dropdown next to it.
  *
- * Stackmyth `Select` used directly rather than through `SelectField`, because
- * this form has no `FormController` around it — two fields and no cross-field
- * rules do not need the validation machinery, but they do need the design
- * system. An earlier version reached for native `<select>` elements here and
- * they stood out immediately: browser chrome in the middle of a styled page.
+ * Language is the same {@link LanguageCombobox} the account drawer opens, so
+ * the two places a language is chosen look and behave alike — and so a third
+ * and fourth language arrive in a list that filters rather than in a row of
+ * buttons that wraps. Only the option set differs: this screen is where
+ * "follow my browser" lives, and it carries a sentinel value because a
+ * combobox item is keyed by a non-empty string while the stored preference for
+ * "no override" is empty. The two are mapped at this boundary and nowhere
+ * else.
+ *
+ * The timezone stays a `Select`: its list is a fixed set that is read rather
+ * than searched, and it is grouped, which a flat combobox list would lose.
+ *
+ * Both are used directly rather than through `SelectField`, because this form
+ * has no `FormController` around it — two fields and no cross-field rules do
+ * not need the validation machinery, but they do need the design system. An
+ * earlier version reached for native `<select>` elements here and they stood
+ * out immediately: browser chrome in the middle of a styled page.
  */
+
+/** What the combobox calls "follow my browser"; stored as an empty value. */
+const FOLLOW_BROWSER = "auto";
 export function ProfileForm({
   initialLocale,
   initialTimeZone,
@@ -88,21 +104,19 @@ export function ProfileForm({
           error={state.errors.locale}
           htmlFor="profile-locale"
         >
-          <Select value={locale} onValueChange={setLocale} id="profile-locale">
-            <SelectTrigger fullWidth size="lg">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {/* The empty value is the default and is not a blank: it means
-                  "follow my browser". */}
-              <SelectItem value="">{copy.profile.languageAuto}</SelectItem>
-              {LOCALES.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {getCopy(option).localeName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <LanguageCombobox
+            id="profile-locale"
+            value={locale === "" ? FOLLOW_BROWSER : locale}
+            onValueChange={(next) => setLocale(next === FOLLOW_BROWSER ? "" : next)}
+            options={[
+              { value: FOLLOW_BROWSER, label: copy.profile.languageAuto },
+              ...LOCALES.map((option) => ({
+                value: option,
+                label: getCopy(option).localeName,
+              })),
+            ]}
+            ariaLabel={copy.profile.languageLabel}
+          />
         </ControlledField>
 
         <ControlledField

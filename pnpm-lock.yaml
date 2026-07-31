@@ -38,6 +38,9 @@ importers:
       '@stackmyth/classnames':
         specifier: ^0.1.1
         version: 0.1.1
+      '@stackmyth/combobox':
+        specifier: ^0.24.6
+        version: 0.24.6(@stackmyth/core@0.24.6(react@19.2.4))(@stackmyth/icons@0.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@stackmyth/core':
         specifier: ^0.24.6
         version: 0.24.6(react@19.2.4)
@@ -1204,6 +1207,14 @@ packages:
 
   '@stackmyth/classnames@0.1.1':
     resolution: {integrity: sha512-OcQBxj1cllztgSRtcPlmDvH1iTNgkFST669pW4eD/tXLe2EMaCTyx0Hiw4L/g3UnxiRV8KnleVH65gBBk2QONw==, tarball: https://npm.pkg.github.com/download/@stackmyth/classnames/0.1.1/b7e03f794a423a1af5358cd6a928d8a170d6c630}
+
+  '@stackmyth/combobox@0.24.6':
+    resolution: {integrity: sha512-hksbTBMhQ69dFmretsbS+9LaxTMjt9ZUoo/ADX69dLvAAxzHxaaOU5InEvT+C6ltVHbMY1yf8pVwfRwr27SVPg==, tarball: https://npm.pkg.github.com/download/@stackmyth/combobox/0.24.6/8918465f5fff2841288b2dec87cb2e650f33a7ab}
+    peerDependencies:
+      '@stackmyth/core': '>=0.0.0'
+      '@stackmyth/icons': '>=0.0.0'
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
 
   '@stackmyth/core@0.24.6':
     resolution: {integrity: sha512-naaY1d1y8RrdrzHKj3HIIvRe4yozRPLYrFOc8ZGXgPXOqo97jkafVYzHSm+TqsSEpKYUixo5hWNbKrw6goIpRw==, tarball: https://npm.pkg.github.com/download/@stackmyth/core/0.24.6/9a11dfef900d7306ca7ab6c382f795d11fdc225e}
@@ -3932,6 +3943,15 @@ snapshots:
       react: 19.2.4
 
   '@stackmyth/classnames@0.1.1': {}
+
+  '@stackmyth/combobox@0.24.6(@stackmyth/core@0.24.6(react@19.2.4))(@stackmyth/icons@0.1.1(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+    dependencies:
+      '@stackmyth/classnames': 0.1.1
+      '@stackmyth/core': 0.24.6(react@19.2.4)
+      '@stackmyth/event-bus': 0.1.1(react@19.2.4)
+      '@stackmyth/icons': 0.1.1(react@19.2.4)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   '@stackmyth/core@0.24.6(react@19.2.4)':
     dependencies:

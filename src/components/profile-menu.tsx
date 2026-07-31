@@ -30,6 +30,7 @@ import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
 import { useCopy } from "@/components/copy-provider";
 import { DrawerContent } from "@/components/drawer-content";
+import { LanguageChoice } from "@/components/language-choice";
 import { ROUTES } from "@/config/routes";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { setTheme } from "@/lib/theme-actions";
@@ -49,9 +50,12 @@ import { setTheme } from "@/lib/theme-actions";
  * never open one in a new tab (STACKMYTH-GAP #17). Outside a menu, `Button
  * asChild` + next/link gives a genuine link with a genuine href.
  *
- * Language is not here. It lives on `/profile` beside the timezone, which is
- * the screen for preferences that need explaining; appearance stays because it
- * is a look-at-it-now choice.
+ * Language sits here beside appearance, for the same reason appearance does:
+ * both are look-at-it-now choices, and a signed-in reader had no quick way to
+ * change the one thing that rewrites every string on the page — `/profile` was
+ * two navigations away, in whichever language they were trying to leave.
+ * `/profile` keeps the full pair, language and timezone, including the "follow
+ * my browser" option this quick switch has no room to explain.
  */
 export function ProfileMenu({
   organizer,
@@ -215,6 +219,8 @@ export function ProfileMenu({
             </Stack>
 
             <Divider />
+
+            <LanguageChoice />
 
             <Stack gap="2">
               <Text variant="small" color="muted">

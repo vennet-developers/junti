@@ -43,6 +43,7 @@ export const es = {
     optional: "opcional",
     language: "Idioma",
     changeLanguage: "Cambiar idioma",
+    noMatches: "Sin resultados",
   },
 
   /** Labels for the breadcrumb trail and the header's account control. */

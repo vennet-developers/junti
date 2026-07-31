@@ -35,6 +35,7 @@ import "@stackmyth/textarea/textarea.css";
 import "@stackmyth/label/label.css";
 import "@stackmyth/field/field.css";
 import "@stackmyth/select/select.css";
+import "@stackmyth/combobox/combobox.css";
 import "@stackmyth/radio-group/radio-group.css";
 import "@stackmyth/switch/switch.css";
 import "@stackmyth/checkbox/checkbox.css";

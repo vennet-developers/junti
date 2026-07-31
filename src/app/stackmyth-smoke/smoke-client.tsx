@@ -37,8 +37,11 @@ import { Stat } from "@stackmyth/stat";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
+import { useCopy } from "@/components/copy-provider";
 import { GuestMenu } from "@/components/guest-menu";
+import { LanguageCombobox } from "@/components/language-combobox";
 import { ProfileMenu } from "@/components/profile-menu";
+import { LOCALES, getCopy } from "@/config/copy";
 
 /**
  * Renders one of each primitive the app will actually use. If this page looks
@@ -46,9 +49,11 @@ import { ProfileMenu } from "@/components/profile-menu";
  * blows up the layout, that is a gap and belongs in STACKMYTH-GAPS.md.
  */
 export function SmokeClient() {
+  const { copy } = useCopy();
   const [name, setName] = useState("");
   const [answer, setAnswer] = useState("in");
   const [kind, setKind] = useState("match");
+  const [smokeLocale, setSmokeLocale] = useState("auto");
 
   return (
     <Container size="1">
@@ -277,9 +282,9 @@ export function SmokeClient() {
         <Stack gap="3">
           <Text variant="h3">Account drawer</Text>
           <Text variant="small" color="muted">
-            Both open as a right-hand drawer: full width on a phone, 416px from 768px up. Signed out
-            offers sign-in, language and appearance; signed in offers the destinations, appearance
-            and sign-out.
+            A top sheet at the full height of the screen on a phone, a 416px panel on the right from
+            768px up. Signed out offers sign-in, language and appearance; signed in offers the
+            destinations, language, appearance and sign-out.
           </Text>
           <Flex gap="3" wrap="wrap" align="center">
             <GuestMenu theme={null} />
@@ -292,6 +297,38 @@ export function SmokeClient() {
               theme={null}
             />
           </Flex>
+        </Stack>
+
+        {/*
+          The same language control `/profile` renders, outside a dialog.
+
+          Worth its own entry because the two contexts stack differently: in the
+          drawer the list has to clear a modal, here it has nothing to clear,
+          and both come from one component. `/profile` needs a session, so this
+          is where that half can be looked at.
+
+          Local state rather than the real preference: this page is for looking
+          at controls, not for changing the language of the browser you are
+          looking at them in.
+        */}
+        <Stack gap="3">
+          <Text variant="h3">Language combobox</Text>
+          <Text variant="small" color="muted">
+            As `/profile` renders it, with the &quot;follow my browser&quot; option the
+            drawer&apos;s quick switch leaves out. Filters by typing; each language names itself.
+          </Text>
+          <LanguageCombobox
+            value={smokeLocale}
+            onValueChange={setSmokeLocale}
+            options={[
+              { value: "auto", label: copy.profile.languageAuto },
+              ...LOCALES.map((option) => ({
+                value: option,
+                label: getCopy(option).localeName,
+              })),
+            ]}
+            ariaLabel={copy.profile.languageLabel}
+          />
         </Stack>
       </Stack>
     </Container>

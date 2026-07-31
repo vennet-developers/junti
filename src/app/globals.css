@@ -140,6 +140,48 @@ body {
 }
 
 /*
+  The combobox's inner field, whose focus ring is drawn by its wrapper.
+
+  This is the one control in the app where the focusable element is not the
+  element that looks like the field. The wrapper carries the border, the
+  chevron and — on focus — a coloured border and a ring; the `<input>` inside
+  it has no border at all. So `:focus-visible` above, which exists to make sure
+  nothing focusable is ever silent, was drawing a second frame two pixels
+  inside the first: one field, two rings.
+
+  This removes the duplicate, not the indication. Verified rather than assumed:
+  with the field focused the wrapper reports a 1px border in the focus colour
+  plus a box-shadow ring, and it frames the whole control including the
+  chevron, which the inner outline never did.
+
+  The descendant selector is not a shortcut. `ComboboxInput` puts `className`
+  on the wrapper it renders, not on the `<input>` inside it, so the class marks
+  the control and the rule reaches the one focusable element in it. Written
+  against the element, not the library's class name, so it survives a rename.
+*/
+.combobox-field input:focus-visible {
+  outline: none;
+}
+
+/*
+  A combobox dropdown that has to clear a dialog.
+
+  The list portals to the document — into the drawer's panel it would be
+  positioned against a transformed ancestor and land off screen — and the
+  document puts it two layers below the dialog it belongs to: the scale has
+  dropdowns at 1000 and dialog content at 1400.
+
+  So it is raised to the step defined as always visible above modals, through
+  the component's own custom property rather than a `z-index` written here.
+  Outside a dialog the lift changes nothing: there is nothing between those two
+  levels to jump over, and toasts remain above it, which is right — a
+  notification that cannot be seen is worse than a list that is.
+*/
+.combobox-popup {
+  --sm-combobox-z: var(--sm-z-tooltip);
+}
+
+/*
   The drawer's header, given the same room under its rule as above its avatar.
 
   A bordered header pads its bottom with `--sm-dialog-header-gap`, and that

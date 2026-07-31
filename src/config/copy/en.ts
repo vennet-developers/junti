@@ -38,6 +38,7 @@ export const en: Copy = {
     optional: "optional",
     language: "Language",
     changeLanguage: "Change language",
+    noMatches: "No matches",
   },
 
   /** Labels for the breadcrumb trail and the header's account control. */
