@@ -40,6 +40,7 @@ import { Textarea } from "@stackmyth/textarea";
 import { MessageForm } from "@/app/messages/message-form";
 import { EventList, type EventListItem } from "@/app/my-events/event-list";
 import { useCopy } from "@/components/copy-provider";
+import { Disclosure } from "@/components/disclosure";
 import { GuestMenu } from "@/components/guest-menu";
 import { LanguageCombobox } from "@/components/language-combobox";
 import { ProfileMenu } from "@/components/profile-menu";
@@ -363,6 +364,29 @@ export function SmokeClient() {
               theme={null}
             />
           </Flex>
+        </Stack>
+
+        {/*
+          The collapsible section every screen uses, through one wrapper.
+
+          Both places it appears — an event page and the organizer panel —
+          need a token to reach, so this is where the variant can be looked at.
+          Two of them, because `card` is a treatment you read as a stack: one
+          rounded surface per section with a gap between them, and the open one
+          lifting off the page.
+        */}
+        <Stack gap="3">
+          <Text variant="h3">Disclosure</Text>
+          <Disclosure id="smoke-links" label="Links del evento">
+            <Text variant="small" color="muted">
+              El de invitados y el de organizador, que se comparten por WhatsApp.
+            </Text>
+          </Disclosure>
+          <Disclosure id="smoke-edit" label="Editar el evento" defaultOpen>
+            <Text variant="small" color="muted">
+              Abierto de entrada, para ver cómo se levanta la tarjeta cuando lo está.
+            </Text>
+          </Disclosure>
         </Stack>
 
         {/*
