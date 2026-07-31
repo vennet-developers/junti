@@ -769,6 +769,56 @@ library is missing rather than a bug in `Combobox`. The manifest's
 
 ---
 
+## 20. Two paddings with no way in: pill buttons and input-group addons
+
+> **Status: open at 0.24.6.** Both measured in the browser, both fixed in this
+> app by writing the component's own arithmetic out again.
+
+Small, and grouped because they are the same shape of problem: a value the
+component hard-codes, no prop and no token pointing at it, and a layout that
+needs it changed.
+
+**a. `shape="pill"` is deliberately off-centre.** The rule reads:
+
+```css
+.sm-button--shape-pill {
+  padding-inline-start: var(--sm-button-padding-block);
+  padding-inline-end: calc(var(--sm-button-padding-block) * 1.5);
+}
+```
+
+That is right for what it was clearly built for — the account capsule in this
+app's header, where an avatar has to sit concentric in the rounded end — and
+wrong for a pill containing only a label, which is most of them. Measured on
+the event cards: 8.4px leading against 12.6px trailing, and the owner spotted
+it as "the text is shifted" without needing the numbers.
+
+There is no third shape. `shape` is `rect | pill | square | circle`, so a
+button with round ends and a centred label is not expressible, and the app sets
+`padding-inline` to the trailing value on both sides.
+
+**What I would have wanted.** Either the asymmetry keyed to content — it exists
+for a leading round child, and `iconOnly` already proves the component can
+reason about that — or a `--sm-button-padding-inline-start` alongside the
+existing tokens, so an override is a value rather than a formula copied out of
+the stylesheet and left to drift.
+
+**b. `.sm-input-group__addon` pads itself with a literal.** `padding: 0 0.5rem`,
+with no `--sm-input-group-addon-*` token beside the eleven the package does
+expose. An 18px icon therefore sits 9px from the edge of a box whose corner
+radius is 13px — inside the curve, which reads as jammed against it. The app
+overrides the class from its own stylesheet, which is precisely the reaching
+past the API that tokens exist to prevent.
+
+**Where this repeats.** The dropdown's `--sm-dropdown-item-height` is the
+opposite case and worth naming as the good one: it is a token, so raising the
+menu to this app's touch floor was a single declaration. The rule that seems to
+be missing is simply "every spacing value a consumer can see is a token" — the
+packages are most of the way there, and the exceptions are where the friction
+turns up.
+
+---
+
 ## What worked well, unprompted
 
 Stating this because a gaps file that is only complaints is not honest feedback.

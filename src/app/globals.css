@@ -47,10 +47,23 @@ body {
 }
 
 /*
- * Visible focus everywhere. Uses the focus-ring token rather than a literal
- * color so it tracks the theme in both light and dark.
+ * Visible focus on everything the design system does not already handle.
+ *
+ * Every Stackmyth control declares `outline: none` and draws its own ring — a
+ * coloured border plus a shadow, sized to the control. This rule used to hit
+ * them too, and being unlayered it won, so each of them got a second ring two
+ * pixels outside the first. On a plain field that read as a heavy focus; on a
+ * control whose focusable element is wrapped in the box that looks like the
+ * field — the search group, the combobox — the extra outline drew a bare
+ * vertical line beside the icon, which looks like a stray divider.
+ *
+ * So it applies to what the library does not style: plain anchors, and any
+ * native element rendered directly. `sm-` prefixes every class the library
+ * emits and nothing this app writes, which is what makes the exclusion
+ * readable — and it is an exclusion rather than a list because the rule is a
+ * safety net: anything focusable that nobody has styled must still be visible.
  */
-:focus-visible {
+:focus-visible:not([class*="sm-"]) {
   outline: 2px solid var(--sm-border-focus);
   outline-offset: 2px;
 }
@@ -137,160 +150,6 @@ body {
 */
 .drawer {
   --sm-dialog-content-padding-block: var(--sm-dialog-content-padding);
-}
-
-/*
-  The combobox's inner field, whose focus ring is drawn by its wrapper.
-
-  This is the one control in the app where the focusable element is not the
-  element that looks like the field. The wrapper carries the border, the
-  chevron and — on focus — a coloured border and a ring; the `<input>` inside
-  it has no border at all. So `:focus-visible` above, which exists to make sure
-  nothing focusable is ever silent, was drawing a second frame two pixels
-  inside the first: one field, two rings.
-
-  This removes the duplicate, not the indication. Verified rather than assumed:
-  with the field focused the wrapper reports a 1px border in the focus colour
-  plus a box-shadow ring, and it frames the whole control including the
-  chevron, which the inner outline never did.
-
-  The descendant selector is not a shortcut. `ComboboxInput` puts `className`
-  on the wrapper it renders, not on the `<input>` inside it, so the class marks
-  the control and the rule reaches the one focusable element in it. Written
-  against the element, not the library's class name, so it survives a rename.
-*/
-.combobox-field input:focus-visible {
-  outline: none;
-}
-
-/*
-  A dropdown menu sized for a thumb.
-
-  The library ships `--sm-dropdown-item-height: 2rem` — 32px, against the 44px
-  floor this app holds everywhere else — and, unlike every control that gets
-  its padding from `--sm-density-factor`, the menu does not scale with it. On a
-  phone that is a row you aim at rather than tap.
-
-  So the density factor is applied here by hand, which is why the 2rem is
-  written out again: a custom property cannot be defined in terms of itself, so
-  there is no way to say "whatever the library ships, times 1.4". If the
-  library's default moves, this number has to follow — the comment is the only
-  thing tying them together.
-
-  Phones only. On a pointer device 32px is a comfortable menu row and a 45px
-  one reads as a list of buttons, so the desktop menu is left alone. Same 768px
-  boundary the drawer uses.
-*/
-@media (max-width: 767px) {
-  .menu-touch {
-    --sm-dropdown-item-height: calc(2rem * var(--sm-density-factor));
-    --sm-dropdown-item-padding-x: var(--sm-space-3);
-    --sm-dropdown-min-width: 14rem;
-  }
-}
-
-/*
-  The coloured band across the top of an event card.
-
-  The band sets its own text colour — it is one of six palette pairs, or grey
-  once the event has happened — and `Text` does not inherit colour: it resolves
-  `--sm-text-color-base`, which defaults to the page's primary text and would
-  paint dark type on whichever colour the band happens to be.
-
-  Pointing that property at `currentColor` is what makes the pair travel:
-  the `Box` sets `color` through a supported prop, every `Text` inside picks it
-  up, and the light and dark values still come from the tokens rather than from
-  anything written here. `color` alone could not do it, and `style=` on a
-  Stackmyth component is not something this app does.
-*/
-.event-band {
-  --sm-text-color-base: currentColor;
-}
-
-/*
-  A combobox dropdown that has to clear a dialog.
-
-  The list portals to the document — into the drawer's panel it would be
-  positioned against a transformed ancestor and land off screen — and the
-  document puts it two layers below the dialog it belongs to: the scale has
-  dropdowns at 1000 and dialog content at 1400.
-
-  So it is raised to the step defined as always visible above modals, through
-  the component's own custom property rather than a `z-index` written here.
-  Outside a dialog the lift changes nothing: there is nothing between those two
-  levels to jump over, and toasts remain above it, which is right — a
-  notification that cannot be seen is worse than a list that is.
-*/
-.combobox-popup {
-  --sm-combobox-z: var(--sm-z-tooltip);
-}
-
-/*
-  The drawer's header, given the same room under its rule as above its avatar.
-
-  A bordered header pads its bottom with `--sm-dialog-header-gap`, and that
-  token is also the flex gap between the title and the description — one value
-  doing two jobs. At 0.375rem it is right for the gap between a name and an
-  email and wrong for the space before a rule: the account panel had 1.25rem
-  of air above the avatar and 0.375rem under the address, so the rule read as
-  something the email was resting on. Raising the token would have pushed the
-  name and the email apart to fix a margin they have nothing to do with, so
-  the padding is set directly here and the token is left alone. Logged as
-  STACKMYTH-GAP #18.
-
-  The value is the panel's own block padding, so the header's two edges stay
-  equal without a number being written down.
-*/
-.drawer-header {
-  padding-block-end: var(--sm-dialog-content-padding-block);
-}
-
-/*
-  A navigation row inside the drawer, aligned with everything else in it.
-
-  These rows are buttons — `Button asChild` around a next/link, because a
-  destination has to be a real anchor — and a button carries inline padding of
-  its own. That padding indented the icons ~9px past the section labels and
-  the toggle group beside them, which all sit on the panel's own padding edge.
-  Two columns in one panel, one of them for no reason.
-
-  Zeroing the button's own custom property rather than its `padding` is what
-  keeps this a configuration and not an override: same mechanism as the
-  attendee avatar palette above, and it survives a change in how the component
-  composes its padding. `fullWidth` means the hover surface still spans the
-  panel, so the row keeps reading as a row.
-
-  No `!important`: the component declares this inside `@layer components` and
-  an unlayered rule outranks it.
-*/
-.drawer-row {
-  --sm-button-padding-inline: 0;
-}
-
-/*
-  The account drawer once it covers the whole phone screen: a surface, not a
-  panel resting on something.
-
-  A dialog is drawn as a floating object — rounded corners, a hairline border,
-  a drop shadow — and every one of those describes an edge that has a page
-  behind it. At 100dvh by 100% there is no behind: the border becomes a
-  hairline tracing the four sides of the screen, the shadow falls on nothing,
-  and a rounded corner leaves a notch of dead space in a corner the content
-  should own. Phones do this too — a full-screen sheet is square.
-
-  Not `size="full"`, which the library offers for exactly this and which also
-  zeroes the content padding: `.sm-dialog-body` carries a negative inline
-  margin equal to that padding, so setting it to 0 does not indent the body,
-  it drags every row out to the glass — the title and the close button
-  included. This removes the frame and leaves the spacing alone.
-
-  No `!important` needed. The component's own rules live in `@layer
-  components`, and an unlayered rule beats a layered one at any specificity.
-*/
-.drawer-full-bleed {
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
 }
 
 /*

@@ -104,9 +104,7 @@ export function EventCardActions({
           </Button>
         </DropdownMenuTrigger>
 
-        {/* `menu-touch` lifts the rows to the app's touch floor on a phone;
-            see globals.css for why the library's own default does not. */}
-        <DropdownMenuContent align="end" className="menu-touch">
+        <DropdownMenuContent align="end">
           <DropdownMenuItem disabled={pending} onSelect={duplicate}>
             <Flex gap="2" align="center">
               <CopyIcon size={16} aria-hidden="true" />

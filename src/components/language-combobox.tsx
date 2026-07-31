@@ -111,14 +111,10 @@ export function LanguageCombobox({
           id={id}
           size="lg"
           fullWidth
-          // Lands on the wrapper this renders, which is what draws the focus
-          // ring; the class lets `globals.css` silence the second one the app's
-          // own `:focus-visible` would otherwise draw around the inner field.
-          className="combobox-field"
           aria-label={ariaLabel}
           placeholder={copy.common.language}
         />
-        <ComboboxContent className="combobox-popup">
+        <ComboboxContent>
           <ComboboxList>
             {options.map((option) => (
               <ComboboxItem key={option.value} value={option.value} label={option.label}>

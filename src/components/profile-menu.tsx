@@ -163,7 +163,7 @@ export function ProfileMenu({
       </DialogTrigger>
 
       <DrawerContent onDismiss={() => setOpen(false)}>
-        <DialogHeader bordered className="drawer-header">
+        <DialogHeader bordered>
           <Flex justify="between" align="start" gap="3">
             <Flex gap="3" align="center" minWidth="0">
               <Box flexShrink={0}>
@@ -203,16 +203,9 @@ export function ProfileMenu({
             <Stack gap="2">
               {/* Real links. `justify="start"` so a full-width button reads as a
                   row of navigation rather than a centred call to action, and
-                  `drawer-row` drops the button's own inline padding so the
-                  icons line up with the section labels below. */}
-              <Button
-                asChild
-                variant="ghost"
-                size="lg"
-                fullWidth
-                justify="start"
-                className="drawer-row"
-              >
+                  `flush` drops the button's own inline padding so the icons
+                  line up with the section labels below. */}
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
                 <Link href={ROUTES.myEvents} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <CalendarIcon size={18} aria-hidden="true" />
@@ -221,14 +214,7 @@ export function ProfileMenu({
                 </Link>
               </Button>
 
-              <Button
-                asChild
-                variant="ghost"
-                size="lg"
-                fullWidth
-                justify="start"
-                className="drawer-row"
-              >
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
                 <Link href={ROUTES.profile} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <UserIcon size={18} aria-hidden="true" />
@@ -237,14 +223,7 @@ export function ProfileMenu({
                 </Link>
               </Button>
 
-              <Button
-                asChild
-                variant="ghost"
-                size="lg"
-                fullWidth
-                justify="start"
-                className="drawer-row"
-              >
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
                 <Link href={ROUTES.messages} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <MessageCircleIcon size={18} aria-hidden="true" />
@@ -296,7 +275,7 @@ export function ProfileMenu({
               size="lg"
               fullWidth
               justify="start"
-              className="drawer-row"
+              flush
               disabled={pending}
               onClick={signOut}
             >

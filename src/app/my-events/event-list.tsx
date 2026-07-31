@@ -46,6 +46,22 @@ export interface EventListItem {
 type Filter = "upcoming" | "past" | "all";
 
 /**
+ * Lower-cased and stripped of accents, for comparing.
+ *
+ * "futbol" has to find "Fútbol". Typing an accent on a phone keyboard means a
+ * long press, and almost nobody does it while searching — so a case-only
+ * comparison told an organizer that none of their events matched a word that
+ * is right there in the title. Both sides are folded, so it works whichever
+ * side carries the accent.
+ *
+ * NFD splits a letter into its base and its mark; the range that follows is
+ * the combining marks block, so what is left is the plain letters.
+ */
+function foldForSearch(value: string): string {
+  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/**
  * The history, searchable and split by whether the event has happened.
  *
  * Client-side because both controls act on a list the server already sent in
@@ -59,13 +75,13 @@ export function EventList({ events }: { events: EventListItem[] }) {
   const [filter, setFilter] = useState<Filter>("upcoming");
 
   const buckets = useMemo(() => {
-    const needle = term.trim().toLowerCase();
+    const needle = foldForSearch(term.trim());
 
     const matches = needle
       ? events.filter(
           (event) =>
-            event.title.toLowerCase().includes(needle) ||
-            (event.location?.toLowerCase().includes(needle) ?? false),
+            foldForSearch(event.title).includes(needle) ||
+            foldForSearch(event.location ?? "").includes(needle),
         )
       : events;
 
@@ -200,15 +216,15 @@ function EventCard({ event }: { event: EventListItem }) {
 
   return (
     <Card surface="outlined" padding="0">
-      <Box className="event-band" backgroundColor={band.background} color={band.text} px="5" py="3">
+      <Box backgroundColor={band.background} color={band.text} px="5" py="3">
         <Flex justify="between" align="center" gap="3">
           <Box minWidth="0">
-            <Text variant="small" weight="semibold">
+            <Text variant="small" weight="semibold" color="inherit">
               {event.typeLabel ?? copy.auth.eventFallbackLabel}
             </Text>
           </Box>
           <Box flexShrink={0}>
-            <Text variant="small" weight="medium">
+            <Text variant="small" weight="medium" color="inherit">
               {event.when}
             </Text>
           </Box>

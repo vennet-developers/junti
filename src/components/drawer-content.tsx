@@ -43,9 +43,9 @@ import { DialogContent } from "@stackmyth/dialog";
  * Nothing is passed on the desktop branch: for a side panel `size` means
  * WIDTH, and the height is already 100%.
  *
- * Filling the screen also means dropping the frame — see `.drawer-full-bleed`
- * for why the border, shadow and corner radius all describe an edge that no
- * longer has a page behind it.
+ * Filling the screen also means dropping the frame, which is what `frameless`
+ * is for: the border, the shadow and the corner radius all describe an edge
+ * that has a page behind it, and at full bleed there is none.
  *
  * `useIsMobile` reads `matchMedia` after hydration, which is fine here for a
  * reason worth stating: the panel renders nothing until it is opened, and
@@ -124,11 +124,8 @@ export function DrawerContent({
       height={isMobile ? "100dvh" : undefined}
       // Frame off once it fills the screen; on the desktop panel the border
       // and shadow are what separate it from the page behind it.
-      className={
-        [props.className, "drawer", isMobile ? "drawer-full-bleed" : null]
-          .filter(Boolean)
-          .join(" ") || undefined
-      }
+      frameless={isMobile}
+      className={[props.className, "drawer"].filter(Boolean).join(" ") || undefined}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     />
