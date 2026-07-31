@@ -178,8 +178,17 @@ export function ProfileMenu({
           <Stack gap="5">
             <Stack gap="2">
               {/* Real links. `justify="start"` so a full-width button reads as a
-                  row of navigation rather than a centred call to action. */}
-              <Button asChild variant="ghost" size="lg" fullWidth justify="start">
+                  row of navigation rather than a centred call to action, and
+                  `drawer-row` drops the button's own inline padding so the
+                  icons line up with the section labels below. */}
+              <Button
+                asChild
+                variant="ghost"
+                size="lg"
+                fullWidth
+                justify="start"
+                className="drawer-row"
+              >
                 <Link href={ROUTES.myEvents}>
                   <Flex gap="3" align="center">
                     <CalendarIcon size={18} aria-hidden="true" />
@@ -188,7 +197,14 @@ export function ProfileMenu({
                 </Link>
               </Button>
 
-              <Button asChild variant="ghost" size="lg" fullWidth justify="start">
+              <Button
+                asChild
+                variant="ghost"
+                size="lg"
+                fullWidth
+                justify="start"
+                className="drawer-row"
+              >
                 <Link href={ROUTES.profile}>
                   <Flex gap="3" align="center">
                     <UserIcon size={18} aria-hidden="true" />
@@ -238,6 +254,7 @@ export function ProfileMenu({
               size="lg"
               fullWidth
               justify="start"
+              className="drawer-row"
               disabled={pending}
               onClick={signOut}
             >

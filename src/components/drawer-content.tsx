@@ -125,8 +125,9 @@ export function DrawerContent({
       // Frame off once it fills the screen; on the desktop panel the border
       // and shadow are what separate it from the page behind it.
       className={
-        [props.className, isMobile ? "drawer-full-bleed" : null].filter(Boolean).join(" ") ||
-        undefined
+        [props.className, "drawer", isMobile ? "drawer-full-bleed" : null]
+          .filter(Boolean)
+          .join(" ") || undefined
       }
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}

@@ -122,6 +122,46 @@ body {
 }
 
 /*
+  The account drawer's vertical breathing room.
+
+  The dialog ships 1.25rem of inline padding against 0.625rem of block, which
+  suits a centred modal whose first row is a line of text. This panel opens
+  with an avatar, a name and an email stacked against the top edge, and half
+  the inline padding above them reads as a crop rather than a margin. Matching
+  the two makes the corner square.
+
+  A token, not a length: the value is the component's own inline padding, so
+  the two stay equal if the library ever retunes them. Only the block axis
+  moves — `.sm-dialog-body` cancels the INLINE padding with a negative margin
+  of the same size, and changing that number would pull every row sideways.
+*/
+.drawer {
+  --sm-dialog-content-padding-block: var(--sm-dialog-content-padding);
+}
+
+/*
+  A navigation row inside the drawer, aligned with everything else in it.
+
+  These rows are buttons — `Button asChild` around a next/link, because a
+  destination has to be a real anchor — and a button carries inline padding of
+  its own. That padding indented the icons ~9px past the section labels and
+  the toggle group beside them, which all sit on the panel's own padding edge.
+  Two columns in one panel, one of them for no reason.
+
+  Zeroing the button's own custom property rather than its `padding` is what
+  keeps this a configuration and not an override: same mechanism as the
+  attendee avatar palette above, and it survives a change in how the component
+  composes its padding. `fullWidth` means the hover surface still spans the
+  panel, so the row keeps reading as a row.
+
+  No `!important`: the component declares this inside `@layer components` and
+  an unlayered rule outranks it.
+*/
+.drawer-row {
+  --sm-button-padding-inline: 0;
+}
+
+/*
   The account drawer once it covers the whole phone screen: a surface, not a
   panel resting on something.
 
