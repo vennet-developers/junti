@@ -667,3 +667,72 @@ async function loadEventType(
 
   return { slug: row.slug, label: pickLabel(row.labels, locale, row.slug) };
 }
+
+// ── The approvals queue ──────────────────────────────────────────────────────
+
+/** One receipt waiting on a decision, with enough context to judge it. */
+export interface PendingApproval {
+  submissionId: string;
+  eventId: string;
+  eventTitle: string;
+  publicToken: string;
+  organizerToken: string;
+  participantName: string;
+  policyLabels: Record<string, string> | null;
+  policySlug: string;
+  /** The participant's own words: a transfer reference, "paid in cash". */
+  note: string | null;
+  submittedAt: Date;
+  /** Whether there is an image to look at before deciding. */
+  hasEvidence: boolean;
+}
+
+/**
+ * Everything the organizer still has to decide, across every event they own.
+ *
+ * Oldest first: somebody who sent a receipt on Monday has been waiting longer
+ * than somebody who sent one an hour ago, and a queue that buries them under
+ * newer arrivals is a queue that never clears its tail.
+ *
+ * One query rather than one per event. An organizer with a season of weekly
+ * matches has a dozen events open at once, and the page that exists to save
+ * them steps should not spend a round trip per event to build itself.
+ */
+export async function loadPendingApprovals(organizerId: string): Promise<PendingApproval[]> {
+  const rows = await db
+    .select({
+      submissionId: policySubmissions.id,
+      eventId: events.id,
+      eventTitle: events.title,
+      publicToken: events.publicToken,
+      organizerToken: events.organizerToken,
+      participantName: participants.displayName,
+      policyLabels: policyDefinitions.labels,
+      policySlug: policyDefinitions.slug,
+      note: policySubmissions.note,
+      submittedAt: policySubmissions.createdAt,
+      evidenceId: policyEvidence.submissionId,
+    })
+    .from(policySubmissions)
+    .innerJoin(eventPolicies, eq(policySubmissions.policyId, eventPolicies.id))
+    .innerJoin(events, eq(eventPolicies.eventId, events.id))
+    .innerJoin(participants, eq(policySubmissions.participantId, participants.id))
+    .innerJoin(policyDefinitions, eq(eventPolicies.policyDefinitionId, policyDefinitions.id))
+    .leftJoin(policyEvidence, eq(policyEvidence.submissionId, policySubmissions.id))
+    .where(and(eq(events.organizerId, organizerId), eq(policySubmissions.status, "submitted")))
+    .orderBy(asc(policySubmissions.createdAt));
+
+  return rows.map((row) => ({
+    submissionId: row.submissionId,
+    eventId: row.eventId,
+    eventTitle: row.eventTitle,
+    publicToken: row.publicToken,
+    organizerToken: row.organizerToken,
+    participantName: row.participantName,
+    policyLabels: row.policyLabels as Record<string, string> | null,
+    policySlug: row.policySlug,
+    note: row.note,
+    submittedAt: row.submittedAt,
+    hasEvidence: row.evidenceId !== null,
+  }));
+}

@@ -29,6 +29,8 @@ export const ROUTES = {
    * between them is who the setting affects.
    */
   messages: "/messages",
+  /** Every receipt waiting on this organizer, across all of their events. */
+  approvals: "/approvals",
   /** Where Google and the emailed links land. */
   authCallback: "/auth/callback",
 } as const;

@@ -353,6 +353,27 @@ export const es = {
     copyOrganizerLink: "Copiar mi link de organizador",
   },
 
+  approvals: {
+    link: "Aprobaciones",
+    title: "Aprobaciones pendientes",
+    heading: "Aprobaciones pendientes",
+    subheading: "Comprobantes esperando tu visto bueno, en todos tus eventos.",
+    emptyTitle: "Nada por revisar",
+    emptyHelp: "Cuando alguien mande un comprobante, aparece acá.",
+    selectAll: "Seleccionar todo",
+    clearSelection: "Quitar selección",
+    approveSelected: (n: number) => (n === 1 ? "Aprobar 1" : `Aprobar ${n}`),
+    approving: "Aprobando…",
+    approvedNotice: (n: number) =>
+      n === 1 ? "Aprobaste 1 comprobante." : `Aprobaste ${n} comprobantes.`,
+    nothingLeft: "Esos ya estaban resueltos.",
+    openEvent: "Abrir el evento",
+    seeReceipt: "Ver comprobante",
+    noReceipt: "Sin imagen",
+    waitingSince: (when: string) => `Desde ${when}`,
+    rejectHint: "¿Vas a rechazar alguno? Se hace dentro del evento, con el motivo.",
+  },
+
   messages: {
     link: "Mensajes",
     title: "Mensajes a invitados",

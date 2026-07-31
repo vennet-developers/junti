@@ -345,6 +345,27 @@ export const en: Copy = {
     copyOrganizerLink: "Copy my organizer link",
   },
 
+  approvals: {
+    link: "Approvals",
+    title: "Pending approvals",
+    heading: "Pending approvals",
+    subheading: "Receipts waiting on you, across every event of yours.",
+    emptyTitle: "Nothing to review",
+    emptyHelp: "When somebody sends a receipt, it shows up here.",
+    selectAll: "Select all",
+    clearSelection: "Clear selection",
+    approveSelected: (n: number) => (n === 1 ? "Approve 1" : `Approve ${n}`),
+    approving: "Approving…",
+    approvedNotice: (n: number) =>
+      n === 1 ? "You approved 1 receipt." : `You approved ${n} receipts.`,
+    nothingLeft: "Those were already resolved.",
+    openEvent: "Open the event",
+    seeReceipt: "See receipt",
+    noReceipt: "No image",
+    waitingSince: (when: string) => `Since ${when}`,
+    rejectHint: "Rejecting one? That happens inside the event, with the reason.",
+  },
+
   messages: {
     link: "Messages",
     title: "Guest messages",

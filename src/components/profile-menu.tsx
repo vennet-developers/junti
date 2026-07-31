@@ -16,6 +16,7 @@ import {
 } from "@stackmyth/dialog";
 import {
   CalendarIcon,
+  CheckCircleIcon,
   ChevronDownIcon,
   LogOutIcon,
   MessageCircleIcon,
@@ -210,6 +211,17 @@ export function ProfileMenu({
                   <Flex gap="3" align="center">
                     <CalendarIcon size={18} aria-hidden="true" />
                     {copy.auth.myEventsLink}
+                  </Flex>
+                </Link>
+              </Button>
+
+              {/* Second, right under the events: it is where an organizer goes
+                  when something is waiting, and it reads across all of them. */}
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
+                <Link href={ROUTES.approvals} onClick={closeUnlessOpeningElsewhere}>
+                  <Flex gap="3" align="center">
+                    <CheckCircleIcon size={18} aria-hidden="true" />
+                    {copy.approvals.link}
                   </Flex>
                 </Link>
               </Button>
