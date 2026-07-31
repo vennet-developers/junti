@@ -6,13 +6,12 @@ import { getViewerCopy } from "@/lib/locale";
 /**
  * Who made this, at the bottom of every page.
  *
- * **The wording is not a choice.** Vennet's brand manual prescribes one legal
- * line for the site and app footer — "© <year> Vennet SAS. <Product> is a
- * Vennet product. All rights reserved." — and names "a Vennet product" as
- * sanctioned voice against a "we never say" list of the usual agency words. So
- * this says exactly that, with Junti as the product and Vennet as the house:
- * the hierarchy was confirmed before anything was written, because shipping the
- * wrong one publicly is annoying to walk back.
+ * **"© <year> Junti by Vennet", and the same line in every email.** Shorter
+ * than the legal line Vennet's manual prescribes for its own products — no
+ * entity, no rights sentence, no domain — because this app lives at
+ * junti.vennet.dev and a footer that spells out the company twice on a phone
+ * is a footer nobody reads. The hierarchy it states is still the confirmed
+ * one: Vennet the house, Junti the product.
  *
  * **The mark, not the wordmark.** Vennet ships both, and only the mark is real
  * artwork: the wordmark and the lockup are `<text>` elements asking for Outfit,

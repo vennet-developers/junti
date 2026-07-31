@@ -355,16 +355,13 @@ export const es = {
 
   footer: {
     /*
-      La línea legal que el manual de marca de Vennet prescribe para el pie de
-      sitio y de app, en una sola línea: «© <año> Vennet SAS. <Producto> es un
-      producto de Vennet. Todos los derechos reservados.»
-
-      Una sola cadena: el enlace lo lleva la marca de Vennet encima, así que
-      la frase no tiene que partirse para hospedarlo — y una oración armada
-      por concatenación solo sale bien en el idioma para el que se escribió.
+      La atribución del pie, en app y en correo, idéntica en ambos: «© <año>
+      Junti by Vennet». Más corta que la línea legal que el manual de Vennet
+      prescribe para sus propios productos, y sin el dominio — el enlace lo
+      lleva la marca encima, y repetir la dirección debajo la nombraba dos
+      veces en cuatro palabras.
     */
-    legal: (year: number) =>
-      `© ${year} Vennet SAS. ${BRAND_NAME} es un producto de Vennet. Todos los derechos reservados.`,
+    legal: (year: number) => `© ${year} ${BRAND_NAME} by Vennet`,
     /** Nombre accesible del enlace que envuelve la marca. */
     vennetLabel: "Vennet",
   },

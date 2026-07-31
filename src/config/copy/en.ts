@@ -347,12 +347,12 @@ export const en: Copy = {
 
   footer: {
     /*
-      The legal line Vennet's brand manual prescribes for the site and app
-      footer, on a single line — one string, because the mark above it carries
-      the link, so the sentence never has to be split to host one.
+      The footer attribution, identical in the app and in email: "© <year>
+      Junti by Vennet". Shorter than the legal line Vennet's manual prescribes
+      for its own products, and without the domain — the mark above carries the
+      link, and repeating the address below named it twice in four words.
     */
-    legal: (year: number) =>
-      `© ${year} Vennet SAS. ${BRAND_NAME} is a Vennet product. All rights reserved.`,
+    legal: (year: number) => `© ${year} ${BRAND_NAME} by Vennet`,
     /** Accessible name for the link wrapping the mark. */
     vennetLabel: "Vennet",
   },

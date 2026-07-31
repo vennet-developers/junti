@@ -5,7 +5,6 @@ import {
   Hr,
   Html,
   Img,
-  Link,
   Preview,
   Section,
   Text,
@@ -108,10 +107,7 @@ export function EmailLayout({ preview, origin, children }: LayoutProps) {
               style={{ display: "block", marginBottom: "12px", opacity: 0.75 }}
             />
             <Text style={{ color: COLORS.muted, fontSize: "12px", lineHeight: "18px", margin: 0 }}>
-              © {new Date().getFullYear()} Vennet SAS. {BRAND_NAME} —{" "}
-              <Link href="https://vennet.dev" style={{ color: COLORS.link }}>
-                vennet.dev
-              </Link>
+              © {new Date().getFullYear()} {BRAND_NAME} by Vennet
             </Text>
           </Section>
         </Container>
