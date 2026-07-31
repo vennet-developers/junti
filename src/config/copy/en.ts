@@ -334,10 +334,40 @@ export const en: Copy = {
   },
 
   share: {
-    whatsAppMessage: (title: string, when: string, url: string) =>
-      `Hey! ${title} — ${when}. Let me know if you are coming: ${url}`,
+    /*
+      The default invitation, as a template. The placeholders are English in
+      both languages on purpose: they are not prose but slots, inserted by
+      buttons labelled in the writer's own language, and keeping the token
+      fixed lets a template survive its author switching the interface.
+    */
+    defaultMessage: "Hey! {title} — {when}. Let me know if you are coming: {link}",
     copyParticipantLink: "Copy guest link",
     copyOrganizerLink: "Copy my organizer link",
+  },
+
+  messages: {
+    link: "Messages",
+    title: "Guest messages",
+    heading: "Guest messages",
+    subheading: "What yours receive when you share an event.",
+    invitationLabel: "WhatsApp invitation",
+    invitationHelp:
+      "WhatsApp opens with this already written. You can change it before sending, and whatever you save here is used for every event you share.",
+    insertLabel: "Insert",
+    placeholderTitle: "Title",
+    placeholderWhen: "Date and time",
+    placeholderLink: "Link",
+    previewLabel: "How it looks",
+    restore: "Back to the default message",
+    saved: "Message saved.",
+    /* Only used by somebody who has no events yet, so the preview still
+       shows the shape of a real message. */
+    sampleTitle: "Thursday football",
+    sampleWhen: "Thu, 7 Aug, 8:00 pm (Bogotá)",
+    usingDefault: "You are using the default message.",
+    errorEmpty: "Write the message, or go back to the one the app ships.",
+    errorMissingLink: "The link is missing: without it nobody can reply. Put it wherever you like.",
+    errorTooLong: (max: number) => `${max} characters maximum.`,
   },
 
   auth: {

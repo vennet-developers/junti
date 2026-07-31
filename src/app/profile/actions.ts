@@ -62,7 +62,13 @@ export async function saveProfile(
   // silently reset somebody's dark mode.
   const stored = await loadStoredPreferences(organizer.id);
 
-  await saveStoredPreferences(organizer.id, { locale, timeZone, theme: stored.theme });
+  // Read-then-write: this form owns language and timezone, and must not clear
+  // the appearance or the invitation template stored in the same row.
+  await saveStoredPreferences(organizer.id, {
+    ...stored,
+    locale,
+    timeZone,
+  });
 
   await writePreferenceCookie(LOCALE_COOKIE, locale);
 

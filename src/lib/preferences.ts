@@ -61,6 +61,16 @@ export interface StoredPreferences {
   timeZone: string | null;
   /** NULL means "follow my operating system". */
   theme: Theme | null;
+  /**
+   * The organizer's own invitation template, or NULL for the app's.
+   *
+   * The odd one out in this record: the other three decide what this person
+   * sees, and this one decides what everybody they invite receives. It lives
+   * here because it is stored per account like the rest, and it is edited
+   * somewhere else — `/messages` rather than `/profile` — for exactly that
+   * difference.
+   */
+  shareMessage: string | null;
 }
 
 /** Where the language came from, which decides whether an event may override it. */
@@ -155,6 +165,7 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
       locale: userPreferences.locale,
       timeZone: userPreferences.timeZone,
       theme: userPreferences.theme,
+      shareMessage: userPreferences.shareMessage,
     })
     .from(userPreferences)
     .where(eq(userPreferences.userId, userId))
@@ -164,7 +175,31 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
     locale: isLocale(row?.locale) ? row.locale : null,
     timeZone: row?.timeZone && isValidTimeZone(row.timeZone) ? row.timeZone : null,
     theme: isTheme(row?.theme) ? row.theme : null,
+    // Validated on the way in, not on the way out: a template that lost its
+    // link would leave every share link broken with nothing to explain it.
+    shareMessage: row?.shareMessage ?? null,
   };
+}
+
+/**
+ * The invitation template an event's owner writes, or the one the app ships.
+ *
+ * Takes the OWNER's id rather than the viewer's, because the manage screen is
+ * reachable with a token by somebody who is not signed in at all — and the
+ * message that goes out is the organizer's, whoever is holding the link. An
+ * anonymous event has no owner and therefore no stored template, which is
+ * exactly when the default is right.
+ */
+export async function loadShareTemplate(ownerId: string | null, fallback: string): Promise<string> {
+  if (!ownerId) return fallback;
+
+  const [row] = await db
+    .select({ shareMessage: userPreferences.shareMessage })
+    .from(userPreferences)
+    .where(eq(userPreferences.userId, ownerId))
+    .limit(1);
+
+  return row?.shareMessage?.trim() || fallback;
 }
 
 /** Writes the durable record. NULL on either field clears that override. */
@@ -174,13 +209,20 @@ export async function saveStoredPreferences(
 ): Promise<void> {
   await db
     .insert(userPreferences)
-    .values({ userId, locale: next.locale, timeZone: next.timeZone, theme: next.theme })
+    .values({
+      userId,
+      locale: next.locale,
+      timeZone: next.timeZone,
+      theme: next.theme,
+      shareMessage: next.shareMessage,
+    })
     .onConflictDoUpdate({
       target: userPreferences.userId,
       set: {
         locale: next.locale,
         timeZone: next.timeZone,
         theme: next.theme,
+        shareMessage: next.shareMessage,
         updatedAt: new Date(),
       },
     });

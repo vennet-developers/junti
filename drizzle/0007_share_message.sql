@@ -1,0 +1,11 @@
+-- The organizer's own invitation, as a template.
+--
+-- NULL keeps the meaning it has in every other column here: follow the default,
+-- which for this one is the message the app writes in the reader's language. So
+-- there is nothing to backfill and nobody's invitations change on deploy.
+--
+-- The template holds `{title}`, `{when}` and `{link}`. `{link}` is required and
+-- that is checked where it is saved rather than by a constraint here: the set of
+-- placeholders is application vocabulary, and a CHECK that spelled them out
+-- would need a migration every time one is added.
+ALTER TABLE "user_preferences" ADD COLUMN "share_message" text;

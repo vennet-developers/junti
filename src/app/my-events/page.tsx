@@ -14,8 +14,9 @@ import { loadEventTypes } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
 import { formatEventDateTime, formatMoney } from "@/lib/format";
 import { paletteIndexFor } from "@/lib/palette";
+import { renderShareMessage } from "@/lib/share-message";
 import { getOrganizer } from "@/lib/organizer";
-import { resolvePreferences } from "@/lib/preferences";
+import { loadShareTemplate, resolvePreferences } from "@/lib/preferences";
 import { loadOrganizerEvents } from "@/lib/roster";
 import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
 
@@ -46,6 +47,9 @@ export default async function MyEventsPage({
 
   // Absolute, because the share message is pasted into WhatsApp.
   const base = await origin();
+
+  // One lookup for every card: the organizer's own invitation, or the app's.
+  const shareTemplate = await loadShareTemplate(organizer.id, copy.share.defaultMessage);
 
   // One lookup for the whole list: the catalogue is a handful of rows, and the
   // alternative is a join repeating the same labels on every event.
@@ -86,11 +90,11 @@ export default async function MyEventsPage({
     firstAttendees: event.firstAttendees,
     managePath: managePath(event.publicToken, event.organizerToken),
     whatsAppUrl: whatsAppShareUrl(
-      copy.share.whatsAppMessage(
-        event.title,
-        shortEventTime(event.startsAt, event.timeZone, copy),
-        `${base}${participantPath(event.publicToken)}`,
-      ),
+      renderShareMessage(shareTemplate, {
+        title: event.title,
+        when: shortEventTime(event.startsAt, event.timeZone, copy),
+        link: `${base}${participantPath(event.publicToken)}`,
+      }),
     ),
   }));
 

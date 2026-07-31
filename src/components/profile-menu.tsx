@@ -18,6 +18,7 @@ import {
   CalendarIcon,
   ChevronDownIcon,
   LogOutIcon,
+  MessageCircleIcon,
   MonitorIcon,
   MoonIcon,
   SunIcon,
@@ -232,6 +233,22 @@ export function ProfileMenu({
                   <Flex gap="3" align="center">
                     <UserIcon size={18} aria-hidden="true" />
                     {copy.profile.link}
+                  </Flex>
+                </Link>
+              </Button>
+
+              <Button
+                asChild
+                variant="ghost"
+                size="lg"
+                fullWidth
+                justify="start"
+                className="drawer-row"
+              >
+                <Link href={ROUTES.messages} onClick={closeUnlessOpeningElsewhere}>
+                  <Flex gap="3" align="center">
+                    <MessageCircleIcon size={18} aria-hidden="true" />
+                    {copy.messages.link}
                   </Flex>
                 </Link>
               </Button>

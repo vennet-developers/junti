@@ -23,6 +23,12 @@ export const ROUTES = {
   signIn: "/sign-in",
   myEvents: "/my-events",
   profile: "/profile",
+  /**
+   * What the organizer's guests receive, as opposed to `/profile`, which is
+   * how the organizer sees the app. The two are settings screens and the split
+   * between them is who the setting affects.
+   */
+  messages: "/messages",
   /** Where Google and the emailed links land. */
   authCallback: "/auth/callback",
 } as const;

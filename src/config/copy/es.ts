@@ -342,10 +342,40 @@ export const es = {
   },
 
   share: {
-    whatsAppMessage: (title: string, when: string, url: string) =>
-      `¡Parcero! ${title} — ${when}. Confirma si vienes acá: ${url}`,
+    /*
+      La invitación por defecto, como plantilla. Los marcadores van en inglés a
+      propósito y en los dos idiomas: no son texto, son huecos que el editor
+      inserta con botones rotulados en el idioma de quien escribe, y dejarlos
+      fijos hace que una plantilla sobreviva a que su autor cambie la interfaz.
+    */
+    defaultMessage: "¡Parcero! {title} — {when}. Confirma si vienes acá: {link}",
     copyParticipantLink: "Copiar link de invitados",
     copyOrganizerLink: "Copiar mi link de organizador",
+  },
+
+  messages: {
+    link: "Mensajes",
+    title: "Mensajes a invitados",
+    heading: "Mensajes a invitados",
+    subheading: "Lo que reciben los tuyos cuando compartes un evento.",
+    invitationLabel: "Invitación por WhatsApp",
+    invitationHelp:
+      "Se abre en WhatsApp con este texto ya escrito. Puedes cambiarlo antes de enviarlo, y lo que guardes acá se usa en todos tus eventos.",
+    insertLabel: "Insertar",
+    placeholderTitle: "Título",
+    placeholderWhen: "Fecha y hora",
+    placeholderLink: "Enlace",
+    previewLabel: "Así se ve",
+    restore: "Volver al mensaje por defecto",
+    saved: "Mensaje guardado.",
+    /* Only used by somebody who has no events yet, so the preview still
+       shows the shape of a real message. */
+    sampleTitle: "Fútbol de los jueves",
+    sampleWhen: "jue, 7 ago, 8:00 p. m. (Bogotá)",
+    usingDefault: "Estás usando el mensaje por defecto.",
+    errorEmpty: "Escribe el mensaje o vuelve al que trae la app.",
+    errorMissingLink: "Falta el enlace: sin él, nadie puede confirmar. Insértalo donde quieras.",
+    errorTooLong: (max: number) => `Máximo ${max} caracteres.`,
   },
 
   auth: {

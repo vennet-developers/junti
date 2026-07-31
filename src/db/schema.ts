@@ -530,6 +530,22 @@ export const userPreferences = pgTable("user_preferences", {
    */
   theme: text("theme"),
 
+  /**
+   * The invitation this organizer sends, as a template, or NULL for the one
+   * the app writes in the reader's language.
+   *
+   * Holds `{title}`, `{when}` and `{link}` where the event's own details go.
+   * `{link}` is required — an invitation without it is a message nobody can
+   * answer — and that is enforced where it is saved, not here: a CHECK
+   * constraint on a template language would have to be rewritten every time a
+   * placeholder is added.
+   *
+   * Belongs to the organizer rather than the event because the case that asks
+   * for it is the fixture that repeats: whoever rewrites the greeting once
+   * means it for every Thursday, not for one of them.
+   */
+  shareMessage: text("share_message"),
+
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

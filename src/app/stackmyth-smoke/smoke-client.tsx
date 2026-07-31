@@ -37,6 +37,7 @@ import { Stat } from "@stackmyth/stat";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
+import { MessageForm } from "@/app/messages/message-form";
 import { EventList, type EventListItem } from "@/app/my-events/event-list";
 import { useCopy } from "@/components/copy-provider";
 import { GuestMenu } from "@/components/guest-menu";
@@ -362,6 +363,28 @@ export function SmokeClient() {
               theme={null}
             />
           </Flex>
+        </Stack>
+
+        {/*
+          The invitation editor, which `/messages` needs a session to reach.
+
+          Here for the half that can be looked at without one: typing, the
+          insert buttons and the live preview, which all run in the browser.
+          Saving calls a server action that requires an account, so the button
+          on this page reports "sign in" rather than doing anything — the point
+          is the editing, not the storing.
+        */}
+        <Stack gap="3">
+          <Text variant="h3">Invitation editor</Text>
+          <MessageForm
+            stored={null}
+            fallback={copy.share.defaultMessage}
+            sample={{
+              title: "Fútbol de los jueves",
+              when: "jue, 7 ago, 8:00 p. m. (Bogotá)",
+              link: "https://junti-three.vercel.app/e/ejemplo",
+            }}
+          />
         </Stack>
 
         {/*

@@ -17,9 +17,10 @@ import { CreatedToast } from "@/components/created-toast";
 import { getCopy } from "@/config/copy";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
+import { renderShareMessage } from "@/lib/share-message";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
-import { readingTimeZone, resolvePreferences } from "@/lib/preferences";
+import { loadShareTemplate, readingTimeZone, resolvePreferences } from "@/lib/preferences";
 import { getOrganizer } from "@/lib/organizer";
 import { ROUTES } from "@/config/routes";
 import {
@@ -111,10 +112,13 @@ export default async function ManagePage({
 
   // The organizer's message goes out in the EVENT's zone with the place named,
   // because it lands in a chat where somebody may be reading it from abroad.
-  const shareMessage = copy.share.whatsAppMessage(
-    event.title,
-    shortEventTime(event.startsAt, event.timeZone, copy),
-    participantUrl,
+  const shareMessage = renderShareMessage(
+    await loadShareTemplate(eventRow.organizerId, copy.share.defaultMessage),
+    {
+      title: event.title,
+      when: shortEventTime(event.startsAt, event.timeZone, copy),
+      link: participantUrl,
+    },
   );
 
   const justCreated = created === "1";
