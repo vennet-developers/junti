@@ -122,6 +122,32 @@ body {
 }
 
 /*
+  The account drawer once it covers the whole phone screen: a surface, not a
+  panel resting on something.
+
+  A dialog is drawn as a floating object — rounded corners, a hairline border,
+  a drop shadow — and every one of those describes an edge that has a page
+  behind it. At 100dvh by 100% there is no behind: the border becomes a
+  hairline tracing the four sides of the screen, the shadow falls on nothing,
+  and a rounded corner leaves a notch of dead space in a corner the content
+  should own. Phones do this too — a full-screen sheet is square.
+
+  Not `size="full"`, which the library offers for exactly this and which also
+  zeroes the content padding: `.sm-dialog-body` carries a negative inline
+  margin equal to that padding, so setting it to 0 does not indent the body,
+  it drags every row out to the glass — the title and the close button
+  included. This removes the frame and leaves the spacing alone.
+
+  No `!important` needed. The component's own rules live in `@layer
+  components`, and an unlayered rule beats a layered one at any specificity.
+*/
+.drawer-full-bleed {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/*
   One crumb of the breadcrumb trail, capped in width.
 
   An event title is free text and routinely longer than the screen: at 390px
