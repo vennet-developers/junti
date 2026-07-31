@@ -269,14 +269,8 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             attendingCount={roster.attending.length}
             copy={copy}
             readerTimeZone={readerTimeZone}
+            openSlots={roster.openSlots}
           />
-
-          {/* Only the "spots left" nudge lives here. When the event is FULL the
-            RSVP box says so itself, right where the consequence applies —
-            saying it twice on one screen is noise. */}
-          {!event.isClosed && roster.openSlots !== null && roster.openSlots > 0 ? (
-            <Notice tone="info" title={copy.event.spotsLeft(roster.openSlots)} />
-          ) : null}
 
           {/*
           The RSVP box comes BEFORE the roster.

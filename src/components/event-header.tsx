@@ -38,9 +38,23 @@ export interface EventHeaderProps {
   copy: Copy;
   /** The reader's zone. Falls back to the event's, which shows one line. */
   readerTimeZone: string;
+  /**
+   * Spots still free, or null when the event has no cap.
+   *
+   * Comes from the roster rather than being derived from `capacity` minus
+   * `attendingCount`, because the waitlist has its own rules about what counts
+   * as holding a spot and this header has no business reimplementing them.
+   */
+  openSlots: number | null;
 }
 
-export function EventHeader({ event, attendingCount, copy, readerTimeZone }: EventHeaderProps) {
+export function EventHeader({
+  event,
+  attendingCount,
+  copy,
+  readerTimeZone,
+  openSlots,
+}: EventHeaderProps) {
   const when = describeEventTime({
     startsAt: event.startsAt,
     eventTimeZone: event.timeZone,
@@ -63,6 +77,25 @@ export function EventHeader({ event, attendingCount, copy, readerTimeZone }: Eve
           {event.isClosed ? (
             <Badge variant="error" size="sm" soft>
               {copy.event.closedBadge}
+            </Badge>
+          ) : null}
+
+          {/*
+            "Spots left" belongs in this row and not in a notice of its own.
+
+            It was a full-width card between the header and the RSVP box —
+            roughly 90px of vertical space on a phone to carry four words, on the
+            screen whose whole job is to get somebody to the answer quickly. It
+            is a status about the event, which is exactly what the badges beside
+            it are, so it costs nothing here.
+
+            Not shown when the event is closed or full: a closed event's spots
+            are moot, and a full one says so in the RSVP box, where the
+            consequence actually applies. Saying it twice on one screen is noise.
+          */}
+          {!event.isClosed && openSlots !== null && openSlots > 0 ? (
+            <Badge variant="info" size="sm" soft>
+              {copy.event.spotsLeft(openSlots)}
             </Badge>
           ) : null}
         </Flex>

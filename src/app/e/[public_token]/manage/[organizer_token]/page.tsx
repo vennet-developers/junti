@@ -213,6 +213,7 @@ export default async function ManagePage({
             attendingCount={roster.attending.length}
             copy={copy}
             readerTimeZone={readerTimeZone}
+            openSlots={roster.openSlots}
           />
 
           {justCreated ? (
