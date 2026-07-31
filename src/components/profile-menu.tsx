@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@stackmyth/avatar";
 import { Button } from "@stackmyth/button";
@@ -86,6 +86,25 @@ export function ProfileMenu({
     // "system" is this panel's word for "no stored preference". The server
     // stores null, and null is what lets `prefers-color-scheme` take over.
     startTransition(() => void setTheme(next === "system" ? null : next));
+  }
+
+  /**
+   * Close the drawer as a destination is chosen.
+   *
+   * Leaving for another page closed it already, by unmounting the header that
+   * holds it. Going to the page you are already on does not: `/profile` →
+   * "My profile" re-renders nothing, so the panel stayed open over the screen
+   * it had just been asked to show. The panel closing is what the tap means,
+   * whether or not anything navigates.
+   *
+   * Except when the click is asking for a second tab. Cmd/ctrl, shift and the
+   * middle button all mean "open that elsewhere, leave me where I am", and
+   * these are real anchors precisely so that works — closing the panel out
+   * from under someone who is staying put would take half of it back.
+   */
+  function closeUnlessOpeningElsewhere(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    setOpen(false);
   }
 
   function signOut() {
@@ -193,7 +212,7 @@ export function ProfileMenu({
                 justify="start"
                 className="drawer-row"
               >
-                <Link href={ROUTES.myEvents}>
+                <Link href={ROUTES.myEvents} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <CalendarIcon size={18} aria-hidden="true" />
                     {copy.auth.myEventsLink}
@@ -209,7 +228,7 @@ export function ProfileMenu({
                 justify="start"
                 className="drawer-row"
               >
-                <Link href={ROUTES.profile}>
+                <Link href={ROUTES.profile} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <UserIcon size={18} aria-hidden="true" />
                     {copy.profile.link}
