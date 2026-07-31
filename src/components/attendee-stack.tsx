@@ -7,12 +7,16 @@ import { paletteIndexFor } from "@/lib/palette";
 /**
  * The overlapping faces on an event card.
  *
- * Participants have no photos and no accounts — they type a name into a
- * WhatsApp link and that is all we ever know about them — so the stack is
- * initials. To stop it reading as a row of identical grey discs, each name gets
- * a colour derived from the name itself, which means the same person keeps the
- * same colour across every event and across reloads without anything being
- * stored.
+ * Initials rather than photographs, even though participants have accounts now
+ * and most carry a Google avatar. This stack draws the summary on an event
+ * card, where the query returns names and a count and nothing else; loading
+ * every attendee's photo to fill a 24px disc on a list of a dozen events is a
+ * lot of bytes for very little. `PersonAvatar` is the one that shows the real
+ * picture, where the person is actually the subject.
+ *
+ * To stop it reading as a row of identical grey discs, each name gets a colour
+ * derived from the name itself, which means the same person keeps the same
+ * colour across every event and across reloads without anything being stored.
  */
 
 /**

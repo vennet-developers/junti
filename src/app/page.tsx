@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   /*
     A signed-in organizer has no use for the pitch: they came back to look at
-    their events, so send them there. Anonymous visitors — the whole WhatsApp
+    their events, so send them there. Signed-out visitors — the whole WhatsApp
     group following a link, or somebody arriving for the first time — get the
     landing page unchanged.
 
@@ -66,9 +66,9 @@ export default async function HomePage() {
             <Button asChild fullWidth size="lg">
               <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
             </Button>
-            {/* Secondary on purpose: creating an event must stay possible
-                without an account. Signing in only adds the history and the
-                photo. */}
+            {/* Secondary on purpose: both destinations now ask for the same
+                account, so the primary button is the one that says what this
+                is for. */}
             <Button asChild fullWidth size="md" variant="ghost">
               <Link href={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
             </Button>

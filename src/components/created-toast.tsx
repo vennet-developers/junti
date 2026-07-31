@@ -15,14 +15,11 @@ import { useCopy } from "@/components/copy-provider";
  * component spends it, and then rewrites the URL without the flag so a refresh
  * or a shared link does not announce a creation that happened yesterday.
  *
- * Both landings need it, for different reasons:
- *
- * - **Anonymous** creators land on the organizer page, where the links are the
- *   whole point. The toast is the celebration; the instruction to keep the
- *   links stays on the page, because that one is still true tomorrow.
- * - **Account holders** land on their event list, which until now said nothing
- *   at all — the new event simply appeared in a list, and you had to trust it
- *   had worked.
+ * Creation lands on the event list, which said nothing at all before this: the
+ * new event simply appeared among the others and you had to trust it had
+ * worked. There used to be a second landing — the organizer panel, for an event
+ * created with no account, where the links were the only way back — and it went
+ * when events stopped being ownerless.
  */
 export function CreatedToast() {
   const { copy } = useCopy();

@@ -21,14 +21,12 @@ import { MessageForm } from "./message-form";
  *
  * A second settings screen beside `/profile`, and the line between them is who
  * the setting is for: `/profile` decides how this person sees the app —
- * language, timezone — while everything here leaves the building. Today that
- * is the WhatsApp invitation, which is the only message Junti sends: nobody
- * collects a participant's email, they type a name into a link. When something
- * else does go out, it belongs on this page rather than in a fourth place.
+ * language, timezone — while everything here leaves the building. That is the
+ * WhatsApp invitation the organizer pastes into a chat, and the emailed
+ * invitation now sent from the manage screen. When something else goes out, it
+ * belongs on this page rather than in a fourth place.
  *
- * Signed-in only, because the message is stored against an account. An
- * anonymous organizer keeps the app's default, which is why `loadShareTemplate`
- * takes a nullable owner.
+ * Signed-in only, because the message is stored against an account.
  */
 export async function generateMetadata(): Promise<Metadata> {
   const { copy } = await getViewerCopy();

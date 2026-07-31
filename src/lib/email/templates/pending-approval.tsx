@@ -11,9 +11,10 @@ import { EmailLayout, emailText } from "./layout";
  * an organizer today — the approvals queue exists precisely because receipts
  * pile up unseen, and a queue nobody is told about is a page nobody opens.
  *
- * Participants get nothing here, and cannot: nobody collects their email. They
- * type a name into a WhatsApp link, which is the whole point of the product.
- * So every message this template family sends goes to an account holder.
+ * This one goes to an account holder, who by definition has an address we did
+ * not have to ask for. `event-invitation` is the other case — the only message
+ * addressed to somebody who has no account yet, sent to a list the organizer
+ * typed in.
  */
 export interface PendingApprovalValues {
   /** Who sent the receipt. */
