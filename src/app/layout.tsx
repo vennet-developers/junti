@@ -83,6 +83,7 @@ import "./brand-marks.css";
 import "./globals.css";
 
 import { CheckCircleIcon, InfoIcon, TriangleAlertIcon, XCircleIcon, XIcon } from "@stackmyth/icons";
+import { Box } from "@stackmyth/layout";
 import { Toaster } from "@stackmyth/toast";
 
 import { AppFooter } from "@/components/app-footer";
@@ -149,6 +150,17 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <CopyProvider locale={locale}>
           {children}
+
+          {/*
+            The spacer that puts the footer on the bottom edge of a short page.
+            The body is a column at least a screen tall; this eats what is left
+            over and collapses to nothing once the content fills it.
+
+            A `Box` with `flexGrow` rather than `margin-block-start: auto` on
+            the footer, because `mt` takes steps of the spacing scale and not
+            `auto` — this says the same thing through a supported prop.
+          */}
+          <Box flexGrow={1} />
 
           {/*
             In the layout rather than on each page, which is the only way

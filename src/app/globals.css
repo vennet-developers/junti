@@ -32,6 +32,15 @@ html {
 
 body {
   margin: 0;
+  /*
+    A column that always fills the screen, so the footer can be pushed to the
+    bottom of the viewport on a short page instead of floating half way up it.
+    The footer takes `margin-block-start: auto`, which consumes whatever height
+    is left over — and consumes nothing once the content is taller than the
+    screen, so a long page keeps the footer where it belongs, after everything.
+  */
+  display: flex;
+  flex-direction: column;
   min-height: 100dvh;
   background: var(--sm-bg-surface);
   color: var(--sm-text-primary);

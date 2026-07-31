@@ -30,8 +30,14 @@ import { getViewerCopy } from "@/lib/locale";
  * against, while the mark keeps its own ink because a logo redrawn in the
  * host's colours is no longer the logo.
  *
- * **Static, at the end of the document.** Nothing floats or sticks, so on a
- * phone it cannot land on the button somebody is reaching for.
+ * **At the bottom of the viewport, without sticking to it.** The body is a
+ * column at least a screen tall and a spacer above this eats whatever height a
+ * short page leaves over, so the footer lands on the bottom edge instead of
+ * floating half way up an empty screen. On a page taller than the screen there
+ * is nothing left over, the spacer collapses, and its own top margin keeps it
+ * off the content. Which is the difference from `position: fixed`: it never
+ * covers the page, and on a phone it cannot land on the button somebody is
+ * reaching for.
  */
 export async function AppFooter() {
   const { copy } = await getViewerCopy();
