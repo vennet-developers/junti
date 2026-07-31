@@ -369,6 +369,20 @@ export const es = {
     vennetLabel: "Vennet",
   },
 
+  /** Lo que sale por correo. Cada plantilla, junto a su asunto. */
+  emails: {
+    pendingApproval: {
+      subject: (name: string) => `${name} mandó un comprobante`,
+      preview: (name: string) => `${name} está esperando tu visto bueno.`,
+      heading: "Tienes un comprobante por revisar",
+      body: (name: string, event: string) =>
+        `${name} subió su comprobante para ${event}. Hasta que lo apruebes, no cuenta como confirmado.`,
+      alsoWaiting: (n: number) =>
+        `Con este van ${n} esperando. Puedes aprobarlos todos de una en la cola.`,
+      cta: "Ver la cola",
+    },
+  },
+
   approvals: {
     link: "Aprobaciones",
     title: "Aprobaciones pendientes",

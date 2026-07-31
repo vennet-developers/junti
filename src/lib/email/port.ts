@@ -21,17 +21,23 @@ import "server-only";
  * The messages this app can send, by name.
  *
  * A closed union rather than free strings: a template that does not exist is a
- * build error rather than a delivery that silently never happens. Empty for
- * now — the transport is what this task ships, and the first real message
- * arrives with the ticket that needs it.
+ * build error rather than a delivery that silently never happens, and adding a
+ * name here without writing its renderer does not compile.
  */
-export type MessageTemplate = never;
+export type MessageTemplate = "pending-approval";
 
 export interface OutboundMessage {
   /** Where it goes. An email address today; a phone number for WhatsApp. */
   to: string;
   template: MessageTemplate;
-  /** Whatever that template interpolates. */
+  /**
+   * Whatever that template interpolates.
+   *
+   * Strings, deliberately: these cross a process boundary the moment a send
+   * moves to a queue, and a contract that only carries what survives JSON is
+   * one that keeps working when it does. Each template narrows this to its own
+   * shape where it renders.
+   */
   values: Record<string, string>;
   /**
    * The reader's language, so the adapter renders in it.

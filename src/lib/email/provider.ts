@@ -31,6 +31,16 @@ function resolveAdapter(): EmailPort {
   if (provider === "resend") {
     const apiKey = process.env.RESEND_API_KEY?.trim();
     const from = process.env.EMAIL_FROM?.trim();
+    /*
+      Vercel gives the deployment's own host; locally there is none, so the dev
+      server's address stands in. Absolute either way, because an <img> in an
+      inbox has no page to be relative to.
+    */
+    const origin = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+      ? process.env.NEXT_PUBLIC_SITE_URL.trim()
+      : process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : "http://localhost:3000";
 
     if (!apiKey || !from) {
       throw new Error(
@@ -39,7 +49,7 @@ function resolveAdapter(): EmailPort {
       );
     }
 
-    return createResendAdapter({ apiKey, from });
+    return createResendAdapter({ apiKey, from, origin });
   }
 
   throw new Error(`Unknown EMAIL_PROVIDER "${provider}". Known: console, resend.`);

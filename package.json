@@ -17,6 +17,8 @@
     "db:export": "tsx scripts/export.ts"
   },
   "dependencies": {
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.0",
     "@stackmyth/accordion": "^0.24.8",
     "@stackmyth/alert": "^0.24.8",
     "@stackmyth/avatar": "^0.24.8",

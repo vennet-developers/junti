@@ -1,6 +1,13 @@
 import "server-only";
 
+import { render } from "@react-email/render";
+
 import type { EmailPort, OutboundMessage, SendResult } from "./port";
+import {
+  PendingApprovalEmail,
+  pendingApprovalSubject,
+  type PendingApprovalValues,
+} from "./templates/pending-approval";
 
 /**
  * Resend, behind the port.
@@ -19,6 +26,11 @@ const ENDPOINT = "https://api.resend.com/emails";
 export interface ResendConfig {
   apiKey: string;
   /**
+   * Absolute origin of this deployment, for the images and links inside a
+   * message. A relative path in an inbox resolves against the mail client.
+   */
+  origin: string;
+  /**
    * The From address, which must be on a domain verified with Resend.
    *
    * Per environment, so a mistake in development cannot spend production's
@@ -29,18 +41,40 @@ export interface ResendConfig {
 }
 
 /**
- * Renders a template into what email needs.
+ * Turns a message into what email needs.
  *
  * Deliberately the only place in the app that knows a message has a subject
- * line: the port's contract is a template and its values, precisely so the same
- * message can be handed to WhatsApp later without unlearning email's shape.
+ * line and a body: the port's contract is a template and its values, precisely
+ * so the same message can be handed to WhatsApp later without unlearning
+ * email's shape. A WhatsApp adapter would render the identical input into
+ * whatever that API wants, from this same union.
  *
- * Empty while the transport ships without a message to carry. The first
- * template lands here and in the port's union together, so neither can exist
- * without the other.
+ * The switch is exhaustive against `MessageTemplate`, so adding a name to that
+ * union without writing its case fails the build rather than throwing in
+ * production.
+ *
+ * `html` and `text` both, always. A text part is what stops a client that
+ * refuses HTML from showing an empty message, and it is what most spam filters
+ * read first.
  */
-function render(message: OutboundMessage): { subject: string; text: string } {
-  throw new Error(`No template renderer for "${message.template}"`);
+async function compose(
+  message: OutboundMessage,
+  origin: string,
+): Promise<{ subject: string; html: string; text: string }> {
+  switch (message.template) {
+    case "pending-approval": {
+      const values = message.values as unknown as PendingApprovalValues;
+      const element = (
+        <PendingApprovalEmail values={values} locale={message.locale} origin={origin} />
+      );
+
+      return {
+        subject: pendingApprovalSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+  }
 }
 
 export function createResendAdapter(config: ResendConfig): EmailPort {
@@ -48,7 +82,7 @@ export function createResendAdapter(config: ResendConfig): EmailPort {
     name: "resend",
 
     async send(message: OutboundMessage): Promise<SendResult> {
-      const { subject, text } = render(message);
+      const { subject, html, text } = await compose(message, config.origin);
 
       try {
         const response = await fetch(ENDPOINT, {
@@ -61,6 +95,7 @@ export function createResendAdapter(config: ResendConfig): EmailPort {
             from: config.from,
             to: [message.to],
             subject,
+            html,
             text,
           }),
         });

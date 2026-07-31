@@ -357,6 +357,20 @@ export const en: Copy = {
     vennetLabel: "Vennet",
   },
 
+  /** What goes out by email. Each template, beside its subject. */
+  emails: {
+    pendingApproval: {
+      subject: (name: string) => `${name} sent a receipt`,
+      preview: (name: string) => `${name} is waiting on your go-ahead.`,
+      heading: "You have a receipt to review",
+      body: (name: string, event: string) =>
+        `${name} uploaded their receipt for ${event}. Until you approve it, they do not count as confirmed.`,
+      alsoWaiting: (n: number) =>
+        `That makes ${n} waiting. You can approve them all at once from the queue.`,
+      cta: "Open the queue",
+    },
+  },
+
   approvals: {
     link: "Approvals",
     title: "Pending approvals",
