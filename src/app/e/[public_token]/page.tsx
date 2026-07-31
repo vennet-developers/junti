@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { Container, Divider, Stack } from "@stackmyth/layout";
@@ -25,13 +24,13 @@ import {
   loadRoster,
   type RosterMember,
 } from "@/lib/roster";
-import { editCookieName } from "@/lib/rsvp-cookie";
 import { ROUTES } from "@/config/routes";
 import { participantPath } from "@/lib/urls";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { JoinPanel } from "./join-panel";
 import { PolicyPanel, type PolicyPanelItem } from "./policy-panel";
+import { SignInToJoin } from "./sign-in-to-join";
 
 /**
  * The participant view.
@@ -78,31 +77,26 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   /**
    * This reader's own row, if they have one.
    *
-   * Matched on the account first and the device cookie second, which is what
-   * lets a signed-in person amend their answer from a phone that has never
-   * been here.
+   * Matched on the account, and only on the account. There used to be a second
+   * path here — an edit-token cookie written at RSVP time — from when answering
+   * needed no account at all. It bought one thing, amending an RSVP from the
+   * same browser, and cost the roster an identity that could not survive a new
+   * phone or a cleared browser. Now that answering requires signing in, the
+   * account is the identity everywhere and this is a single lookup.
    */
-  const editToken = (await cookies()).get(editCookieName(eventRow.id))?.value;
-
-  const identityFilters = [
-    editToken ? eq(participants.editToken, editToken) : null,
-    organizer ? eq(participants.userId, organizer.id) : null,
-  ].filter((clause) => clause !== null);
-
-  const mineRow =
-    identityFilters.length > 0
-      ? ((
-          await db
-            .select({
-              id: participants.id,
-              displayName: participants.displayName,
-              attendance: participants.attendance,
-            })
-            .from(participants)
-            .where(and(eq(participants.eventId, eventRow.id), or(...identityFilters)))
-            .limit(1)
-        )[0] ?? null)
-      : null;
+  const mineRow = organizer
+    ? ((
+        await db
+          .select({
+            id: participants.id,
+            displayName: participants.displayName,
+            attendance: participants.attendance,
+          })
+          .from(participants)
+          .where(and(eq(participants.eventId, eventRow.id), eq(participants.userId, organizer.id)))
+          .limit(1)
+      )[0] ?? null)
+    : null;
 
   const mine = mineRow
     ? { displayName: mineRow.displayName, attendance: mineRow.attendance }
@@ -197,16 +191,25 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
         */}
           {event.isClosed ? (
             <Notice tone="warning" title={copy.event.closedNotice} />
-          ) : (
+          ) : organizer ? (
             <JoinPanel
               publicToken={publicToken}
               mine={mine}
               isFull={roster.openSlots !== null && roster.openSlots === 0}
-              account={
-                organizer
-                  ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
-                  : null
-              }
+              account={{ displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }}
+            />
+          ) : (
+            /* Everything above this line rendered for them too. Only the
+               answer is gated, and only until they come back signed in. */
+            <SignInToJoin
+              publicToken={publicToken}
+              copy={copy}
+              eventTitle={event.title}
+              attending={roster.attending.map((member) => ({
+                id: member.id,
+                displayName: member.displayName,
+                avatarUrl: member.avatarUrl,
+              }))}
             />
           )}
 

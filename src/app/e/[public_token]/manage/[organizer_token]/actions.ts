@@ -3,24 +3,33 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { uuidv7 } from "uuidv7";
+import { z } from "zod";
 
 import { getCopy } from "@/config/copy";
 import type { Copy } from "@/config/copy";
 import { db } from "@/db/client";
-import { eventPolicies, events, participants, payments, policySubmissions } from "@/db/schema";
+import {
+  eventPolicies,
+  events,
+  invitations,
+  participants,
+  payments,
+  policySubmissions,
+} from "@/db/schema";
 import type { EventRow } from "@/db/schema";
-import { resolveAttendance } from "@/domain/waitlist";
+import { sendMessage } from "@/lib/email/provider";
+import type { OutboundMessage } from "@/lib/email/port";
+import { formatEventDateTime } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
 import { getOrganizer } from "@/lib/organizer";
-import { authorizeOrganizer, findSubmissionInEvent, loadParticipantRows } from "@/lib/roster";
-import { createEditToken } from "@/lib/tokens";
+import { authorizeOrganizer, findSubmissionInEvent, loadInvitations } from "@/lib/roster";
 import { managePath, participantPath } from "@/lib/urls";
 import {
   field,
   fieldErrors,
-  makeAddParticipantSchema,
   makeEventSchema,
+  makeInviteSchema,
   parsePoliciesField,
   participantIdSchema,
   paymentStatusSchema,
@@ -44,14 +53,29 @@ import {
 export type ManageState = { errors: Record<string, string>; ok?: boolean };
 
 /**
+ * What a send came to, counted rather than narrated.
+ *
+ * Three numbers because one paste can end three ways at once: some went, some
+ * were skipped as already answered, some failed at the provider. A single "done"
+ * would hide the third, and the third is the one worth telling somebody about.
+ */
+export type InviteState = ManageState & {
+  sent?: number;
+  skipped?: number;
+  failed?: number;
+};
+
+/**
  * Loads the event only if the token pair is valid, and refreshes both views on
  * success. Returns null when the caller is not the organizer.
  */
 async function authorize(publicToken: string, organizerToken: string): Promise<EventRow | null> {
-  // Either the URL token or ownership of the event. Ownership comes from the
-  // verified session, never from anything the client sends.
+  // A session first, always: the token delegates which event, the session says
+  // who. Neither is taken from anything the client asserts.
   const organizer = await getOrganizer();
-  return authorizeOrganizer(publicToken, organizerToken, organizer?.id ?? null);
+  if (!organizer) return null;
+
+  return authorizeOrganizer(publicToken, organizerToken, organizer.id);
 }
 
 function refresh(publicToken: string, organizerToken: string): void {
@@ -141,64 +165,158 @@ export async function setPaymentStatus(
   return { errors: {}, ok: true };
 }
 
-/** Adds somebody manually — for the friend who never opens links. */
-export async function addParticipant(
+/**
+ * The message describing one invitation, ready for the port.
+ *
+ * The date is formatted HERE rather than in the template, because the template
+ * receives strings only — a contract that survives crossing a process boundary
+ * if sending ever moves to a queue, and one a WhatsApp adapter can reuse without
+ * learning about `Date` or time zones.
+ */
+function invitationMessage(
+  event: EventRow,
+  organizerName: string,
+  email: string,
+  copy: Copy,
+): OutboundMessage {
+  return {
+    to: email,
+    template: "event-invitation",
+    locale: event.locale,
+    values: {
+      organizerName,
+      eventTitle: event.title,
+      eventWhen: formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale),
+      // The template checks for empty rather than taking a null: see the
+      // `values` contract on OutboundMessage — strings, all the way down.
+      eventWhere: event.location ?? "",
+      eventPath: participantPath(event.publicToken),
+    },
+  };
+}
+
+/**
+ * Invites people by address, from a pasted list.
+ *
+ * **This replaced adding a participant by hand**, and the difference is whose
+ * word the roster carries. Adding by hand wrote somebody's name onto the list,
+ * counted them against capacity and could make them owe money — all on the
+ * organizer's say-so, for a person who had never seen the event. An invitation
+ * claims only what is true: they were asked.
+ *
+ * Rows are written BEFORE anything is sent, and a send that fails does not roll
+ * one back. An invitation that exists but did not arrive is recoverable — the
+ * organizer can see it sitting there and resend. A message that went out with no
+ * row behind it is not: it would be invisible here and the same address would be
+ * invited again on the next paste.
+ */
+export async function inviteToEvent(
   publicToken: string,
   organizerToken: string,
-  _previous: ManageState,
+  _previous: InviteState,
   formData: FormData,
-): Promise<ManageState> {
+): Promise<InviteState> {
   const event = await authorize(publicToken, organizerToken);
   if (!event) return denied();
 
   const copy = await eventCopy(event.locale);
 
-  const parsed = makeAddParticipantSchema(copy).safeParse({
-    displayName: field(formData, "displayName"),
-    attendance: field(formData, "attendance"),
-  });
+  const parsed = makeInviteSchema(copy).safeParse(field(formData, "emails"));
+  if (!parsed.success) return { errors: fieldErrors(parsed.error, "emails") };
 
-  if (!parsed.success) return { errors: fieldErrors(parsed.error) };
+  const emails = parsed.data;
 
-  const rows = await loadParticipantRows(event.id);
+  // Whoever is asking, by name. Falls back to the event's title-holder wording
+  // when managing purely by token, which is possible for a co-organizer who was
+  // handed the manage link.
+  const organizer = await getOrganizer();
+  const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
 
-  const clash = rows.some(
-    (row) =>
-      row.participant.displayName.toLocaleLowerCase("es-CO") ===
-      parsed.data.displayName.toLocaleLowerCase("es-CO"),
+  const alreadyOn = new Set(
+    (await loadInvitations(event.id)).filter((row) => row.answered).map((row) => row.email),
   );
 
-  if (clash) return { errors: { displayName: copy.rsvp.duplicateName } };
+  // Somebody who already answered does not get asked again. The organizer is
+  // pasting a list they keep somewhere else, and it will contain the people who
+  // said yes last week.
+  const toSend = emails.filter((email) => !alreadyOn.has(email));
 
-  // The organizer adding somebody is still subject to capacity — otherwise the
-  // waitlist would mean nothing and the roster could quietly exceed the cap.
-  const attendance = resolveAttendance({
-    requested: parsed.data.attendance,
-    capacity: event.capacity,
-    participants: rows.map((row) => ({
-      id: row.participant.id,
-      joinedAt: row.participant.createdAt,
-      attendance: row.participant.attendance,
-    })),
-    existing: null,
-  });
-
-  try {
-    await db.insert(participants).values({
-      id: uuidv7(),
-      eventId: event.id,
-      displayName: parsed.data.displayName,
-      attendance,
-      editToken: createEditToken(),
-    });
-  } catch {
-    return { errors: { displayName: copy.rsvp.duplicateName } };
+  if (toSend.length === 0) {
+    return { errors: {}, ok: true, sent: 0, skipped: emails.length };
   }
 
-  await syncPayments(event);
+  await db
+    .insert(invitations)
+    .values(
+      toSend.map((email) => ({
+        id: uuidv7(),
+        eventId: event.id,
+        email,
+      })),
+    )
+    // A repeat is a resend, not a second row — the unique index on
+    // (event_id, email) is what makes that true, and this is how a pasted list
+    // containing last week's addresses stays one invitation each.
+    .onConflictDoUpdate({
+      target: [invitations.eventId, invitations.email],
+      set: { sentAt: new Date() },
+    });
+
+  const results = await Promise.all(
+    toSend.map((email) => sendMessage(invitationMessage(event, organizerName, email, copy))),
+  );
+
+  const failed = results.filter((result) => result.status === "failed").length;
+
   refresh(publicToken, organizerToken);
 
-  return { errors: {}, ok: true };
+  return {
+    errors: {},
+    ok: true,
+    sent: toSend.length - failed,
+    skipped: emails.length - toSend.length,
+    failed,
+  };
+}
+
+/** Sends one invitation again, for somebody who has not answered. */
+export async function resendInvitation(
+  publicToken: string,
+  organizerToken: string,
+  invitationId: string,
+): Promise<InviteState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const id = z.uuid().safeParse(invitationId);
+  if (!id.success) return { errors: { _form: copy.errors.notFound } };
+
+  // Scoped to this event, so an id from somewhere else finds nothing.
+  const [row] = await db
+    .select({ email: invitations.email, participantId: invitations.participantId })
+    .from(invitations)
+    .where(and(eq(invitations.id, id.data), eq(invitations.eventId, event.id)))
+    .limit(1);
+
+  if (!row) return { errors: { _form: copy.errors.notFound } };
+
+  // Already answered — there is nothing left to invite them to.
+  if (row.participantId !== null) return { errors: {}, ok: true, sent: 0, skipped: 1 };
+
+  const organizer = await getOrganizer();
+  const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
+
+  const result = await sendMessage(invitationMessage(event, organizerName, row.email, copy));
+
+  await db.update(invitations).set({ sentAt: new Date() }).where(eq(invitations.id, id.data));
+
+  refresh(publicToken, organizerToken);
+
+  return result.status === "failed"
+    ? { errors: { _form: copy.invites.errorSendFailed }, sent: 0, failed: 1 }
+    : { errors: {}, ok: true, sent: 1 };
 }
 
 /** Removes a participant. The payment row goes with them, by cascade. */
@@ -286,18 +404,16 @@ export async function setEventClosed(
 /**
  * Whether this event's details may be changed, and by whom.
  *
- * Editing is the one organizer power that needs an account. An event created
- * signed out has no owner and its details are fixed for good — that is the
- * deliberate difference between the two creation paths, and the reason the
- * create form says so before you press the button.
+ * Editing is the one organizer power reserved for the OWNER. Everything else —
+ * payments, invitations, the waitlist, closing — a delegate holding the manage
+ * link can do, because running the day is what the link is for and gating that
+ * behind ownership would make it useless.
  *
- * Everything else an organizer does — payments, adding people, the waitlist,
- * closing — still works from the link alone, because "who has paid" is the
- * product and gating it behind an account would gut it.
+ * What changed is the failure mode. This used to return false for an event with
+ * no owner at all, whose details were then fixed forever; every event has an
+ * owner now, so the only way to be refused is to not be them.
  */
 async function mayEdit(event: EventRow): Promise<boolean> {
-  if (event.organizerId === null) return false;
-
   const organizer = await getOrganizer();
   return organizer !== null && organizer.id === event.organizerId;
 }
@@ -318,11 +434,7 @@ export async function editEvent(
   // anyone holding the link, so the form's absence is a courtesy and this is
   // the rule.
   if (!(await mayEdit(event))) {
-    return {
-      errors: {
-        _form: event.organizerId === null ? copy.manage.editNeedsAccount : copy.manage.editNotYours,
-      },
-    };
+    return { errors: { _form: copy.manage.editNotYours } };
   }
 
   const parsed = makeEventSchema(copy).safeParse({

@@ -19,14 +19,13 @@ import {
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
-import { RadioField } from "@/components/radio-field";
 import { SelectField } from "@/components/select-field";
 import { toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
 import type { EventView } from "@/lib/roster";
 import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
-import { makeAddParticipantSchema, makeEventClientSchema } from "@/lib/validation";
+import { makeEventClientSchema } from "@/lib/validation";
 
-import { addParticipant, editEvent, type ManageState } from "./actions";
+import { editEvent, type ManageState } from "./actions";
 
 interface Ctx {
   publicToken: string;
@@ -42,96 +41,6 @@ function toFormData(data: Record<string, unknown>): FormData {
   return formData;
 }
 
-export function AddParticipantForm({ publicToken, organizerToken }: Ctx) {
-  const { copy } = useCopy();
-  const [pending, startTransition] = useTransition();
-  const [serverState, setServerState] = useState<ManageState>({ errors: {} });
-  const [formKey, setFormKey] = useState(0);
-
-  const attendanceOptions = [
-    { value: "in", label: copy.attendance.in },
-    { value: "out", label: copy.attendance.out },
-    { value: "maybe", label: copy.attendance.maybe },
-  ];
-
-  const participantResolver = useMemo(
-    () => createZodResolver(makeAddParticipantSchema(copy)),
-    [copy],
-  );
-
-  function submit(data: Record<string, unknown>) {
-    startTransition(async () => {
-      const result = await addParticipant(
-        publicToken,
-        organizerToken,
-        { errors: {} },
-        toFormData(data),
-      );
-      setServerState(result);
-
-      if (result.ok) {
-        // Remount so the name field clears, ready for the next person.
-        setFormKey((key) => key + 1);
-        toast.success(copy.manage.addParticipantSaved);
-      }
-    });
-  }
-
-  // No Card wrapper: the Disclosure that contains this already supplies the
-  // heading and the frame. Two nested titles read as a bug.
-  return (
-    <FormController
-      key={formKey}
-      resolver={participantResolver}
-      defaultValues={{ displayName: "", attendance: "in" }}
-      mode="onBlur"
-      reValidateMode="onChange"
-    >
-      <Form onValid={submit}>
-        <Stack gap="4">
-          <FormError message={serverState.errors._form} />
-
-          <FormField name="displayName">
-            {({ fieldProps, error }) => (
-              <ControlledField
-                label={copy.rsvp.nameLabel}
-                description={copy.manage.addParticipantHelp}
-                error={error ?? serverState.errors.displayName}
-                htmlFor={fieldProps.id}
-              >
-                <Input
-                  {...fieldProps}
-                  fullWidth
-                  size="lg"
-                  maxLength={40}
-                  autoComplete="off"
-                  status={error ? "error" : "default"}
-                />
-              </ControlledField>
-            )}
-          </FormField>
-
-          <ControlledField label={copy.rsvp.attendanceLabel}>
-            <RadioField
-              name="attendance"
-              options={attendanceOptions}
-              defaultValue="in"
-              orientation="horizontal"
-            />
-          </ControlledField>
-
-          <SubmitButton
-            pending={pending}
-            idleLabel={copy.manage.addParticipantSubmit}
-            pendingLabel={copy.common.loading}
-            variant="secondary"
-            size="md"
-          />
-        </Stack>
-      </Form>
-    </FormController>
-  );
-}
 
 export function EditEventForm({
   publicToken,

@@ -26,9 +26,10 @@ export interface OneTapJoinProps {
 /**
  * Joining for somebody who is already signed in.
  *
- * One button, no fields. The RSVP form exists because an anonymous participant
- * has to say who they are; a signed-in one already has, so asking again is a
- * form standing between them and the only thing they came to do.
+ * One button, no fields. The session already knows who they are, so a form
+ * asking again is nothing but an obstacle between them and the only thing they
+ * came here to do. The full form still exists for the person whose account name
+ * is not what this group calls them.
  *
  * The name and photo are shown before the tap, not after. This is the one
  * chance to notice that the account about to be added is the wrong one.

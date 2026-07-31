@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@stackmyth/button";
 import { Box, Container, Divider, Stack } from "@stackmyth/layout";
@@ -22,9 +22,10 @@ import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
 import { loadShareTemplate, readingTimeZone, resolvePreferences } from "@/lib/preferences";
 import { getOrganizer } from "@/lib/organizer";
-import { ROUTES } from "@/config/routes";
+import { ROUTES, signInPath } from "@/config/routes";
 import {
   authorizeOrganizer,
+  loadInvitations,
   findEventByPublicToken,
   loadReviewQueue,
   loadRoster,
@@ -33,7 +34,8 @@ import {
 import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
 
 import { CloseEventControl } from "./close-event-control";
-import { AddParticipantForm, EditEventForm } from "./manage-forms";
+import { InviteForm, InvitedList } from "./invite-panel";
+import { EditEventForm } from "./manage-forms";
 import { PaymentControls, PromoteControl, RemoveControl } from "./participant-controls";
 import { ReviewQueue, type ReviewItem } from "./review-queue";
 
@@ -71,7 +73,13 @@ export default async function ManagePage({
   const { created } = await searchParams;
 
   const organizer = await getOrganizer();
-  const eventRow = await authorizeOrganizer(publicToken, organizerToken, organizer?.id ?? null);
+
+  // Sign in rather than 404. Somebody arriving on a manage link they were sent
+  // is in the right place and simply has no session yet — telling them the page
+  // does not exist would be a lie they cannot act on.
+  if (!organizer) redirect(signInPath(managePath(publicToken, organizerToken)));
+
+  const eventRow = await authorizeOrganizer(publicToken, organizerToken, organizer.id);
   if (!eventRow) notFound();
 
   const locale = await resolveEventLocale(eventRow.locale);
@@ -79,15 +87,24 @@ export default async function ManagePage({
 
   const { timeZone: preferredTimeZone, theme } = await resolvePreferences();
 
-  // Editing needs the account the event is attributed to. Anonymous events have
-  // none, so their details are fixed — see DECISIONS.md.
-  const canEdit = eventRow.organizerId !== null && organizer?.id === eventRow.organizerId;
+  /**
+   * Editing needs the owning account, not merely the manage link.
+   *
+   * Every event has an owner now, so the "this event has nobody to check
+   * against" case is gone and this is one comparison. What remains is real: a
+   * co-organizer holding the shared link can run the day — approve receipts,
+   * mark payments, invite — but cannot rewrite what the event IS.
+   */
+  const canEdit = organizer?.id === eventRow.organizerId;
   const readerTimeZone = readingTimeZone(preferredTimeZone, eventRow.timeZone);
 
   const roster = await loadRoster(eventRow, locale);
   const { event } = roster;
 
   const queue = await loadReviewQueue(eventRow.id, locale);
+
+  // Organizer-only, and the only read on this page that returns addresses.
+  const invitations = await loadInvitations(eventRow.id);
 
   // The catalogue, for the edit form's kind picker and policy list.
   const [eventTypes, policyOptionsByType] = await Promise.all([
@@ -247,7 +264,11 @@ export default async function ManagePage({
                 copyLabel={copy.share.copyOrganizerLink}
               />
 
-              <Notice tone="warning" title={copy.eventCreated.warning} />
+              {/* The warning that used to sit here said losing this link meant
+                losing the event, which was true when the token was the only
+                identity there was. The event is in your history now; the link
+                is for handing to somebody else. */}
+              <Notice tone="info" title={copy.eventCreated.organizerLinkNote} />
             </Stack>
           </Disclosure>
 
@@ -403,8 +424,24 @@ export default async function ManagePage({
               </>
             )}
 
-            <Disclosure id="add" label={copy.manage.addParticipant}>
-              <AddParticipantForm publicToken={publicToken} organizerToken={organizerToken} />
+            {/* Inviting, where adding somebody by hand used to be. The roster
+              above is who answered; this is who was asked. */}
+            <Disclosure id="invite" label={copy.invites.heading}>
+              <Stack gap="5">
+                <InviteForm publicToken={publicToken} organizerToken={organizerToken} />
+
+                <Stack gap="2">
+                  <Text variant="small" color="muted">
+                    {copy.invites.listHelp}
+                  </Text>
+                  <InvitedList
+                    publicToken={publicToken}
+                    organizerToken={organizerToken}
+                    invitations={invitations}
+                    timeZone={readerTimeZone}
+                  />
+                </Stack>
+              </Stack>
             </Disclosure>
           </Stack>
 
@@ -428,18 +465,9 @@ export default async function ManagePage({
               />
             ) : (
               /* Say why rather than showing nothing. An absent form reads as a
-               bug; "this needs an account" is a fact about how the event was
-               created, and everything else on this page still works. */
-              <Notice
-                tone="info"
-                title={
-                  eventRow.organizerId === null
-                    ? copy.manage.editNeedsAccount
-                    : copy.manage.editNotYours
-                }
-              >
-                {eventRow.organizerId === null ? copy.manage.editNeedsAccountHelp : null}
-              </Notice>
+               bug; "this is not your event" is a fact about who owns it, and
+               everything else on this page still works. */
+              <Notice tone="info" title={copy.manage.editNotYours} />
             )}
           </Disclosure>
 

@@ -269,11 +269,61 @@ export const makeRsvpSchema = (copy: Copy) =>
 
 export type RsvpInput = z.infer<ReturnType<typeof makeRsvpSchema>>;
 
-export const makeAddParticipantSchema = (copy: Copy) =>
-  z.object({
-    displayName: displayNameSchema(copy),
-    attendance: rsvpAttendanceSchema(copy),
-  });
+/**
+ * How many addresses one paste may carry.
+ *
+ * A ceiling on the blast radius of a single click, not on how many people an
+ * event can have — invite again for the next twenty. It exists because the
+ * failure it prevents is expensive and irreversible: a pasted column from a
+ * spreadsheet turning into four hundred emails nobody can recall.
+ */
+export const MAX_INVITES_PER_SEND = 20;
+
+/**
+ * A pasted list of addresses.
+ *
+ * Splits on commas, semicolons and whitespace, because people paste from
+ * wherever they had the addresses and the separator is not a decision they
+ * think they are making.
+ *
+ * Lowercased and deduplicated here rather than at the call site, so the unique
+ * index on `(event_id, email)` and this parser agree on what "the same address"
+ * means. The address check is deliberately loose — the same reasoning as the
+ * sign-in form's: the real validation is whether the message arrives, and a
+ * clever regex mostly succeeds at rejecting valid addresses.
+ */
+export const makeInviteSchema = (copy: Copy) =>
+  z
+    .string()
+    .trim()
+    .min(1, copy.invites.errorEmpty)
+    .transform((raw) => {
+      const parts = raw
+        .split(/[,;\s]+/)
+        .map((part) => part.trim().toLowerCase())
+        .filter((part) => part.length > 0);
+
+      return [...new Set(parts)];
+    })
+    .superRefine((emails, ctx) => {
+      if (emails.length === 0) {
+        ctx.addIssue({ code: "custom", message: copy.invites.errorEmpty });
+        return;
+      }
+
+      const invalid = emails.filter((email) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email));
+
+      if (invalid.length > 0) {
+        ctx.addIssue({ code: "custom", message: copy.invites.errorInvalid(invalid.join(", ")) });
+      }
+
+      if (emails.length > MAX_INVITES_PER_SEND) {
+        ctx.addIssue({
+          code: "custom",
+          message: copy.invites.errorTooMany(MAX_INVITES_PER_SEND, emails.length),
+        });
+      }
+    });
 
 export const setPaymentStatusSchema = z.object({
   participantId: participantIdSchema,
@@ -377,13 +427,20 @@ export function field(formData: FormData, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
-/** Flattens Zod issues into `{ fieldName: message }` for rendering next to inputs. */
-export function fieldErrors(error: z.ZodError): Record<string, string> {
+/**
+ * Flattens Zod issues into `{ fieldName: message }` for rendering next to inputs.
+ *
+ * `fallbackField` is for schemas that are not objects — a bare string one, say,
+ * whose issues carry an empty path. Without it every message from such a schema
+ * lands in `_form` and is rendered at the top of the form rather than under the
+ * one input it is actually about.
+ */
+export function fieldErrors(error: z.ZodError, fallbackField = "_form"): Record<string, string> {
   const result: Record<string, string> = {};
 
   for (const issue of error.issues) {
     const key = issue.path[0];
-    const name = typeof key === "string" ? key : "_form";
+    const name = typeof key === "string" ? key : fallbackField;
     result[name] ??= issue.message;
   }
 

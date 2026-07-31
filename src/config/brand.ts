@@ -14,4 +14,4 @@ export const BRAND_TAGLINE = "Quién viene y quién ya pagó.";
 
 /** Used in <title> metadata and anywhere the name needs a descriptor next to it. */
 export const BRAND_DESCRIPTION =
-  "Organiza partidos, fiestas y parches sin cuentas ni contraseñas. Comparte un link y listo.";
+  "Organiza partidos, fiestas y parches sin contraseñas. Comparte un link y listo.";

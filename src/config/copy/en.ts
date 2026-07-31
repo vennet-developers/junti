@@ -58,7 +58,7 @@ export const en: Copy = {
     heading: BRAND_NAME,
     subheading: BRAND_TAGLINE,
     pitch:
-      "Create the event, share the link on WhatsApp, and watch in real time who is coming and who has already paid you. No accounts, no passwords.",
+      "Create the event, share the link on WhatsApp, and watch in real time who is coming and who has already paid you. Sign in with Google or a link to your email — no passwords.",
     cta: "Create an event",
     howItWorksTitle: "How it works",
     steps: [
@@ -73,13 +73,8 @@ export const en: Copy = {
 
   createEvent: {
     title: "Create event",
-    attributionAnonTitle: "Sign in first?",
-    attributionAnonHelp:
-      "Without an account the event works the same, but you will not be able to edit it later or recover the link if you lose it.",
-    attributionContinueAnon: "Carry on without an account",
-    draftKept: "We kept what you had typed.",
     heading: "New event",
-    subheading: "Takes a minute. You do not need an account.",
+    subheading: "Takes a minute.",
     fields: {
       title: "What are you doing?",
       titlePlaceholder: "Thursday football",
@@ -124,9 +119,9 @@ export const en: Copy = {
       "This is the one you share. They say if they are coming and see who owes what.",
     organizerLinkLabel: "Your organizer link",
     organizerLinkHelp:
-      "Keep it safe and do not share it. It is how you mark payments, add people and close the event.",
-    warning:
-      "There are no accounts and no way to recover access. Lose the organizer link and you lose control of the event. Save it in your notes or send it to yourself on WhatsApp.",
+      "For someone helping you run the event. It is how they mark payments, invite people and close it.",
+    organizerLinkNote:
+      "You do not need to save it: the event lives in “My events” and you can always get back from there. Whoever receives this link has to sign in with their own account, and only you can edit the event's details.",
     shareWhatsApp: "Share on WhatsApp",
     goToManage: "Go to my organizer panel",
   },
@@ -201,6 +196,18 @@ export const en: Copy = {
       "Someone on this event already has your name. Adjust it and we will add you just as fast.",
     signedInAs: (name: string) => `You are signed in as ${name}.`,
     useAnotherName: "I'd rather type a different name",
+    signInHeading: (title: string) => `Sign in to join ${title}`,
+    signInHelp:
+      "Google or a link to your email, no password, and you land right back on this event.",
+    signInBenefits: [
+      "Your spot is held in your name, not your phone's.",
+      "Change your answer from any phone, whenever you like.",
+      "See what you owe and whether the organizer has marked it received.",
+      "Every plan you join ends up in one place.",
+    ],
+    signInCta: "Sign in or create an account",
+    signInAlreadyIn: "Already in:",
+    signInAndMore: (n: number) => (n === 1 ? "and 1 more" : `and ${n} more`),
   },
 
   policies: {
@@ -295,9 +302,6 @@ export const en: Copy = {
     heading: "Organizer panel",
     subheading: "Only you see this screen. Do not share this link.",
     participantsSection: "Participants",
-    addParticipant: "Add someone",
-    addParticipantHelp: "For the friend who never opens links.",
-    addParticipantSubmit: "Add",
     removeParticipant: "Remove",
     removeConfirmTitle: "Remove this person?",
     removeConfirmBody: (name: string) =>
@@ -319,12 +323,9 @@ export const en: Copy = {
     closeEventHelp: "Freezes the answers. You can reopen it later.",
     reopenEvent: "Reopen event",
     editEvent: "Edit event",
-    editNeedsAccount: "Editing the details needs an account",
-    editNeedsAccountHelp:
-      "This event was created without one, so its details are fixed. Everything else — payments, people, the waitlist, closing it — still works from this link.",
-    editNotYours: "This event belongs to another account, so only that one can change its details.",
+    editNotYours:
+      "This event belongs to another account, so only that one can change its details. Everything else — payments, invitations, the waitlist, closing it — you can do from this link.",
     editEventSaved: "Changes saved.",
-    addParticipantSaved: "Added to the list.",
     shareSection: "Links",
     splitWarningTitle: "Careful with the numbers",
     splitWarningBody: (name: string, confirmed: string, current: string) =>
@@ -369,6 +370,45 @@ export const en: Copy = {
         `That makes ${n} waiting. You can approve them all at once from the queue.`,
       cta: "Open the queue",
     },
+    eventInvitation: {
+      subject: (organizer: string, event: string) => `${organizer} invited you to ${event}`,
+      preview: (organizer: string, event: string) => `${organizer} is inviting you to ${event}.`,
+      heading: (organizer: string) => `${organizer} invited you`,
+      body: (event: string) =>
+        `You are invited to ${event}. Have a look and let them know if you are coming — that is how the organizer knows who to count on.`,
+      cta: "See the event",
+      accountNote:
+        "You will need to sign in to confirm. Google or a link to your email, no password.",
+    },
+  },
+
+  invites: {
+    heading: "Invite by email",
+    help: "Paste the addresses separated by commas. Each one gets the event link.",
+    label: "Emails",
+    placeholder: "ana@email.com, luis@email.com",
+    submit: "Send invitations",
+    submitting: "Sending…",
+    /** Who is inviting, when the event is managed by link with no session. */
+    fromOrganizer: "The organizer",
+    sent: (n: number) => (n === 1 ? "Sent 1 invitation." : `Sent ${n} invitations.`),
+    skipped: (n: number) =>
+      n === 1 ? "1 had already answered." : `${n} had already answered, so we left them alone.`,
+    failed: (n: number) =>
+      n === 1 ? "1 could not be sent." : `${n} could not be sent. Try those again.`,
+    listHeading: "Invited",
+    listHelp: "Who has answered and who has not.",
+    empty: "You have not invited anyone by email yet.",
+    answered: (name: string) => `Answered as ${name}`,
+    waiting: "No answer yet",
+    resend: "Send again",
+    resending: "Sending…",
+    resent: "Sent again.",
+    errorEmpty: "Enter at least one email address.",
+    errorInvalid: (list: string) => `This does not look like an email: ${list}`,
+    errorTooMany: (max: number, got: number) =>
+      `That is ${got} addresses and the limit per send is ${max}. Send the rest in another batch.`,
+    errorSendFailed: "We could not send the invitation. Try again.",
   },
 
   approvals: {
@@ -419,9 +459,8 @@ export const en: Copy = {
 
   auth: {
     signInTitle: "Sign in",
-    signInHeading: "Sign in to see your events",
-    signInSubheading:
-      "Only organizers need an account. Whoever gets the link does not have to sign in to anything.",
+    signInHeading: "Sign in to Junti",
+    signInSubheading: "No password: use Google, or a link we email you.",
     google: "Continue with Google",
     emailLabel: "Your email",
     emailPlaceholder: "you@email.com",

@@ -9,8 +9,12 @@ export interface JoinPanelProps {
   publicToken: string;
   mine: { displayName: string; attendance: string } | null;
   isFull: boolean;
-  /** The signed-in identity, or null. Never sent for a signed-out reader. */
-  account: { displayName: string; avatarUrl: string | null } | null;
+  /**
+   * The signed-in identity. Not nullable: the page renders `SignInToJoin`
+   * instead of this panel when nobody is signed in, so by the time we are here
+   * there is always an account to join as.
+   */
+  account: { displayName: string; avatarUrl: string | null };
 }
 
 /**
@@ -19,15 +23,16 @@ export interface JoinPanelProps {
  * A tiny client component whose whole job is to hold the "I'd rather type a
  * name" state — it exists so the page around it can stay a server component.
  *
- * Anyone already on the roster goes straight to the form: they are amending an
- * answer, and one-tap has nothing to offer someone who is already in.
+ * The form is no longer how a stranger introduces themselves; the session does
+ * that now. What is left for it is choosing a different name from the one on
+ * the account, and amending an answer — which is why anyone already on the
+ * roster goes straight to it, one-tap having nothing to offer someone who is
+ * already in.
  */
 export function JoinPanel({ publicToken, mine, isFull, account }: JoinPanelProps) {
   const [useForm, setUseForm] = useState(false);
 
-  const canOneTap = account !== null && mine === null && !useForm;
-
-  if (canOneTap) {
+  if (mine === null && !useForm) {
     return (
       <OneTapJoin
         publicToken={publicToken}

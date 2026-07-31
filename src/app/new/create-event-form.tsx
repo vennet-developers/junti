@@ -26,13 +26,10 @@ import {
 import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
-import { Notice } from "@/components/notice";
-import { clearDraft, takeDraft, type EventDraft } from "@/lib/event-draft";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
 
 import { createEvent, type CreateEventState } from "./actions";
-import { SignInPill } from "./sign-in-pill";
 
 export interface CreateEventFormProps {
   defaultTimeZone: string;
@@ -44,55 +41,22 @@ export interface CreateEventFormProps {
    * changing the kind updates the list without a round trip.
    */
   policyOptionsByType: Record<string, PolicyOptionView[]>;
-  /** Who the event will be attributed to, or null when signed out. */
-  organizer: { displayName: string; avatarUrl: string | null } | null;
-  /**
-   * An event being duplicated, already shifted to next week.
-   *
-   * Outranks a parked draft: arriving here from "duplicate and edit" is an
-   * explicit request for THIS event, and restoring something half-typed from an
-   * earlier sitting over it would be baffling.
-   */
+  /** An event being duplicated, already shifted to next week. */
   prefill: Record<string, unknown> | null;
 }
 
 /**
- * Read at most once per page load, and cached so `useSyncExternalStore` gets a
- * stable reference — returning a fresh object from `getSnapshot` makes React
- * re-render forever.
- */
-let cachedDraft: EventDraft | null | undefined;
-
-function draftSnapshot(): EventDraft | null {
-  if (cachedDraft === undefined) cachedDraft = takeDraft();
-  return cachedDraft;
-}
-
-/**
- * Restores a draft parked before signing in, then hands off.
+ * The create form.
  *
- * The restore has to remount the body rather than merely feed it new props:
- * `FormController` builds its store once, and several controls hold their own
- * state. Keying on whether a draft was found means exactly one remount, right
- * after hydration and before anybody has typed.
+ * This used to also restore a draft parked in `sessionStorage` before an OAuth
+ * round trip, remounting the body once after hydration to feed the store values
+ * `FormController` only reads at construction. That machinery existed for one
+ * situation — being offered sign-in on top of a half-typed form — and the page
+ * now requires a session before rendering any of this, so there is nothing to
+ * park and nothing to come back to.
  */
 export function CreateEventForm(props: CreateEventFormProps) {
-  const parked = useSyncExternalStore(
-    () => () => {},
-    draftSnapshot,
-    () => null,
-  );
-
-  const draft = props.prefill ?? parked;
-
-  return (
-    <CreateEventFormBody
-      key={props.prefill ? "duplicate" : draft ? "restored" : "fresh"}
-      {...props}
-      draft={draft}
-      restoredFromDraft={!props.prefill && draft !== null}
-    />
-  );
+  return <CreateEventFormBody {...props} draft={props.prefill} />;
 }
 
 function CreateEventFormBody({
@@ -100,10 +64,8 @@ function CreateEventFormBody({
   defaultLocale,
   eventTypes,
   policyOptionsByType,
-  organizer,
   draft,
-  restoredFromDraft,
-}: CreateEventFormProps & { draft: EventDraft | null; restoredFromDraft: boolean }) {
+}: CreateEventFormProps & { draft: Record<string, unknown> | null }) {
   const { copy } = useCopy();
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<CreateEventState>({ errors: {} });
@@ -203,10 +165,6 @@ function CreateEventFormBody({
       // A successful create redirects, so anything returned is a failure.
       if (result) setServerState(result);
     });
-
-    // The draft has served its purpose either way: on success the event exists,
-    // and on failure the form is still on screen holding the same values.
-    clearDraft();
   }
 
   /*
@@ -228,11 +186,6 @@ function CreateEventFormBody({
     >
       <Form onValid={submit}>
         <Stack gap="5">
-          {/* First, because attribution cannot be fixed after the fact. */}
-          <SignInPill organizer={organizer} />
-
-          {restoredFromDraft ? <Notice tone="info" title={copy.createEvent.draftKept} /> : null}
-
           <FormError message={serverState.errors._form} />
 
           <FormField name="title">

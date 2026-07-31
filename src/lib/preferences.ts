@@ -184,15 +184,12 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
 /**
  * The invitation template an event's owner writes, or the one the app ships.
  *
- * Takes the OWNER's id rather than the viewer's, because the manage screen is
- * reachable with a token by somebody who is not signed in at all — and the
- * message that goes out is the organizer's, whoever is holding the link. An
- * anonymous event has no owner and therefore no stored template, which is
- * exactly when the default is right.
+ * Takes the OWNER's id rather than the viewer's, because a co-organizer holding
+ * the manage link should send the owner's message, not their own — the wording
+ * belongs to whoever's event it is. The nullable owner this used to accept is
+ * gone with the events that had none.
  */
-export async function loadShareTemplate(ownerId: string | null, fallback: string): Promise<string> {
-  if (!ownerId) return fallback;
-
+export async function loadShareTemplate(ownerId: string, fallback: string): Promise<string> {
   const [row] = await db
     .select({ shareMessage: userPreferences.shareMessage })
     .from(userPreferences)

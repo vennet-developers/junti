@@ -36,8 +36,13 @@ export async function GET(
 ) {
   const { public_token, organizer_token, submission_id } = await context.params;
 
+  // 404 rather than a redirect: this route serves bytes to an <img>, and a
+  // sign-in page rendered into an image element helps nobody. The page that
+  // links here has already sent the reader to sign in.
   const user = await getCurrentUser();
-  const event = await authorizeOrganizer(public_token, organizer_token, user?.id ?? null);
+  if (!user) return new NextResponse(null, { status: 404 });
+
+  const event = await authorizeOrganizer(public_token, organizer_token, user.id);
 
   if (!event) {
     return new NextResponse(null, { status: 404 });

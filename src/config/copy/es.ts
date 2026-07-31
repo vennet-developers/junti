@@ -63,7 +63,7 @@ export const es = {
     heading: BRAND_NAME,
     subheading: BRAND_TAGLINE,
     pitch:
-      "Crea el evento, comparte el link por WhatsApp y mira en tiempo real quién viene y quién ya te pagó. Sin cuentas, sin contraseñas.",
+      "Crea el evento, comparte el link por WhatsApp y mira en tiempo real quién viene y quién ya te pagó. Se entra con Google o con un link al correo — sin contraseñas.",
     cta: "Crear un evento",
     howItWorksTitle: "Cómo funciona",
     steps: [
@@ -78,13 +78,8 @@ export const es = {
 
   createEvent: {
     title: "Crear evento",
-    attributionAnonTitle: "¿Entras primero?",
-    attributionAnonHelp:
-      "Sin cuenta el evento funciona igual, pero no vas a poder editarlo después ni recuperar el link si lo pierdes.",
-    attributionContinueAnon: "Sigo sin cuenta",
-    draftKept: "Guardamos lo que llevas escrito.",
     heading: "Nuevo evento",
-    subheading: "Solo toma un minuto. No necesitas crear una cuenta.",
+    subheading: "Solo toma un minuto.",
     fields: {
       title: "¿Qué van a hacer?",
       titlePlaceholder: "Fútbol de los jueves",
@@ -130,9 +125,9 @@ export const es = {
       "Este es el que compartes. Con él dicen si vienen y ven quién debe cuánto.",
     organizerLinkLabel: "Tu link de organizador",
     organizerLinkHelp:
-      "Guárdalo bien y no lo compartas. Con él marcas pagos, agregas gente y cierras el evento.",
-    warning:
-      "No hay cuentas ni recuperación de acceso. Si pierdes el link de organizador, pierdes el control del evento. Guárdalo en tus notas o mándatelo por WhatsApp.",
+      "Para que alguien más te ayude a manejar el evento. Con él marca pagos, invita y cierra el evento.",
+    organizerLinkNote:
+      "No tienes que guardarlo: el evento queda en «Mis eventos» y siempre puedes volver desde ahí. Quien reciba este link necesita entrar con su cuenta, y solo tú puedes editar los datos del evento.",
     shareWhatsApp: "Compartir por WhatsApp",
     goToManage: "Ir a mi panel de organizador",
   },
@@ -208,6 +203,18 @@ export const es = {
       "Ya hay alguien con tu nombre en este evento. Ajústalo y te apuntamos igual de rápido.",
     signedInAs: (name: string) => `Estás como ${name}.`,
     useAnotherName: "Prefiero escribir otro nombre",
+    signInHeading: (title: string) => `Entra para apuntarte a ${title}`,
+    signInHelp:
+      "Es con Google o con un link a tu correo, sin contraseña, y vuelves derecho a este evento.",
+    signInBenefits: [
+      "Tu lugar queda guardado a tu nombre, no al del teléfono.",
+      "Cambias tu respuesta desde cualquier celular, cuando quieras.",
+      "Ves qué te toca pagar y si el organizador ya lo dio por recibido.",
+      "Todos los planes a los que te apuntas quedan en un solo lugar.",
+    ],
+    signInCta: "Iniciar sesión o crear cuenta",
+    signInAlreadyIn: "Ya van:",
+    signInAndMore: (n: number) => (n === 1 ? "y 1 más" : `y ${n} más`),
   },
 
   policies: {
@@ -302,9 +309,6 @@ export const es = {
     heading: "Panel de organizador",
     subheading: "Solo tú ves esta pantalla. No compartas este link.",
     participantsSection: "Participantes",
-    addParticipant: "Agregar a alguien",
-    addParticipantHelp: "Para el amigo que nunca abre los links.",
-    addParticipantSubmit: "Agregar",
     removeParticipant: "Quitar",
     removeConfirmTitle: "¿Quitar a esta persona?",
     removeConfirmBody: (name: string) =>
@@ -326,13 +330,9 @@ export const es = {
     closeEventHelp: "Congela las confirmaciones. Puedes reabrirlo después.",
     reopenEvent: "Reabrir evento",
     editEvent: "Editar evento",
-    editNeedsAccount: "Para editar los datos hace falta una cuenta",
-    editNeedsAccountHelp:
-      "Este evento se creó sin cuenta, así que sus datos quedan fijos. Todo lo demás —pagos, gente, lista de espera, cerrarlo— sigue funcionando desde este link.",
     editNotYours:
-      "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos.",
+      "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos. Todo lo demás —pagos, invitaciones, lista de espera, cerrarlo— sí puedes hacerlo desde este link.",
     editEventSaved: "Cambios guardados.",
-    addParticipantSaved: "Lo agregamos a la lista.",
     shareSection: "Links",
     splitWarningTitle: "Ojo con las cuentas",
     splitWarningBody: (name: string, confirmed: string, current: string) =>
@@ -378,6 +378,45 @@ export const es = {
         `Con este van ${n} esperando. Puedes aprobarlos todos de una en la cola.`,
       cta: "Ver la cola",
     },
+    eventInvitation: {
+      subject: (organizer: string, event: string) => `${organizer} te invitó a ${event}`,
+      preview: (organizer: string, event: string) => `${organizer} te está invitando a ${event}.`,
+      heading: (organizer: string) => `${organizer} te invitó`,
+      body: (event: string) =>
+        `Te están invitando a ${event}. Mira los detalles y dinos si vienes — así el organizador sabe con cuántos contar.`,
+      cta: "Ver el evento",
+      accountNote:
+        "Para confirmar necesitas entrar con tu cuenta. Es con Google o con un link a tu correo, sin contraseña.",
+    },
+  },
+
+  invites: {
+    heading: "Invitar por correo",
+    help: "Pega los correos separados por coma. A cada uno le llega el link del evento.",
+    label: "Correos",
+    placeholder: "ana@correo.com, luis@correo.com",
+    submit: "Enviar invitaciones",
+    submitting: "Enviando…",
+    /** Quien invita, cuando se administra solo con el link y no hay sesión. */
+    fromOrganizer: "El organizador",
+    sent: (n: number) => (n === 1 ? "Enviamos 1 invitación." : `Enviamos ${n} invitaciones.`),
+    skipped: (n: number) =>
+      n === 1 ? "1 ya había respondido." : `${n} ya habían respondido, así que no les escribimos.`,
+    failed: (n: number) =>
+      n === 1 ? "1 no pudo salir." : `${n} no pudieron salir. Intenta de nuevo con esas.`,
+    listHeading: "Invitados",
+    listHelp: "Quién ya respondió y quién sigue sin contestar.",
+    empty: "Todavía no has invitado a nadie por correo.",
+    answered: (name: string) => `Respondió como ${name}`,
+    waiting: "Sin responder",
+    resend: "Reenviar",
+    resending: "Reenviando…",
+    resent: "Se lo mandamos otra vez.",
+    errorEmpty: "Escribe al menos un correo.",
+    errorInvalid: (list: string) => `Esto no parece un correo: ${list}`,
+    errorTooMany: (max: number, got: number) =>
+      `Son ${got} correos y el máximo por envío es ${max}. Manda el resto en otra tanda.`,
+    errorSendFailed: "No pudimos enviar la invitación. Intenta de nuevo.",
   },
 
   approvals: {
@@ -428,9 +467,8 @@ export const es = {
 
   auth: {
     signInTitle: "Entrar",
-    signInHeading: "Entra para ver tus eventos",
-    signInSubheading:
-      "Solo los organizadores necesitan cuenta. Quien recibe el link no tiene que entrar a nada.",
+    signInHeading: "Entra a Junti",
+    signInSubheading: "Sin contraseña: con Google, o con un link que te mandamos al correo.",
     google: "Continuar con Google",
     emailLabel: "Tu correo",
     emailPlaceholder: "tu@correo.com",

@@ -57,6 +57,13 @@
       "when": 1785478349635,
       "tag": "0007_share_message",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1785536314939,
+      "tag": "0008_cold_cassandra_nova",
+      "breakpoints": true
     }
   ]
 }

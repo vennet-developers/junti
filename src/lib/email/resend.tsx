@@ -4,6 +4,11 @@ import { render } from "@react-email/render";
 
 import type { EmailPort, OutboundMessage, SendResult } from "./port";
 import {
+  EventInvitationEmail,
+  eventInvitationSubject,
+  type EventInvitationValues,
+} from "./templates/event-invitation";
+import {
   PendingApprovalEmail,
   pendingApprovalSubject,
   type PendingApprovalValues,
@@ -70,6 +75,19 @@ async function compose(
 
       return {
         subject: pendingApprovalSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "event-invitation": {
+      const values = message.values as unknown as EventInvitationValues;
+      const element = (
+        <EventInvitationEmail values={values} locale={message.locale} origin={origin} />
+      );
+
+      return {
+        subject: eventInvitationSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };

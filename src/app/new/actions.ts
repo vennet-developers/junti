@@ -11,7 +11,6 @@ import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { getOrganizer } from "@/lib/organizer";
 import { ROUTES } from "@/config/routes";
 import { createOrganizerToken, createPublicToken } from "@/lib/tokens";
-import { managePath } from "@/lib/urls";
 import { field, fieldErrors, makeEventSchema, parsePoliciesField } from "@/lib/validation";
 
 /**
@@ -77,10 +76,12 @@ export async function createEvent(
   const publicToken = createPublicToken();
   const organizerToken = createOrganizerToken();
 
-  // Attribute the event when someone is signed in, so it shows up in their
-  // history. Creating anonymously still works — that is the original flow and
-  // the tokens remain the access path either way.
+  // Every event has an owner. The page will not render this form without a
+  // session, but the check belongs here too — a server action is a public
+  // endpoint, and "the page would not have shown it" authorizes nothing.
   const organizer = await getOrganizer();
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
   const eventId = uuidv7();
 
   /**
@@ -92,7 +93,7 @@ export async function createEvent(
    */
   await db.transaction(async (tx) => {
     await tx.insert(events).values({
-      organizerId: organizer?.id ?? null,
+      organizerId: organizer.id,
       id: eventId,
       publicToken,
       organizerToken,
@@ -124,24 +125,18 @@ export async function createEvent(
   });
 
   /**
-   * Where you land depends on whether the event has an owner.
+   * Straight to the history, where the new event is the first card.
    *
-   * **Signed out** → the organizer panel, with the links panel open. Those two
-   * URLs are the only way back into the event that will ever exist, so putting
-   * anything between the creator and them would be careless.
+   * There used to be a second destination — the manage panel with the links
+   * open — for an event created with no account. Those two URLs were the only
+   * way back into such an event that would ever exist, so anything standing
+   * between the creator and them was careless. Owned events are recoverable
+   * from the history forever, so the links stop being an emergency and become
+   * one tap away like everything else.
    *
-   * **Signed in** → the history, where the new event is the first card. It is
-   * recoverable from there forever, so the links stop being an emergency and
-   * become one tap away like everything else.
+   * `?created=1` because the confirmation has to survive the redirect.
    */
   // redirect() throws to unwind, so it must be outside the try/catch above and
   // is never reached on a validation failure.
-  // Both destinations carry ?created=1: the confirmation has to survive the
-  // redirect, and until now the account-holder path arrived with no feedback at
-  // all — the event just appeared in the list.
-  redirect(
-    organizer
-      ? `${ROUTES.myEvents}?created=1`
-      : `${managePath(publicToken, organizerToken)}?created=1`,
-  );
+  redirect(`${ROUTES.myEvents}?created=1`);
 }

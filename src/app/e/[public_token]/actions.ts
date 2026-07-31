@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq } from "drizzle-orm";
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { uuidv7 } from "uuidv7";
 
@@ -16,9 +16,11 @@ import { resolveEventLocale } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import { syncPayments } from "@/lib/payments";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
-import { findEventByPublicToken, loadParticipantRows } from "@/lib/roster";
-import { EDIT_COOKIE_MAX_AGE, editCookieName } from "@/lib/rsvp-cookie";
-import { createEditToken } from "@/lib/tokens";
+import {
+  findEventByPublicToken,
+  linkInvitationToParticipant,
+  loadParticipantRows,
+} from "@/lib/roster";
 import { participantPath } from "@/lib/urls";
 import {
   field,
@@ -56,10 +58,14 @@ async function eventCopy(eventLocale: string): Promise<Copy> {
 /**
  * Records or amends an RSVP.
  *
- * Identity is the display name, case-insensitively unique per event. A device
- * that has RSVP'd before carries an edit token in a cookie, which lets it amend
- * its own row; a signed-in person is matched on their account instead, which is
- * what lets them change their answer from a different phone.
+ * Identity is the account, and the display name is only a label — still unique
+ * per event so the roster reads cleanly, but no longer the thing that says who
+ * you are. That used to be reversed: the name was the identity and a cookie
+ * carried the right to amend it, which meant your answer belonged to a browser
+ * rather than to you.
+ *
+ * The form still exists because the name on a Google account is not always the
+ * name a group knows you by. What it no longer does is let a stranger answer.
  */
 export async function submitRsvp(
   publicToken: string,
@@ -96,10 +102,7 @@ export async function submitRsvp(
   const { displayName, attendance: requested } = parsed.data;
 
   const organizer = await getOrganizer();
-
-  const cookieStore = await cookies();
-  const cookieName = editCookieName(event.id);
-  const editToken = cookieStore.get(cookieName)?.value ?? null;
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
 
   const rows = await loadParticipantRows(event.id);
   const rosterForCapacity = rows.map((row) => ({
@@ -108,15 +111,9 @@ export async function submitRsvp(
     attendance: row.participant.attendance,
   }));
 
-  // The row this person already owns: by account first, because that survives
-  // a new device, then by the cookie this browser is carrying.
-  const owned =
-    (organizer
-      ? (rows.find((row) => row.participant.userId === organizer.id)?.participant ?? null)
-      : null) ??
-    (editToken
-      ? (rows.find((row) => row.participant.editToken === editToken)?.participant ?? null)
-      : null);
+  // The row this person already owns. One lookup, and it survives a new phone
+  // or a cleared browser — neither of which the cookie it replaced did.
+  const owned = rows.find((row) => row.participant.userId === organizer.id)?.participant ?? null;
 
   const nameClash = rows.find(
     (row) =>
@@ -141,26 +138,23 @@ export async function submitRsvp(
       .set({
         displayName,
         attendance,
-        // Claims the row for the account if they signed in after RSVPing on
-        // this device. Never clears it: signing out does not orphan the entry.
-        ...(organizer && !owned.userId
-          ? { userId: organizer.id, avatarUrl: organizer.avatarUrl }
-          : {}),
+        // Kept fresh on every amend: a photo changed on the Google account
+        // should not leave last year's picture on the roster.
+        avatarUrl: organizer.avatarUrl,
         updatedAt: new Date(),
       })
       .where(and(eq(participants.id, owned.id), eq(participants.eventId, event.id)));
   } else {
-    const newEditToken = createEditToken();
+    const id = uuidv7();
 
     try {
       await db.insert(participants).values({
-        id: uuidv7(),
+        id,
         eventId: event.id,
         displayName,
         attendance,
-        editToken: newEditToken,
-        userId: organizer?.id ?? null,
-        avatarUrl: organizer?.avatarUrl ?? null,
+        userId: organizer.id,
+        avatarUrl: organizer.avatarUrl,
       });
     } catch {
       // The unique index on (event_id, lower(display_name)) is the real
@@ -169,13 +163,9 @@ export async function submitRsvp(
       return { errors: { displayName: copy.rsvp.duplicateName } };
     }
 
-    cookieStore.set(cookieName, newEditToken, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: participantPath(publicToken),
-      maxAge: EDIT_COOKIE_MAX_AGE,
-    });
+    // Closes the loop for somebody who got here from an invitation email, so
+    // the organizer's list stops showing them as still waiting.
+    await linkInvitationToParticipant(event.id, organizer.email, id);
   }
 
   await syncPayments(event);
@@ -188,8 +178,8 @@ export async function submitRsvp(
  * Joins the event in one tap, for somebody already signed in.
  *
  * Takes no name and no form: the session already knows who they are, which is
- * the entire point — the RSVP form exists because anonymous participants have
- * to introduce themselves, and a signed-in one does not.
+ * the entire point. The form is what remains for the person whose account name
+ * is not what this group calls them.
  *
  * The one thing that can still go wrong is a name collision, because display
  * names are unique per event and somebody may already be on the roster as
@@ -245,13 +235,14 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
     existing: null,
   });
 
+  const id = uuidv7();
+
   try {
     await db.insert(participants).values({
-      id: uuidv7(),
+      id,
       eventId: event.id,
       displayName,
       attendance,
-      editToken: createEditToken(),
       userId: organizer.id,
       avatarUrl: organizer.avatarUrl,
     });
@@ -259,6 +250,7 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
     return { errors: { _form: copy.rsvp.oneTapNameTaken, nameTaken: "1" } };
   }
 
+  await linkInvitationToParticipant(event.id, organizer.email, id);
   await syncPayments(event);
   revalidatePath(participantPath(publicToken));
 
@@ -389,33 +381,21 @@ export async function submitPolicyResponse(
 }
 
 /**
- * The participant row belonging to whoever is asking — by account, else by the
- * edit-token cookie this browser holds.
+ * The participant row belonging to whoever is asking, by account.
  *
  * Never takes a participant id from the request. Doing so would let anyone
- * holding the public link submit a receipt as somebody else.
+ * holding the public link submit a receipt as somebody else — which matters
+ * more here than anywhere: a receipt is what settles who has paid.
  */
 async function findMyParticipantRow(eventId: string) {
   const organizer = await getOrganizer();
+  if (!organizer) return null;
 
-  if (organizer) {
-    const [byAccount] = await db
-      .select({ id: participants.id })
-      .from(participants)
-      .where(and(eq(participants.eventId, eventId), eq(participants.userId, organizer.id)))
-      .limit(1);
-
-    if (byAccount) return byAccount;
-  }
-
-  const editToken = (await cookies()).get(editCookieName(eventId))?.value;
-  if (!editToken) return null;
-
-  const [byCookie] = await db
+  const [row] = await db
     .select({ id: participants.id })
     .from(participants)
-    .where(and(eq(participants.eventId, eventId), eq(participants.editToken, editToken)))
+    .where(and(eq(participants.eventId, eventId), eq(participants.userId, organizer.id)))
     .limit(1);
 
-  return byCookie ?? null;
+  return row ?? null;
 }

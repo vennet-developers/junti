@@ -259,8 +259,12 @@ export const events = pgTable(
     closedAt: timestamp("closed_at", { withTimezone: true }),
 
     /**
-     * The signed-in account that created this event, or null when it was
-     * created anonymously (the original token-only flow, still supported).
+     * The signed-in account that owns this event.
+     *
+     * Was nullable, for the original flow where an event could be created with
+     * no account at all and the organizer token WAS the identity. That is gone:
+     * losing the link meant losing the event with no way back, and every read
+     * path had to carry a "what if there is no owner" branch to support it.
      *
      * Deliberately a plain uuid with NO foreign key to `auth.users`. A
      * cross-schema FK would tie these migrations to Supabase specifically, and
@@ -269,7 +273,7 @@ export const events = pgTable(
      * identity comes from Supabase Auth, and swapping the provider would not
      * require a migration.
      */
-    organizerId: uuid("organizer_id"),
+    organizerId: uuid("organizer_id").notNull(),
 
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -299,22 +303,18 @@ export const participants = pgTable(
     attendance: attendance("attendance").notNull().default("in"),
 
     /**
-     * Lets one device amend its own RSVP without an account. Stored in a cookie
-     * on the participant's browser; never displayed.
-     */
-    editToken: text("edit_token").notNull(),
-
-    /**
-     * Set when this RSVP came from a signed-in account, null for the anonymous
-     * flow — which remains the common case and the one the product is built
-     * around.
+     * The account this RSVP belongs to.
      *
-     * Its value is that it survives what the cookie does not: a signed-in
-     * person can amend their RSVP from a different phone, or after clearing
-     * their browser. Same reasoning as `events.organizer_id` for the absent
-     * foreign key to `auth.users`.
+     * This is the identity now, and the only one. It replaced a pair: a display
+     * name that had to be unique per event to tell people apart, and an
+     * `edit_token` in a cookie that granted the right to amend. That pair tied
+     * an answer to a browser rather than to a person — a new phone or a cleared
+     * cookie and the RSVP was no longer yours.
+     *
+     * Same reasoning as `events.organizer_id` for the absent foreign key to
+     * `auth.users`.
      */
-    userId: uuid("user_id"),
+    userId: uuid("user_id").notNull(),
 
     /**
      * Copied from the identity provider at RSVP time rather than fetched.
@@ -341,9 +341,10 @@ export const participants = pgTable(
     /**
      * One RSVP per account per event.
      *
-     * Needs no `where user_id is not null`: Postgres treats NULLs as distinct
-     * in a unique index, so any number of anonymous participants coexist here
-     * while two RSVPs from the same account cannot.
+     * The NULL-tolerance this index used to rely on — Postgres treating NULLs
+     * as distinct, so any number of account-less rows could coexist — is no
+     * longer load-bearing now that `user_id` is NOT NULL. The constraint means
+     * what it says.
      */
     uniqueIndex("participants_event_user_unique").on(table.eventId, table.userId),
     index("participants_event_created_idx").on(table.eventId, table.createdAt),
@@ -371,6 +372,74 @@ export const payments = pgTable(
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
   },
   (table) => [index("payments_participant_idx").on(table.participantId)],
+);
+
+/**
+ * Somebody the organizer asked to come, by address.
+ *
+ * Replaces adding a participant by hand. That put a name on the roster on
+ * somebody else's say-so — it counted against capacity, it could owe money, and
+ * the person it named had never agreed to any of it. An invitation says the
+ * true thing instead: they were asked, and they have not answered yet.
+ *
+ * **The only table that holds a contact address.** `participants` deliberately
+ * does not: its rows render for anyone holding the public link, and an email
+ * column there would be one careless `select *` away from publishing everyone's
+ * address to the whole group. Everything here is read behind organizer
+ * authorization only.
+ *
+ * Channel-agnostic in spirit, like the message port it feeds. `email` is the
+ * address today; when WhatsApp arrives it gets its own column rather than
+ * overloading this one, because a phone number is not an email and a schema
+ * that pretends otherwise is a schema that cannot validate either.
+ */
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid("id").primaryKey(),
+
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+
+    /** Lowercased before it is written, so uniqueness means what it looks like. */
+    email: text("email").notNull(),
+
+    /**
+     * What this invitation turned into, once they signed in and answered.
+     *
+     * Null is "asked, no answer yet" — the state the whole table exists to
+     * make visible. Resolved at RSVP time by matching the account's verified
+     * email, which is why nothing here has to be trusted from a form.
+     *
+     * `set null` rather than `cascade`: an organizer removing somebody from the
+     * roster has not un-invited them, and the record that they were asked is
+     * still true.
+     */
+    participantId: uuid("participant_id").references(() => participants.id, {
+      onDelete: "set null",
+    }),
+
+    /**
+     * When it last went out — updated on a resend rather than appended to.
+     *
+     * A full send history would be the honest thing if anyone needed to audit
+     * delivery, and nobody does: the organizer's question is "did I already
+     * send this, and how long ago", which one timestamp answers.
+     */
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    /**
+     * One invitation per address per event. Inviting the same person twice is
+     * a resend, not a second row — which is what stops a pasted list with a
+     * repeated address from sending somebody two identical emails.
+     */
+    uniqueIndex("invitations_event_email_unique").on(table.eventId, table.email),
+    index("invitations_event_sent_idx").on(table.eventId, table.sentAt.desc()),
+  ],
 );
 
 /**

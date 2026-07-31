@@ -7,6 +7,7 @@ import {
   eventPolicies,
   events,
   eventTypes,
+  invitations,
   participants,
   payments,
   policyDefinitions,
@@ -176,26 +177,29 @@ export async function findEventByOrganizerToken(
 /**
  * Authorizes an organizer action by EITHER route.
  *
- * Two ways to manage an event, deliberately:
+ * Two ways to reach an event's controls, deliberately:
  *
- * 1. **The organizer token in the URL.** The original model, and the only one
- *    that works for someone without an account — it is still how you hand an
- *    event to a friend.
- * 2. **Ownership.** The signed-in account that created it, which is what makes
- *    the history page able to link straight into managing.
+ * 1. **The organizer token in the URL.** How you hand an event to a friend so
+ *    they can run the day while you are not looking at your phone.
+ * 2. **Ownership.** The account that created it, which is what lets the history
+ *    page link straight into managing without carrying the token around.
  *
- * Ownership is checked against the session, never against anything the client
- * sends. Returns null when neither holds.
+ * **A session is required either way**, and that is the change. The token used
+ * to be an identity all by itself: holding the link WAS being the organizer, so
+ * losing it lost the event and finding it gained one. Now it delegates — it says
+ * which event you may help run, and the session says who is helping. What the
+ * delegate cannot do is edit the event itself; see `canEdit` on the manage page.
+ *
+ * Both routes are checked server-side against the database, never against
+ * anything the client asserts. Returns null when neither holds.
  */
 export async function authorizeOrganizer(
   publicToken: string,
   organizerToken: string,
-  currentOrganizerId: string | null,
+  currentOrganizerId: string,
 ): Promise<EventRow | null> {
   const byToken = await findEventByOrganizerToken(publicToken, organizerToken);
   if (byToken) return byToken;
-
-  if (!currentOrganizerId) return null;
 
   const [owned] = await db
     .select()
@@ -466,6 +470,79 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
 /** The raw participant + payment rows, for actions that need to write. */
 export async function loadParticipantRows(eventId: string): Promise<JoinedRow[]> {
   return loadJoinedRows(eventId);
+}
+
+// ── Invitations ──────────────────────────────────────────────────────────────
+
+export interface InvitationView {
+  id: string;
+  /** An address. **Organizer-only** — never reaches a participant-facing view. */
+  email: string;
+  /** They signed in and answered. What they answered is the roster's business. */
+  answered: boolean;
+  /** The name they answered under, when they have. */
+  participantName: string | null;
+  sentAt: Date;
+}
+
+/**
+ * Everyone who was asked to this event, answered or not.
+ *
+ * **Every caller must be behind organizer authorization.** This is the one read
+ * in this module that returns contact addresses, and the participant page has no
+ * business calling it — which is why it is not folded into `loadRoster`, whose
+ * result is rendered for anyone holding the public link.
+ *
+ * Unanswered first, because that is the list the organizer can still act on;
+ * within each group, most recently sent first.
+ */
+export async function loadInvitations(eventId: string): Promise<InvitationView[]> {
+  const rows = await db
+    .select({
+      id: invitations.id,
+      email: invitations.email,
+      participantId: invitations.participantId,
+      participantName: participants.displayName,
+      sentAt: invitations.sentAt,
+    })
+    .from(invitations)
+    .leftJoin(participants, eq(participants.id, invitations.participantId))
+    .where(eq(invitations.eventId, eventId))
+    .orderBy(asc(sql`(${invitations.participantId} is not null)`), desc(invitations.sentAt));
+
+  return rows.map((row) => ({
+    id: row.id,
+    email: row.email,
+    answered: row.participantId !== null,
+    participantName: row.participantName,
+    sentAt: row.sentAt,
+  }));
+}
+
+/**
+ * Ties an invitation to the RSVP that answered it.
+ *
+ * Called on every join, matching the account's **verified** email — the address
+ * Supabase confirmed, not anything typed into a form. That is what makes this
+ * safe to do automatically: claiming somebody else's invitation would require
+ * controlling their inbox, at which point the invitation is the least of it.
+ *
+ * Silent when there is no invitation. Most people arrive from a forwarded link
+ * having never been emailed, and that is the normal case, not a miss.
+ */
+export async function linkInvitationToParticipant(
+  eventId: string,
+  email: string | null,
+  participantId: string,
+): Promise<void> {
+  if (!email) return;
+
+  await db
+    .update(invitations)
+    .set({ participantId })
+    .where(
+      and(eq(invitations.eventId, eventId), eq(invitations.email, email.trim().toLowerCase())),
+    );
 }
 
 // ── Policy submissions ───────────────────────────────────────────────────────
