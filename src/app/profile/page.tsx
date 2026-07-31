@@ -47,15 +47,20 @@ export default async function ProfilePage() {
 
       <Container size="1" px="4" py="6">
         <Stack gap="6">
-          {/* My events is the root for an account holder — `/` only redirects
-              there — so the trail starts from it rather than from the landing
-              page they will never see again. */}
+          {/*
+            Home, not "my events". This screen is beside the events, not inside
+            them: your language and your timezone are not part of any roster,
+            and a trail reading "My events › My profile" claimed a containment
+            that does not exist. The event screens keep "My events" as their
+            root because an event genuinely is one of yours.
+
+            The destination is the same either way — `/` redirects an account
+            holder to their events — so this is about what the trail says, not
+            about where the link goes. Which is the whole job of a breadcrumb.
+          */}
           <PageBreadcrumb
             label={copy.nav.breadcrumbLabel}
-            items={[
-              { label: copy.auth.myEventsLink, href: ROUTES.myEvents },
-              { label: copy.profile.link },
-            ]}
+            items={[{ label: copy.nav.home, href: ROUTES.home }, { label: copy.profile.link }]}
           />
 
           <Stack gap="2">
