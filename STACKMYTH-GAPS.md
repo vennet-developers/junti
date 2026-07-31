@@ -684,6 +684,40 @@ was added where it was first needed and never generalised.
 
 ---
 
+## 18. `--sm-dialog-header-gap` is two measurements under one name
+
+> **Status: open at 0.24.6.** `.sm-dialog-header` uses the token as its flex
+> `gap`, and the bordered variants use the same token as `padding-bottom`.
+> Verified in the installed `dialog.css`.
+
+**What I was building.** The account drawer's header: an avatar beside a name
+and an email, above a rule, with the panel body under it.
+
+**What happened.** The header holds two rows, and there are two different
+distances in it — the space _between_ the name and the email, and the space
+_under_ the email before the rule. Both read from `--sm-dialog-header-gap`,
+which is `0.375rem`. That is right for the first and much too small for the
+second: with the panel's own padding at `1.25rem`, the header had 1.25rem of
+air above the avatar and 0.375rem below the address, so the rule looked like
+something the email was resting on rather than a boundary under a block.
+
+Raising the token fixes the margin and breaks the pairing: name and email
+drift apart to buy space that has nothing to do with them. So the app sets
+`padding-block-end` on the header directly — reaching past the token to the
+property it feeds, which is exactly what a token is supposed to prevent.
+
+**What I would have wanted.** A second token, `--sm-dialog-header-padding-end`
+(defaulting to `--sm-dialog-header-gap`, so nothing changes for anyone who
+does not set it). The gap between a header's own lines and the gap between a
+header and what follows it are not the same measurement and do not scale
+together — a header with one line has the second distance and not the first.
+
+**Where this pattern repeats.** Worth a sweep rather than a patch: any
+component whose internal rhythm and outer separation share a token has the
+same latent conflict. `--sm-dialog-content-gap` looks like the next one.
+
+---
+
 ## What worked well, unprompted
 
 Stating this because a gaps file that is only complaints is not honest feedback.

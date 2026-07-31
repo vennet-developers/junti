@@ -139,7 +139,7 @@ export function ProfileMenu({
       </DialogTrigger>
 
       <DrawerContent onDismiss={() => setOpen(false)}>
-        <DialogHeader bordered>
+        <DialogHeader bordered className="drawer-header">
           <Flex justify="between" align="start" gap="3">
             <Flex gap="3" align="center" minWidth="0">
               <Box flexShrink={0}>

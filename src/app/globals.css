@@ -140,6 +140,26 @@ body {
 }
 
 /*
+  The drawer's header, given the same room under its rule as above its avatar.
+
+  A bordered header pads its bottom with `--sm-dialog-header-gap`, and that
+  token is also the flex gap between the title and the description — one value
+  doing two jobs. At 0.375rem it is right for the gap between a name and an
+  email and wrong for the space before a rule: the account panel had 1.25rem
+  of air above the avatar and 0.375rem under the address, so the rule read as
+  something the email was resting on. Raising the token would have pushed the
+  name and the email apart to fix a margin they have nothing to do with, so
+  the padding is set directly here and the token is left alone. Logged as
+  STACKMYTH-GAP #18.
+
+  The value is the panel's own block padding, so the header's two edges stay
+  equal without a number being written down.
+*/
+.drawer-header {
+  padding-block-end: var(--sm-dialog-content-padding-block);
+}
+
+/*
   A navigation row inside the drawer, aligned with everything else in it.
 
   These rows are buttons — `Button asChild` around a next/link, because a

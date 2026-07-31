@@ -114,7 +114,7 @@ export function GuestMenu({
       </DialogTrigger>
 
       <DrawerContent onDismiss={() => setOpen(false)}>
-        <DialogHeader bordered>
+        <DialogHeader bordered className="drawer-header">
           <Flex justify="between" align="center" gap="3">
             <DialogTitle>{copy.nav.guestMenuLabel}</DialogTitle>
             {/* asChild so the close is a real Button at the touch floor rather
