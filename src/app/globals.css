@@ -192,3 +192,20 @@ body {
      flex items rather than inline text. */
   vertical-align: bottom;
 }
+
+/*
+  The sign-in card riding up onto the preview it is gating.
+
+  App CSS rather than a Box prop because the overlap is a NEGATIVE margin, and
+  `mt` only takes the positive spacing scale — the same reason `.breadcrumb-crumb`
+  is here. The alternative, a relative offset, moves the card without moving the
+  space it reserves and leaves the gap at the bottom instead of closing it.
+
+  `position: relative` is what puts the card above the faded half in the paint
+  order; without it the two share a stacking context and the preview, coming
+  later in the tree, would win and show through the card's own surface.
+*/
+.gated-preview__card {
+  position: relative;
+  margin-top: -5rem;
+}

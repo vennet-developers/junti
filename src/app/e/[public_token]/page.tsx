@@ -28,6 +28,7 @@ import { ROUTES } from "@/config/routes";
 import { participantPath } from "@/lib/urls";
 import { and, eq } from "drizzle-orm";
 
+import { GatedPreview } from "./gated-preview";
 import { JoinPanel } from "./join-panel";
 import { PolicyPanel, type PolicyPanelItem } from "./policy-panel";
 import { SignInToJoin } from "./sign-in-to-join";
@@ -141,6 +142,103 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
     );
   };
 
+  /**
+   * The money and the roster — everything after the answer.
+   *
+   * Lifted into a variable because it is rendered in two frames: plainly for
+   * anyone who can act on it, and behind {@link GatedPreview} for a signed-out
+   * reader, where the sign-in card sits on top of it. Writing it twice is how
+   * the two drift.
+   */
+  const eventTail = (
+    <Stack gap="6">
+      <Divider />
+
+      <MoneySummary roster={roster} copy={copy} />
+
+      {showMoney ? <Divider /> : null}
+
+      <Stack gap="5">
+        <Text variant="h3" fontFamily="var(--junti-display)">
+          {copy.roster.heading}
+        </Text>
+
+        {roster.members.length === 0 ? (
+          <Text color="muted">{copy.roster.empty}</Text>
+        ) : (
+          <>
+            <RosterGroup
+              title={copy.roster.inTitle}
+              members={roster.confirmed}
+              currency={event.currency}
+              copy={copy}
+              showMoney={showMoney}
+            />
+
+            {/*
+              Collapsed, and below the confirmed list.
+
+              These people said they are coming and still hold a spot — they
+              are simply not confirmed yet. Putting them in the main list
+              would overstate how many are certain; leaving them off the page
+              would hide the fact that they are counted against capacity.
+              Collapsed says both: present, and not the same thing.
+            */}
+            {roster.pendingPolicy.length > 0 ? (
+              <Disclosure
+                id="pending-policy"
+                label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
+              >
+                <Stack gap="3">
+                  <Text variant="small" color="muted">
+                    {copy.roster.pendingPolicyHelp}
+                  </Text>
+                  <RosterGroup
+                    title={copy.roster.pendingPolicyTitle}
+                    members={roster.pendingPolicy}
+                    currency={event.currency}
+                    copy={copy}
+                    showMoney={showMoney}
+                    renderNote={pendingNote}
+                  />
+                </Stack>
+              </Disclosure>
+            ) : null}
+
+            {roster.waitlisted.length > 0 ? (
+              <RosterGroup
+                title={copy.roster.waitlistedTitle}
+                members={roster.waitlisted}
+                currency={event.currency}
+                copy={copy}
+                showMoney={false}
+                numbered
+              />
+            ) : null}
+            {roster.maybe.length > 0 ? (
+              <RosterGroup
+                title={copy.roster.maybeTitle}
+                members={roster.maybe}
+                currency={event.currency}
+                copy={copy}
+                showMoney={false}
+              />
+            ) : null}
+            {roster.notAttending.length > 0 ? (
+              <RosterGroup
+                title={copy.roster.outTitle}
+                members={roster.notAttending}
+                currency={event.currency}
+                copy={copy}
+                showMoney={false}
+              />
+            ) : null}
+          </>
+        )}
+      </Stack>
+    </Stack>
+  );
+
   return (
     <>
       <AppHeader organizer={organizer} theme={theme} signInNext={participantPath(publicToken)} />
@@ -198,20 +296,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
               isFull={roster.openSlots !== null && roster.openSlots === 0}
               account={{ displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }}
             />
-          ) : (
-            /* Everything above this line rendered for them too. Only the
-               answer is gated, and only until they come back signed in. */
-            <SignInToJoin
-              publicToken={publicToken}
-              copy={copy}
-              eventTitle={event.title}
-              attending={roster.attending.map((member) => ({
-                id: member.id,
-                displayName: member.displayName,
-                avatarUrl: member.avatarUrl,
-              }))}
-            />
-          )}
+          ) : null}
 
           {/* Immediately under the answer, because it is the rest of the same
             act: you said you are coming, here is what is still missing. */}
@@ -219,90 +304,32 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             <PolicyPanel publicToken={publicToken} items={myPolicies} />
           ) : null}
 
-          <Divider />
-
-          <MoneySummary roster={roster} copy={copy} />
-
-          {showMoney ? <Divider /> : null}
-
-          <Stack gap="5">
-            <Text variant="h3" fontFamily="var(--junti-display)">
-              {copy.roster.heading}
-            </Text>
-
-            {roster.members.length === 0 ? (
-              <Text color="muted">{copy.roster.empty}</Text>
-            ) : (
-              <>
-                <RosterGroup
-                  title={copy.roster.inTitle}
-                  members={roster.confirmed}
-                  currency={event.currency}
+          {/*
+            For a signed-out reader the rest of the page is the teaser and the
+            card rides on top of it. Everybody else gets it plainly: somebody
+            who can act on these numbers has no business reading them through
+            a fade.
+          */}
+          {organizer || event.isClosed ? (
+            eventTail
+          ) : (
+            <GatedPreview
+              card={
+                <SignInToJoin
+                  publicToken={publicToken}
                   copy={copy}
-                  showMoney={showMoney}
+                  eventTitle={event.title}
+                  attending={roster.attending.map((member) => ({
+                    id: member.id,
+                    displayName: member.displayName,
+                    avatarUrl: member.avatarUrl,
+                  }))}
                 />
-
-                {/*
-                Collapsed, and below the confirmed list.
-
-                These people said they are coming and still hold a spot — they
-                are simply not confirmed yet. Putting them in the main list
-                would overstate how many are certain; leaving them off the page
-                would hide the fact that they are counted against capacity.
-                Collapsed says both: present, and not the same thing.
-              */}
-                {roster.pendingPolicy.length > 0 ? (
-                  <Disclosure
-                    id="pending-policy"
-                    label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
-                  >
-                    <Stack gap="3">
-                      <Text variant="small" color="muted">
-                        {copy.roster.pendingPolicyHelp}
-                      </Text>
-                      <RosterGroup
-                        title={copy.roster.pendingPolicyTitle}
-                        members={roster.pendingPolicy}
-                        currency={event.currency}
-                        copy={copy}
-                        showMoney={showMoney}
-                        renderNote={pendingNote}
-                      />
-                    </Stack>
-                  </Disclosure>
-                ) : null}
-
-                {roster.waitlisted.length > 0 ? (
-                  <RosterGroup
-                    title={copy.roster.waitlistedTitle}
-                    members={roster.waitlisted}
-                    currency={event.currency}
-                    copy={copy}
-                    showMoney={false}
-                    numbered
-                  />
-                ) : null}
-                {roster.maybe.length > 0 ? (
-                  <RosterGroup
-                    title={copy.roster.maybeTitle}
-                    members={roster.maybe}
-                    currency={event.currency}
-                    copy={copy}
-                    showMoney={false}
-                  />
-                ) : null}
-                {roster.notAttending.length > 0 ? (
-                  <RosterGroup
-                    title={copy.roster.outTitle}
-                    members={roster.notAttending}
-                    currency={event.currency}
-                    copy={copy}
-                    showMoney={false}
-                  />
-                ) : null}
-              </>
-            )}
-          </Stack>
+              }
+            >
+              {eventTail}
+            </GatedPreview>
+          )}
         </Stack>
       </Container>
     </>
