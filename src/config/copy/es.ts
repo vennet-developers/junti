@@ -353,6 +353,24 @@ export const es = {
     copyOrganizerLink: "Copiar mi link de organizador",
   },
 
+  footer: {
+    /*
+      La línea legal que el manual de marca de Vennet prescribe para el pie de
+      sitio y de app, en una sola línea: «© <año> Vennet SAS. <Producto> es un
+      producto de Vennet. Todos los derechos reservados.»
+
+      Partida en tres para que «Vennet» pueda ser el enlace sin construir la
+      frase por concatenación — el orden de las palabras no es el mismo en
+      todos los idiomas, y una oración armada con fragmentos solo sale bien en
+      aquel para el que se escribió.
+    */
+    legalBefore: (year: number) => `© ${year} Vennet SAS. ${BRAND_NAME} es un producto de`,
+    /* Arranca con el punto que cierra la frase anterior: el enlace es la
+       última palabra de esa oración, no la primera de esta. */
+    legalAfter: ". Todos los derechos reservados.",
+    vennetLabel: "Vennet",
+  },
+
   approvals: {
     link: "Aprobaciones",
     title: "Aprobaciones pendientes",

@@ -85,6 +85,7 @@ import "./globals.css";
 import { CheckCircleIcon, InfoIcon, TriangleAlertIcon, XCircleIcon, XIcon } from "@stackmyth/icons";
 import { Toaster } from "@stackmyth/toast";
 
+import { AppFooter } from "@/components/app-footer";
 import { CopyProvider } from "@/components/copy-provider";
 
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
@@ -148,6 +149,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <CopyProvider locale={locale}>
           {children}
+
+          {/*
+            In the layout rather than on each page, which is the only way
+            "every page" stays true: a footer added screen by screen is a
+            footer somebody forgets on the next screen they add.
+          */}
+          <AppFooter />
 
           {/*
             One toast host for the whole app.
