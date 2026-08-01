@@ -67,6 +67,28 @@ Two ways past it, in order of effort:
    Budget for the backups: files in a bucket are outside `pg_dump` and need
    their own.
 
+### Auth email goes through the app now, not through Supabase
+
+**Superseding the section below, same day.** Custom SMTP fixed delivery and left
+the message itself as Supabase's: English, their template, none of the frame
+every other message here carries. The **Send Email Hook** replaces the sending
+outright — Supabase calls `POST /api/auth/send-email`, the app renders with its
+own React Email layout in the reader's language, and it goes out through the
+same port as everything else. Free plan, no extra cost.
+
+What deliberately stays with Supabase: issuing and expiring tokens, deciding
+signup-versus-magic-link, creating the user, and rate limiting the public
+endpoint. The alternative — `generateLink` with the service_role key — moved all
+of that into this codebase along with an admin credential.
+
+Custom SMTP stays configured and goes dormant: with the hook enabled it is never
+used. Leave it. It is what sending falls back to if the hook is ever turned off.
+
+Two constraints worth remembering. The hook has a **five-second budget for the
+whole invocation**, retries included, so that route must stay small. And the
+hook URL has to be live **before** the hook is enabled — pointing it at a
+deployment that lacks the route breaks email sign-in completely.
+
 ### The email limit is no longer a future problem — it is the current one
 
 **As of 2026-08-01, custom SMTP is required, not advisable.** Two things

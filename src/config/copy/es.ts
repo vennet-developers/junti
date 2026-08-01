@@ -378,6 +378,25 @@ export const es = {
         `Con este van ${n} esperando. Puedes aprobarlos todos de una en la cola.`,
       cta: "Ver la cola",
     },
+    authLink: {
+      signup: {
+        subject: "Confirma tu correo para entrar a Junti",
+        preview: "Un toque y quedas dentro.",
+        heading: "Bienvenido a Junti",
+        body: "Toca el botón para confirmar que este correo es tuyo. Con eso quedas dentro — no hay contraseña que inventar ni recordar.",
+        cta: "Confirmar y entrar",
+      },
+      magiclink: {
+        subject: "Tu link para entrar a Junti",
+        preview: "Toca el botón y quedas dentro.",
+        heading: "Entra a Junti",
+        body: "Pediste entrar con tu correo. Toca el botón y listo, sin contraseña.",
+        cta: "Entrar",
+      },
+      expiry: (minutes: number) =>
+        `El link vence en ${minutes} minutos y sirve una sola vez. Si se te pasa, pide uno nuevo.`,
+      ignore: "¿No fuiste tú? Ignora este correo. Sin tocar el link no pasa nada.",
+    },
     eventInvitation: {
       subject: (organizer: string, event: string) => `${organizer} te invitó a ${event}`,
       preview: (organizer: string, event: string) => `${organizer} te está invitando a ${event}.`,

@@ -370,6 +370,25 @@ export const en: Copy = {
         `That makes ${n} waiting. You can approve them all at once from the queue.`,
       cta: "Open the queue",
     },
+    authLink: {
+      signup: {
+        subject: "Confirm your email to join Junti",
+        preview: "One tap and you are in.",
+        heading: "Welcome to Junti",
+        body: "Tap the button to confirm this address is yours. That is all it takes — there is no password to invent or remember.",
+        cta: "Confirm and sign in",
+      },
+      magiclink: {
+        subject: "Your link to sign in to Junti",
+        preview: "Tap the button and you are in.",
+        heading: "Sign in to Junti",
+        body: "You asked to sign in with your email. Tap the button and you are in — no password.",
+        cta: "Sign in",
+      },
+      expiry: (minutes: number) =>
+        `The link expires in ${minutes} minutes and works once. If you miss it, ask for a new one.`,
+      ignore: "Not you? Ignore this email. Nothing happens unless the link is opened.",
+    },
     eventInvitation: {
       subject: (organizer: string, event: string) => `${organizer} invited you to ${event}`,
       preview: (organizer: string, event: string) => `${organizer} is inviting you to ${event}.`,

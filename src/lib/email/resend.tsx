@@ -3,6 +3,7 @@ import "server-only";
 import { render } from "@react-email/render";
 
 import type { EmailPort, OutboundMessage, SendResult } from "./port";
+import { AuthLinkEmail, authLinkSubject, type AuthLinkValues } from "./templates/auth-link";
 import {
   EventInvitationEmail,
   eventInvitationSubject,
@@ -75,6 +76,17 @@ async function compose(
 
       return {
         subject: pendingApprovalSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "auth-link": {
+      const values = message.values as unknown as AuthLinkValues;
+      const element = <AuthLinkEmail values={values} locale={message.locale} origin={origin} />;
+
+      return {
+        subject: authLinkSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };

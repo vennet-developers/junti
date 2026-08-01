@@ -31,7 +31,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
  * an id would leave one label pointing at the other's input.
  */
 export function SignInForm({ redirectTo }: { redirectTo: string }) {
-  const { copy } = useCopy();
+  const { copy, locale } = useCopy();
   const emailId = useId();
   const [pending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
@@ -71,7 +71,17 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
       const supabase = createSupabaseBrowserClient();
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: value,
-        options: { emailRedirectTo: callbackUrl() },
+        options: {
+          emailRedirectTo: callbackUrl(),
+          /*
+            The language the person is reading the app in, stored on the account
+            so the send-email hook can write to them in it. Applied when the
+            account is created, which is the only moment Supabase accepts it —
+            an existing user keeps whatever they signed up with, and changing it
+            belongs on the profile screen rather than here.
+          */
+          data: { locale },
+        },
       });
 
       if (authError) {
