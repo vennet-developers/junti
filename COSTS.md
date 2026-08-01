@@ -81,8 +81,19 @@ signup-versus-magic-link, creating the user, and rate limiting the public
 endpoint. The alternative — `generateLink` with the service_role key — moved all
 of that into this codebase along with an admin credential.
 
-Custom SMTP stays configured and goes dormant: with the hook enabled it is never
-used. Leave it. It is what sending falls back to if the hook is ever turned off.
+**Keep custom SMTP enabled anyway, and not as a fallback.** With the hook on,
+Supabase never uses those SMTP credentials to send anything — but the setting is
+what unlocks the email rate limit. Turn it off and Supabase forces
+`rate_limit_email_sent` back to the built-in **2 per hour**, which it did on
+2026-08-01: the log line reads `updating Email limiter from 30 to 2`, and email
+sign-in was unusable within three attempts. The docs are explicit that the limit
+"can only be changed with your own custom SMTP setup". The credentials are a
+licence to raise the ceiling, not a delivery path.
+
+Raise the limit itself in Authentication → Rate Limits. 30/hour is the floor
+Supabase sets on enabling custom SMTP and it is too low for a WhatsApp group
+arriving at once; the sending is Resend's 3,000/month, not Supabase's, so there
+is nothing to save by leaving it small.
 
 Two constraints worth remembering. The hook has a **five-second budget for the
 whole invocation**, retries included, so that route must stay small. And the
