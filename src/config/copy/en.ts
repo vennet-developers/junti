@@ -473,6 +473,12 @@ export const en: Copy = {
     emailInvalid: "Enter a valid email address.",
     signOut: "Sign out",
     failed: "We could not complete the sign-in. Try again.",
+    linkWrongBrowser: "Open the link where you asked for it",
+    linkWrongBrowserHelp:
+      "The link only works in the same browser, on the same device, that asked for it. If you opened the email somewhere else, request a new one here.",
+    linkFailed: "That link no longer works",
+    linkFailedHelp:
+      "Each link works once and expires after an hour. Request a new one, or use Google.",
     myEventsTitle: "My events",
     myEventsHeading: "My events",
     myEventsEmpty: "You have not created any events yet.",

@@ -5,6 +5,7 @@ import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
+import { Notice } from "@/components/notice";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { SignInForm } from "@/components/sign-in-form";
 import { ROUTES } from "@/config/routes";
@@ -24,9 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, error } = await searchParams;
 
   // Only relative paths, so `?next=https://evil.example` cannot turn the
   // sign-in flow into an open redirect.
@@ -57,6 +58,24 @@ export default async function SignInPage({
             </Text>
             <Text color="muted">{copy.auth.signInSubheading}</Text>
           </Stack>
+
+          {/*
+            Why they are back here, when they are back here.
+
+            Somebody who followed a link from their inbox and ended up on a
+            sign-in form has been told nothing at all, and the most natural
+            reading of that is that the app lost their request. Naming the
+            cause is what turns a dead end into an instruction.
+          */}
+          {error === "browser" ? (
+            <Notice tone="warning" title={copy.auth.linkWrongBrowser}>
+              {copy.auth.linkWrongBrowserHelp}
+            </Notice>
+          ) : error ? (
+            <Notice tone="warning" title={copy.auth.linkFailed}>
+              {copy.auth.linkFailedHelp}
+            </Notice>
+          ) : null}
 
           <SignInForm redirectTo={redirectTo} />
         </Stack>

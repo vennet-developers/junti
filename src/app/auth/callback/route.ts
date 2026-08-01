@@ -38,6 +38,23 @@ export async function GET(request: NextRequest) {
   // Relative paths only — an absolute `next` would make this an open redirect.
   const destination = next?.startsWith("/") && !next.startsWith("//") ? next : ROUTES.myEvents;
 
+  /**
+   * Back to sign-in, saying why and remembering where they were going.
+   *
+   * Both halves were missing. The reason was sent as `?error=1` and the
+   * sign-in page never read it, so a failed link produced a blank form and no
+   * account of what had happened — which is indistinguishable from the app
+   * having simply forgotten the request. And `next` was dropped, so somebody
+   * who signed in on the second attempt landed on their event list rather than
+   * the event they had been invited to.
+   */
+  function failed(reason: "browser" | "link"): NextResponse {
+    const back = signInPath(destination);
+    return NextResponse.redirect(
+      `${origin}${back}${back.includes("?") ? "&" : "?"}error=${reason}`,
+    );
+  }
+
   const supabase = await createSupabaseServerClient();
 
   if (code) {
@@ -48,7 +65,19 @@ export async function GET(request: NextRequest) {
       if (data.user) await applyStoredPreferences(data.user.id);
       return NextResponse.redirect(`${origin}${destination}`);
     }
-  } else if (tokenHash && type) {
+
+    /*
+      `bad_code_verifier` is worth telling apart, because it is the one failure
+      with a specific instruction attached. PKCE keeps the verifier in a cookie
+      belonging to the origin that STARTED the sign-in, so this is what a link
+      opened in a different browser — or landing on a different origin than the
+      one that asked — looks like from here. "Try again" does not help; "open it
+      where you asked for it" does.
+    */
+    return failed(error.code === "bad_code_verifier" ? "browser" : "link");
+  }
+
+  if (tokenHash && type) {
     const { error, data } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (!error) {
       if (data.user) await applyStoredPreferences(data.user.id);
@@ -56,5 +85,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}${signInPath()}?error=1`);
+  return failed("link");
 }

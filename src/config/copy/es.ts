@@ -482,6 +482,12 @@ export const es = {
     emailInvalid: "Escribe un correo válido.",
     signOut: "Salir",
     failed: "No pudimos completar el ingreso. Intenta de nuevo.",
+    linkWrongBrowser: "Abre el link donde lo pediste",
+    linkWrongBrowserHelp:
+      "El link solo funciona en el mismo navegador y el mismo dispositivo desde donde lo pediste. Si abriste el correo en otro lado, pide uno nuevo desde acá.",
+    linkFailed: "Ese link ya no sirve",
+    linkFailedHelp:
+      "Cada link sirve una sola vez y vence a la hora. Pide uno nuevo, o entra con Google.",
     myEventsTitle: "Mis eventos",
     myEventsHeading: "Mis eventos",
     myEventsEmpty: "Todavía no has creado ningún evento.",
