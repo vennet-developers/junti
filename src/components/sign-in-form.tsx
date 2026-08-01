@@ -73,16 +73,46 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
         email: value,
         options: { emailRedirectTo: callbackUrl() },
       });
+
       if (authError) {
-        setError(copy.auth.failed);
+        /*
+          Rate limiting gets its own message, because the generic one ends in
+          "try again" and trying again is precisely what does not work. The
+          sending quota is per project and per hour, so the only useful
+          instruction is to wait or to use Google.
+        */
+        setError(
+          authError.status === 429 || /rate/i.test(authError.code ?? "")
+            ? copy.auth.emailRateLimited
+            : copy.auth.failed,
+        );
         return;
       }
+
       setSentTo(value);
     });
   }
 
   if (sentTo) {
-    return <Notice tone="info" title={copy.auth.emailSent(sentTo)} />;
+    /*
+      Deliberately does NOT claim the message arrived.
+
+      Supabase answers 200 the moment it accepts the request, which is not the
+      same as delivering: the built-in SMTP silently drops anything addressed
+      outside the project's team, and it has an hourly cap. Saying "we sent it"
+      and stopping there left somebody staring at an inbox that was never going
+      to fill, with no idea whether to wait, retry, or do something else.
+
+      So it says where to look — including the spam folder and the fact that a
+      first-time address gets a "confirm your email" message rather than
+      anything calling itself a link — and it names the way in that never
+      depends on mail arriving at all.
+    */
+    return (
+      <Notice tone="info" title={copy.auth.emailSent(sentTo)}>
+        {copy.auth.emailSentHelp}
+      </Notice>
+    );
   }
 
   return (

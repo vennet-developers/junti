@@ -67,6 +67,28 @@ Two ways past it, in order of effort:
    Budget for the backups: files in a bucket are outside `pg_dump` and need
    their own.
 
+### The email limit is no longer a future problem — it is the current one
+
+**As of 2026-08-01, custom SMTP is required, not advisable.** Two things
+changed. Answering an event now requires an account, so email sign-in went from
+a fallback for the occasional organizer to the only way in for anyone without a
+Google account. And the built-in service does not merely throttle: it **refuses
+to deliver to any address that is not a member of the Supabase organization**,
+silently, after answering `200`. A sign-up from `someone@hotmail.com` produces
+a `mail.send` log line and no email.
+
+Everything needed is already here — `RESEND_API_KEY` and `EMAIL_FROM` are set
+for the app's own message port. What is missing is telling **Supabase Auth**
+about them, which is a separate setting: Authentication → Emails → SMTP
+Settings, or one `PATCH` to `/v1/projects/<ref>/config/auth`. Resend's SMTP host
+is `smtp.resend.com:465`, user `resend`, password the same API key.
+
+Two things to get right while doing it. Custom SMTP starts at **30 messages per
+hour** — raise it on the Rate Limits page. And **disable link tracking** on the
+provider: it rewrites URLs, and a rewritten confirmation link does not verify.
+
+The section below is what this looked like while it was still hypothetical.
+
 ### The email limit is the one that will surprise you
 
 Supabase's built-in SMTP is explicitly labelled for testing: roughly **2–3

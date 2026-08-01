@@ -474,8 +474,11 @@ export const es = {
     emailPlaceholder: "tu@correo.com",
     emailSubmit: "Enviarme un link",
     emailSending: "Enviando…",
-    emailSent: (email: string) =>
-      `Te mandamos un link a ${email}. Ábrelo desde este mismo dispositivo para entrar.`,
+    emailSent: (email: string) => `Revisa ${email}`,
+    emailSentHelp:
+      "Ábrelo desde este mismo dispositivo. Si es tu primera vez, el correo dice «confirma tu cuenta». Mira también en spam — y si no llega en un par de minutos, entra con Google, que es inmediato.",
+    emailRateLimited:
+      "Se enviaron demasiados correos en la última hora. Espera un rato o entra con Google.",
     emailInvalid: "Escribe un correo válido.",
     signOut: "Salir",
     failed: "No pudimos completar el ingreso. Intenta de nuevo.",

@@ -466,8 +466,10 @@ export const en: Copy = {
     emailPlaceholder: "you@email.com",
     emailSubmit: "Email me a link",
     emailSending: "Sending…",
-    emailSent: (email: string) =>
-      `We sent a link to ${email}. Open it on this same device to sign in.`,
+    emailSent: (email: string) => `Check ${email}`,
+    emailSentHelp:
+      "Open it on this same device. If this is your first time, the message says “confirm your email”. Check spam too — and if nothing arrives in a couple of minutes, use Google, which is instant.",
+    emailRateLimited: "Too many emails went out in the last hour. Wait a while, or use Google.",
     emailInvalid: "Enter a valid email address.",
     signOut: "Sign out",
     failed: "We could not complete the sign-in. Try again.",
