@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { DEFAULT_LOCALE, isLocale } from "@/config/copy";
 import { sendMessage } from "@/lib/email/provider";
 import type { AuthLinkAction } from "@/lib/email/templates/auth-link";
+import { origin } from "@/lib/urls";
 import { verifyWebhook } from "@/lib/webhook-signature";
 
 /**
@@ -45,6 +46,11 @@ interface HookPayload {
     token_hash?: string;
     email_action_type?: string;
     redirect_to?: string;
+    /**
+     * Part of the payload and deliberately UNUSED. Supabase sends its own
+     * project domain here, not this app's — building a link from it puts
+     * `https://<ref>.supabase.co/auth/callback` in somebody's inbox.
+     */
     site_url?: string;
   };
 }
@@ -52,36 +58,50 @@ interface HookPayload {
 /**
  * Where the link should land, and whether we are willing to send people there.
  *
- * `redirect_to` is echoed back from the request that started the sign-in, and
- * Supabase has already checked it against the project's allow-list. This checks
- * it again anyway: the value ends up inside an email as a clickable link, and
- * "someone else validated it" is not a property this code can see. An origin we
- * do not recognise falls back to the site URL rather than being trusted.
+ * **The app's own origin comes from the request, not from the payload.** The
+ * hook's `site_url` field is Supabase's notion of the site and in practice
+ * arrives as the Supabase project's own domain — using it as a fallback put
+ * `https://<ref>.supabase.co/auth/callback` inside a real email, a link that
+ * goes nowhere. The request landed on this app, so its host is the one thing
+ * here that cannot be wrong about what this app is.
  *
- * The `next` inside it is carried through untouched — the callback validates it
- * as a relative path, which is where that check belongs.
+ * `redirect_to` is echoed back from the request that started the sign-in, and
+ * Supabase has already checked it against the project's allow-list. It is
+ * checked again anyway, because the value ends up inside an email as something
+ * a person will click, and "someone else validated it" is not a property this
+ * code can see. Anything unrecognised falls back to this app's own origin.
+ *
+ * localhost is allowed on purpose: Supabase cannot call a laptop, so a sign-in
+ * started locally has its email rendered by the deployed app — and the link
+ * still has to come back to the machine that asked for it.
+ *
+ * The `next` inside is carried through untouched. The callback validates it as
+ * a relative path, which is where that check belongs.
  */
-function callbackUrl(tokenHash: string, type: string, redirectTo: string, siteUrl: string): string {
-  const site = new URL(siteUrl);
-
-  let target: URL;
+function callbackUrl(
+  tokenHash: string,
+  type: string,
+  redirectTo: string,
+  appOrigin: string,
+): string {
+  let target: URL | null = null;
   try {
     target = new URL(redirectTo);
   } catch {
-    target = site;
+    target = null;
   }
 
   const allowed =
-    target.origin === site.origin ||
-    target.hostname === "localhost" ||
-    target.hostname === "127.0.0.1";
+    target !== null &&
+    (target.origin === appOrigin ||
+      target.hostname === "localhost" ||
+      target.hostname === "127.0.0.1");
 
-  const origin = allowed ? target.origin : site.origin;
-  const next = target.searchParams.get("next");
-
-  const url = new URL("/auth/callback", origin);
+  const url = new URL("/auth/callback", allowed && target ? target.origin : appOrigin);
   url.searchParams.set("token_hash", tokenHash);
   url.searchParams.set("type", type);
+
+  const next = target?.searchParams.get("next");
   if (next) url.searchParams.set("next", next);
 
   return url.toString();
@@ -131,8 +151,6 @@ export async function POST(request: NextRequest) {
     return json({ error: { message: "missing user or email_data" } }, { status: 400 });
   }
 
-  const siteUrl = data.site_url ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
   /*
     A `token_hash` link, NOT the PKCE `code` flow.
 
@@ -146,11 +164,12 @@ export async function POST(request: NextRequest) {
     so whoever holds it can use it. That is how magic links have always worked,
     and it is what Supabase's own confirmation mail already did.
   */
+  const appOrigin = await origin();
   const url = callbackUrl(
     data.token_hash,
     data.email_action_type,
-    data.redirect_to ?? siteUrl,
-    siteUrl,
+    data.redirect_to ?? "",
+    appOrigin,
   );
 
   /*
