@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { supabasePublishableKey, supabaseUrl } from "@/config/supabase-env";
+import { isDeadSession } from "@/lib/supabase/session";
 
 /**
  * Refreshes the Supabase session cookie.
@@ -62,7 +63,33 @@ export async function proxy(request: NextRequest) {
   });
 
   // Touching getUser() is what triggers the refresh. Do not remove it.
-  await supabase.auth.getUser();
+  const { error } = await supabase.auth.getUser();
+
+  /*
+    A session Supabase will never honour again has to be thrown away here.
+
+    Cookies naming a deleted account do not expire — they are well-formed
+    strings that simply describe nothing — so without this every request
+    re-presents them and fails identically. Server Components cannot set
+    cookies, and `getUser()` returning null just makes the app render as signed
+    out while the dead cookies ride along forever. The person sees a sign-in
+    form that refuses to work and has no way to know the fix is clearing site
+    data. This is the only place in the request path that can both detect it and
+    do something about it.
+
+    Deleted by hand rather than through `signOut()`: that makes a call to
+    Supabase to revoke a session which, by definition, is already gone — a
+    round trip that can only fail, on a request somebody is waiting for.
+
+    Which errors count is in `isDeadSession`, and the restraint there is the
+    important part: clearing on any failure would turn a brief outage into
+    everybody being signed out at once.
+  */
+  if (isDeadSession(error)) {
+    for (const cookie of request.cookies.getAll()) {
+      if (cookie.name.startsWith("sb-")) response.cookies.delete(cookie.name);
+    }
+  }
 
   return response;
 }
@@ -74,6 +101,7 @@ export const config = {
      *                     their events — so it has to know about the session
      *   /my-events        the history, requires a session
      *   /profile          language and timezone settings
+     *   /onboarding       first run, and signed-in only
      *   /sign-in          the sign-in page, redirects away when already in
      *   /auth/...         the OAuth / magic-link callback
      *   /new              so a signed-in creator gets attributed
@@ -84,6 +112,7 @@ export const config = {
     "/",
     "/my-events/:path*",
     "/profile",
+    "/onboarding",
     "/sign-in",
     "/auth/:path*",
     "/new",
