@@ -128,7 +128,14 @@ export default async function MyEventsPage({
     <>
       <AppHeader organizer={organizer} theme={theme} />
 
-      <Container size="1" px="4" py="6">
+      {/*
+        The scan tier. This screen is a list you sweep for the next thing you
+        have to think about, and more of it in view is strictly better — see the
+        width policy in globals.css. Costs nothing on a phone: `size` is a
+        max-width, and at 390px a 880px cap and a 448px cap both simply fill the
+        screen.
+      */}
+      <Container size="3" px="4" py="6">
         <Stack gap="5">
           {/* Creation redirects here for account holders, so the confirmation
               arrives as a flag on the URL rather than with the action. */}
@@ -150,21 +157,30 @@ export default async function MyEventsPage({
             to be the last thing on the page, which meant an organizer with a
             dozen events scrolled past all of them to create the thirteenth.
           */}
-          <Button asChild size="lg" fullWidth>
-            <Link href={ROUTES.newEvent}>
-              {/*
-                A Flex here, unlike a plain Button. Button normally wraps its
-                children in `.sm-button__content`, which supplies the 8px gap —
-                but `asChild` clones the Link and that wrapper is never
-                rendered, so without this the icon and the label touch.
-                Verified in the DOM, not assumed.
-              */}
-              <Flex gap="2" align="center" justify="center">
-                <PlusIcon size={16} aria-hidden="true" />
-                {copy.home.cta}
-              </Flex>
-            </Link>
-          </Button>
+          {/*
+            Full-bleed on a phone, where the thumb wants the whole width; capped
+            once the page is wide, because one button stretched across 880px
+            stops reading as a button and starts reading as a banner. The cap
+            goes on a wrapper so `fullWidth` keeps meaning "fill your parent"
+            and the two do not fight each other.
+          */}
+          <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+            <Button asChild size="lg" fullWidth>
+              <Link href={ROUTES.newEvent}>
+                {/*
+                  A Flex here, unlike a plain Button. Button normally wraps its
+                  children in `.sm-button__content`, which supplies the 8px gap —
+                  but `asChild` clones the Link and that wrapper is never
+                  rendered, so without this the icon and the label touch.
+                  Verified in the DOM, not assumed.
+                */}
+                <Flex gap="2" align="center" justify="center">
+                  <PlusIcon size={16} aria-hidden="true" />
+                  {copy.home.cta}
+                </Flex>
+              </Link>
+            </Button>
+          </Box>
 
           {/*
             Above the list and above the search, because it is the only thing

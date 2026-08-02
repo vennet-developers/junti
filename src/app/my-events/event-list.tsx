@@ -7,7 +7,7 @@ import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";
 import { CalendarIcon, MapPinIcon, SearchIcon } from "@stackmyth/icons";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@stackmyth/input-group";
-import { Box, Flex, Stack } from "@stackmyth/layout";
+import { Box, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
 
@@ -152,17 +152,47 @@ export function EventList({ events }: { events: EventListItem[] }) {
             happened above. */}
         {(["upcoming", "past", "all"] as const).map((value) => (
           <TabsContent key={value} value={value}>
-            <Stack gap="3" pt="4">
-              {shown.length === 0 ? (
+            {shown.length === 0 ? (
+              /*
+                The empty state stays a single full-width block rather than
+                becoming the first cell of a grid. A centred illustration
+                occupying the left third of a wide screen, with two empty
+                columns beside it, reads as a card that failed to load rather
+                than as "there is nothing here".
+              */
+              <Box pt="4">
                 <EmptyState
                   icon={<CalendarIcon size={28} />}
                   title={term.trim() ? copy.auth.noMatches(term.trim()) : emptyCopy[value].title}
                   description={term.trim() ? undefined : emptyCopy[value].description}
                 />
-              ) : (
-                shown.map((event) => <EventCard key={event.id} event={event} />)
-              )}
-            </Stack>
+              </Box>
+            ) : (
+              /*
+                A grid from `md` up, one column below it.
+
+                This is the clearest case in the app for spending width: the
+                page is scanned, not read. A season of Thursday football is a
+                stripe of one colour running down the list, and the whole point
+                of the band is that the pattern is visible at a glance — which
+                needs several cards in view at once. One column shows two on a
+                laptop; two columns show four.
+
+                Two, and not the three that fit. Three was tried and measured:
+                inside this page's 880px container it puts each card at roughly
+                285px, and the card is drawn for 448. Titles broke to three
+                lines, and the coloured band overlapped itself — the date ran
+                straight through "Fiesta infantil". Two columns land each cell
+                near 430px, within a rounding error of the width every part of
+                this card was designed against, so the density doubles and
+                nothing has to be redrawn to pay for it.
+              */
+              <Grid columns={{ base: "1", md: "2" }} gap="3" pt="4">
+                {shown.map((event) => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </Grid>
+            )}
           </TabsContent>
         ))}
       </Tabs>
@@ -233,7 +263,23 @@ function EventCard({ event }: { event: EventListItem }) {
   return (
     <Card surface="outlined" padding="0">
       <Box backgroundColor={band.background} color={band.text} px="5" py="3">
-        <Flex justify="between" align="center" gap="3">
+        {/*
+          Wraps rather than collides.
+
+          The band holds two things that both refuse to give ground: the type
+          label cannot shrink past its longest word, and the date carries
+          `flexShrink={0}` because "8:02 p. m." broken across two lines is not a
+          time any more. At 448px — the only width this card had until the
+          agenda became a grid — they fit side by side and the conflict never
+          came up.
+
+          In a grid cell they do not fit, and `justify="between"` with two
+          unshrinkable items does not degrade, it overlaps: the date ran
+          straight through "Fiesta infantil". `wrap` gives the date somewhere to
+          go, so a narrow card gets two lines instead of two strings sharing the
+          same pixels.
+        */}
+        <Flex justify="between" align="center" gap="3" wrap="wrap">
           <Box minWidth="0">
             <Text variant="small" weight="semibold" color="inherit">
               {event.typeLabel ?? copy.auth.eventFallbackLabel}
