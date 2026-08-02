@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Field, FieldError, FieldLabel } from "@stackmyth/field";
@@ -37,6 +37,38 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Wakes the send-email hook while somebody is still typing.
+   *
+   * Supabase gives that hook **five seconds for the whole invocation**, retries
+   * included, and calls it synchronously inside the sign-in request. A cold
+   * serverless function has to be fetched and initialised before it runs a line
+   * of our code, and this one pulls in a React renderer and both languages of
+   * copy. It has blown the budget in production once already: Supabase answered
+   * `hook_timeout`, and the person got a sign-in that simply failed.
+   *
+   * So the request that costs the cold start is made now, when nobody is
+   * waiting on it, rather than in the middle of the one that matters. Landing
+   * on this screen and typing an address takes several seconds; the function
+   * only needs one.
+   *
+   * Deliberately unsigned, so it is rejected at the signature check before
+   * touching anything. It warms the same code path and cannot send a message,
+   * which is exactly the trade wanted: no side effect, no email, no state.
+   *
+   * `keepalive` so navigating away mid-flight does not abort it, and every
+   * failure swallowed — this is an optimisation, and a warm-up that reports
+   * problems is worse than one that quietly does not happen.
+   */
+  useEffect(() => {
+    void fetch("/api/auth/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+      keepalive: true,
+    }).catch(() => {});
+  }, []);
 
   function callbackUrl() {
     const url = new URL(ROUTES.authCallback, window.location.origin);
@@ -91,10 +123,23 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
           sending quota is per project and per hour, so the only useful
           instruction is to wait or to use Google.
         */
+        /*
+          Three outcomes, three messages, because the right thing to do differs
+          in each. Rate limiting means wait; the generic one ends in "try
+          again", which is the one instruction that cannot work when the quota
+          is per hour. A hook timeout means the opposite — trying again is
+          exactly what works, because the first attempt is what warmed the
+          function up.
+        */
+        const timedOut = /hook_timeout|timeout/i.test(authError.code ?? "");
+        const rateLimited = authError.status === 429 || /rate/i.test(authError.code ?? "");
+
         setError(
-          authError.status === 429 || /rate/i.test(authError.code ?? "")
-            ? copy.auth.emailRateLimited
-            : copy.auth.failed,
+          timedOut
+            ? copy.auth.slowRetry
+            : rateLimited
+              ? copy.auth.emailRateLimited
+              : copy.auth.failed,
         );
         return;
       }

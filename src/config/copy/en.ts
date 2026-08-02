@@ -506,6 +506,7 @@ export const en: Copy = {
     emailSent: (email: string) => `Check ${email}`,
     emailSentHelp:
       "Open it on this same device. If this is your first time, the message says “confirm your email”. Check spam too — and if nothing arrives in a couple of minutes, use Google, which is instant.",
+    slowRetry: "That took longer than usual. Tap again and it should go straight through.",
     emailRateLimited: "Too many emails went out in the last hour. Wait a while, or use Google.",
     emailInvalid: "Enter a valid email address.",
     signOut: "Sign out",

@@ -514,6 +514,7 @@ export const es = {
     emailSent: (email: string) => `Revisa ${email}`,
     emailSentHelp:
       "Ábrelo desde este mismo dispositivo. Si es tu primera vez, el correo dice «confirma tu cuenta». Mira también en spam — y si no llega en un par de minutos, entra con Google, que es inmediato.",
+    slowRetry: "Se demoró más de lo normal. Toca otra vez y debería salir de una.",
     emailRateLimited:
       "Se enviaron demasiados correos en la última hora. Espera un rato o entra con Google.",
     emailInvalid: "Escribe un correo válido.",
