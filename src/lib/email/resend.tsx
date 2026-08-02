@@ -44,6 +44,20 @@ export interface ResendConfig {
    * subdomain's problem, and the address is what decides which one wears it.
    */
   from: string;
+  /**
+   * Where a reply should land, when that is not the From address.
+   *
+   * Sending moves to a dedicated subdomain to keep Junti's reputation off the
+   * company's own domain, and the moment it does, the From becomes an address
+   * with no mailbox behind it. Somebody who hits reply — to ask what the event
+   * is, or to say they cannot make it — deserves better than a bounce, and
+   * "noreply@" is the industry's way of admitting it never solved this.
+   *
+   * Optional, and absent by default: while the From is still a real mailbox
+   * there is nothing to redirect, and a Reply-To equal to the From is noise in
+   * every header.
+   */
+  replyTo?: string;
 }
 
 /**
@@ -124,6 +138,9 @@ export function createResendAdapter(config: ResendConfig): EmailPort {
           body: JSON.stringify({
             from: config.from,
             to: [message.to],
+            // Omitted rather than sent empty: Resend rejects a `reply_to` that
+            // is present and blank, and an unset key is the same as no header.
+            ...(config.replyTo ? { reply_to: [config.replyTo] } : {}),
             subject,
             html,
             text,

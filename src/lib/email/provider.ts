@@ -49,7 +49,15 @@ function resolveAdapter(): EmailPort {
       );
     }
 
-    return createResendAdapter({ apiKey, from, origin });
+    /*
+      Set this once the From address stops being a mailbox somebody reads.
+      Moving sending to a dedicated subdomain is what makes that happen, and a
+      reply that bounces is a worse failure than the reputation risk the move
+      was meant to avoid.
+    */
+    const replyTo = process.env.EMAIL_REPLY_TO?.trim() || undefined;
+
+    return createResendAdapter({ apiKey, from, origin, replyTo });
   }
 
   throw new Error(`Unknown EMAIL_PROVIDER "${provider}". Known: console, resend.`);
