@@ -26,14 +26,24 @@ export const dynamic = "force-dynamic";
  * Which events retire an address, and which are only news.
  *
  * `bounced` is narrower than it looks: Resend reports soft bounces under the
- * same name, and a full mailbox is not a dead one. The `bounce.type` in the
- * payload is what separates them, and only `hard` is permanent.
+ * same name, and a full mailbox is not a dead one. `bounce.type` separates
+ * them, and **its vocabulary is Amazon SES's, not a friendly one** —
+ * `Permanent`, `Transient`, `Undetermined`. This first shipped checking for
+ * `"hard"`, a word that appears nowhere in the payload, so every bounce was
+ * received and quietly ignored. It took firing a real one to notice, because
+ * an endpoint that returns 200 and does nothing looks exactly like one that
+ * works.
+ *
+ * Only `Permanent` suppresses. `Transient` is a full mailbox or a server having
+ * a moment; `Undetermined` is the provider admitting it does not know, and
+ * retiring an address on a guess is worse than sending one more message.
  *
  * `delivered` and `opened` arrive too and are deliberately ignored. Recording
  * who opened what would be tracking, which this project does not do — the
  * domain has click and open tracking switched off at the provider for the same
  * reason.
  */
+const PERMANENT_BOUNCE = "permanent";
 interface ResendEvent {
   type?: string;
   data?: {
@@ -81,7 +91,11 @@ export async function POST(request: NextRequest) {
   }
 
   const complained = event.type === "email.complained";
-  const hardBounce = event.type === "email.bounced" && event.data?.bounce?.type === "hard";
+
+  // Lower-cased before comparing: the field is somebody else's enum and its
+  // capitalisation is not a promise anybody made to us.
+  const bounceType = event.data?.bounce?.type?.trim().toLowerCase();
+  const hardBounce = event.type === "email.bounced" && bounceType === PERMANENT_BOUNCE;
 
   if (complained || hardBounce) {
     for (const email of recipients(event.data)) {
