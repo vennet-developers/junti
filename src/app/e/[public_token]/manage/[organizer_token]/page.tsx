@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
 import { Button } from "@stackmyth/button";
-import { Box, Container, Divider, Stack } from "@stackmyth/layout";
+import { Box, Container, Divider, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { EventHeader } from "@/components/event-header";
@@ -218,7 +218,7 @@ export default async function ManagePage({
         signInNext={managePath(publicToken, organizerToken)}
       />
 
-      <Container size="1" px="4" py="6">
+      <Container size="4" px="4" py="6">
         <Stack gap="6">
           {/*
             Three levels deep and reached by a secret link, so this is the
@@ -348,169 +348,205 @@ export default async function ManagePage({
 
           <Divider />
 
-          <MoneySummary roster={roster} copy={copy} />
+          {/*
+            Two columns from `lg`: the record on the left, the tools on the
+            right.
 
-          {showMoney ? <Divider /> : null}
+            This is the densest screen in the product and the one an organizer
+            opens at a desk. Everything above this line is context — which event,
+            what is waiting on you — and stays full width because it is read once
+            and applies to the whole page. Below it the page does two different
+            jobs: the roster is the record of who answered and what they owe, and
+            it is long; inviting, editing and closing are tools you reach for and
+            put down, and they are short. Stacked, that meant scrolling past the
+            entire roster to invite one more person.
 
-          <Stack gap="5">
-            {roster.members.length === 0 ? (
-              <Notice tone="info" title={copy.manage.noParticipants}>
-                {copy.manage.noParticipantsHelp}
-              </Notice>
-            ) : (
-              <>
-                <RosterGroup
-                  title={copy.roster.inTitle}
-                  members={roster.confirmed}
-                  currency={event.currency}
-                  copy={copy}
-                  showMoney={showMoney}
-                  renderActions={participantActions}
-                  renderNote={contactNote}
-                />
+            **The DOM order is the phone's order, unchanged.** No `order`
+            juggling and no reordering to make the columns work: on a single
+            column this renders money, roster, invite, edit, close — exactly the
+            sequence it rendered before. The grid only decides where things sit
+            once there is a second column to sit in, which is also why the share
+            panel stayed above rather than moving into the aside. It opens
+            expanded on a just-created event, and burying the links somebody was
+            sent here to copy would be a regression on the one visit that matters
+            most.
 
-                {roster.pendingPolicy.length > 0 ? (
-                  <Disclosure
-                    id="pending-policy"
-                    label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
-                    defaultOpen
-                  >
-                    <Stack gap="3">
-                      <Text variant="small" color="muted">
-                        {copy.roster.pendingPolicyHelp}
-                      </Text>
+            `align="start"` so the aside keeps its own height instead of
+            stretching to match a roster of forty people.
+          */}
+          <Grid columns={{ base: "1", lg: "1.7fr 1fr" }} gap="6" align="start">
+            <Stack gap="6">
+              <MoneySummary roster={roster} copy={copy} />
+
+              {showMoney ? <Divider /> : null}
+
+              <Stack gap="5">
+                {roster.members.length === 0 ? (
+                  <Notice tone="info" title={copy.manage.noParticipants}>
+                    {copy.manage.noParticipantsHelp}
+                  </Notice>
+                ) : (
+                  <>
+                    <RosterGroup
+                      title={copy.roster.inTitle}
+                      members={roster.confirmed}
+                      currency={event.currency}
+                      copy={copy}
+                      showMoney={showMoney}
+                      renderActions={participantActions}
+                      renderNote={contactNote}
+                    />
+
+                    {roster.pendingPolicy.length > 0 ? (
+                      <Disclosure
+                        id="pending-policy"
+                        label={`${copy.roster.pendingPolicyTitle} (${roster.pendingPolicy.length})`}
+                        defaultOpen
+                      >
+                        <Stack gap="3">
+                          <Text variant="small" color="muted">
+                            {copy.roster.pendingPolicyHelp}
+                          </Text>
+                          <RosterGroup
+                            title={copy.roster.pendingPolicyTitle}
+                            members={roster.pendingPolicy}
+                            currency={event.currency}
+                            copy={copy}
+                            showMoney={showMoney}
+                            renderNote={pendingNote}
+                            renderActions={participantActions}
+                          />
+                        </Stack>
+                      </Disclosure>
+                    ) : null}
+
+                    {roster.waitlisted.length > 0 ? (
                       <RosterGroup
-                        title={copy.roster.pendingPolicyTitle}
-                        members={roster.pendingPolicy}
+                        title={copy.roster.waitlistedTitle}
+                        members={roster.waitlisted}
                         currency={event.currency}
                         copy={copy}
-                        showMoney={showMoney}
-                        renderNote={pendingNote}
-                        renderActions={participantActions}
+                        showMoney={false}
+                        numbered
+                        renderActions={(member) => (
+                          <>
+                            <PromoteControl
+                              publicToken={publicToken}
+                              organizerToken={organizerToken}
+                              participantId={member.id}
+                              displayName={member.displayName}
+                            />
+                            <RemoveControl
+                              publicToken={publicToken}
+                              organizerToken={organizerToken}
+                              participantId={member.id}
+                              displayName={member.displayName}
+                            />
+                          </>
+                        )}
                       />
-                    </Stack>
-                  </Disclosure>
-                ) : null}
+                    ) : null}
 
-                {roster.waitlisted.length > 0 ? (
-                  <RosterGroup
-                    title={copy.roster.waitlistedTitle}
-                    members={roster.waitlisted}
-                    currency={event.currency}
-                    copy={copy}
-                    showMoney={false}
-                    numbered
-                    renderActions={(member) => (
-                      <>
-                        <PromoteControl
-                          publicToken={publicToken}
-                          organizerToken={organizerToken}
-                          participantId={member.id}
-                          displayName={member.displayName}
-                        />
-                        <RemoveControl
-                          publicToken={publicToken}
-                          organizerToken={organizerToken}
-                          participantId={member.id}
-                          displayName={member.displayName}
-                        />
-                      </>
-                    )}
-                  />
-                ) : null}
-
-                {roster.maybe.length > 0 ? (
-                  <RosterGroup
-                    title={copy.roster.maybeTitle}
-                    members={roster.maybe}
-                    currency={event.currency}
-                    copy={copy}
-                    showMoney={false}
-                    renderActions={(member) => (
-                      <RemoveControl
-                        publicToken={publicToken}
-                        organizerToken={organizerToken}
-                        participantId={member.id}
-                        displayName={member.displayName}
+                    {roster.maybe.length > 0 ? (
+                      <RosterGroup
+                        title={copy.roster.maybeTitle}
+                        members={roster.maybe}
+                        currency={event.currency}
+                        copy={copy}
+                        showMoney={false}
+                        renderActions={(member) => (
+                          <RemoveControl
+                            publicToken={publicToken}
+                            organizerToken={organizerToken}
+                            participantId={member.id}
+                            displayName={member.displayName}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                ) : null}
+                    ) : null}
 
-                {roster.notAttending.length > 0 ? (
-                  <RosterGroup
-                    title={copy.roster.outTitle}
-                    members={roster.notAttending}
-                    currency={event.currency}
-                    copy={copy}
-                    showMoney={false}
-                    renderActions={(member) => (
-                      <RemoveControl
-                        publicToken={publicToken}
-                        organizerToken={organizerToken}
-                        participantId={member.id}
-                        displayName={member.displayName}
+                    {roster.notAttending.length > 0 ? (
+                      <RosterGroup
+                        title={copy.roster.outTitle}
+                        members={roster.notAttending}
+                        currency={event.currency}
+                        copy={copy}
+                        showMoney={false}
+                        renderActions={(member) => (
+                          <RemoveControl
+                            publicToken={publicToken}
+                            organizerToken={organizerToken}
+                            participantId={member.id}
+                            displayName={member.displayName}
+                          />
+                        )}
                       />
-                    )}
-                  />
-                ) : null}
-              </>
-            )}
+                    ) : null}
+                  </>
+                )}
+              </Stack>
+            </Stack>
 
-            {/* Inviting, where adding somebody by hand used to be. The roster
-              above is who answered; this is who was asked. */}
-            <Disclosure id="invite" label={copy.invites.heading}>
-              <Stack gap="5">
-                <InviteForm publicToken={publicToken} organizerToken={organizerToken} />
+            {/* The aside. Everything here is something you do; everything in the
+                column beside it is something that happened. */}
+            <Stack gap="6">
+              {/* Inviting, where adding somebody by hand used to be. Beside the
+                roster rather than under it now: that column is who answered,
+                this is who was asked, and on a laptop the organizer can watch
+                one fill as they work the other. */}
+              <Disclosure id="invite" label={copy.invites.heading}>
+                <Stack gap="5">
+                  <InviteForm publicToken={publicToken} organizerToken={organizerToken} />
 
-                <Stack gap="2">
-                  <Text variant="small" color="muted">
-                    {copy.invites.listHelp}
-                  </Text>
-                  <InvitedList
+                  <Stack gap="2">
+                    <Text variant="small" color="muted">
+                      {copy.invites.listHelp}
+                    </Text>
+                    <InvitedList
+                      publicToken={publicToken}
+                      organizerToken={organizerToken}
+                      invitations={invitations}
+                      timeZone={readerTimeZone}
+                    />
+                  </Stack>
+                </Stack>
+              </Disclosure>
+
+              <Disclosure id="edit" label={copy.manage.editEvent}>
+                {canEdit ? (
+                  <EditEventForm
                     publicToken={publicToken}
                     organizerToken={organizerToken}
-                    invitations={invitations}
-                    timeZone={readerTimeZone}
-                  />
-                </Stack>
-              </Stack>
-            </Disclosure>
-          </Stack>
-
-          <Disclosure id="edit" label={copy.manage.editEvent}>
-            {canEdit ? (
-              <EditEventForm
-                publicToken={publicToken}
-                organizerToken={organizerToken}
-                event={event}
-                policies={roster.policies.map((policy) => ({
-                  id: policy.id,
-                  definitionId: policy.definitionId,
-                  /* Sent back as the override the organizer actually set, not the
+                    event={event}
+                    policies={roster.policies.map((policy) => ({
+                      id: policy.id,
+                      definitionId: policy.definitionId,
+                      /* Sent back as the override the organizer actually set, not the
                  resolved text — passing the resolved label would silently pin
                  every inherited policy to its current wording on first save. */
-                  label: policy.labelOverride,
-                  description: policy.descriptionOverride,
-                }))}
-                eventTypes={eventTypes}
-                policyOptionsByType={policyOptionsByType}
-              />
-            ) : (
-              /* Say why rather than showing nothing. An absent form reads as a
+                      label: policy.labelOverride,
+                      description: policy.descriptionOverride,
+                    }))}
+                    eventTypes={eventTypes}
+                    policyOptionsByType={policyOptionsByType}
+                  />
+                ) : (
+                  /* Say why rather than showing nothing. An absent form reads as a
                bug; "this is not your event" is a fact about who owns it, and
                everything else on this page still works. */
-              <Notice tone="info" title={copy.manage.editNotYours} />
-            )}
-          </Disclosure>
+                  <Notice tone="info" title={copy.manage.editNotYours} />
+                )}
+              </Disclosure>
 
-          {/* Closing is deliberately last and low-key: it is the end of the
-            event's life, not something to reach for by accident. */}
-          <CloseEventControl
-            publicToken={publicToken}
-            organizerToken={organizerToken}
-            isClosed={event.isClosed}
-          />
+              {/* Closing is deliberately last and low-key: it is the end of the
+                event's life, not something to reach for by accident. */}
+              <CloseEventControl
+                publicToken={publicToken}
+                organizerToken={organizerToken}
+                isClosed={event.isClosed}
+              />
+            </Stack>
+          </Grid>
         </Stack>
       </Container>
     </>
