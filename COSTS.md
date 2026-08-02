@@ -56,11 +56,22 @@ no room for the data the app is actually for, and `pg_dump` grows with it.
 
 Two ways past it, in order of effort:
 
-1. **Delete approved receipts.** Once the organizer has approved one, the record
+1. **Delete approved receipts — done, as of 2026-08-02.** Approving one now
+   deletes the image, from both the single review and the bulk queue. The record
    that it _was_ approved is what matters; the photograph of somebody's banking
    app is a liability with no remaining purpose.
-   `deleteEvidence()` in `src/lib/evidence-store.ts` exists for exactly this and
-   is deliberately not wired to anything automatic.
+
+   This section used to say `deleteEvidence()` was "deliberately not wired to
+   anything automatic" — the tool for the day the allowance started to matter.
+   Two things changed that. The privacy notice now describes what happens to
+   receipts, and a notice is a promise; and the arithmetic below only ever bit
+   because approved images were kept forever. **Rejections still keep the
+   image**, because the participant has to send something else and destroying
+   what they sent helps nobody.
+
+   The practical effect: only receipts awaiting review occupy space. The ceiling
+   below stops being a countdown and becomes a queue depth.
+
 2. **Move to Supabase Storage** — 1 GB free, ~6,600 receipts, and it stops
    competing with the rest of the data. `evidence-store.ts` is the only module
    that touches the bytes, so this is that file plus a script that copies rows.

@@ -18,6 +18,7 @@ import {
 } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
 import { suppressedAmong } from "@/lib/consent";
+import { deleteEvidence } from "@/lib/evidence-store";
 import { sendMessage } from "@/lib/email/provider";
 import type { OutboundMessage } from "@/lib/email/port";
 import { formatEventDateTime } from "@/lib/format";
@@ -556,6 +557,25 @@ export async function reviewSubmission(
       updatedAt: new Date(),
     })
     .where(eq(policySubmissions.id, submission.id));
+
+  /*
+    An approved receipt is deleted, and the approval is what survives.
+
+    A photograph of somebody's banking app has exactly one purpose: convincing
+    the organizer they paid. The moment that is settled it stops being evidence
+    and becomes a liability sitting in a database with no backups — the SAME
+    database the whole product runs on, where receipts are the only thing that
+    consumes real space. COSTS.md puts the ceiling at ~1,500 of them.
+
+    Only on approval. A rejection means the participant has to send something
+    else, and destroying what they sent would leave them arguing about an image
+    nobody can look at any more.
+
+    Irreversible on purpose, and worth knowing: an organizer who approves by
+    mistake cannot go back and look. The submission row still says who sent
+    what and when, which is the part a dispute actually turns on.
+  */
+  if (parsed.data.decision === "approved") await deleteEvidence(submission.id);
 
   refresh(publicToken, organizerToken);
   return { errors: {}, ok: true };

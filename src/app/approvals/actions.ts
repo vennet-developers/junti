@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import { eventPolicies, events, policySubmissions } from "@/db/schema";
 import { getViewerCopy } from "@/lib/locale";
+import { deleteEvidenceFor } from "@/lib/evidence-store";
 import { getOrganizer } from "@/lib/organizer";
 
 export interface ApprovalState {
@@ -68,6 +69,22 @@ export async function approveSubmissions(submissionIds: string[]): Promise<Appro
     })
     .where(inArray(policySubmissions.id, owned))
     .returning({ id: policySubmissions.id });
+
+  /*
+    The receipts go with the approval — see the note on the single review.
+
+    Driven by `returning()` rather than by the ids that came in: the update is
+    already scoped to submissions this organizer owns AND still awaiting review,
+    so only the rows that were genuinely decided come back. Deleting from the
+    request's list instead would let a stale id from a second tab destroy an
+    image belonging to a submission that was never approved here.
+
+    One statement for the batch. Approving fifteen receipts should not be
+    fifteen round trips on a queue built for exactly that.
+  */
+  if (decided.length > 0) {
+    await deleteEvidenceFor(decided.map((row) => row.id));
+  }
 
   // The roster, the pending counts and this queue are all rendered on the
   // server from the same rows.

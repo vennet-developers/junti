@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { policyEvidence } from "@/db/schema";
@@ -162,11 +162,32 @@ export async function hasEvidence(submissionId: string): Promise<boolean> {
 /**
  * Drops the image but keeps the decision.
  *
- * Once a receipt is approved, the record that it *was* approved is what the
- * organizer needs; the photograph of someone's bank app is a liability with no
- * remaining purpose. Not called automatically — it is the tool for the day the
- * database allowance starts to matter, documented in COSTS.md.
+ * **Called on every approval**, from both places that can approve. Once a
+ * receipt is accepted, the record that it *was* accepted is what the organizer
+ * needs; the photograph of somebody's banking app is a liability with no
+ * remaining purpose, sitting in the one table that consumes real space in a
+ * database with no backups.
+ *
+ * Approval only. A rejection means the participant has to send something else,
+ * and destroying what they sent would leave both sides arguing about an image
+ * neither can look at.
  */
 export async function deleteEvidence(submissionId: string): Promise<void> {
   await db.delete(policyEvidence).where(eq(policyEvidence.submissionId, submissionId));
+}
+
+/**
+ * The same, for a batch.
+ *
+ * One statement rather than a loop: the approvals queue exists so an organizer
+ * can clear fifteen receipts at once, and doing that as fifteen round trips on
+ * a pooled connection is how a feature built for speed becomes the slow one.
+ *
+ * Callers must pass ids they have already authorized. This deletes what it is
+ * given and checks nothing — the ownership question belongs with the update
+ * that decided them.
+ */
+export async function deleteEvidenceFor(submissionIds: string[]): Promise<void> {
+  if (submissionIds.length === 0) return;
+  await db.delete(policyEvidence).where(inArray(policyEvidence.submissionId, submissionIds));
 }
