@@ -243,7 +243,23 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
     <>
       <AppHeader organizer={organizer} theme={theme} signInNext={participantPath(publicToken)} />
 
-      <Container size="1" px="4" py="6">
+      {/*
+        A reading column, one step wider — not a page that stretches.
+
+        This is one event being read, not a list being scanned, so the width
+        policy in globals.css puts it in the narrow tier and it stays there:
+        running the roster and the money out to 1136px would make the eye travel
+        further for nothing.
+
+        `size="2"` rather than `size="1"` for one concrete reason. At 448px the
+        formatted date does not fit on a line — "jueves, 30 de julio de 2026,
+        6:00 p. m. · hora de Bogota" broke after "hora de", stranding "Bogota"
+        alone on a second line while a thousand pixels sat unused beside it. The
+        detail rows are the densest single lines in the product, and 688px is
+        what they need. Costs nothing on a phone, where both caps exceed the
+        viewport.
+      */}
+      <Container size="2" px="4" py="6">
         <Stack gap="6">
           {/* Writes this device's zone into a cookie on a first visit, so the
             server can render every later paint on the right clock. */}
