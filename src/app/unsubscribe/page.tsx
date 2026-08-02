@@ -6,7 +6,7 @@ import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
 import { Notice } from "@/components/notice";
-import { suppressEmail } from "@/lib/consent";
+import { emailForUnsubscribeToken, suppressEmail } from "@/lib/consent";
 import { getViewerCopy } from "@/lib/locale";
 import { resolvePreferences } from "@/lib/preferences";
 
@@ -19,12 +19,11 @@ import { resolvePreferences } from "@/lib/preferences";
  * order to be left alone would be the opposite of honouring the request. One
  * click has to be enough.
  *
- * That does mean a link somebody forwards could unsubscribe an address that did
- * not ask. The trade is deliberate and it goes this way round: the cost is one
- * person missing invitations they can still receive by any other route, against
- * a legal obligation and somebody being written to after saying stop. A
- * confirmation button would look careful and would mostly convert a request
- * into a dead end.
+ * **A forwarded link no longer unsubscribes the wrong person.** It used to: the
+ * address was in the URL, so whoever clicked removed whoever was named. The
+ * token is the invitation's id, which resolves to the address the invitation
+ * was sent to and to nothing else — forwarding it now unsubscribes the person it
+ * was always about, which is the only outcome that was ever intended.
  *
  * Acted on during render rather than behind a button, for the same reason.
  * Idempotent, so a second click on a link kept in an inbox changes nothing.
@@ -39,21 +38,28 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function UnsubscribePage({
   searchParams,
 }: {
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ t?: string }>;
 }) {
-  const { email } = await searchParams;
+  const { t } = await searchParams;
   const { copy } = await getViewerCopy();
   const { theme } = await resolvePreferences();
 
-  // Loose on purpose, like every other address check here: the point is to
-  // reject obvious junk in a URL, not to adjudicate what an address may be.
-  const parsed = z
-    .string()
-    .trim()
-    .regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
-    .safeParse(email ?? "");
+  /*
+    A token, never the address.
 
-  if (parsed.success) await suppressEmail(parsed.data);
+    `?email=ana@correo.com` put somebody's address in their browser history, in
+    every proxy log between them and here, and in the referrer of whatever they
+    opened next — on the one page whose entire purpose is respecting their
+    privacy. The token is the invitation's own id: opaque, unguessable, tied to
+    one address, and it means a forwarded link unsubscribes the person it was
+    sent to rather than whoever happened to click.
+  */
+  const token = z.uuid().safeParse(t ?? "");
+  const email = token.success ? await emailForUnsubscribeToken(token.data) : null;
+
+  if (email) await suppressEmail(email);
+
+  const parsed = email ? { success: true as const, data: email } : { success: false as const };
 
   return (
     <>

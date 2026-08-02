@@ -18,6 +18,7 @@ import {
 } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
 import { suppressedAmong } from "@/lib/consent";
+import { claimSends } from "@/lib/send-limit";
 import { deleteEvidence } from "@/lib/evidence-store";
 import { sendMessage } from "@/lib/email/provider";
 import type { OutboundMessage } from "@/lib/email/port";
@@ -62,6 +63,14 @@ export type ManageState = { errors: Record<string, string>; ok?: boolean };
  * were skipped as already answered, some failed at the provider. A single "done"
  * would hide the third, and the third is the one worth telling somebody about.
  */
+/**
+ * Invitations one organizer may send in an hour, across all their events.
+ *
+ * Well above a real evening of organizing — twenty a paste, a handful of
+ * pastes — and far below the volume that gets a sending domain noticed.
+ */
+const INVITES_PER_HOUR = 100;
+
 export type InviteState = ManageState & {
   sent?: number;
   skipped?: number;
@@ -180,6 +189,7 @@ function invitationMessage(
   event: EventRow,
   organizerName: string,
   email: string,
+  unsubscribeToken: string,
   copy: Copy,
 ): OutboundMessage {
   return {
@@ -194,7 +204,7 @@ function invitationMessage(
       // `values` contract on OutboundMessage — strings, all the way down.
       eventWhere: event.location ?? "",
       eventPath: participantPath(event.publicToken),
-      unsubscribePath: `${ROUTES.unsubscribe}?email=${encodeURIComponent(email)}`,
+      unsubscribePath: `${ROUTES.unsubscribe}?t=${unsubscribeToken}`,
     },
   };
 }
@@ -255,11 +265,26 @@ export async function inviteToEvent(
   const optedOut = await suppressedAmong(emails);
   const toSend = emails.filter((email) => !alreadyOn.has(email) && !optedOut.has(email));
 
+  /*
+    Claimed before anything is written, and counted per organizer rather than
+    per event: the abuse this guards is one person emailing strangers all
+    afternoon, and spreading it across five events they created would otherwise
+    cost them nothing. `MAX_INVITES_PER_SEND` caps one paste; this caps the
+    afternoon.
+  */
+  // `authorize` already required a session, so the organizer is present; the
+  // event id is a fallback that can only be reached if that ever stops holding.
+  const limitKey = `invite:${organizer?.id ?? event.id}`;
+  const allowance = await claimSends(limitKey, INVITES_PER_HOUR, toSend.length);
+  if (!allowance.ok) {
+    return { errors: { _form: copy.invites.errorRateLimited(INVITES_PER_HOUR) } };
+  }
+
   if (toSend.length === 0) {
     return { errors: {}, ok: true, sent: 0, skipped: emails.length };
   }
 
-  await db
+  const rows = await db
     .insert(invitations)
     .values(
       toSend.map((email) => ({
@@ -274,10 +299,19 @@ export async function inviteToEvent(
     .onConflictDoUpdate({
       target: [invitations.eventId, invitations.email],
       set: { sentAt: new Date() },
-    });
+    })
+    /*
+      The row's id IS the unsubscribe token, so the insert has to hand it back.
+      `onConflictDoUpdate` rather than `DoNothing` for exactly this reason: a
+      resend to an address already invited must return the existing id, and
+      `DoNothing` returns nothing at all for the rows it skipped.
+    */
+    .returning({ id: invitations.id, email: invitations.email });
 
   const results = await Promise.all(
-    toSend.map((email) => sendMessage(invitationMessage(event, organizerName, email, copy))),
+    rows.map((row) =>
+      sendMessage(invitationMessage(event, organizerName, row.email, row.id, copy)),
+    ),
   );
 
   const failed = results.filter((result) => result.status === "failed").length;
@@ -309,7 +343,11 @@ export async function resendInvitation(
 
   // Scoped to this event, so an id from somewhere else finds nothing.
   const [row] = await db
-    .select({ email: invitations.email, participantId: invitations.participantId })
+    .select({
+      id: invitations.id,
+      email: invitations.email,
+      participantId: invitations.participantId,
+    })
     .from(invitations)
     .where(and(eq(invitations.id, id.data), eq(invitations.eventId, event.id)))
     .limit(1);
@@ -328,7 +366,9 @@ export async function resendInvitation(
   const organizer = await getOrganizer();
   const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
 
-  const result = await sendMessage(invitationMessage(event, organizerName, row.email, copy));
+  const result = await sendMessage(
+    invitationMessage(event, organizerName, row.email, row.id, copy),
+  );
 
   await db.update(invitations).set({ sentAt: new Date() }).where(eq(invitations.id, id.data));
 

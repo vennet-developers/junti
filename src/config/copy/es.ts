@@ -526,6 +526,8 @@ export const es = {
     errorInvalid: (list: string) => `Esto no parece un correo: ${list}`,
     errorTooMany: (max: number, got: number) =>
       `Son ${got} correos y el máximo por envío es ${max}. Manda el resto en otra tanda.`,
+    errorRateLimited: (max: number) =>
+      `Ya enviaste muchas invitaciones en la última hora (el máximo es ${max}). Espera un rato y sigues.`,
     errorSendFailed: "No pudimos enviar la invitación. Intenta de nuevo.",
   },
 

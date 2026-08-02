@@ -517,6 +517,8 @@ export const en: Copy = {
     errorInvalid: (list: string) => `This does not look like an email: ${list}`,
     errorTooMany: (max: number, got: number) =>
       `That is ${got} addresses and the limit per send is ${max}. Send the rest in another batch.`,
+    errorRateLimited: (max: number) =>
+      `You have sent a lot of invitations in the last hour (the limit is ${max}). Wait a while and carry on.`,
     errorSendFailed: "We could not send the invitation. Try again.",
   },
 

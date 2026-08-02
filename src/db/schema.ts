@@ -719,6 +719,51 @@ export const emailSuppressions = pgTable("email_suppressions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * A counter that survives leaving one serverless instance.
+ *
+ * `rate-limit.ts` keeps its counts in a module-level Map, which is per instance
+ * — and Vercel runs however many it likes. That makes it a speed bump: enough
+ * for the accidental double-click it was written for, useless against the thing
+ * that actually costs something, which is somebody discovering they can make
+ * this app email strangers.
+ *
+ * **Postgres rather than a hosted counter.** COSTS.md lists "a hosted
+ * rate-limit counter" among the things that would end the zero-cost constraint,
+ * and the database is already here, already shared by every instance, and
+ * already the thing a send has to talk to anyway. A row per key per window is
+ * two orders of magnitude less traffic than the sends it guards.
+ *
+ * Deliberately only for outbound messages. The in-memory limiter stays where it
+ * is for form submissions, where the failure it prevents is a duplicate row and
+ * not a burnt sending reputation.
+ */
+export const sendCounters = pgTable(
+  "send_counters",
+  {
+    /**
+     * What is being counted: `invite:<event id>`, `invite:org:<user id>`.
+     *
+     * Free text rather than an enum because the useful granularity is not
+     * knowable in advance — per organizer today, per recipient the first time
+     * somebody is invited to nine events in an evening.
+     */
+    key: text("key").notNull(),
+
+    /**
+     * Start of the window this row counts, truncated to the hour.
+     *
+     * Part of the primary key, which is what makes expiry free: a new hour is a
+     * new row, and old rows are deleted by the retention job rather than by a
+     * lock-taking sweep on every write.
+     */
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+
+    count: integer("count").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.key, table.windowStart] })],
+);
+
 export const userPreferences = pgTable("user_preferences", {
   userId: uuid("user_id").primaryKey(),
 

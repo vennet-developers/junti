@@ -71,3 +71,41 @@ jobs:
 
           echo "::error::keep-alive did not return 200 after 3 attempts."
           exit 1
+
+      # Retention runs on the same schedule and in the same workflow, because a
+      # second workflow is a second thing GitHub can disable after 60 days of
+      # repository inactivity — and the failure mode of a silently stopped
+      # retention job is data outliving what the privacy notice promises.
+      #
+      # `continue-on-error`: keeping the database awake is the job this workflow
+      # is named for, and a retention failure must not make it look like that
+      # one failed. It still shows up as an annotation.
+      - name: Run scheduled retention
+        continue-on-error: true
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          RETENTION_SECRET: ${{ secrets.RETENTION_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RETENTION_SECRET:-}" ]; then
+            echo "::warning::RETENTION_SECRET is not set — skipping retention."
+            exit 0
+          fi
+
+          code=$(curl --silent --show-error --location \
+                      --max-time 60 \
+                      --request POST \
+                      --header "Authorization: Bearer ${RETENTION_SECRET}" \
+                      --output retention.json \
+                      --write-out '%{http_code}' \
+                      "${APP_URL%/}/api/retention" || echo "000")
+
+          if [ "$code" = "200" ]; then
+            echo "Deleted:"
+            cat retention.json
+            exit 0
+          fi
+
+          echo "::warning::retention returned HTTP $code"
+          [ -s retention.json ] && cat retention.json

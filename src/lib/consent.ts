@@ -4,7 +4,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 
 import { db } from "@/db/client";
-import { consentEvents, emailSuppressions } from "@/db/schema";
+import { consentEvents, emailSuppressions, invitations } from "@/db/schema";
 
 /**
  * Consent, as evidence rather than as a setting.
@@ -96,6 +96,33 @@ export async function suppressedAmong(emails: string[]): Promise<Set<string>> {
     .where(inArray(emailSuppressions.email, normalised));
 
   return new Set(rows.map((row) => row.email));
+}
+
+/**
+ * The address behind an unsubscribe token.
+ *
+ * The token is the invitation's own id. That is what keeps the address out of
+ * the URL — a link that says `?email=ana@correo.com` puts somebody's address in
+ * their browser history, in any proxy log along the way, and in the referrer of
+ * whatever they open next. It also means a forwarded link unsubscribes the
+ * person it names rather than whoever clicked it.
+ *
+ * Reusing the id rather than minting a second secret: it is already unique,
+ * already unguessable, already tied to exactly one address and one event, and
+ * already deleted when the event is. A separate token column would be a second
+ * thing to keep in step for no property this one lacks.
+ *
+ * Returns null for a token that matches nothing — an invitation deleted with
+ * its event, or a link somebody mangled.
+ */
+export async function emailForUnsubscribeToken(token: string): Promise<string | null> {
+  const [row] = await db
+    .select({ email: invitations.email })
+    .from(invitations)
+    .where(eq(invitations.id, token))
+    .limit(1);
+
+  return row?.email ?? null;
 }
 
 /**
