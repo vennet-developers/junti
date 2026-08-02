@@ -29,6 +29,13 @@ export const ROUTES = {
    */
   onboarding: "/onboarding",
   /**
+   * The privacy notice. Public and indexable, unlike everything else here —
+   * a notice nobody can reach without an account is not a notice.
+   */
+  privacy: "/privacidad",
+  /** Where an unsubscribe link in an email lands. No account required. */
+  unsubscribe: "/baja",
+  /**
    * What the organizer's guests receive, as opposed to `/profile`, which is
    * how the organizer sees the app. The two are settings screens and the split
    * between them is who the setting affects.

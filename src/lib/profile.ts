@@ -81,6 +81,19 @@ export async function ensureProfile(user: User): Promise<{ needsOnboarding: bool
   return { needsOnboarding: false };
 }
 
+/**
+ * Removes the phone number, for a withdrawn permission.
+ *
+ * A real delete. The organizer's roster selects this column, so anything short
+ * of emptying it leaves the number reachable by the next query somebody writes.
+ */
+export async function clearPhone(userId: string): Promise<void> {
+  await db
+    .update(userProfiles)
+    .set({ phone: null, updatedAt: new Date() })
+    .where(eq(userProfiles.userId, userId));
+}
+
 /** Writes what the onboarding screen collected. */
 export async function saveProfile(
   userId: string,

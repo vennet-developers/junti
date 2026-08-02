@@ -30,6 +30,8 @@ export interface EventInvitationValues {
   eventWhere: string;
   /** The public participant path, e.g. "/e/abc123". */
   eventPath: string;
+  /** Where "stop writing to me" goes. Already carries the address. */
+  unsubscribePath: string;
 }
 
 export function EventInvitationEmail({
@@ -70,6 +72,18 @@ export function EventInvitationEmail({
             inbox is the kind of surprise that ends in nobody answering. */}
         <Text style={{ ...emailText.paragraph, fontSize: "13px", margin: "20px 0 0" }}>
           {copy.accountNote}
+        </Text>
+
+        {/*
+          The only message here that goes to somebody who never asked for it.
+          An organizer typed their address into a box; they have no account, no
+          session and nothing to revoke with, so the way out has to be in the
+          message itself and has to work in one click.
+        */}
+        <Text style={{ ...emailText.paragraph, fontSize: "12px", margin: "16px 0 0" }}>
+          <a href={`${origin}${values.unsubscribePath}`} style={{ color: "inherit" }}>
+            {copy.unsubscribe}
+          </a>
         </Text>
       </Section>
     </EmailLayout>

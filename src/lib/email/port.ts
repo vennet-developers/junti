@@ -24,7 +24,8 @@ import "server-only";
  * build error rather than a delivery that silently never happens, and adding a
  * name here without writing its renderer does not compile.
  */
-export type MessageTemplate = "pending-approval" | "event-invitation" | "auth-link";
+export type MessageTemplate =
+  "pending-approval" | "event-invitation" | "auth-link" | "event-created" | "rsvp-confirmed";
 
 export interface OutboundMessage {
   /** Where it goes. An email address today; a phone number for WhatsApp. */

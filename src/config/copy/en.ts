@@ -389,6 +389,31 @@ export const en: Copy = {
         `The link expires in ${minutes} minutes and works once. If you miss it, ask for a new one.`,
       ignore: "Not you? Ignore this email. Nothing happens unless the link is opened.",
     },
+    eventCreated: {
+      subject: (title: string) => `Your event “${title}” is live`,
+      preview: (title: string) => `Share the link to ${title} on WhatsApp.`,
+      heading: "Your event is live",
+      body: "This is the link you share with your guests. They use it to say if they are coming and to see who owes what.",
+      cta: "See the event",
+    },
+    rsvpConfirmed: {
+      confirmed: {
+        subject: (title: string) => `You are on the list for “${title}”`,
+        preview: (title: string) => `Your spot at ${title} is confirmed.`,
+        heading: "You are on the list",
+        body: (title: string) => `You said you are coming to ${title}. Here are the details.`,
+      },
+      waitlisted: {
+        subject: (title: string) => `You are on the waitlist for “${title}”`,
+        preview: (title: string) => `${title} is full.`,
+        heading: "You are on the waitlist",
+        body: (title: string) =>
+          `${title} was already full when you answered. If somebody drops out, the organizer moves you up and lets you know.`,
+      },
+      yourShare: (amount: string) => `Your share is ${amount}.`,
+      cta: "See the event",
+      changeNote: "Plans changed? You can change your answer from the event whenever you like.",
+    },
     eventInvitation: {
       subject: (organizer: string, event: string) => `${organizer} invited you to ${event}`,
       preview: (organizer: string, event: string) => `${organizer} is inviting you to ${event}.`,
@@ -398,7 +423,51 @@ export const en: Copy = {
       cta: "See the event",
       accountNote:
         "You will need to sign in to confirm. Google or a link to your email, no password.",
+      unsubscribe: "Would rather not get invitations? Unsubscribe.",
     },
+  },
+
+  unsubscribe: {
+    title: "Unsubscribe",
+    heading: "We will not write again",
+    doneTitle: (email: string) => `Done — ${email} is off the list`,
+    doneHelp:
+      "No more Junti invitations will reach that address, from any event or any organizer. If you join something yourself, the emails for that participation still arrive.",
+    badLinkTitle: "That link is incomplete",
+    badLinkHelp:
+      "It is missing the email address. Open the link exactly as it came in the message, or write to hello@vennet.dev and we will remove you by hand.",
+  },
+
+  privacy: {
+    title: "Privacy notice",
+    heading: "How we handle your data",
+    intro:
+      "The short version: we keep the minimum the event needs, we sell nothing, and you can ask us to delete it whenever you like.",
+    responsibleTitle: "Who is responsible",
+    responsibleBody:
+      "Vennet, based in Colombia, is the data controller. For any request about your data, write to hello@vennet.dev.",
+    dataTitle: "What we keep",
+    dataBody:
+      "Your email, your name, and your WhatsApp number only if you gave it by ticking the box. For events we keep which ones you joined, what you answered, and whether the organizer recorded your payment. If somebody invited you by email, we keep that address so the invitation can reach you.",
+    purposesTitle: "What for",
+    purposesBody:
+      "Email is how you get in: there is no password, we send you a link. Your name is what everyone else sees on the event's list. The phone number exists for exactly one thing — so the organizer of an event you joined can reach you on WhatsApp.",
+    sharingTitle: "Who else sees it",
+    sharingBody:
+      "The organizer of each event you join sees your name, your answer and — if you allowed it — your WhatsApp. Other guests see your name and your answer, never your email or your phone. We share nothing with anyone else and sell nothing to third parties.",
+    processorsTitle: "Which tools",
+    processorsBody:
+      "Supabase holds the database and handles sign-in, in Canada. Resend delivers the email, in the United States. Vercel hosts the application. Each processes data only on our instructions and only for what is described here.",
+    transferTitle: "Leaving the country",
+    transferBody:
+      "Because those tools sit outside Colombia, your data is processed in Canada and the United States. Using Junti means accepting that transfer; if you would rather not, write to us and we will delete your account.",
+    rightsTitle: "Your rights",
+    rightsBody:
+      "You can ask what we hold, correct it, update it or delete it, and withdraw any permission you gave. WhatsApp you can withdraw yourself from your profile, and the number is deleted immediately. For anything else write to hello@vennet.dev and we answer within the periods set by Colombia's Ley 1581 de 2012.",
+    retentionTitle: "For how long",
+    retentionBody:
+      "While you have an account. If you delete it we remove your personal data and keep only what the event needs so everyone else's numbers still add up. Payment receipts are deleted once the organizer approves them.",
+    version: (v: string) => `Version of this notice: ${v}`,
   },
 
   onboarding: {
@@ -417,6 +486,9 @@ export const en: Copy = {
     errorNameRequired: "Enter your name.",
     errorNameTooLong: "That name is too long.",
     errorPhone: "That number does not look right. Digits only, with or without a country code.",
+    consentLabel: "I allow the organizer of events I join to reach me on WhatsApp at this number.",
+    consentHelp: "Without this we do not store the number at all. You can withdraw it any time.",
+    privacyLink: "Privacy notice",
   },
 
   invites: {

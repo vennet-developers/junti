@@ -1,8 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/config/routes";
+import { recordConsent } from "@/lib/consent";
+import { clientIp } from "@/lib/rate-limit";
 import { getViewerCopy } from "@/lib/locale";
 import { saveProfile } from "@/lib/profile";
 import { createSupabaseServerClient, getCurrentUser } from "@/lib/supabase/server";
@@ -41,7 +44,35 @@ export async function completeProfile(
 
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
 
-  await saveProfile(user.id, parsed.data);
+  /*
+    A phone with no consent behind it is not stored at all.
+
+    Not stored-and-flagged: the organizer's view reads the column, so a number
+    sitting there with a "not allowed" bit somewhere else is one careless join
+    away from being shown. Refusing to write it is the only version of this that
+    cannot be got wrong later.
+
+    The box is unchecked by default and the phone is optional, so the ordinary
+    path — leave both alone — is also the private one.
+  */
+  const agreed = field(formData, "whatsappConsent") === "on";
+  const phone = agreed ? parsed.data.phone : null;
+
+  await saveProfile(user.id, { fullName: parsed.data.fullName, phone });
+
+  /*
+    Recorded whenever a number was actually offered, granted or not. A refusal
+    is evidence too: it is what answers "did you ask, and what did they say"
+    six months from now.
+  */
+  if (parsed.data.phone) {
+    await recordConsent(user.id, {
+      purpose: "organizer_whatsapp",
+      channel: "whatsapp",
+      granted: agreed,
+      sourceIp: clientIp(await headers()),
+    });
+  }
 
   const supabase = await createSupabaseServerClient();
   await supabase.auth.updateUser({ data: { full_name: parsed.data.fullName } });

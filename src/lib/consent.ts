@@ -1,0 +1,112 @@
+import "server-only";
+
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { uuidv7 } from "uuidv7";
+
+import { db } from "@/db/client";
+import { consentEvents, emailSuppressions } from "@/db/schema";
+
+/**
+ * Consent, as evidence rather than as a setting.
+ *
+ * Ley 1581 puts the burden of proof on whoever holds the data: not "do they
+ * agree" but "show that they agreed, to what, and when". That is why nothing
+ * here updates a row. Every grant and every revocation is an event, and the
+ * current state is a question you answer by reading the most recent one.
+ */
+
+/**
+ * The version of the privacy notice a consent was given against.
+ *
+ * Bump it when the notice's substance changes — a new purpose, a new
+ * sub-processor, a new destination country — and NOT for a typo. Old rows keep
+ * pointing at the text that was actually on screen, which is the only thing
+ * that makes them evidence of anything.
+ */
+export const POLICY_VERSION = "2026-08-02";
+
+/**
+ * What can be consented to, separately.
+ *
+ * A closed union rather than free strings, for the same reason the message
+ * templates are one: a purpose invented at a call site is a purpose nobody can
+ * later query, revoke or report on.
+ *
+ * `organizer_whatsapp` is the only member today, and it is the only thing this
+ * app collects that genuinely needs asking. Transactional mail about an event
+ * somebody joined is not on this list on purpose — it is what the service does,
+ * not a separate use of their data — but it still honours suppression.
+ */
+export type ConsentPurpose = "organizer_whatsapp";
+
+export interface ConsentRecord {
+  purpose: ConsentPurpose;
+  channel: string;
+  granted: boolean;
+  sourceIp: string | null;
+}
+
+/** Writes one grant or revocation. Never updates. */
+export async function recordConsent(userId: string, record: ConsentRecord): Promise<void> {
+  await db.insert(consentEvents).values({
+    id: uuidv7(),
+    userId,
+    purpose: record.purpose,
+    channel: record.channel,
+    granted: record.granted,
+    policyVersion: POLICY_VERSION,
+    sourceIp: record.sourceIp,
+  });
+}
+
+/**
+ * Whether this person currently agrees to a purpose.
+ *
+ * The most recent event wins. Absence is refusal, not permission — a person who
+ * was never asked has not agreed, and defaulting the other way is how a consent
+ * system becomes decorative.
+ */
+export async function hasConsent(userId: string, purpose: ConsentPurpose): Promise<boolean> {
+  const [latest] = await db
+    .select({ granted: consentEvents.granted })
+    .from(consentEvents)
+    .where(and(eq(consentEvents.userId, userId), eq(consentEvents.purpose, purpose)))
+    .orderBy(desc(consentEvents.createdAt))
+    .limit(1);
+
+  return latest?.granted ?? false;
+}
+
+/**
+ * Addresses that have asked to be left alone, out of the ones given.
+ *
+ * Takes a list and returns a Set rather than answering one at a time, because
+ * the call site that matters is a pasted batch of invitations — and checking
+ * twenty addresses one query each is how a suppression list quietly gets
+ * skipped under load.
+ */
+export async function suppressedAmong(emails: string[]): Promise<Set<string>> {
+  if (emails.length === 0) return new Set();
+
+  const normalised = emails.map((email) => email.trim().toLowerCase());
+
+  const rows = await db
+    .select({ email: emailSuppressions.email })
+    .from(emailSuppressions)
+    .where(inArray(emailSuppressions.email, normalised));
+
+  return new Set(rows.map((row) => row.email));
+}
+
+/**
+ * Records that an address does not want to be written to again.
+ *
+ * Idempotent: unsubscribing twice is the same as once, and a second click on a
+ * link somebody kept in their inbox must not error.
+ */
+export async function suppressEmail(email: string, reason = "unsubscribed"): Promise<void> {
+  await db
+    .insert(emailSuppressions)
+    .values({ email: email.trim().toLowerCase(), reason })
+    .onConflictDoNothing({ target: emailSuppressions.email });
+}

@@ -397,6 +397,31 @@ export const es = {
         `El link vence en ${minutes} minutos y sirve una sola vez. Si se te pasa, pide uno nuevo.`,
       ignore: "¿No fuiste tú? Ignora este correo. Sin tocar el link no pasa nada.",
     },
+    eventCreated: {
+      subject: (title: string) => `Tu evento «${title}» quedó listo`,
+      preview: (title: string) => `Comparte el link de ${title} por WhatsApp.`,
+      heading: "Tu evento está creado",
+      body: "Este es el link que compartes con tus invitados. Con él dicen si vienen y ven quién debe cuánto.",
+      cta: "Ver el evento",
+    },
+    rsvpConfirmed: {
+      confirmed: {
+        subject: (title: string) => `Quedaste en la lista de «${title}»`,
+        preview: (title: string) => `Tu lugar en ${title} está confirmado.`,
+        heading: "Estás en la lista",
+        body: (title: string) => `Dijiste que vas a ${title}. Acá quedan los detalles.`,
+      },
+      waitlisted: {
+        subject: (title: string) => `Quedaste en lista de espera de «${title}»`,
+        preview: (title: string) => `El cupo de ${title} está lleno.`,
+        heading: "Estás en lista de espera",
+        body: (title: string) =>
+          `El cupo de ${title} ya estaba lleno cuando respondiste. Si alguien cancela, el organizador te sube y te avisa.`,
+      },
+      yourShare: (amount: string) => `Te corresponden ${amount}.`,
+      cta: "Ver el evento",
+      changeNote: "¿Cambió el plan? Puedes cambiar tu respuesta desde el evento cuando quieras.",
+    },
     eventInvitation: {
       subject: (organizer: string, event: string) => `${organizer} te invitó a ${event}`,
       preview: (organizer: string, event: string) => `${organizer} te está invitando a ${event}.`,
@@ -406,7 +431,51 @@ export const es = {
       cta: "Ver el evento",
       accountNote:
         "Para confirmar necesitas entrar con tu cuenta. Es con Google o con un link a tu correo, sin contraseña.",
+      unsubscribe: "¿No quieres recibir más invitaciones? Date de baja.",
     },
+  },
+
+  unsubscribe: {
+    title: "Darte de baja",
+    heading: "No te escribimos más",
+    doneTitle: (email: string) => `Listo, ${email} queda fuera`,
+    doneHelp:
+      "No vas a recibir más invitaciones de Junti en esa dirección, de ningún evento ni de ningún organizador. Si te apuntas a algo por tu cuenta, los correos de esa participación sí siguen llegando.",
+    badLinkTitle: "Ese link está incompleto",
+    badLinkHelp:
+      "Le falta la dirección de correo. Abre el link tal como venía en el mensaje, o escríbenos a hello@vennet.dev y te sacamos a mano.",
+  },
+
+  privacy: {
+    title: "Aviso de privacidad",
+    heading: "Cómo tratamos tus datos",
+    intro:
+      "En corto: guardamos lo mínimo para que el evento funcione, no vendemos nada, y puedes pedir que lo borremos cuando quieras.",
+    responsibleTitle: "Quién responde",
+    responsibleBody:
+      "Vennet, con domicilio en Colombia, es el responsable del tratamiento. Para cualquier solicitud sobre tus datos escribe a hello@vennet.dev.",
+    dataTitle: "Qué guardamos",
+    dataBody:
+      "Tu correo, tu nombre, y tu número de WhatsApp solo si lo diste marcando la casilla. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si alguien te invitó por correo, guardamos esa dirección para poder mandarte la invitación.",
+    purposesTitle: "Para qué",
+    purposesBody:
+      "El correo es cómo entras: no hay contraseña, te mandamos un link. El nombre es lo que ven los demás en la lista del evento. El teléfono existe para una sola cosa, y es que el organizador de un evento al que te apuntaste pueda escribirte por WhatsApp.",
+    sharingTitle: "Quién más lo ve",
+    sharingBody:
+      "El organizador de cada evento al que te apuntas ve tu nombre, tu respuesta y —si lo autorizaste— tu WhatsApp. Los demás invitados ven tu nombre y tu respuesta, nunca tu correo ni tu teléfono. No compartimos nada con nadie más ni vendemos datos a terceros.",
+    processorsTitle: "Con qué herramientas",
+    processorsBody:
+      "Supabase guarda la base de datos y maneja el ingreso, en Canadá. Resend entrega los correos, en Estados Unidos. Vercel aloja la aplicación. Cada uno trata los datos solo por instrucción nuestra y para lo descrito aquí.",
+    transferTitle: "Salida del país",
+    transferBody:
+      "Como esas herramientas están fuera de Colombia, tus datos se procesan en Canadá y Estados Unidos. Al usar Junti aceptas esa transferencia; si no estás de acuerdo, escríbenos y borramos tu cuenta.",
+    rightsTitle: "Tus derechos",
+    rightsBody:
+      "Puedes pedir saber qué tenemos tuyo, corregirlo, actualizarlo o borrarlo, y revocar cualquier autorización que hayas dado. El WhatsApp lo revocas tú mismo desde tu perfil y el número se borra de inmediato. Para lo demás escribe a hello@vennet.dev y respondemos dentro de los plazos que fija la Ley 1581 de 2012.",
+    retentionTitle: "Cuánto tiempo",
+    retentionBody:
+      "Mientras tengas cuenta. Si la borras, quitamos tus datos personales y dejamos solo lo que el evento necesita para que las cuentas de los demás sigan cuadrando. Los comprobantes de pago se borran cuando el organizador los aprueba.",
+    version: (v: string) => `Versión de este aviso: ${v}`,
   },
 
   onboarding: {
@@ -425,6 +494,10 @@ export const es = {
     errorNameRequired: "Escribe tu nombre.",
     errorNameTooLong: "Ese nombre es muy largo.",
     errorPhone: "Ese número no parece válido. Solo dígitos, con o sin indicativo.",
+    consentLabel:
+      "Autorizo que el organizador de los eventos a los que me apunte pueda escribirme por WhatsApp a este número.",
+    consentHelp: "Sin esta autorización no guardamos el número. Puedes revocarla cuando quieras.",
+    privacyLink: "Aviso de privacidad",
   },
 
   invites: {

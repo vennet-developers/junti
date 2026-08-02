@@ -17,6 +17,7 @@ import {
   policySubmissions,
 } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
+import { suppressedAmong } from "@/lib/consent";
 import { sendMessage } from "@/lib/email/provider";
 import type { OutboundMessage } from "@/lib/email/port";
 import { formatEventDateTime } from "@/lib/format";
@@ -24,6 +25,7 @@ import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
 import { getOrganizer } from "@/lib/organizer";
 import { authorizeOrganizer, findSubmissionInEvent, loadInvitations } from "@/lib/roster";
+import { ROUTES } from "@/config/routes";
 import { managePath, participantPath } from "@/lib/urls";
 import {
   field,
@@ -191,6 +193,7 @@ function invitationMessage(
       // `values` contract on OutboundMessage — strings, all the way down.
       eventWhere: event.location ?? "",
       eventPath: participantPath(event.publicToken),
+      unsubscribePath: `${ROUTES.unsubscribe}?email=${encodeURIComponent(email)}`,
     },
   };
 }
@@ -239,7 +242,17 @@ export async function inviteToEvent(
   // Somebody who already answered does not get asked again. The organizer is
   // pasting a list they keep somewhere else, and it will contain the people who
   // said yes last week.
-  const toSend = emails.filter((email) => !alreadyOn.has(email));
+  /*
+    Two reasons not to write to somebody, and they are different.
+
+    `alreadyOn` is a courtesy: they answered, so asking again is noise. The
+    suppression list is not a courtesy — it is somebody who told us to stop, and
+    it is the only protection available to a person who never had an account to
+    revoke with. It is checked here rather than at the port so the organizer can
+    be told how many were skipped.
+  */
+  const optedOut = await suppressedAmong(emails);
+  const toSend = emails.filter((email) => !alreadyOn.has(email) && !optedOut.has(email));
 
   if (toSend.length === 0) {
     return { errors: {}, ok: true, sent: 0, skipped: emails.length };
@@ -304,6 +317,12 @@ export async function resendInvitation(
 
   // Already answered — there is nothing left to invite them to.
   if (row.participantId !== null) return { errors: {}, ok: true, sent: 0, skipped: 1 };
+
+  // And a resend is still a send: somebody who unsubscribed does not get one
+  // because an organizer pressed a button next to their name.
+  if ((await suppressedAmong([row.email])).size > 0) {
+    return { errors: {}, ok: true, sent: 0, skipped: 1 };
+  }
 
   const organizer = await getOrganizer();
   const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;

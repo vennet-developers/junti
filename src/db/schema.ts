@@ -636,6 +636,89 @@ export const userProfiles = pgTable("user_profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * What somebody agreed to, when, and for what — never overwritten.
+ *
+ * **Append-only, and that is the entire design.** A `consented` boolean on a
+ * profile answers "do they agree now" and destroys the only question that
+ * matters when somebody asks why they are being contacted: what were they told,
+ * and when. Ley 1581 puts the burden of proof on whoever holds the data, and a
+ * column that gets overwritten cannot discharge it. Revoking writes a new row
+ * with `granted = false`; the grant stays where it was.
+ *
+ * **Per purpose and per channel, never bundled.** Agreeing that an organizer
+ * may write to you on WhatsApp is not agreeing to anything else, and one row
+ * covering "communications" would be exactly the bundled consent the law
+ * refuses to recognise.
+ *
+ * `policyVersion` is what makes an old row still mean something. Consent is to
+ * a specific text; when the notice changes, prior rows document what was
+ * actually shown rather than what the notice happens to say today.
+ */
+export const consentEvents = pgTable(
+  "consent_events",
+  {
+    id: uuid("id").primaryKey(),
+
+    /**
+     * Who agreed. No foreign key to `auth.users`, same reasoning as
+     * `events.organizer_id` — and here it matters twice over: a consent record
+     * has to outlive the account, because "we deleted the user" is not an
+     * answer to "prove they agreed".
+     */
+    userId: uuid("user_id").notNull(),
+
+    /** What for. One value, one purpose — see the note above about bundling. */
+    purpose: text("purpose").notNull(),
+
+    /** Which way we would reach them: `whatsapp`, `email`. */
+    channel: text("channel").notNull(),
+
+    /** True for a grant, false for a revocation. Both are events. */
+    granted: boolean("granted").notNull(),
+
+    /** The version of the privacy notice that was on screen at the time. */
+    policyVersion: text("policy_version").notNull(),
+
+    /**
+     * Where it came from, for the evidentiary trail.
+     *
+     * Nullable because a revocation triggered by a background job has no
+     * request behind it, and inventing one would be worse than recording none.
+     */
+    sourceIp: text("source_ip"),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    /** "What is the current state for this person and purpose" — the hot read. */
+    index("consent_user_purpose_idx").on(table.userId, table.purpose, table.createdAt.desc()),
+  ],
+);
+
+/**
+ * Addresses that have asked not to be written to again.
+ *
+ * Keyed by address rather than by account, because the people who most need
+ * this **have no account**: an organizer types a stranger's email into the
+ * invite box and the app writes to somebody who never agreed to anything and
+ * has nobody to revoke with. A suppression list is the only mechanism that can
+ * serve them, and it has to work with nothing but the address.
+ *
+ * Honoured across every event and every sender. Deliberately not scoped to one
+ * event: "stop emailing me" means what it says, and asking somebody to opt out
+ * once per event is a way of not honouring it.
+ */
+export const emailSuppressions = pgTable("email_suppressions", {
+  /** Lowercased before writing, like `invitations.email`. */
+  email: text("email").primaryKey(),
+
+  /** `unsubscribed` today; `bounced` and `complained` when webhooks land. */
+  reason: text("reason").notNull(),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const userPreferences = pgTable("user_preferences", {
   userId: uuid("user_id").primaryKey(),
 

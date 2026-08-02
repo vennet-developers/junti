@@ -2,13 +2,18 @@
 
 import { useState, useTransition } from "react";
 
+import Link from "next/link";
+
 import { Button } from "@stackmyth/button";
+import { Checkbox } from "@stackmyth/checkbox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Input } from "@stackmyth/input";
-import { Stack } from "@stackmyth/layout";
+import { Box, Flex, Stack } from "@stackmyth/layout";
+import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
 import { FormError } from "@/components/form-shell";
+import { ROUTES } from "@/config/routes";
 
 import { completeProfile, type OnboardingState } from "./actions";
 
@@ -83,6 +88,34 @@ export function OnboardingForm({ next, defaultName }: { next: string; defaultNam
           />
           {state.errors.phone ? <FieldError>{state.errors.phone}</FieldError> : null}
         </Field>
+
+        {/*
+          Unchecked, unbundled, and its own sentence.
+
+          Ley 1581 does not recognise consent that arrived pre-ticked or rolled
+          up with something else, so this box starts empty and says exactly one
+          thing: the organizer may write to you on WhatsApp. Leaving it alone
+          means the number is never stored — not stored-and-ignored — which is
+          why the label can promise something the code actually enforces.
+        */}
+        <Stack gap="2">
+          {/* `Flex as="label"` rather than a `label` prop — Checkbox is the bare
+              input, and this is the composition the approvals queue already
+              uses, so the two checkboxes in the product behave alike. */}
+          <Flex as="label" gap="3" align="start">
+            <Box flexShrink={0} pt="1">
+              <Checkbox name="whatsappConsent" />
+            </Box>
+            <Text variant="small">{copy.onboarding.consentLabel}</Text>
+          </Flex>
+
+          <Text variant="small" color="muted">
+            {copy.onboarding.consentHelp}{" "}
+            <Box as={Link} href={ROUTES.privacy} target="_blank" rel="noopener noreferrer">
+              {copy.onboarding.privacyLink}
+            </Box>
+          </Text>
+        </Stack>
 
         <Button type="submit" size="lg" fullWidth disabled={pending}>
           {pending ? copy.onboarding.submitting : copy.onboarding.submit}

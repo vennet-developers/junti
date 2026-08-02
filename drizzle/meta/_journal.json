@@ -71,6 +71,13 @@
       "when": 1785629016518,
       "tag": "0009_careful_zeigeist",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785705855150,
+      "tag": "0010_steady_nebula",
+      "breakpoints": true
     }
   ]
 }

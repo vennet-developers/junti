@@ -9,10 +9,13 @@ import { getCopy } from "@/config/copy";
 import type { Copy } from "@/config/copy";
 import { db } from "@/db/client";
 import { eventPolicies, participants, policyDefinitions, policySubmissions } from "@/db/schema";
+import type { EventRow } from "@/db/schema";
 import { findHandler, initialStatusFor } from "@/domain/policy-handlers";
 import { resolveAttendance } from "@/domain/waitlist";
 import { checkEvidence, EVIDENCE_MAX_BYTES, putEvidence } from "@/lib/evidence-store";
+import { formatEventDateTime, formatMoney } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
+import { notify } from "@/lib/notify";
 import { getOrganizer } from "@/lib/organizer";
 import { syncPayments } from "@/lib/payments";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
@@ -166,6 +169,7 @@ export async function submitRsvp(
     // Closes the loop for somebody who got here from an invitation email, so
     // the organizer's list stops showing them as still waiting.
     await linkInvitationToParticipant(event.id, organizer.email, id);
+    await sendRsvpReceipt(event, organizer, attendance, copy);
   }
 
   await syncPayments(event);
@@ -251,10 +255,56 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
   }
 
   await linkInvitationToParticipant(event.id, organizer.email, id);
+  await sendRsvpReceipt(event, organizer, attendance, copy);
   await syncPayments(event);
   revalidatePath(participantPath(publicToken));
 
   return { errors: {}, waitlisted: attendance === "waitlisted" };
+}
+
+/**
+ * The receipt for answering.
+ *
+ * Sent on a NEW answer only, never on an amendment: somebody flipping between
+ * "voy" and "tal vez" while deciding does not want four emails about it, and a
+ * receipt for a change is a notification, which is a different thing nobody
+ * asked for.
+ *
+ * Only for the two outcomes worth a message. Saying you cannot come is not
+ * something anybody needs mailed back to them.
+ *
+ * Failures are swallowed inside `notify`, deliberately: the RSVP is recorded
+ * and must not be undone because a provider had a bad minute.
+ */
+async function sendRsvpReceipt(
+  event: EventRow,
+  organizer: { email: string | null },
+  attendance: string,
+  copy: Copy,
+): Promise<void> {
+  if (!organizer.email) return;
+  if (attendance !== "in" && attendance !== "waitlisted") return;
+
+  const share =
+    event.costMode === "none" || event.costAmountMinor === null
+      ? ""
+      : formatMoney(event.costAmountMinor, event.currency, copy.intlLocale);
+
+  await notify({
+    to: organizer.email,
+    template: "rsvp-confirmed",
+    locale: event.locale,
+    values: {
+      eventTitle: event.title,
+      eventWhen: formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale),
+      eventWhere: event.location ?? "",
+      // Only meaningful for a per-person cost; a total split among an unknown
+      // number of people is not a figure this message can state honestly.
+      amount: event.costMode === "per_person" ? share : "",
+      attendance,
+      eventPath: participantPath(event.publicToken),
+    },
+  });
 }
 
 export type SubmissionState = { errors: Record<string, string>; done?: boolean };

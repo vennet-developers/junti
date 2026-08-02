@@ -4,6 +4,16 @@ import { render } from "@react-email/render";
 
 import type { EmailPort, OutboundMessage, SendResult } from "./port";
 import { sandboxSubject } from "./sandbox";
+import {
+  EventCreatedEmail,
+  eventCreatedSubject,
+  type EventCreatedValues,
+} from "./templates/event-created";
+import {
+  RsvpConfirmedEmail,
+  rsvpConfirmedSubject,
+  type RsvpConfirmedValues,
+} from "./templates/rsvp-confirmed";
 import { AuthLinkEmail, authLinkSubject, type AuthLinkValues } from "./templates/auth-link";
 import {
   EventInvitationEmail,
@@ -102,6 +112,30 @@ async function compose(
 
       return {
         subject: authLinkSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "event-created": {
+      const values = message.values as unknown as EventCreatedValues;
+      const element = <EventCreatedEmail values={values} locale={message.locale} origin={origin} />;
+
+      return {
+        subject: eventCreatedSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "rsvp-confirmed": {
+      const values = message.values as unknown as RsvpConfirmedValues;
+      const element = (
+        <RsvpConfirmedEmail values={values} locale={message.locale} origin={origin} />
+      );
+
+      return {
+        subject: rsvpConfirmedSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };

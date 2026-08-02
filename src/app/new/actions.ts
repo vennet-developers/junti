@@ -8,9 +8,12 @@ import { db } from "@/db/client";
 import { eventPolicies, events } from "@/db/schema";
 import { getViewerCopy } from "@/lib/locale";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { formatEventDateTime } from "@/lib/format";
+import { notify } from "@/lib/notify";
 import { getOrganizer } from "@/lib/organizer";
 import { ROUTES } from "@/config/routes";
 import { createOrganizerToken, createPublicToken } from "@/lib/tokens";
+import { participantPath } from "@/lib/urls";
 import { field, fieldErrors, makeEventSchema, parsePoliciesField } from "@/lib/validation";
 
 /**
@@ -123,6 +126,31 @@ export async function createEvent(
       );
     }
   });
+
+  /*
+    The link, in their inbox.
+
+    The one thing an organizer does immediately after creating an event is paste
+    its link into a group chat, and the moment they close the tab that link is
+    somewhere they have to go and find. An inbox is a place they can forward
+    from on a phone without opening the app.
+
+    After the transaction and outside it: the event exists, and a provider
+    having a bad minute must not undo that. `notify` swallows its own failures
+    for the same reason, and checks the suppression list first.
+  */
+  if (organizer.email) {
+    await notify({
+      to: organizer.email,
+      template: "event-created",
+      locale: input.locale,
+      values: {
+        eventTitle: input.title,
+        eventWhen: formatEventDateTime(input.startsAt, input.timeZone, copy.intlLocale),
+        eventPath: participantPath(publicToken),
+      },
+    });
+  }
 
   /**
    * Straight to the history, where the new event is the first card.

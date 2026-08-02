@@ -1,8 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { isLocale, type Locale } from "@/config/copy";
+import { ROUTES } from "@/config/routes";
+import { recordConsent } from "@/lib/consent";
+import { clearPhone } from "@/lib/profile";
+import { clientIp } from "@/lib/rate-limit";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
 import {
@@ -80,5 +85,37 @@ export async function saveProfile(
   // Every rendered string can change, not just this page.
   revalidatePath("/", "layout");
 
+  return { errors: {}, ok: true };
+}
+
+/**
+ * Withdraws the WhatsApp permission and deletes the number.
+ *
+ * **Deletes, not flags.** The organizer's roster reads `user_profiles.phone`
+ * directly; a number left in the column behind a "revoked" bit somewhere else
+ * is one careless join away from still being shown, and "we stopped meaning it"
+ * is not what withdrawal means. Clearing the column is the only version of this
+ * that cannot be undone by a future query.
+ *
+ * The withdrawal is its own row in the consent ledger rather than an edit to
+ * the grant. Both facts stay true: they agreed on one date, and changed their
+ * mind on another. That pair is what the ledger exists to preserve.
+ */
+export async function revokeWhatsApp(): Promise<ProfileState> {
+  const { copy } = await getViewerCopy();
+
+  const organizer = await getOrganizer();
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+  await clearPhone(organizer.id);
+
+  await recordConsent(organizer.id, {
+    purpose: "organizer_whatsapp",
+    channel: "whatsapp",
+    granted: false,
+    sourceIp: clientIp(await headers()),
+  });
+
+  revalidatePath(ROUTES.profile);
   return { errors: {}, ok: true };
 }
