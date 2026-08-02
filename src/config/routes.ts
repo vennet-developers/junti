@@ -32,9 +32,9 @@ export const ROUTES = {
    * The privacy notice. Public and indexable, unlike everything else here —
    * a notice nobody can reach without an account is not a notice.
    */
-  privacy: "/privacidad",
+  privacy: "/privacy",
   /** Where an unsubscribe link in an email lands. No account required. */
-  unsubscribe: "/baja",
+  unsubscribe: "/unsubscribe",
   /**
    * What the organizer's guests receive, as opposed to `/profile`, which is
    * how the organizer sees the app. The two are settings screens and the split
