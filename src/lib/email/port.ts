@@ -47,6 +47,22 @@ export interface OutboundMessage {
    * is a fact about them, not about who triggered the send.
    */
   locale: string;
+  /**
+   * This message belongs to a test, not to somebody's real event.
+   *
+   * A flag about the message's ORIGIN, not about how to render it — which is
+   * why it is a boolean and not a subject prefix. The port's whole contract is
+   * a recipient, a template and values, precisely so a WhatsApp adapter can
+   * reuse it without learning email's shape; deciding that "sandbox" means
+   * `[sandbox] ` in front of a subject line is the email adapter's business,
+   * and a WhatsApp adapter would express the same fact its own way.
+   *
+   * Defaulted centrally in `sendMessage` from the environment, so no call site
+   * has to remember. Set it explicitly only where the environment lies — see
+   * the send-email hook, which always runs in production even when the person
+   * signing in is on their laptop.
+   */
+  sandbox?: boolean;
 }
 
 /**

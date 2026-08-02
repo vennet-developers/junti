@@ -180,10 +180,25 @@ export async function POST(request: NextRequest) {
   const stored = payload.user?.user_metadata?.locale;
   const locale = typeof stored === "string" && isLocale(stored) ? stored : DEFAULT_LOCALE;
 
+  /*
+    The one place where the environment is the wrong answer.
+
+    Everywhere else, "is this a test" means "is this process production", and
+    `sendMessage` fills that in. Not here: Supabase cannot call a laptop, so
+    this hook ALWAYS runs on the production deployment — including for a
+    sign-in somebody started on localhost, which is precisely the mail most
+    worth marking, because it is the one being sent all day while testing.
+
+    The link is the honest signal. It was built from `redirect_to`, so it
+    points back at whichever origin asked for it.
+  */
+  const sandbox = /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(url);
+
   const result = await sendMessage({
     to: email,
     template: "auth-link",
     locale,
+    sandbox,
     values: {
       url,
       action: data.email_action_type as AuthLinkAction,

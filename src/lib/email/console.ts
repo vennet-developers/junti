@@ -23,7 +23,7 @@ export const consoleAdapter: EmailPort = {
     // event, sometimes an amount. A development log is the wrong place for
     // them, and the shape is what is being debugged here anyway.
     console.info(
-      `[email:console] would send "${message.template}" to ${message.to} in ${message.locale}`,
+      `[email:console]${message.sandbox ? " [sandbox]" : ""} would send "${message.template}" to ${message.to} in ${message.locale}`,
     );
 
     return { status: "sent", id: `console-${message.template}` };

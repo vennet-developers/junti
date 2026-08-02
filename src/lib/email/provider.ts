@@ -83,8 +83,36 @@ function port(): EmailPort {
  * Everything about who delivers, how they are configured and what their API
  * looks like stops here. A call site names a message and a recipient.
  */
+/**
+ * Whether this process is somewhere a real person's mail should not come from.
+ *
+ * `VERCEL_ENV` is "production" only on the production deployment; it is
+ * "preview" on a branch deploy and undefined on a laptop. Asking for the one
+ * positive case rather than listing the negatives means a new environment is
+ * treated as a sandbox until somebody says otherwise, which is the safe way
+ * round for a flag that decides whether mail looks real.
+ */
+export function isSandboxEnvironment(): boolean {
+  return process.env.VERCEL_ENV !== "production";
+}
+
+/**
+ * The one function the rest of the app calls.
+ *
+ * Everything about who delivers, how they are configured and what their API
+ * looks like stops here. A call site names a message and a recipient.
+ *
+ * `sandbox` is filled in from the environment when the caller did not say,
+ * so marking test mail is not something anybody has to remember. A caller that
+ * DOES say wins, because there is one place where the environment is not the
+ * answer: the send-email hook runs on production for a sign-in that may have
+ * started on localhost.
+ */
 export async function sendMessage(message: OutboundMessage): Promise<SendResult> {
-  return port().send(message);
+  // `??`, not a spread default: a caller passing `sandbox: undefined` — which
+  // is what an optional variable does — would otherwise overwrite the default
+  // with nothing and quietly send test mail that looks real.
+  return port().send({ ...message, sandbox: message.sandbox ?? isSandboxEnvironment() });
 }
 
 /** Which adapter is live, for a health endpoint or an incident. */

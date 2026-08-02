@@ -3,6 +3,7 @@ import "server-only";
 import { render } from "@react-email/render";
 
 import type { EmailPort, OutboundMessage, SendResult } from "./port";
+import { sandboxSubject } from "./sandbox";
 import { AuthLinkEmail, authLinkSubject, type AuthLinkValues } from "./templates/auth-link";
 import {
   EventInvitationEmail,
@@ -126,7 +127,9 @@ export function createResendAdapter(config: ResendConfig): EmailPort {
     name: "resend",
 
     async send(message: OutboundMessage): Promise<SendResult> {
-      const { subject, html, text } = await compose(message, config.origin);
+      const composed = await compose(message, config.origin);
+      const { html, text } = composed;
+      const subject = sandboxSubject(composed.subject, message.sandbox);
 
       try {
         const response = await fetch(ENDPOINT, {
