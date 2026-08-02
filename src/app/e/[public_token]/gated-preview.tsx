@@ -32,7 +32,20 @@ export function GatedPreview({ card, children }: { card: ReactNode; children: Re
         inert
         aria-hidden="true"
         pointerEvents="none"
-        height="14rem"
+        /*
+          Taller once there is room for it.
+
+          14rem is what a 390px screen can spare: the title, the time and the
+          place have to stay above the fold, and on a phone that leaves almost
+          nothing. A laptop has 900px of height and the same content occupies
+          less of it, so the window can show more of what is being withheld —
+          which is the whole mechanism. A teaser that reveals more is a better
+          teaser, right up until it scrolls.
+
+          The overlap in `.gated-preview__card` is derived from this number, so
+          the two move together. Changing one alone breaks the seam.
+        */
+        height={{ base: "14rem", md: "18rem" }}
         overflow="hidden"
         /*
           Finishes at 70%, not at the bottom edge. A gradient that runs to 100%

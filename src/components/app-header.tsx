@@ -26,9 +26,17 @@ import type { Theme } from "@/lib/preferences";
  * else, because that is what "home" means to each of them — `/` only redirects
  * to `/my-events` for a session anyway.
  *
- * Full-bleed by design: the border runs edge to edge while the contents line up
- * with the page's own container, which is what stops the rule from looking like
- * it belongs to the card underneath it.
+ * Full-bleed by design: the border runs edge to edge while the contents sit in
+ * a container, which is what stops the rule from looking like it belongs to the
+ * card underneath it.
+ *
+ * **That container is the app's frame, not the page's.** It used to be `size="1"`
+ * to line up exactly with the page body beneath — which worked only because
+ * every page in the app happened to be 448px. Once the console runs to 1136px
+ * and a form stays at 448px, a bar that matched each one would change width from
+ * screen to screen, and furniture that moves when you walk between rooms reads
+ * as a bug. So it sits at the widest tier every page can reach and pages fit
+ * inside it.
  */
 export function AppHeader({
   organizer,
@@ -42,7 +50,7 @@ export function AppHeader({
 }) {
   return (
     <Box as="header" borderBottom="1px solid var(--sm-border-default)">
-      <Container size="1" px="4">
+      <Container size="4" px="4">
         <Flex justify="between" align="center" gap="3" py="3">
           {/*
             The chapa is the logo, and this is the one place it appears — the

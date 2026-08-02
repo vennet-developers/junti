@@ -176,6 +176,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             full-width submit button, and at 390px a bottom toast lands on the
             control you just pressed. The offset clears the signed-in header.
 
+            Both premises are a phone's, and both were re-checked against a
+            laptop rather than assumed to carry over. They hold, for a reason
+            that is not the original one: at a desktop width the submit button is
+            no longer full-bleed, so a bottom toast would clear it — but the eye
+            is at the top of a 900px viewport, and a confirmation that appears
+            600px below where you are looking is a confirmation you miss. Same
+            position, different justification, so it is written down rather than
+            left looking like an untouched default.
+
             Icons are not built in — the component ships icon-free on purpose —
             so the variants get theirs here, once, and a success toast looks the
             same wherever it came from.

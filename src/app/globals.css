@@ -30,6 +30,53 @@ html {
   --sm-density-factor: 1.4;
 }
 
+/*
+ * ── The width policy ─────────────────────────────────────────────────────────
+ *
+ * Three rules govern every screen, and they are stated here rather than
+ * rediscovered per page.
+ *
+ * **1. `Container size` is a max-width, so widening a page costs nothing on a
+ * phone.** `size="3"` at 390px behaves exactly like `size="1"` — both caps are
+ * larger than the viewport, so both simply fill it. That is why the per-screen
+ * work is mostly a one-word change and why none of it can regress the phone.
+ *
+ * **2. Width is granted for a reason or not at all.** Screens that are *scanned*
+ * — the agenda, the approvals queue, the organizer console — get it, because
+ * more of the list fits. Screens that are *read or answered* — forms, a single
+ * event, the privacy notice — stay narrow, because a longer line is worse
+ * reading, not better. Six of the twelve routes deliberately stay narrow.
+ *
+ * **3. The shell is the frame, not the page.** The header and footer sit at the
+ * widest tier (`size="4"`) while page bodies vary beneath them. They used to
+ * match the page exactly, which was only ever true because every page happened
+ * to be 448px; once pages differ, a bar that resizes with each one reads as the
+ * furniture moving between screens.
+ *
+ * Breakpoints are Stackmyth's own (640/768/1024/1280) via `Responsive<T>` props.
+ * Nothing here invents a second scale.
+ */
+
+/*
+ * Touch density, undone where there is a cursor.
+ *
+ * 1.4 exists because a thumb needs a bigger target than a pointer does. On a
+ * laptop it buys nothing and costs a lot: every control carries 40% more padding
+ * than it was designed for, which is what makes the app look like a phone
+ * screenshot on a monitor.
+ *
+ * Gated on `pointer: fine` and not on width alone, because the thing that
+ * matters is what is doing the pointing. A 1280px tablet is still a thumb, and
+ * stepping it down there would shrink the targets of the person who most needs
+ * them. Back to exactly 1 — the library's own default, the value the components
+ * were drawn against.
+ */
+@media (min-width: 64rem) and (pointer: fine) {
+  :root {
+    --sm-density-factor: 1;
+  }
+}
+
 body {
   margin: 0;
   /*
@@ -53,6 +100,23 @@ body {
   font-size: var(--sm-font-size-xl);
   line-height: var(--sm-leading-normal);
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * One step down the scale once there is room.
+ *
+ * `xl` is a phone decision: held at arm's length, in the sun, one-handed. The
+ * same size on a monitor two feet away is not generous, it is shouting — and it
+ * is the other half of why the app reads as a blown-up phone on a laptop.
+ *
+ * `lg`, not `md`. The library's `md` is 14px, tuned for dense desktop UI, and
+ * this app is not dense desktop UI on any screen; one step is the correction,
+ * two would be a different product. Still a token, still on the scale.
+ */
+@media (min-width: 48rem) {
+  body {
+    font-size: var(--sm-font-size-lg);
+  }
 }
 
 /*
@@ -208,4 +272,28 @@ body {
 .gated-preview__card {
   position: relative;
   margin-top: -5rem;
+}
+
+/*
+  The overlap follows the window it overlaps.
+
+  Every number in this effect was measured against a 390px screen: a 14rem
+  window, a mask that reaches full transparency at 70% of it, and a card whose
+  top lands at 9rem — just inside the 9.8rem where the fade finishes, so the
+  card covers the seam rather than leaving a strip of blank.
+
+  The window grows at `md` (see `gated-preview.tsx`) because a laptop has the
+  vertical room to show more of what is being withheld, which is the entire
+  point of the effect. The overlap has to grow with it or the relationship the
+  measurements encode breaks: at an 18rem window the fade finishes at 12.6rem,
+  and a card still riding up 5rem would start at 13rem — past the seam, with
+  nothing covering it.
+
+  6.25rem puts the top back at 11.75rem, the same fraction inside the fade as
+  the phone value. One number derived from the other, not two guesses.
+*/
+@media (min-width: 48rem) {
+  .gated-preview__card {
+    margin-top: -6.25rem;
+  }
 }

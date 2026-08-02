@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@stackmyth/button";
 import { EmptyState } from "@stackmyth/empty-state";
 import { TriangleAlertIcon } from "@stackmyth/icons";
-import { Container, Flex, Stack } from "@stackmyth/layout";
+import { Center, Container, Flex } from "@stackmyth/layout";
 
 import { useCopy } from "@/components/copy-provider";
 import { ROUTES } from "@/config/routes";
@@ -41,8 +41,9 @@ export default function Error({
   }, [error]);
 
   return (
-    <Container size="1" px="4" py="8">
-      <Stack gap="6">
+    /* Centred for the same reason as the 404 — see the note there. */
+    <Center minHeight={{ base: "auto", md: "58dvh" }}>
+      <Container size="1" px="4" py="8">
         <EmptyState
           icon={<TriangleAlertIcon size={28} />}
           title={copy.errorBoundary.title}
@@ -62,7 +63,7 @@ export default function Error({
             </Flex>
           }
         />
-      </Stack>
-    </Container>
+      </Container>
+    </Center>
   );
 }

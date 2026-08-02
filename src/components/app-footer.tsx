@@ -50,7 +50,13 @@ export async function AppFooter() {
 
   return (
     <Box as="footer" borderTop="1px solid var(--sm-border-default)" mt="7">
-      <Container size="1" px="4">
+      {/*
+        The same frame width as the header, for the same reason: the shell
+        belongs to the app, not to whichever page is under it. Nothing moves
+        visually — the contents are centred either way — but the two rules that
+        bracket the page now agree with each other at every viewport.
+      */}
+      <Container size="4" px="4">
         <Stack gap="4" py="6" align="center">
           {/*
             A plain <a> rather than next/link: it leaves the app entirely, and
