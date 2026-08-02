@@ -10,7 +10,7 @@ import { Skeleton } from "@stackmyth/skeleton";
  */
 export default function Loading() {
   return (
-    <Container size="1" px="4" py="6">
+    <Container size="2" px="4" py="6">
       <Stack gap="6" aria-hidden="true">
         <Stack gap="2">
           <Skeleton width="55%" height="34px" borderRadius="var(--sm-radius-md)" />

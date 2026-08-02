@@ -1,4 +1,4 @@
-import { Box, Container, Flex, Stack } from "@stackmyth/layout";
+import { Box, Container, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Skeleton } from "@stackmyth/skeleton";
 
 /**
@@ -8,12 +8,24 @@ import { Skeleton } from "@stackmyth/skeleton";
  * then cards — rather than a spinner, so the layout does not jump when the
  * content lands. The page queries the roster and the event-type catalogue, so
  * on mobile data there is a real gap to fill.
+ *
+ * **Every width here is a claim about the page underneath, so every width has
+ * to move when that page does.** This claimed to prevent a jump while causing
+ * one: the page went to `size="3"` with a two-column grid and this stayed at
+ * `size="1"` in one column, so the skeleton drew a 448px ribbon and the content
+ * landed 880px wide in two columns. A placeholder that lies about the layout is
+ * worse than a spinner — a spinner at least does not promise a shape.
+ *
+ * That is the standing cost of hand-drawn skeletons and the reason to keep them
+ * few: they are a second copy of the layout with nothing enforcing that the two
+ * agree.
  */
 export default function Loading() {
   return (
     <>
       <Box as="header" borderBottom="1px solid var(--sm-border-default)">
-        <Container size="1" px="4">
+        {/* The shell's frame width — see `app-header.tsx`. */}
+        <Container size="4" px="4">
           <Flex justify="between" align="center" gap="3" py="3">
             <Skeleton width="64px" height="28px" borderRadius="var(--sm-radius-md)" />
             {/* Measured against the real trigger, so the header does not
@@ -25,17 +37,34 @@ export default function Loading() {
         </Container>
       </Box>
 
-      <Container size="1" px="4" py="6">
+      <Container size="3" px="4" py="6">
         <Stack gap="5" aria-hidden="true">
           <Skeleton width="45%" height="30px" borderRadius="var(--sm-radius-md)" />
-          <Skeleton width="100%" height="50px" borderRadius="var(--sm-radius-md)" />
+
+          {/*
+            The create button, capped exactly where the real one is capped.
+
+            `Skeleton`'s own `width` is a plain string — it is the one
+            layout-ish component in the kit whose dimensions are not
+            `Responsive<T>` — so the breakpoint lives on a wrapper instead. That
+            works, and it is also the gap: a bone cannot state its own two
+            widths, so every responsive bone needs a Box around it.
+          */}
+          <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+            <Skeleton width="100%" height="50px" borderRadius="var(--sm-radius-md)" />
+          </Box>
+
           <Skeleton width="100%" height="45px" borderRadius="var(--sm-radius-md)" />
           <Skeleton width="100%" height="40px" borderRadius="var(--sm-radius-md)" />
 
-          {/* Two cards: enough to read as a list without pretending to know
-              how many events there are. */}
-          <Stack gap="3" pt="1">
-            {[0, 1].map((card) => (
+          {/*
+            Four cards in the same grid the list uses, not two in a column.
+            Two filled one screen when the list was one column; in two columns
+            they fill half of one, and a placeholder that stops half way up
+            reads as content that finished loading short.
+          */}
+          <Grid columns={{ base: "1", md: "2" }} gap="3" pt="1">
+            {[0, 1, 2, 3].map((card) => (
               <Stack key={card} gap="3" p="4" border borderRadius="var(--sm-radius-lg)">
                 <Flex justify="between" align="start" gap="3">
                   <Stack gap="2" width="70%">
@@ -52,7 +81,7 @@ export default function Loading() {
                 <Skeleton width="50%" height="16px" borderRadius="var(--sm-radius-sm)" />
               </Stack>
             ))}
-          </Stack>
+          </Grid>
         </Stack>
       </Container>
     </>

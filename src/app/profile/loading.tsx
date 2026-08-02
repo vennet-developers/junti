@@ -11,7 +11,7 @@ export default function Loading() {
   return (
     <>
       <Box as="header" borderBottom="1px solid var(--sm-border-default)">
-        <Container size="1" px="4">
+        <Container size="4" px="4">
           <Flex justify="between" align="center" gap="3" py="3">
             <Skeleton width="64px" height="28px" borderRadius="var(--sm-radius-md)" />
             {/* Matches the real trigger's measured 144x51 — see the note in
@@ -21,7 +21,7 @@ export default function Loading() {
         </Container>
       </Box>
 
-      <Container size="1" px="4" py="6">
+      <Container size="2" px="4" py="6">
         <Stack gap="6" aria-hidden="true">
           {/* The breadcrumb line, so the heading below does not jump up a row
               when the real trail arrives. */}
