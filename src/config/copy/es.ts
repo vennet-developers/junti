@@ -474,7 +474,7 @@ export const es = {
       "Puedes pedir saber qué tenemos tuyo, corregirlo, actualizarlo o borrarlo, y revocar cualquier autorización que hayas dado. El WhatsApp lo revocas tú mismo desde tu perfil y el número se borra de inmediato. Para lo demás escribe a hello@vennet.dev y respondemos dentro de los plazos que fija la Ley 1581 de 2012.",
     retentionTitle: "Cuánto tiempo",
     retentionBody:
-      "Mientras tengas cuenta. Si la borras, quitamos tus datos personales y dejamos solo lo que el evento necesita para que las cuentas de los demás sigan cuadrando. Los comprobantes de pago se borran cuando el organizador los aprueba.",
+      "Mientras tengas cuenta. Si la borras, quitamos tus datos personales y dejamos solo lo que el evento necesita para que las cuentas de los demás sigan cuadrando. Los comprobantes de pago que subes se guardan mientras el evento exista; si quieres que borremos el tuyo antes, escríbenos.",
     version: (v: string) => `Versión de este aviso: ${v}`,
   },
 

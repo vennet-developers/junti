@@ -466,7 +466,7 @@ export const en: Copy = {
       "You can ask what we hold, correct it, update it or delete it, and withdraw any permission you gave. WhatsApp you can withdraw yourself from your profile, and the number is deleted immediately. For anything else write to hello@vennet.dev and we answer within the periods set by Colombia's Ley 1581 de 2012.",
     retentionTitle: "For how long",
     retentionBody:
-      "While you have an account. If you delete it we remove your personal data and keep only what the event needs so everyone else's numbers still add up. Payment receipts are deleted once the organizer approves them.",
+      "While you have an account. If you delete it we remove your personal data and keep only what the event needs so everyone else's numbers still add up. Payment receipts you upload are kept for as long as the event exists; if you want yours removed sooner, write to us.",
     version: (v: string) => `Version of this notice: ${v}`,
   },
 
