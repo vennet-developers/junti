@@ -401,6 +401,24 @@ export const en: Copy = {
     },
   },
 
+  onboarding: {
+    title: "Complete your profile",
+    heading: "What is your name?",
+    subheading: "Just this and you are set. It is what everyone else sees on the lists.",
+    nameLabel: "Full name",
+    nameHelp: "This is how your friends will recognise you on the event's list.",
+    namePlaceholder: "Ivan Avila",
+    phoneLabel: "WhatsApp (optional)",
+    phoneHelp:
+      "So the organizer of your events can reach you. It never shows on the public list and other guests cannot see it.",
+    phonePlaceholder: "300 123 4567",
+    submit: "Done, take me in",
+    submitting: "Saving…",
+    errorNameRequired: "Enter your name.",
+    errorNameTooLong: "That name is too long.",
+    errorPhone: "That number does not look right. Digits only, with or without a country code.",
+  },
+
   invites: {
     heading: "Invite by email",
     help: "Paste the addresses separated by commas. Each one gets the event link.",

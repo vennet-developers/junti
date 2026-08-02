@@ -582,6 +582,60 @@ export const policyEvidence = pgTable("policy_evidence", {
  * a cross-schema FK would tie these migrations to Supabase, and the schema is
  * meant to run unchanged on any Postgres.
  */
+/**
+ * Who somebody is, as opposed to how they want the app to behave.
+ *
+ * **Deliberately not folded into `user_preferences`.** That table answers "what
+ * should this app do for me" — language, clock, theme, the invitation I send.
+ * This one answers "who am I", and the two have different lifetimes and
+ * different readers: a preference is only ever read for the person it belongs
+ * to, while a name and a phone number exist precisely so somebody ELSE can
+ * recognise and reach you.
+ *
+ * This also reverses a stated decision, on purpose. `organizer.ts` says nothing
+ * about a person is stored here because the session already carries it. That
+ * held while the only thing we needed was a name to print on a roster, which
+ * the session does carry. It stops holding the moment an organizer needs a way
+ * to reach a guest: metadata on somebody else's session is not readable by this
+ * app, so a contact detail that lives only there cannot serve the one purpose
+ * it was collected for.
+ *
+ * No foreign key to `auth.users`, for the same reason as `events.organizer_id`.
+ */
+export const userProfiles = pgTable("user_profiles", {
+  userId: uuid("user_id").primaryKey(),
+
+  /**
+   * What they are called, as they wrote it.
+   *
+   * Seeded from the identity provider when it supplies one — Google does — so
+   * most people never see the screen that asks. It is one field rather than
+   * given/family names: this is a roster in a group chat, not a passport, and
+   * every extra box is friction on the one screen standing between somebody and
+   * using the app.
+   */
+  fullName: text("full_name").notNull(),
+
+  /**
+   * A WhatsApp number, or NULL.
+   *
+   * **Organizer-readable, and only ever that.** The whole reason to hold it is
+   * so the person running an event can reach the people who said they are
+   * coming; it must never reach the participant view, which renders for anyone
+   * holding the public link. That is enforced by which query selects it — see
+   * `loadParticipantContacts`, which sits behind organizer authorization the
+   * same way `loadInvitations` does.
+   *
+   * Stored as typed, minus spaces and punctuation. Not validated into a
+   * canonical international form: this app cannot dial it, and rejecting a real
+   * number because it lacks a country code helps nobody.
+   */
+  phone: text("phone"),
+
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const userPreferences = pgTable("user_preferences", {
   userId: uuid("user_id").primaryKey(),
 
@@ -638,6 +692,7 @@ export type NewPaymentRow = typeof payments.$inferInsert;
 export type EventPolicyRow = typeof eventPolicies.$inferSelect;
 export type NewEventPolicyRow = typeof eventPolicies.$inferInsert;
 export type UserPreferencesRow = typeof userPreferences.$inferSelect;
+export type UserProfileRow = typeof userProfiles.$inferSelect;
 export type EventTypeRow = typeof eventTypes.$inferSelect;
 export type PolicyDefinitionRow = typeof policyDefinitions.$inferSelect;
 export type EventTypePolicyRow = typeof eventTypePolicies.$inferSelect;

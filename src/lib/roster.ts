@@ -13,6 +13,7 @@ import {
   policyDefinitions,
   policyEvidence,
   policySubmissions,
+  userProfiles,
 } from "@/db/schema";
 import type { CostMode, EventRow, ParticipantRow, PaymentRow } from "@/db/schema";
 
@@ -543,6 +544,33 @@ export async function linkInvitationToParticipant(
     .where(
       and(eq(invitations.eventId, eventId), eq(invitations.email, email.trim().toLowerCase())),
     );
+}
+
+/**
+ * WhatsApp numbers for the people on this event, keyed by participant id.
+ *
+ * **Every caller must be behind organizer authorization**, exactly like
+ * `loadInvitations`. This is deliberately NOT folded into `loadRoster`: that
+ * result renders for anyone holding the public link, and a phone number reaching
+ * it would publish the group's contact details to the group's whole WhatsApp
+ * chat and everyone they forwarded the link to.
+ *
+ * Returns a Map rather than widening `RosterMember`, so a phone cannot ride
+ * along into a component that was only ever given a roster. The organizer page
+ * has to ask for this on purpose.
+ */
+export async function loadParticipantContacts(eventId: string): Promise<Map<string, string>> {
+  const rows = await db
+    .select({ participantId: participants.id, phone: userProfiles.phone })
+    .from(participants)
+    .innerJoin(userProfiles, eq(userProfiles.userId, participants.userId))
+    .where(eq(participants.eventId, eventId));
+
+  return new Map(
+    rows
+      .filter((row): row is { participantId: string; phone: string } => Boolean(row.phone))
+      .map((row) => [row.participantId, row.phone]),
+  );
 }
 
 // ── Policy submissions ───────────────────────────────────────────────────────

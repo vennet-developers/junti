@@ -32,3 +32,15 @@ export function managePath(publicToken: string, organizerToken: string): string 
 export function whatsAppShareUrl(message: string): string {
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * A chat with one person, for an organizer chasing somebody.
+ *
+ * `wa.me` wants digits and nothing else — no `+`, no spaces — so whatever the
+ * person typed is reduced to digits here rather than at the boundary where it
+ * was stored. Keeping the stored value as they wrote it is what lets the
+ * organizer read a number that looks like a number.
+ */
+export function whatsAppContactUrl(phone: string): string {
+  return `https://wa.me/${phone.replace(/\D/g, "")}`;
+}

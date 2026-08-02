@@ -325,6 +325,34 @@ export const makeInviteSchema = (copy: Copy) =>
       }
     });
 
+/**
+ * The onboarding screen: who you are, and optionally how to reach you.
+ *
+ * The phone is stripped of everything a human puts in a number for readability
+ * — spaces, dots, dashes, brackets — and then only checked for length. It is
+ * deliberately NOT parsed into a canonical international form: this app never
+ * dials it, a Colombian number written without +57 is perfectly usable by the
+ * organizer who asked for it, and rejecting a real number for missing a country
+ * code helps nobody. The same reasoning as the sign-in form's email check.
+ */
+export const makeProfileSchema = (copy: Copy) =>
+  z.object({
+    fullName: z
+      .string()
+      .trim()
+      .min(1, copy.onboarding.errorNameRequired)
+      .max(NAME_MAX * 2, copy.onboarding.errorNameTooLong),
+    phone: z
+      .string()
+      .trim()
+      .transform((value) => value.replace(/[\s().-]/g, ""))
+      .refine(
+        (value) => value.length === 0 || /^\+?\d{7,15}$/.test(value),
+        copy.onboarding.errorPhone,
+      )
+      .transform((value) => (value.length === 0 ? null : value)),
+  });
+
 export const setPaymentStatusSchema = z.object({
   participantId: participantIdSchema,
   status: paymentStatusSchema,

@@ -26,12 +26,19 @@ import { ROUTES, signInPath } from "@/config/routes";
 import {
   authorizeOrganizer,
   loadInvitations,
+  loadParticipantContacts,
   findEventByPublicToken,
   loadReviewQueue,
   loadRoster,
   type RosterMember,
 } from "@/lib/roster";
-import { managePath, origin, participantPath, whatsAppShareUrl } from "@/lib/urls";
+import {
+  managePath,
+  origin,
+  participantPath,
+  whatsAppContactUrl,
+  whatsAppShareUrl,
+} from "@/lib/urls";
 
 import { CloseEventControl } from "./close-event-control";
 import { InviteForm, InvitedList } from "./invite-panel";
@@ -103,8 +110,10 @@ export default async function ManagePage({
 
   const queue = await loadReviewQueue(eventRow.id, locale);
 
-  // Organizer-only, and the only read on this page that returns addresses.
+  // Organizer-only, and the two reads on this page that return contact details.
+  // Neither goes anywhere near `loadRoster`, whose result the public page uses.
   const invitations = await loadInvitations(eventRow.id);
+  const contacts = await loadParticipantContacts(eventRow.id);
 
   // The catalogue, for the edit form's kind picker and policy list.
   const [eventTypes, policyOptionsByType] = await Promise.all([
@@ -155,6 +164,28 @@ export default async function ManagePage({
     return (
       <Text variant="small" color="muted">
         {allSubmitted ? copy.roster.inReview(labels) : copy.roster.waitingOn(labels)}
+      </Text>
+    );
+  };
+
+  /**
+   * A way to reach this person, under their name.
+   *
+   * Only on the organizer's screen, and only for people who chose to give a
+   * number — it is optional at onboarding and stays that way. Rendered as a
+   * WhatsApp link rather than plain text because the reason an organizer is
+   * looking at it is that they want to write to somebody, and a number they
+   * have to copy is a number they will not use.
+   */
+  const contactNote = (member: RosterMember) => {
+    const phone = contacts.get(member.id);
+    if (!phone) return null;
+
+    return (
+      <Text variant="small" color="muted">
+        <Box as="a" href={whatsAppContactUrl(phone)} target="_blank" rel="noopener noreferrer">
+          {phone}
+        </Box>
       </Text>
     );
   };
@@ -335,6 +366,7 @@ export default async function ManagePage({
                   copy={copy}
                   showMoney={showMoney}
                   renderActions={participantActions}
+                  renderNote={contactNote}
                 />
 
                 {roster.pendingPolicy.length > 0 ? (

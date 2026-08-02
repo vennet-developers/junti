@@ -409,6 +409,24 @@ export const es = {
     },
   },
 
+  onboarding: {
+    title: "Completa tu perfil",
+    heading: "¿Cómo te llamas?",
+    subheading: "Solo esto y quedas listo. Es lo que ven los demás en las listas.",
+    nameLabel: "Nombre y apellido",
+    nameHelp: "Así te van a reconocer tus amigos en la lista del evento.",
+    namePlaceholder: "Ivan Avila",
+    phoneLabel: "WhatsApp (opcional)",
+    phoneHelp:
+      "Para que el organizador de tus eventos pueda escribirte. No aparece en la lista pública ni lo ven los otros invitados.",
+    phonePlaceholder: "300 123 4567",
+    submit: "Listo, entrar",
+    submitting: "Guardando…",
+    errorNameRequired: "Escribe tu nombre.",
+    errorNameTooLong: "Ese nombre es muy largo.",
+    errorPhone: "Ese número no parece válido. Solo dígitos, con o sin indicativo.",
+  },
+
   invites: {
     heading: "Invitar por correo",
     help: "Pega los correos separados por coma. A cada uno le llega el link del evento.",

@@ -1,8 +1,9 @@
-import type { EmailOtpType } from "@supabase/supabase-js";
+import type { EmailOtpType, User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { ROUTES, signInPath } from "@/config/routes";
 import { applyStoredPreferences } from "@/lib/preferences";
+import { ensureProfile } from "@/lib/profile";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -55,6 +56,28 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  /**
+   * Where a freshly signed-in person actually lands.
+   *
+   * Normally where they were going. The exception is somebody we know nothing
+   * about: an emailed link carries an address and no name, so there is nothing
+   * to put on a roster and they are sent to fill that in first, with their
+   * destination carried along so the detour ends where the trip started.
+   *
+   * A Google account never takes this branch — `ensureProfile` writes the name
+   * the provider already gave and reports nothing missing — which is the point.
+   * The screen exists for the people who need it and stays invisible to
+   * everybody else.
+   */
+  async function landing(user: User): Promise<string> {
+    await applyStoredPreferences(user.id);
+
+    const { needsOnboarding } = await ensureProfile(user);
+    if (!needsOnboarding) return destination;
+
+    return `${ROUTES.onboarding}?next=${encodeURIComponent(destination)}`;
+  }
+
   const supabase = await createSupabaseServerClient();
 
   if (code) {
@@ -62,8 +85,8 @@ export async function GET(request: NextRequest) {
     if (!error) {
       // The one moment we know both who they are and that this device may
       // never have seen them: copy their saved settings onto it.
-      if (data.user) await applyStoredPreferences(data.user.id);
-      return NextResponse.redirect(`${origin}${destination}`);
+      const next = data.user ? await landing(data.user) : destination;
+      return NextResponse.redirect(`${origin}${next}`);
     }
 
     /*
@@ -80,8 +103,10 @@ export async function GET(request: NextRequest) {
   if (tokenHash && type) {
     const { error, data } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (!error) {
-      if (data.user) await applyStoredPreferences(data.user.id);
-      return NextResponse.redirect(`${origin}${destination}`);
+      // This is the branch the emailed links take, and therefore the one that
+      // actually reaches somebody with no name on file.
+      const next = data.user ? await landing(data.user) : destination;
+      return NextResponse.redirect(`${origin}${next}`);
     }
   }
 

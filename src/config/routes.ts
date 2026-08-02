@@ -24,6 +24,11 @@ export const ROUTES = {
   myEvents: "/my-events",
   profile: "/profile",
   /**
+   * First run, for an account the identity provider told us nothing about.
+   * Reached only from the auth callback; see `ensureProfile`.
+   */
+  onboarding: "/onboarding",
+  /**
    * What the organizer's guests receive, as opposed to `/profile`, which is
    * how the organizer sees the app. The two are settings screens and the split
    * between them is who the setting affects.
