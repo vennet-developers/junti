@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
-import { Box, Flex, Stack } from "@stackmyth/layout";
+import { Box, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 import { toast } from "@stackmyth/toast";
@@ -125,64 +125,80 @@ export function MessageForm({
       <Stack gap="5">
         <FormError message={state.errors._form} />
 
-        <ControlledField
-          label={copy.messages.invitationLabel}
-          description={copy.messages.invitationHelp}
-          error={state.errors.message}
-          htmlFor="share-message"
-        >
-          <Textarea
-            ref={field}
-            id="share-message"
-            name="message"
-            fullWidth
-            rows={4}
-            maxLength={SHARE_MESSAGE_MAX_LENGTH}
-            value={message}
-            onChange={(event) => {
-              setMessage(event.target.value);
-              setIsDefault(false);
-            }}
-            status={state.errors.message ? "error" : "default"}
-          />
-        </ControlledField>
-
-        <Stack gap="2">
-          <Text variant="small" color="muted">
-            {copy.messages.insertLabel}
-          </Text>
-          <Flex gap="2" wrap="wrap">
-            {placeholders.map((placeholder) => (
-              <Button
-                key={placeholder.token}
-                type="button"
-                size="sm"
-                variant="outline"
-                shape="pill"
-                disabled={pending}
-                onClick={() => insert(placeholder.token)}
-              >
-                {placeholder.label}
-              </Button>
-            ))}
-          </Flex>
-        </Stack>
-
         {/*
-          The sample uses one of their own events rather than invented text, so
-          the length of a real title and a real date are visible before the
-          message is sent to anybody.
+          Editor left, preview right, from `lg`.
+
+          The preview is the point of this screen — it is the only way to see
+          what a real title and a real date do to the length of the message
+          before it goes to anybody. Stacked, editing means scrolling away from
+          the thing you are editing against, so every change is checked by
+          memory. Side by side it is checked by looking.
+
+          DOM order is unchanged, so a phone still gets field, placeholders,
+          preview, save — in that order and with that spacing.
         */}
-        <Stack gap="2">
-          <Text variant="small" color="muted">
-            {copy.messages.previewLabel}
-          </Text>
-          <Card surface="outlined">
-            <CardContent>
-              <Text>{renderShareMessage(message, sample)}</Text>
-            </CardContent>
-          </Card>
-        </Stack>
+        <Grid columns={{ base: "1", lg: "1fr 1fr" }} gap="5" align="start">
+          <Stack gap="5">
+            <ControlledField
+              label={copy.messages.invitationLabel}
+              description={copy.messages.invitationHelp}
+              error={state.errors.message}
+              htmlFor="share-message"
+            >
+              <Textarea
+                ref={field}
+                id="share-message"
+                name="message"
+                fullWidth
+                rows={4}
+                maxLength={SHARE_MESSAGE_MAX_LENGTH}
+                value={message}
+                onChange={(event) => {
+                  setMessage(event.target.value);
+                  setIsDefault(false);
+                }}
+                status={state.errors.message ? "error" : "default"}
+              />
+            </ControlledField>
+
+            <Stack gap="2">
+              <Text variant="small" color="muted">
+                {copy.messages.insertLabel}
+              </Text>
+              <Flex gap="2" wrap="wrap">
+                {placeholders.map((placeholder) => (
+                  <Button
+                    key={placeholder.token}
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    shape="pill"
+                    disabled={pending}
+                    onClick={() => insert(placeholder.token)}
+                  >
+                    {placeholder.label}
+                  </Button>
+                ))}
+              </Flex>
+            </Stack>
+          </Stack>
+
+          {/*
+            The sample uses one of their own events rather than invented text, so
+            the length of a real title and a real date are visible before the
+            message is sent to anybody.
+          */}
+          <Stack gap="2">
+            <Text variant="small" color="muted">
+              {copy.messages.previewLabel}
+            </Text>
+            <Card surface="outlined">
+              <CardContent>
+                <Text>{renderShareMessage(message, sample)}</Text>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Grid>
 
         <Flex gap="3" wrap="wrap" align="center">
           <Button type="submit" size="lg" loading={pending} loadingLabel={copy.common.loading}>

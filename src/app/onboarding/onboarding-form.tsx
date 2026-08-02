@@ -117,9 +117,13 @@ export function OnboardingForm({ next, defaultName }: { next: string; defaultNam
           </Text>
         </Stack>
 
-        <Button type="submit" size="lg" fullWidth disabled={pending}>
-          {pending ? copy.onboarding.submitting : copy.onboarding.submit}
-        </Button>
+        {/* Same rule as SubmitButton: full-bleed for a thumb, capped for a
+            pointer. */}
+        <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+          <Button type="submit" size="lg" fullWidth disabled={pending}>
+            {pending ? copy.onboarding.submitting : copy.onboarding.submit}
+          </Button>
+        </Box>
       </Stack>
     </form>
   );

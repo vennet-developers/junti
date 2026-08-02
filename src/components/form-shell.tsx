@@ -94,6 +94,13 @@ export function ControlledField({
  * hardcoded an English "Loading…" for screen readers (gap #4) — until
  * `loadingLabel` landed in 0.20.0, which retired the composed
  * disabled-Button-plus-Spinner workaround this component carried.
+ *
+ * **Full-bleed on a phone, capped from `md`.** `fullWidth` is a touch decision:
+ * a thumb reaching the bottom of a form wants the whole width to aim at. A
+ * pointer does not, and the same button stretched across a 688px form reads as a
+ * banner rather than a control — the thing you press stops looking like a thing
+ * you press. Capped here rather than at each call site, because every form in
+ * the app ends in this component and the rule is the same in all of them.
  */
 export function SubmitButton({
   pending,
@@ -109,16 +116,18 @@ export function SubmitButton({
   size?: "md" | "lg";
 }) {
   return (
-    <Button
-      type="submit"
-      size={size}
-      variant={variant}
-      fullWidth
-      loading={pending}
-      loadingLabel={pendingLabel}
-    >
-      {idleLabel}
-    </Button>
+    <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+      <Button
+        type="submit"
+        size={size}
+        variant={variant}
+        fullWidth
+        loading={pending}
+        loadingLabel={pendingLabel}
+      >
+        {idleLabel}
+      </Button>
+    </Box>
   );
 }
 

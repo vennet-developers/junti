@@ -59,8 +59,24 @@ export default async function PrivacyPage() {
     <>
       <AppHeader organizer={organizer} theme={theme} />
 
-      <Container size="1" px="4" py="6">
-        <Stack gap="6">
+      {/*
+        Capped by measure, not by container — and the old cap was wrong in the
+        other direction.
+
+        This is the longest continuous prose in the product and the one page
+        where somebody is genuinely reading rather than tapping. 448px of this
+        body type is roughly 45 characters a line, which is tighter than
+        comfortable for sustained reading; the typographic range is 60–75, and
+        68ch sits in it at any font size because the unit scales with the type
+        rather than fighting it.
+
+        So the container widens and the text does not: `size="2"` gives the
+        headings and the breadcrumb room, `maxWidth` holds the paragraphs at a
+        readable line. A privacy notice that is hard to read is its own kind of
+        compliance problem.
+      */}
+      <Container size="2" px="4" py="6">
+        <Stack gap="6" maxWidth="68ch">
           <PageBreadcrumb
             label={copy.nav.breadcrumbLabel}
             items={[{ label: copy.nav.home, href: ROUTES.home }, { label: copy.privacy.title }]}

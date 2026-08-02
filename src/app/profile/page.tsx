@@ -45,7 +45,7 @@ export default async function ProfilePage() {
     <>
       <AppHeader organizer={organizer} theme={theme} />
 
-      <Container size="1" px="4" py="6">
+      <Container size="2" px="4" py="6">
         <Stack gap="6">
           {/*
             Home, not "my events". This screen is beside the events, not inside

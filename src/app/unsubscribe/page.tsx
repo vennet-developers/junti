@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { z } from "zod";
 
-import { Container, Stack } from "@stackmyth/layout";
+import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
@@ -65,23 +65,34 @@ export default async function UnsubscribePage({
     <>
       <AppHeader organizer={null} theme={theme} />
 
-      <Container size="1" px="4" py="7">
-        <Stack gap="5">
-          <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
-            {copy.unsubscribe.heading}
-          </Text>
+      {/*
+        Narrow, and centred once the screen is tall enough to make that a
+        question. A short card pinned to the top of a 900px viewport with
+        everything under it empty reads as a page that stopped loading — and this
+        is a gate somebody has been sent to, so looking broken is expensive.
 
-          {parsed.success ? (
-            <Notice tone="info" title={copy.unsubscribe.doneTitle(parsed.data)}>
-              {copy.unsubscribe.doneHelp}
-            </Notice>
-          ) : (
-            <Notice tone="warning" title={copy.unsubscribe.badLinkTitle}>
-              {copy.unsubscribe.badLinkHelp}
-            </Notice>
-          )}
-        </Stack>
-      </Container>
+        `minHeight` only from `md`: on a phone the content already fills what it
+        needs and forcing a viewport fraction there would only add scroll.
+      */}
+      <Center minHeight={{ base: "auto", md: "62dvh" }}>
+        <Container size="1" px="4" py="7">
+          <Stack gap="5">
+            <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
+              {copy.unsubscribe.heading}
+            </Text>
+
+            {parsed.success ? (
+              <Notice tone="info" title={copy.unsubscribe.doneTitle(parsed.data)}>
+                {copy.unsubscribe.doneHelp}
+              </Notice>
+            ) : (
+              <Notice tone="warning" title={copy.unsubscribe.badLinkTitle}>
+                {copy.unsubscribe.badLinkHelp}
+              </Notice>
+            )}
+          </Stack>
+        </Container>
+      </Center>
     </>
   );
 }

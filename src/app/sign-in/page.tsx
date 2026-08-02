@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { Container, Stack } from "@stackmyth/layout";
+import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
@@ -45,21 +45,34 @@ export default async function SignInPage({
           and appearance it carries. */}
       <AppHeader organizer={null} theme={theme} />
 
-      <Container size="1" px="4" py="7">
-        <Stack gap="6">
-          <PageBreadcrumb
-            label={copy.nav.breadcrumbLabel}
-            items={[{ label: copy.nav.home, href: ROUTES.home }, { label: copy.auth.signInTitle }]}
-          />
+      {/*
+        Narrow, and centred once the screen is tall enough to make that a
+        question. A short card pinned to the top of a 900px viewport with
+        everything under it empty reads as a page that stopped loading — and this
+        is a gate somebody has been sent to, so looking broken is expensive.
 
-          <Stack gap="2">
-            <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
-              {copy.auth.signInHeading}
-            </Text>
-            <Text color="muted">{copy.auth.signInSubheading}</Text>
-          </Stack>
+        `minHeight` only from `md`: on a phone the content already fills what it
+        needs and forcing a viewport fraction there would only add scroll.
+      */}
+      <Center minHeight={{ base: "auto", md: "62dvh" }}>
+        <Container size="1" px="4" py="7">
+          <Stack gap="6">
+            <PageBreadcrumb
+              label={copy.nav.breadcrumbLabel}
+              items={[
+                { label: copy.nav.home, href: ROUTES.home },
+                { label: copy.auth.signInTitle },
+              ]}
+            />
 
-          {/*
+            <Stack gap="2">
+              <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
+                {copy.auth.signInHeading}
+              </Text>
+              <Text color="muted">{copy.auth.signInSubheading}</Text>
+            </Stack>
+
+            {/*
             Why they are back here, when they are back here.
 
             Somebody who followed a link from their inbox and ended up on a
@@ -67,19 +80,20 @@ export default async function SignInPage({
             reading of that is that the app lost their request. Naming the
             cause is what turns a dead end into an instruction.
           */}
-          {error === "browser" ? (
-            <Notice tone="warning" title={copy.auth.linkWrongBrowser}>
-              {copy.auth.linkWrongBrowserHelp}
-            </Notice>
-          ) : error ? (
-            <Notice tone="warning" title={copy.auth.linkFailed}>
-              {copy.auth.linkFailedHelp}
-            </Notice>
-          ) : null}
+            {error === "browser" ? (
+              <Notice tone="warning" title={copy.auth.linkWrongBrowser}>
+                {copy.auth.linkWrongBrowserHelp}
+              </Notice>
+            ) : error ? (
+              <Notice tone="warning" title={copy.auth.linkFailed}>
+                {copy.auth.linkFailedHelp}
+              </Notice>
+            ) : null}
 
-          <SignInForm redirectTo={redirectTo} />
-        </Stack>
-      </Container>
+            <SignInForm redirectTo={redirectTo} />
+          </Stack>
+        </Container>
+      </Center>
     </>
   );
 }

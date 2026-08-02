@@ -70,7 +70,7 @@ export default async function MessagesPage() {
     <>
       <AppHeader organizer={organizer} theme={theme} />
 
-      <Container size="1" px="4" py="6">
+      <Container size="3" px="4" py="6">
         <Stack gap="6">
           <PageBreadcrumb
             label={copy.nav.breadcrumbLabel}

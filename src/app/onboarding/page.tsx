@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { Container, Stack } from "@stackmyth/layout";
+import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AppHeader } from "@/components/app-header";
@@ -58,24 +58,35 @@ export default async function OnboardingPage({
     <>
       <AppHeader organizer={organizer} theme={theme} />
 
-      <Container size="1" px="4" py="7">
-        <Stack gap="6">
-          <Stack gap="2">
-            <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
-              {copy.onboarding.heading}
-            </Text>
-            <Text color="muted">{copy.onboarding.subheading}</Text>
-          </Stack>
+      {/*
+        Narrow, and centred once the screen is tall enough to make that a
+        question. A short card pinned to the top of a 900px viewport with
+        everything under it empty reads as a page that stopped loading — and this
+        is a gate somebody has been sent to, so looking broken is expensive.
 
-          {/*
+        `minHeight` only from `md`: on a phone the content already fills what it
+        needs and forcing a viewport fraction there would only add scroll.
+      */}
+      <Center minHeight={{ base: "auto", md: "62dvh" }}>
+        <Container size="1" px="4" py="7">
+          <Stack gap="6">
+            <Stack gap="2">
+              <Text as="h1" variant="h2" fontFamily="var(--junti-display)">
+                {copy.onboarding.heading}
+              </Text>
+              <Text color="muted">{copy.onboarding.subheading}</Text>
+            </Stack>
+
+            {/*
             The email's local part is a decent first guess and a terrible final
             answer — "ivelaval" is not what anybody's friends call them. Offered
             as a starting point they can overwrite rather than left blank,
             because an empty required field on arrival reads as a chore.
           */}
-          <OnboardingForm next={destination} defaultName={organizer.displayName} />
-        </Stack>
-      </Container>
+            <OnboardingForm next={destination} defaultName={organizer.displayName} />
+          </Stack>
+        </Container>
+      </Center>
     </>
   );
 }

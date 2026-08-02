@@ -3,7 +3,7 @@
 import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
-import { Stack } from "@stackmyth/layout";
+import { Box, Stack } from "@stackmyth/layout";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@stackmyth/select";
 import { Text } from "@stackmyth/text";
 import { toast } from "@stackmyth/toast";
@@ -150,9 +150,13 @@ export function ProfileForm({
           {copy.profile.storedNotice}
         </Text>
 
-        <Button type="submit" size="lg" fullWidth disabled={pending}>
-          {pending ? copy.profile.saving : copy.profile.save}
-        </Button>
+        {/* Same rule as SubmitButton: full-bleed for a thumb, capped for a
+            pointer. */}
+        <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+          <Button type="submit" size="lg" fullWidth disabled={pending}>
+            {pending ? copy.profile.saving : copy.profile.save}
+          </Button>
+        </Box>
       </Stack>
     </form>
   );

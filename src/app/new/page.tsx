@@ -68,7 +68,7 @@ export default async function NewEventPage({
     <>
       <AppHeader organizer={organizer} theme={theme} signInNext={ROUTES.newEvent} />
 
-      <Container size="1" px="4" py="6">
+      <Container size="2" px="4" py="6">
         <Stack gap="6">
           <PageBreadcrumb
             label={copy.nav.breadcrumbLabel}
