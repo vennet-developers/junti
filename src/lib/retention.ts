@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { invitations, policyEvidence, policySubmissions, sendCounters } from "@/db/schema";
@@ -71,15 +71,29 @@ export async function runRetention(): Promise<RetentionReport> {
     somebody sent something and it was refused — deleting the decision along
     with the picture would silently reinstate them as owing nothing.
   */
+  /*
+    A typed subquery, not a `sql` template.
+
+    The first version interpolated a `Date` into raw SQL and Postgres refused
+    it: a bare parameter in that position has no column to infer its type from,
+    so the driver sends something the planner cannot place. Going through the
+    query builder means the comparison is bound against `reviewed_at` and the
+    date is typed by the column — the same shape the approvals queue already
+    uses to scope its update.
+  */
+  const rejectedSubmissions = db
+    .select({ id: policySubmissions.id })
+    .from(policySubmissions)
+    .where(
+      and(
+        eq(policySubmissions.status, "rejected"),
+        lt(policySubmissions.reviewedAt, daysAgo(REJECTED_EVIDENCE_DAYS)),
+      ),
+    );
+
   const rejected = await db
     .delete(policyEvidence)
-    .where(
-      sql`${policyEvidence.submissionId} in (
-        select ${policySubmissions.id} from ${policySubmissions}
-        where ${policySubmissions.status} = 'rejected'
-          and ${policySubmissions.reviewedAt} < ${daysAgo(REJECTED_EVIDENCE_DAYS)}
-      )`,
-    )
+    .where(inArray(policyEvidence.submissionId, rejectedSubmissions))
     .returning({ submissionId: policyEvidence.submissionId });
 
   const counters = await db
