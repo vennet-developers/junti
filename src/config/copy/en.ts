@@ -445,7 +445,7 @@ export const en: Copy = {
       "The short version: we keep the minimum the event needs, we sell nothing, and you can ask us to delete it whenever you like.",
     responsibleTitle: "Who is responsible",
     responsibleBody:
-      "Vennet, based in Colombia, is the data controller. For any request about your data, write to hello@vennet.dev.",
+      "Junti is a Vennet product, operated by Iván Elías Ávila Almanza, an individual based in Colombia, who acts as the data controller. For questions, complaints, or to exercise any of your rights, write to hello@vennet.dev. We answer questions within ten business days and complaints within fifteen, as Colombia's Ley 1581 de 2012 requires.",
     dataTitle: "What we keep",
     dataBody:
       "Your email, your name, and your WhatsApp number only if you gave it by ticking the box. For events we keep which ones you joined, what you answered, and whether the organizer recorded your payment. If somebody invited you by email, we keep that address so the invitation can reach you.",
@@ -454,7 +454,7 @@ export const en: Copy = {
       "Email is how you get in: there is no password, we send you a link. Your name is what everyone else sees on the event's list. The phone number exists for exactly one thing — so the organizer of an event you joined can reach you on WhatsApp.",
     sharingTitle: "Who else sees it",
     sharingBody:
-      "The organizer of each event you join sees your name, your answer and — if you allowed it — your WhatsApp. Other guests see your name and your answer, never your email or your phone. We share nothing with anyone else and sell nothing to third parties.",
+      "The organizer of each event you join sees your name, your answer and — if you allowed it — your WhatsApp. Other guests see your name and your answer, never your email or your phone. We do not share your data with anyone else, we do not sell it, and we will not: protecting it is part of what this product promises.",
     processorsTitle: "Which tools",
     processorsBody:
       "Supabase holds the database and handles sign-in, in Canada. Resend delivers the email, in the United States. Vercel hosts the application. Each processes data only on our instructions and only for what is described here.",
