@@ -521,6 +521,19 @@ export const en: Copy = {
     myEventsEmpty: "You have not created any events yet.",
     myEventsEmptyHelp: "Once you create one, it shows up here with its history.",
     myEventsLink: "My events",
+    /** How you relate to each event, as the card's badge. */
+    roles: {
+      organizer: "Organizing",
+      in: "Going",
+      out: "Not going",
+      maybe: "Maybe",
+      waitlisted: "Waitlisted",
+      invited: "No answer yet",
+    },
+    openEvent: "Open event",
+    pendingTitle: (n: number) =>
+      n === 1 ? "You were invited to an event" : `You were invited to ${n} events`,
+    pendingHelp: "Open them and say whether you are coming. The organizer is waiting.",
     share: "Share",
     duplicate: "Duplicate",
     duplicateAndEdit: "Duplicate and edit",

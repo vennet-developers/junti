@@ -52,15 +52,39 @@ import { duplicateEvent } from "./actions";
 export function EventCardActions({
   eventId,
   managePath,
+  eventPath,
   whatsAppUrl,
 }: {
   eventId: string;
-  managePath: string;
+  /** Null when the reader does not own this event — see `EventListItem`. */
+  managePath: string | null;
+  eventPath: string;
   whatsAppUrl: string;
 }) {
   const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+
+  /*
+    Somebody who is merely going gets one button, and it is the event.
+
+    Everything else here is an owner's verb — share the invitation, open the
+    roster and the money, duplicate for next week — and offering a guest a
+    dimmed version of a menu they can never use would be worse than not
+    offering it. Sharing is the one that could arguably survive, since the
+    public link is public; it goes anyway, because a guest forwarding an
+    invitation on the organizer's behalf is not a thing this product asks
+    anyone to do.
+  */
+  if (!managePath) {
+    return (
+      <Flex gap="2" align="center" wrap="nowrap">
+        <Button asChild size="sm" variant="secondary" shape="pill">
+          <Link href={eventPath}>{copy.auth.openEvent}</Link>
+        </Button>
+      </Flex>
+    );
+  }
 
   function duplicate() {
     startTransition(async () => {

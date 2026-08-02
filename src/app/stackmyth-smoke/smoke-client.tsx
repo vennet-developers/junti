@@ -72,6 +72,8 @@ const SMOKE_EVENTS: EventListItem[] = [
     attendingCount: 8,
     firstAttendees: ["Camila", "Andrés", "Juli"],
     managePath: "#",
+    role: "organizer",
+    eventPath: "/e/demo",
     whatsAppUrl: "#",
   },
   {
@@ -89,6 +91,8 @@ const SMOKE_EVENTS: EventListItem[] = [
     attendingCount: 12,
     firstAttendees: ["Sara", "Nico"],
     managePath: "#",
+    role: "organizer",
+    eventPath: "/e/demo",
     whatsAppUrl: "#",
   },
   {
@@ -106,6 +110,8 @@ const SMOKE_EVENTS: EventListItem[] = [
     attendingCount: 0,
     firstAttendees: [],
     managePath: "#",
+    role: "organizer",
+    eventPath: "/e/demo",
     whatsAppUrl: "#",
   },
 ];

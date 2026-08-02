@@ -39,7 +39,23 @@ export interface EventListItem {
   colorIndex: number;
   attendingCount: number;
   firstAttendees: string[];
-  managePath: string;
+  /**
+   * How the reader is connected to this event, which decides what the card
+   * offers. Sent as a plain string rather than the server's union because the
+   * only thing the client does with it is pick a label and a variant.
+   */
+  role: "organizer" | "in" | "out" | "maybe" | "waitlisted" | "invited";
+  /**
+   * Null for every event the reader does not own.
+   *
+   * The manage path contains the organizer token, which is full control of the
+   * event. This list now holds events belonging to other people, so the field
+   * has to be absent on those — see the `MyEvent` union in `roster.ts`, where
+   * the compiler enforces the same thing one layer down.
+   */
+  managePath: string | null;
+  /** The public event page. Where somebody who is merely going wants to go. */
+  eventPath: string;
   whatsAppUrl: string;
 }
 
@@ -250,7 +266,18 @@ function EventCard({ event }: { event: EventListItem }) {
               <Text weight="semibold">{event.title}</Text>
             </Box>
 
-            <Box flexShrink={0}>
+            <Flex flexShrink={0} gap="2" align="center" wrap="wrap" justify="end">
+              {/*
+                Your role, next to the event's state, because they answer two
+                different questions that used to have only one answer: this list
+                was everything you organized, so the relationship was implied by
+                the page. Now it holds other people's events too and the card
+                has to say which is which.
+              */}
+              <Badge variant={event.role === "organizer" ? "default" : "outline"} size="sm" soft>
+                {copy.auth.roles[event.role]}
+              </Badge>
+
               {event.isClosed ? (
                 <Badge variant="error" size="sm" soft>
                   {copy.event.closedBadge}
@@ -260,7 +287,7 @@ function EventCard({ event }: { event: EventListItem }) {
                   {event.isPast ? copy.auth.statusPast : copy.auth.statusUpcoming}
                 </Badge>
               )}
-            </Box>
+            </Flex>
           </Flex>
 
           {event.location ? (
@@ -333,6 +360,7 @@ function EventCard({ event }: { event: EventListItem }) {
               <EventCardActions
                 eventId={event.id}
                 managePath={event.managePath}
+                eventPath={event.eventPath}
                 whatsAppUrl={event.whatsAppUrl}
               />
             </Flex>

@@ -530,6 +530,19 @@ export const es = {
     myEventsEmpty: "Todavía no has creado ningún evento.",
     myEventsEmptyHelp: "Cuando crees uno, aparecerá acá con su historial.",
     myEventsLink: "Mis eventos",
+    /** Tu relación con cada evento, en la etiqueta de la tarjeta. */
+    roles: {
+      organizer: "Organizas",
+      in: "Vas",
+      out: "No vas",
+      maybe: "Tal vez",
+      waitlisted: "En espera",
+      invited: "Sin responder",
+    },
+    openEvent: "Ver evento",
+    pendingTitle: (n: number) =>
+      n === 1 ? "Te invitaron a un evento" : `Te invitaron a ${n} eventos`,
+    pendingHelp: "Ábrelos y di si vas. El organizador está esperando tu respuesta.",
     share: "Compartir",
     duplicate: "Duplicar",
     duplicateAndEdit: "Duplicar y editar",

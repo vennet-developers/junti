@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import {
@@ -420,6 +420,135 @@ export interface OrganizerEventSummary {
    * to throw them away would grow with the roster for no visible gain.
    */
   firstAttendees: string[];
+}
+
+/**
+ * How one person relates to one event.
+ *
+ * `invited` is the only one that is not a decision: somebody was emailed and has
+ * not answered. It is the state the agenda pins to the top, because it is the
+ * only one on the page asking for anything.
+ */
+export type MyEventRole = "organizer" | Attendance | "invited";
+
+/** Everything a card needs, regardless of how you are connected to the event. */
+type MyEventCore = Omit<OrganizerEventSummary, "organizerToken" | "createdAt">;
+
+/**
+ * An event on somebody's agenda, discriminated by their role in it.
+ *
+ * **The union is the safety property, and it is why this is not one type with a
+ * nullable token.** `organizer_token` is full control of an event; the manage
+ * screen's own doc says it must never reach a participant route. A single shape
+ * carrying `organizerToken: string | null` would compile perfectly while a card
+ * rendered somebody else's manage link, and the mistake would look like a
+ * missing null check rather than a leak. Here the field is ABSENT from the
+ * variants where it would be a leak, so reading it without first narrowing to
+ * `role === "organizer"` does not compile.
+ *
+ * Absent, specifically — not `organizerToken?: never`. That was the first
+ * attempt and it defeats the whole point: an optional `never` still declares the
+ * property, so `event.organizerToken` type-checks everywhere and merely comes
+ * back `undefined`. A compile check confirms the difference; the version below
+ * is the one that actually errors.
+ */
+export type MyEvent =
+  | (MyEventCore & { role: "organizer"; organizerToken: string })
+  | (MyEventCore & { role: Exclude<MyEventRole, "organizer"> });
+
+/** The columns every one of the three queries below selects. */
+const myEventColumns = {
+  id: events.id,
+  title: events.title,
+  eventTypeId: events.eventTypeId,
+  startsAt: events.startsAt,
+  timeZone: events.timeZone,
+  location: events.location,
+  closedAt: events.closedAt,
+  isPast: sql<boolean>`${events.startsAt} < now()`,
+  publicToken: events.publicToken,
+  costMode: events.costMode,
+  costAmountMinor: events.costAmountMinor,
+  currency: events.currency,
+  attendingCount: attendingCountSql,
+  firstAttendees: firstAttendeesSql,
+} as const;
+
+type MyEventRow = { closedAt: Date | null } & Omit<MyEventCore, "isClosed">;
+
+function toCore(row: MyEventRow): MyEventCore {
+  const { closedAt, ...rest } = row;
+  return { ...rest, isClosed: closedAt !== null };
+}
+
+/**
+ * Everything on one person's plate: what they run, what they answered, and what
+ * they were asked and have not.
+ *
+ * Three queries rather than a UNION, because the three differ in what they join
+ * and one of them selects a column the others must not. Merging in code also
+ * makes the precedence explicit: **organizing wins**. An organizer who also
+ * RSVP'd to their own event appears once, as the organizer, because that is the
+ * relationship that decides what the card can do.
+ *
+ * Sorted the way an agenda reads rather than the way a history does: what is
+ * coming, soonest first; what is done, most recent first. The old ordering was
+ * by creation date, which answered "what did I make lately" — a different
+ * question, and not the one somebody opens this page with.
+ */
+export async function loadMyEvents(userId: string, email: string | null): Promise<MyEvent[]> {
+  const [organized, answered, invited] = await Promise.all([
+    db
+      .select({ ...myEventColumns, organizerToken: events.organizerToken })
+      .from(events)
+      .where(eq(events.organizerId, userId)),
+
+    db
+      .select({ ...myEventColumns, attendance: participants.attendance })
+      .from(participants)
+      .innerJoin(events, eq(events.id, participants.eventId))
+      .where(eq(participants.userId, userId)),
+
+    // Asked and unanswered. `participant_id` is null exactly until they RSVP,
+    // so an accepted invitation drops out of here and reappears above with
+    // whatever they actually said.
+    email
+      ? db
+          .select(myEventColumns)
+          .from(invitations)
+          .innerJoin(events, eq(events.id, invitations.eventId))
+          .where(
+            and(
+              eq(invitations.email, email.trim().toLowerCase()),
+              isNull(invitations.participantId),
+            ),
+          )
+      : Promise.resolve([]),
+  ]);
+
+  const byId = new Map<string, MyEvent>();
+
+  // Weakest claim first, strongest last: each pass overwrites the one before,
+  // which is how "organizing wins" is enforced without a precedence table.
+  for (const row of invited) {
+    byId.set(row.id, { ...toCore(row), role: "invited" });
+  }
+
+  for (const row of answered) {
+    const { attendance, ...rest } = row;
+    byId.set(row.id, { ...toCore(rest), role: attendance });
+  }
+
+  for (const row of organized) {
+    const { organizerToken, ...rest } = row;
+    byId.set(row.id, { ...toCore(rest), role: "organizer", organizerToken });
+  }
+
+  return [...byId.values()].sort((a, b) => {
+    if (a.isPast !== b.isPast) return a.isPast ? 1 : -1;
+    const diff = a.startsAt.getTime() - b.startsAt.getTime();
+    return a.isPast ? -diff : diff;
+  });
 }
 
 export async function loadOrganizerEvents(organizerId: string): Promise<OrganizerEventSummary[]> {
