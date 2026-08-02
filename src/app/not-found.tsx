@@ -28,10 +28,12 @@ export default async function NotFound() {
       a page that failed to finish loading — which is the wrong impression for
       the page whose whole job is to explain that something is missing.
 
-      `minHeight` only from `md` up: on a phone the card already fills what it
+      `80dvh` because these two carry no header — the fraction has to cover what a
+      header would otherwise occupy, or the card lands in the top third. Only from
+      `md` up: on a phone the card already fills what it
       needs to and forcing a viewport fraction there would just add scroll.
     */
-    <Center minHeight={{ base: "auto", md: "58dvh" }}>
+    <Center minHeight={{ base: "auto", md: "80dvh" }}>
       <Container size="1" px="4" py="8">
         <EmptyState
           icon={<HelpCircleIcon size={28} />}
