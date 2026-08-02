@@ -67,15 +67,21 @@ export default async function PrivacyPage() {
         where somebody is genuinely reading rather than tapping. 448px of this
         body type is roughly 45 characters a line, which is tighter than
         comfortable for sustained reading; the typographic range is 60–75, and
-        68ch sits in it at any font size because the unit scales with the type
-        rather than fighting it.
+        68ch sits in the middle of it at any font size because the unit scales
+        with the type rather than fighting it.
 
-        So the container widens and the text does not: `size="2"` gives the
-        headings and the breadcrumb room, `maxWidth` holds the paragraphs at a
-        readable line. A privacy notice that is hard to read is its own kind of
-        compliance problem.
+        **The container has to be wider than the cap or the cap does nothing.**
+        This first shipped as `size="2"` plus `maxWidth="68ch"`, which reads as
+        two safeguards and is really one: `size="2"` leaves 656px of inner width
+        and 68ch resolves to 679px, so the container bound first and the measure
+        was whatever 656px happened to be rather than anything chosen. Measuring
+        caught it — the cap was inert. `size="3"` leaves 848px, which is room for
+        the ch value to be the thing that decides.
+
+        A privacy notice that is hard to read is its own kind of compliance
+        problem, which is why this got measured instead of eyeballed.
       */}
-      <Container size="2" px="4" py="6">
+      <Container size="3" px="4" py="6">
         <Stack gap="6" maxWidth="68ch">
           <PageBreadcrumb
             label={copy.nav.breadcrumbLabel}
