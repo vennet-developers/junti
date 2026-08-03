@@ -5,7 +5,7 @@ import { AutoSkeleton } from "@stackmyth/skeleton/auto";
 import { Text } from "@stackmyth/text";
 
 import { Notice } from "@/components/notice";
-import { loadEventTypes } from "@/lib/catalog";
+import { loadAllEventTypes } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
 import { formatEventDateTime, formatMoney } from "@/lib/format";
 import { paletteIndexFor } from "@/lib/palette";
@@ -76,9 +76,10 @@ export async function Agenda({
   const shareTemplate = await loadShareTemplate(organizerId, copy.share.defaultMessage);
 
   // One lookup for the whole list: the catalogue is a handful of rows, and the
-  // alternative is a join repeating the same labels on every event.
+  // alternative is a join repeating the same labels on every event. Retired
+  // kinds included — this labels events that exist, it is not a picker.
   const typeLabels = new Map(
-    (await loadEventTypes(locale)).map((type) => [type.id, type.label] as const),
+    (await loadAllEventTypes(locale)).map((type) => [type.id, type.label] as const),
   );
 
   /*

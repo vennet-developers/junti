@@ -48,23 +48,41 @@ export interface PolicyOption {
   isSupported: boolean;
 }
 
-/** The kinds of event on offer, in catalogue order. */
-export async function loadEventTypes(locale: Locale): Promise<EventTypeOption[]> {
+/**
+ * Every kind of event ever offered, retired ones included, in catalogue order.
+ *
+ * The base the picker filters down from — and what anything rendering an
+ * *existing* event must use, because an event whose kind was retired still has
+ * that kind. The first retirement (the kids' party, folded into the party)
+ * made this concrete: its one event still needs its label on the agenda and
+ * its own entry in the edit form's picker.
+ */
+export async function loadAllEventTypes(
+  locale: Locale,
+): Promise<(EventTypeOption & { isActive: boolean })[]> {
   const rows = await db
     .select({
       id: eventTypes.id,
       slug: eventTypes.slug,
       labels: eventTypes.labels,
+      isActive: eventTypes.isActive,
     })
     .from(eventTypes)
-    .where(eq(eventTypes.isActive, true))
     .orderBy(asc(eventTypes.position), asc(eventTypes.slug));
 
   return rows.map((row) => ({
     id: row.id,
     slug: row.slug,
     label: pickLabel(row.labels, locale, row.slug),
+    isActive: row.isActive,
   }));
+}
+
+/** The kinds of event on offer — what a picker for a NEW event shows. */
+export async function loadEventTypes(locale: Locale): Promise<EventTypeOption[]> {
+  return (await loadAllEventTypes(locale))
+    .filter((type) => type.isActive)
+    .map((type) => ({ id: type.id, slug: type.slug, label: type.label }));
 }
 
 /**
@@ -90,6 +108,10 @@ export async function loadEventTypes(locale: Locale): Promise<EventTypeOption[]>
  * lets the organizer change the kind after they have started and re-fetching
  * on each change would put a round trip between a tap and the list updating.
  * The whole catalogue is a handful of rows.
+ *
+ * Grouped for retired types too, not just active ones: the edit form of an
+ * event whose kind has since been retired looks its options up by that kind's
+ * id, and finding nothing there would render the policy list half-empty.
  */
 export async function loadPolicyOptionsByEventType(
   locale: Locale,
@@ -105,7 +127,7 @@ export async function loadPolicyOptionsByEventType(
       .from(eventTypePolicies)
       .orderBy(asc(eventTypePolicies.eventTypeId), asc(eventTypePolicies.position)),
     loadAllPolicyOptions(locale),
-    db.select({ id: eventTypes.id }).from(eventTypes).where(eq(eventTypes.isActive, true)),
+    db.select({ id: eventTypes.id }).from(eventTypes),
   ]);
 
   const byDefinition = new Map(catalogue.map((option) => [option.id, option]));

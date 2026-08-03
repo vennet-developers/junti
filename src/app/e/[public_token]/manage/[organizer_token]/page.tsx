@@ -14,7 +14,7 @@ import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RosterGroup } from "@/components/roster-list";
 import { CreatedToast } from "@/components/created-toast";
 import { getCopy } from "@/config/copy";
-import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
+import { loadAllEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { shortEventTime } from "@/lib/event-time";
 import { renderShareMessage } from "@/lib/share-message";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
@@ -114,11 +114,17 @@ export default async function ManagePage({
   const invitations = await loadInvitations(eventRow.id);
   const contacts = await loadParticipantContacts(eventRow.id);
 
-  // The catalogue, for the edit form's kind picker and policy list.
-  const [eventTypes, policyOptionsByType] = await Promise.all([
-    loadEventTypes(locale),
+  // The catalogue, for the edit form's kind picker and policy list. The picker
+  // shows what is on offer plus this event's own kind if it has since been
+  // retired — retiring a kind must not evict the events that already have it,
+  // and a picker missing the current value would silently reassign on save.
+  const [allEventTypes, policyOptionsByType] = await Promise.all([
+    loadAllEventTypes(locale),
     loadPolicyOptionsByEventType(locale),
   ]);
+  const eventTypes = allEventTypes
+    .filter((type) => type.isActive || type.id === eventRow.eventTypeId)
+    .map((type) => ({ id: type.id, slug: type.slug, label: type.label }));
 
   const reviewItems: ReviewItem[] = queue.map((item) => ({
     id: item.id,
