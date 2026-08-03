@@ -2,7 +2,9 @@
 
 import { Box, Flex, Stack } from "@stackmyth/layout";
 import { Skeleton } from "@stackmyth/skeleton";
-import { AutoSkeleton } from "@stackmyth/skeleton/auto";
+import { AutoSkeleton, registerBones } from "@stackmyth/skeleton/auto";
+
+import { AGENDA_SEED } from "./agenda-bones";
 
 /**
  * One name shared by the two halves of the boundary: `Agenda` captures under
@@ -10,6 +12,20 @@ import { AutoSkeleton } from "@stackmyth/skeleton/auto";
  * it would just quietly never find bones — so the string exists exactly once.
  */
 export const AGENDA_SKELETON_NAME = "my-events-agenda";
+
+/*
+  The committed capture, registered the moment this module loads — which is
+  before any effect can read the registry, so even the first render of a wait
+  finds it. Module scope rather than an effect on purpose: an effect would run
+  after the fallback's own first lookup and cost exactly the frame this exists
+  to fill. Harmless during SSR — the registry is a plain Map there and the
+  server branch never reads it.
+
+  Live captures overwrite this bucket as soon as the real agenda renders, so
+  the seed decides only what a first-ever visit sees. See `agenda-bones.ts`
+  for how to refresh it.
+*/
+registerBones(AGENDA_SKELETON_NAME, AGENDA_SEED);
 
 /**
  * What shows inside the agenda's Suspense boundary while the queries run.
