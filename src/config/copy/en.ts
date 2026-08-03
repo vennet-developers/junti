@@ -214,15 +214,10 @@ export const en: Copy = {
     sectionTitle: "What it takes to be confirmed",
     sectionHelp:
       "Anyone who says they are coming but has not met these shows up separately, as pending. You decide which ones apply.",
-    suggestedForKind: "Suggested for this kind of event",
-    add: "Add a requirement",
-    remove: "Remove",
     labelField: "What is it called?",
-    labelHelp: "This is what your guests will read.",
     descriptionField: "Instructions",
-    descriptionHelp: "Optional. Which account to transfer to, for example.",
-    none: "This event asks for nothing extra to confirm.",
-    otherAvailable: "Other requirements available",
+    customize: "Customise",
+    maxReached: (max: number) => `You can ask for up to ${max} requirements per event.`,
     labelOverrideHelp: "Leave it empty to use the usual name.",
     descriptionOverrideHelp: "Leave it empty to use the usual instructions.",
     unsupported:

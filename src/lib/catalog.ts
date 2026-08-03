@@ -68,7 +68,23 @@ export async function loadEventTypes(locale: Locale): Promise<EventTypeOption[]>
 }
 
 /**
- * What each kind of event offers, keyed by event type id.
+ * What each kind of event offers, keyed by event type id — and "offers" means
+ * the whole catalogue, every time.
+ *
+ * For a long while this returned only the associated rows, while a comment in
+ * the policy editor promised that "the association decides what is suggested,
+ * not what is permitted". The inner join made that promise false: a match
+ * event never saw the attendance commitment, and an event type with no
+ * associations offered nothing at all. Nobody noticed while the editor was an
+ * add-picker — an option that never appears is just an option nobody adds.
+ * The switch-list design surfaced it the day it rendered "the whole
+ * catalogue" and half of it was missing.
+ *
+ * Now every active definition appears under every type: the associated ones
+ * first, in their association order and carrying their `isDefault`, then the
+ * rest of the catalogue in its own order, never default. The association is
+ * back to deciding exactly what it always claimed to decide — suggestion and
+ * pre-selection, not permission.
  *
  * Loaded for every type at once rather than per type, because the create form
  * lets the organizer change the kind after they have started and re-fetching
@@ -78,35 +94,38 @@ export async function loadEventTypes(locale: Locale): Promise<EventTypeOption[]>
 export async function loadPolicyOptionsByEventType(
   locale: Locale,
 ): Promise<Record<string, PolicyOption[]>> {
-  const rows = await db
-    .select({
-      eventTypeId: eventTypePolicies.eventTypeId,
-      position: eventTypePolicies.position,
-      isDefault: eventTypePolicies.isDefault,
-      id: policyDefinitions.id,
-      slug: policyDefinitions.slug,
-      handler: policyDefinitions.handler,
-      labels: policyDefinitions.labels,
-      descriptions: policyDefinitions.descriptions,
-    })
-    .from(eventTypePolicies)
-    .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventTypePolicies.policyDefinitionId))
-    .innerJoin(eventTypes, eq(eventTypes.id, eventTypePolicies.eventTypeId))
-    .where(eq(policyDefinitions.isActive, true))
-    .orderBy(asc(eventTypePolicies.eventTypeId), asc(eventTypePolicies.position));
+  const [associations, catalogue, types] = await Promise.all([
+    db
+      .select({
+        eventTypeId: eventTypePolicies.eventTypeId,
+        policyDefinitionId: eventTypePolicies.policyDefinitionId,
+        position: eventTypePolicies.position,
+        isDefault: eventTypePolicies.isDefault,
+      })
+      .from(eventTypePolicies)
+      .orderBy(asc(eventTypePolicies.eventTypeId), asc(eventTypePolicies.position)),
+    loadAllPolicyOptions(locale),
+    db.select({ id: eventTypes.id }).from(eventTypes).where(eq(eventTypes.isActive, true)),
+  ]);
 
+  const byDefinition = new Map(catalogue.map((option) => [option.id, option]));
   const grouped: Record<string, PolicyOption[]> = {};
 
-  for (const row of rows) {
-    (grouped[row.eventTypeId] ??= []).push({
-      id: row.id,
-      slug: row.slug,
-      handler: row.handler,
-      label: pickLabel(row.labels, locale, row.slug),
-      description: pickOptionalLabel(row.descriptions, locale),
-      isDefault: row.isDefault,
-      isSupported: isKnownHandler(row.handler),
-    });
+  for (const type of types) {
+    const linked = associations.filter((a) => a.eventTypeId === type.id);
+    const linkedIds = new Set(linked.map((a) => a.policyDefinitionId));
+
+    grouped[type.id] = [
+      // Associated entries keep their order and their suggestion flag…
+      ...linked
+        .map((a) => {
+          const option = byDefinition.get(a.policyDefinitionId);
+          return option ? { ...option, isDefault: a.isDefault } : null;
+        })
+        .filter((option): option is PolicyOption => option !== null),
+      // …and the rest of the catalogue follows, offered but never suggested.
+      ...catalogue.filter((option) => !linkedIds.has(option.id)),
+    ];
   }
 
   return grouped;
@@ -117,7 +136,9 @@ export async function loadPolicyOptionsByEventType(
  *
  * The association decides what is *suggested*; an organizer is not confined to
  * it. Somebody running an "other" event who wants proof of payment should be
- * able to add it.
+ * able to add it. Written before anything called it — the by-type loader above
+ * finally did, which is what turned this from an aspiration into the base list
+ * every event type builds on.
  */
 export async function loadAllPolicyOptions(locale: Locale): Promise<PolicyOption[]> {
   const rows = await db

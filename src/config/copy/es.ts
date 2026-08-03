@@ -221,15 +221,10 @@ export const es = {
     sectionTitle: "Requisitos para quedar confirmado",
     sectionHelp:
       "Quien diga que viene pero no los cumpla aparece aparte, como pendiente. Tú decides cuáles pones.",
-    suggestedForKind: "Sugeridos para este tipo de evento",
-    add: "Agregar requisito",
-    remove: "Quitar",
     labelField: "¿Cómo se llama?",
-    labelHelp: "Esto es lo que van a leer tus invitados.",
     descriptionField: "Instrucciones",
-    descriptionHelp: "Opcional. Por ejemplo, a qué cuenta transferir.",
-    none: "Este evento no pide nada extra para confirmar.",
-    otherAvailable: "Otros requisitos disponibles",
+    customize: "Personalizar",
+    maxReached: (max: number) => `Puedes pedir hasta ${max} requisitos por evento.`,
     labelOverrideHelp: "Déjalo vacío para usar el nombre de siempre.",
     descriptionOverrideHelp: "Déjalo vacío para usar las instrucciones de siempre.",
     unsupported:
