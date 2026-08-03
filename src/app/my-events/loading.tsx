@@ -1,24 +1,30 @@
-import { Box, Container, Flex, Grid, Stack } from "@stackmyth/layout";
+import { Box, Container, Flex, Stack } from "@stackmyth/layout";
 import { Skeleton } from "@stackmyth/skeleton";
+import { AutoSkeleton } from "@stackmyth/skeleton/auto";
+
+import { AGENDA_SKELETON_NAME } from "./agenda-fallback";
 
 /**
- * Placeholder while the event list is fetched.
+ * Placeholder while the page itself is being fetched.
  *
- * Shaped like the page it replaces — header bar, create action, search, tabs,
- * then cards — rather than a spinner, so the layout does not jump when the
- * content lands. The page queries the roster and the event-type catalogue, so
- * on mobile data there is a real gap to fill.
+ * Since the Suspense split in `page.tsx` this covers a shorter stretch than it
+ * used to: only the wait before the shell arrives — auth and preferences —
+ * after which the page's own `AgendaFallback` takes over inside the boundary.
  *
- * **Every width here is a claim about the page underneath, so every width has
- * to move when that page does.** This claimed to prevent a jump while causing
- * one: the page went to `size="3"` with a two-column grid and this stayed at
- * `size="1"` in one column, so the skeleton drew a 448px ribbon and the content
- * landed 880px wide in two columns. A placeholder that lies about the layout is
- * worse than a spinner — a spinner at least does not promise a shape.
+ * **Two layers, because navigations come in two kinds.** On a soft navigation
+ * this file is mounted by client React — verified live, against an earlier
+ * belief to the contrary that turned out to be a frozen browser tab — so the
+ * `AutoSkeleton` below replays the agenda's traced bones, the same pair by
+ * name as the fallback inside the page. On a hard load nothing in any fallback
+ * hydrates (React streams and replaces, never mounts), so what shows is this
+ * file's server HTML: the hand-drawn furniture around it, and the `fallback`
+ * prop inside it. Both honest, one exact.
  *
- * That is the standing cost of hand-drawn skeletons and the reason to keep them
- * few: they are a second copy of the layout with nothing enforcing that the two
- * agree.
+ * The furniture that stays hand-drawn is deliberately only what cannot drift:
+ * the shell's frame, a heading-shaped bar, the create button at its real
+ * capped width. The part that *changes shape between breakpoints* — the cards —
+ * is exactly the part left to the trace, because guessing at it is how the old
+ * hand-drawn skeleton went stale.
  */
 export default function Loading() {
   return (
@@ -41,49 +47,37 @@ export default function Loading() {
         <Stack gap="5" aria-hidden="true">
           <Skeleton width="45%" height="30px" borderRadius="var(--sm-radius-md)" />
 
-          {/*
-            The create button, capped exactly where the real one is capped.
-
-            `Skeleton`'s own `width` is a plain string — it is the one
-            layout-ish component in the kit whose dimensions are not
-            `Responsive<T>` — so the breakpoint lives on a wrapper instead. That
-            works, and it is also the gap: a bone cannot state its own two
-            widths, so every responsive bone needs a Box around it.
-          */}
+          {/* The create button, capped exactly where the real one is capped. */}
           <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
             <Skeleton width="100%" height="50px" borderRadius="var(--sm-radius-md)" />
           </Box>
 
-          <Skeleton width="100%" height="45px" borderRadius="var(--sm-radius-md)" />
-          <Skeleton width="100%" height="40px" borderRadius="var(--sm-radius-md)" />
-
           {/*
-            Four cards in the same grid the list uses, not two in a column.
-            Two filled one screen when the list was one column; in two columns
-            they fill half of one, and a placeholder that stops half way up
-            reads as content that finished loading short.
+            The agenda region: traced replay on soft navigations, the static
+            `fallback` prop on hard loads. Same name as the page's own pair, so
+            every fallback on this route replays the same capture.
           */}
-          <Grid columns={{ base: "1", md: "2" }} gap="3" pt="1">
-            {[0, 1, 2, 3].map((card) => (
-              <Stack key={card} gap="3" p="4" border borderRadius="var(--sm-radius-lg)">
-                <Flex justify="between" align="start" gap="3">
-                  <Stack gap="2" width="70%">
-                    <Skeleton width="80%" height="20px" borderRadius="var(--sm-radius-sm)" />
-                    <Skeleton width="60%" height="16px" borderRadius="var(--sm-radius-sm)" />
-                  </Stack>
-                  <Skeleton width="64px" height="22px" borderRadius="var(--sm-radius-lg)" />
-                </Flex>
-                <Flex gap="2" align="center">
-                  {[0, 1, 2].map((avatar) => (
-                    <Skeleton key={avatar} width="32px" height="32px" borderRadius="50%" />
-                  ))}
-                </Flex>
-                <Skeleton width="50%" height="16px" borderRadius="var(--sm-radius-sm)" />
-              </Stack>
-            ))}
-          </Grid>
+          <AutoSkeleton
+            name={AGENDA_SKELETON_NAME}
+            loading
+            animate="shimmer"
+            fallback={<Furniture />}
+          >
+            {null}
+          </AutoSkeleton>
         </Stack>
       </Container>
     </>
+  );
+}
+
+/** Width-independent bars for the un-traced case — search, tabs, one card. */
+function Furniture() {
+  return (
+    <Stack gap="4">
+      <Skeleton width="100%" height="45px" borderRadius="var(--sm-radius-md)" animate="shimmer" />
+      <Skeleton width="100%" height="40px" borderRadius="var(--sm-radius-md)" animate="shimmer" />
+      <Skeleton width="100%" height="180px" borderRadius="var(--sm-radius-lg)" animate="shimmer" />
+    </Stack>
   );
 }
