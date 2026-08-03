@@ -10,7 +10,6 @@ import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
 import { Disclosure } from "@/components/disclosure";
 import { Notice } from "@/components/notice";
-import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RosterGroup } from "@/components/roster-list";
 import { CreatedToast } from "@/components/created-toast";
@@ -92,7 +91,7 @@ export default async function ManagePage({
   const locale = await resolveEventLocale(eventRow.locale);
   const copy = getCopy(locale);
 
-  const { timeZone: preferredTimeZone, theme } = await resolvePreferences();
+  const { timeZone: preferredTimeZone } = await resolvePreferences();
 
   /**
    * Editing needs the owning account, not merely the manage link.
@@ -212,12 +211,6 @@ export default async function ManagePage({
 
   return (
     <>
-      <AppHeader
-        organizer={organizer}
-        theme={theme}
-        signInNext={managePath(publicToken, organizerToken)}
-      />
-
       <Container size="4" px="4" py="6">
         <Stack gap="6">
           {/*

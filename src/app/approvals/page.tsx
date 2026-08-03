@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ROUTES, signInPath } from "@/config/routes";
 import { formatEventDateTimeShort } from "@/lib/format";
@@ -43,7 +42,7 @@ export default async function ApprovalsPage() {
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.approvals));
 
-  const { copy, locale, theme, timeZone } = await resolvePreferences();
+  const { copy, locale, timeZone } = await resolvePreferences();
 
   const pending = await loadPendingApprovals(organizer.id);
 
@@ -75,8 +74,6 @@ export default async function ApprovalsPage() {
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} />
-
       <Container size="3" px="4" py="6">
         <Stack gap="6">
           <PageBreadcrumb

@@ -4,13 +4,11 @@ import { redirect } from "next/navigation";
 import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { Notice } from "@/components/notice";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { SignInForm } from "@/components/sign-in-form";
 import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
-import { resolvePreferences } from "@/lib/preferences";
 import { getCurrentUser } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -36,15 +34,12 @@ export default async function SignInPage({
   if (await getCurrentUser()) redirect(redirectTo);
 
   const { copy } = await getViewerCopy();
-  const { theme } = await resolvePreferences();
 
   return (
     <>
       {/* Signed out by definition — the redirect above catches anyone who is
           not. The guest control still earns its place here for the language
           and appearance it carries. */}
-      <AppHeader organizer={null} theme={theme} />
-
       {/*
         Narrow, and centred once the screen is tall enough to make that a
         question. A short card pinned to the top of a 900px viewport with

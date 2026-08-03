@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { loadEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
 import { getViewerCopy } from "@/lib/locale";
@@ -35,7 +34,7 @@ export default async function NewEventPage({
 
   // A stored or detected zone beats the floor: somebody who set Bogotá in their
   // profile while living in Madrid should not re-pick it on every event.
-  const { timeZone: preferredTimeZone, theme } = await resolvePreferences();
+  const { timeZone: preferredTimeZone } = await resolvePreferences();
   const organizer = await getOrganizer();
 
   /*
@@ -66,8 +65,6 @@ export default async function NewEventPage({
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} signInNext={ROUTES.newEvent} />
-
       <Container size="2" px="4" py="6">
         <Stack gap="6">
           <PageBreadcrumb

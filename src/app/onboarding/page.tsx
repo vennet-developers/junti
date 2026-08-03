@@ -4,11 +4,9 @@ import { redirect } from "next/navigation";
 import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
-import { resolvePreferences } from "@/lib/preferences";
 import { loadProfile } from "@/lib/profile";
 
 import { OnboardingForm } from "./onboarding-form";
@@ -52,12 +50,9 @@ export default async function OnboardingPage({
   if (existing) redirect(destination);
 
   const { copy } = await getViewerCopy();
-  const { theme } = await resolvePreferences();
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} />
-
       {/*
         Narrow, and centred once the screen is tall enough to make that a
         question. A short card pinned to the top of a 900px viewport with

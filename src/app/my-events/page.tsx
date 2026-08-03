@@ -9,7 +9,6 @@ import { PlusIcon } from "@stackmyth/icons";
 import { Box, Container, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { CreatedToast } from "@/components/created-toast";
 import { ROUTES, signInPath } from "@/config/routes";
 import { getOrganizer } from "@/lib/organizer";
@@ -52,12 +51,10 @@ export default async function MyEventsPage({
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.myEvents));
 
-  const { copy, theme } = await resolvePreferences();
+  const { copy } = await resolvePreferences();
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} />
-
       {/*
         The scan tier. This screen is a list you sweep for the next thing you
         have to think about, and more of it in view is strictly better — see the

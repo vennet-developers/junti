@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ROUTES, signInPath } from "@/config/routes";
 import { shortEventTime } from "@/lib/event-time";
@@ -41,7 +40,7 @@ export default async function MessagesPage() {
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.messages));
 
-  const { copy, theme } = await resolvePreferences();
+  const { copy } = await resolvePreferences();
   const stored = await loadStoredPreferences(organizer.id);
 
   /*
@@ -68,8 +67,6 @@ export default async function MessagesPage() {
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} />
-
       <Container size="3" px="4" py="6">
         <Stack gap="6">
           <PageBreadcrumb

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import type { User } from "@supabase/supabase-js";
 
 import { getCurrentUser } from "./supabase/server";
@@ -56,8 +58,17 @@ export function toOrganizer(user: User): Organizer {
   };
 }
 
-/** The current organizer, or null when nobody is signed in. */
-export async function getOrganizer(): Promise<Organizer | null> {
+/**
+ * The current organizer, or null when nobody is signed in.
+ *
+ * Wrapped in `React.cache` because two places now ask per request: the root
+ * layout (for the header) and whichever page is rendering (for its own
+ * authorization). `getCurrentUser` revalidates the session against Supabase
+ * over the network — the right call to make once, and the wrong one to make
+ * twice for the same request. The cache is per-request by design, so this is
+ * dedupe, not staleness: a sign-out is a new request and a fresh check.
+ */
+export const getOrganizer = cache(async (): Promise<Organizer | null> => {
   const user = await getCurrentUser();
   return user ? toOrganizer(user) : null;
-}
+});

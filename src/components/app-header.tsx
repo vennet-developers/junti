@@ -18,6 +18,16 @@ import type { Theme } from "@/lib/preferences";
  * `/new` opened with an underlined "Back", `/e/…` with a bare language toggle,
  * `/my-events` with a header this one grew out of.
  *
+ * **Rendered by the root layout, exactly like the footer, and for the same
+ * reason.** It lived in each page for a while, and that placement had a cost
+ * nobody chose on purpose: `loading.tsx` replaces the page segment, so during
+ * every load the header vanished with it, and each skeleton had to carry a
+ * hand-measured fake bar to hide the gap. In the layout it simply survives —
+ * real during loads, never redrawn on navigation, impossible to forget on a
+ * new screen. What made this possible was removing the one per-route prop
+ * (`signInNext`): the guest menu now reads its return path from the router,
+ * which knows the route better than any page prop did.
+ *
  * The right-hand control is the same capsule either way: the account menu when
  * there is a session, {@link GuestMenu} when there is not. Same size, same
  * shape, so the bar does not reflow the moment someone signs in.
@@ -41,12 +51,9 @@ import type { Theme } from "@/lib/preferences";
 export function AppHeader({
   organizer,
   theme,
-  /** Where to come back to after signing in. Ignored when signed in. */
-  signInNext,
 }: {
   organizer: Organizer | null;
   theme: Theme | null;
-  signInNext?: string;
 }) {
   return (
     <Box as="header" borderBottom="1px solid var(--sm-border-default)">
@@ -81,7 +88,7 @@ export function AppHeader({
           {organizer ? (
             <ProfileMenu organizer={organizer} theme={theme} />
           ) : (
-            <GuestMenu theme={theme} next={signInNext} />
+            <GuestMenu theme={theme} />
           )}
         </Flex>
       </Container>

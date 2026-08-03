@@ -3,12 +3,9 @@ import type { Metadata } from "next";
 import { Container, Divider, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
-import { getOrganizer } from "@/lib/organizer";
-import { resolvePreferences } from "@/lib/preferences";
 import { POLICY_VERSION } from "@/lib/consent";
 
 /**
@@ -41,8 +38,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PrivacyPage() {
   const { copy } = await getViewerCopy();
-  const { theme } = await resolvePreferences();
-  const organizer = await getOrganizer();
 
   const sections = [
     { heading: copy.privacy.responsibleTitle, body: copy.privacy.responsibleBody },
@@ -57,8 +52,6 @@ export default async function PrivacyPage() {
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} />
-
       {/*
         Capped by measure, not by container — and the old cap was wrong in the
         other direction.

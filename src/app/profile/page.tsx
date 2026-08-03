@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ROUTES, signInPath } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
@@ -34,7 +33,7 @@ export default async function ProfilePage() {
   const organizer = await getOrganizer();
   if (!organizer) redirect(signInPath(ROUTES.profile));
 
-  const { copy, theme } = await resolvePreferences();
+  const { copy } = await resolvePreferences();
 
   // The stored record, NOT the effective cookie: the form has to show what the
   // account actually chose, and "follow my browser" must render as that rather
@@ -43,8 +42,6 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} />
-
       <Container size="2" px="4" py="6">
         <Stack gap="6">
           {/*

@@ -8,12 +8,10 @@ import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { List, ListItem, ListItemContent, ListItemTitle } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { BRAND_DESCRIPTION } from "@/config/brand";
 import { ROUTES } from "@/config/routes";
 import { getViewerCopy } from "@/lib/locale";
 import { getOrganizer } from "@/lib/organizer";
-import { resolvePreferences } from "@/lib/preferences";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { copy } = await getViewerCopy();
@@ -38,14 +36,11 @@ export default async function HomePage() {
   if (await getOrganizer()) redirect(ROUTES.myEvents);
 
   const { copy } = await getViewerCopy();
-  const { theme } = await resolvePreferences();
 
   return (
     <>
       {/* Always signed out: the redirect above sends account holders to their
           events, so this only ever renders the guest control. */}
-      <AppHeader organizer={null} theme={theme} signInNext={ROUTES.myEvents} />
-
       {/*
         The one screen where empty space is pure cost. It is the first thing
         anybody sees on a laptop — somebody sends the link and it gets opened

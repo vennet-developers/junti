@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { Container, Divider, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
@@ -25,7 +24,6 @@ import {
   type RosterMember,
 } from "@/lib/roster";
 import { ROUTES } from "@/config/routes";
-import { participantPath } from "@/lib/urls";
 import { and, eq } from "drizzle-orm";
 
 import { GatedPreview } from "./gated-preview";
@@ -69,7 +67,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
   const copy = getCopy(locale);
 
   // The reader's zone when one is known, else the event's own.
-  const { timeZone: preferredTimeZone, theme } = await resolvePreferences();
+  const { timeZone: preferredTimeZone } = await resolvePreferences();
   const readerTimeZone = readingTimeZone(preferredTimeZone, eventRow.timeZone);
 
   const roster = await loadRoster(eventRow, locale);
@@ -241,8 +239,6 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
 
   return (
     <>
-      <AppHeader organizer={organizer} theme={theme} signInNext={participantPath(publicToken)} />
-
       {/*
         A reading column, one step wider — not a page that stretches.
 

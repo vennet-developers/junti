@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 
+import { usePathname } from "next/navigation";
+
 import { Avatar, AvatarFallback } from "@stackmyth/avatar";
 import { Button } from "@stackmyth/button";
 import {
@@ -52,17 +54,29 @@ import { setTheme } from "@/lib/theme-actions";
  * language lives here rather than only on `/profile`, which a guest has no way
  * to reach.
  */
-export function GuestMenu({
-  theme,
-  /** Where to return after signing in — the page the drawer was opened from. */
-  next,
-}: {
-  theme: "light" | "dark" | null;
-  next?: string;
-}) {
+export function GuestMenu({ theme }: { theme: "light" | "dark" | null }) {
   const { copy } = useCopy();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  /*
+    Where to return after signing in: the page the drawer was opened from.
+
+    Read from the router rather than threaded down as a prop, because the prop
+    was the one thing keeping this header out of the root layout — a layout
+    cannot know which route it is wrapping, but a client component standing on
+    the page can. Each page used to pass its own path by hand; this is the same
+    value with nobody forgetting to pass it.
+
+    Two paths opt out. `/sign-in` because returning someone to the sign-in page
+    after they signed in is a loop wearing a seatbelt, and `/` because a
+    signed-in visitor never sees the home page — it redirects to the agenda, so
+    sending them there directly skips a hop through a page that will bounce
+    them.
+  */
+  const pathname = usePathname();
+  const returnTo =
+    pathname === ROUTES.home || pathname.startsWith(ROUTES.signIn) ? ROUTES.myEvents : pathname;
 
   function chooseTheme(value: string) {
     // ToggleGroup reports "" when the pressed item is pressed again. One of the
@@ -143,7 +157,7 @@ export function GuestMenu({
               <Text variant="small" color="muted">
                 {copy.auth.signInSubheading}
               </Text>
-              <SignInForm redirectTo={next ?? ROUTES.myEvents} />
+              <SignInForm redirectTo={returnTo} />
             </Stack>
 
             <Divider />

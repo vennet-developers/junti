@@ -28,12 +28,15 @@ export default async function NotFound() {
       a page that failed to finish loading — which is the wrong impression for
       the page whose whole job is to explain that something is missing.
 
-      `80dvh` because these two carry no header — the fraction has to cover what a
-      header would otherwise occupy, or the card lands in the top third. Only from
-      `md` up: on a phone the card already fills what it
-      needs to and forcing a viewport fraction there would just add scroll.
+      `62dvh`, the same fraction as the other short pages, because the header
+      now renders from the root layout and sits above this like everywhere
+      else. It was `80dvh` for a while — chosen when these two screens carried
+      no header and the fraction had to stand in for one; with the real bar
+      back, that oversized value would push the card low and force a scroll.
+      Only from `md` up: on a phone the card already fills what it needs to
+      and forcing a viewport fraction there would just add scroll.
     */
-    <Center minHeight={{ base: "auto", md: "80dvh" }}>
+    <Center minHeight={{ base: "auto", md: "62dvh" }}>
       <Container size="1" px="4" py="8">
         <EmptyState
           icon={<HelpCircleIcon size={28} />}

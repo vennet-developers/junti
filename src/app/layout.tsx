@@ -87,11 +87,13 @@ import { Box } from "@stackmyth/layout";
 import { Toaster } from "@stackmyth/toast";
 
 import { AppFooter } from "@/components/app-footer";
+import { AppHeader } from "@/components/app-header";
 import { CopyProvider } from "@/components/copy-provider";
 
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
 import { getCopy } from "@/config/copy";
 import { getViewerCopy } from "@/lib/locale";
+import { getOrganizer } from "@/lib/organizer";
 import { resolvePreferences } from "@/lib/preferences";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -138,6 +140,18 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const { locale, theme } = await resolvePreferences();
 
+  /*
+    The session, resolved here so the header can be part of the frame.
+
+    This is one network revalidation against Supabase per request — the same
+    call every protected page already makes, deduped by the `React.cache` on
+    `getOrganizer`, so the layout doing it too costs nothing extra. What it
+    buys is the header behaving like the footer: rendered once, surviving
+    `loading.tsx` (which only replaces the page segment), and impossible to
+    forget on the next screen somebody adds.
+  */
+  const organizer = await getOrganizer();
+
   return (
     /*
       `data-mode` is what Stackmyth's palette reads to force an appearance.
@@ -149,6 +163,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang={getCopy(locale).intlLocale} data-mode={theme ?? undefined}>
       <body>
         <CopyProvider locale={locale}>
+          {/*
+            The frame's top edge, mirror of the footer at the bottom. Living
+            here rather than in each page is what keeps it on screen while a
+            page loads: `loading.tsx` replaces `{children}`, not the layout,
+            so the bar a visitor is looking at during a wait is the real one —
+            the five skeletons that used to fake it are gone.
+          */}
+          <AppHeader organizer={organizer} theme={theme} />
+
           {children}
 
           {/*

@@ -42,7 +42,7 @@ export default function Error({
 
   return (
     /* Centred for the same reason as the 404 — see the note there. */
-    <Center minHeight={{ base: "auto", md: "80dvh" }}>
+    <Center minHeight={{ base: "auto", md: "62dvh" }}>
       <Container size="1" px="4" py="8">
         <EmptyState
           icon={<TriangleAlertIcon size={28} />}

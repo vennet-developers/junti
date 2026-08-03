@@ -4,11 +4,9 @@ import { z } from "zod";
 import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AppHeader } from "@/components/app-header";
 import { Notice } from "@/components/notice";
 import { emailForUnsubscribeToken, suppressEmail } from "@/lib/consent";
 import { getViewerCopy } from "@/lib/locale";
-import { resolvePreferences } from "@/lib/preferences";
 
 /**
  * Where an unsubscribe link lands.
@@ -42,7 +40,6 @@ export default async function UnsubscribePage({
 }) {
   const { t } = await searchParams;
   const { copy } = await getViewerCopy();
-  const { theme } = await resolvePreferences();
 
   /*
     A token, never the address.
@@ -63,8 +60,6 @@ export default async function UnsubscribePage({
 
   return (
     <>
-      <AppHeader organizer={null} theme={theme} />
-
       {/*
         Narrow, and centred once the screen is tall enough to make that a
         question. A short card pinned to the top of a 900px viewport with
