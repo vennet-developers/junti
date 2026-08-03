@@ -6,8 +6,10 @@
  * "read the instructions" — the policy editor of the time only showed what a
  * type suggested. Now the editor shows the whole catalogue behind switches,
  * so a type whose only difference is one pre-flipped switch is picker
- * friction, not information. Retired, not deleted: the event that carries it
- * keeps rendering (both foreign keys are restrict), it just leaves the picker.
+ * friction, not information. Deleted outright, with its events becoming
+ * parties first — that is the fold, applied to data — because the foreign
+ * keys are restrict and a bare DELETE would fail on any database where a
+ * kids' party exists.
  *
  * The cookout and the trip come in because they are the money-pooling plans —
  * the case proof of payment exists for — so both suggest it pre-added. The
@@ -19,7 +21,13 @@
  * its own rows instead of failing.
  * ------------------------------------------------------------------------ */
 
-UPDATE "event_types" SET "is_active" = false WHERE "slug" = 'kids_party';--> statement-breakpoint
+UPDATE "events" SET "event_type_id" = (SELECT "id" FROM "event_types" WHERE "slug" = 'party')
+WHERE "event_type_id" IN (SELECT "id" FROM "event_types" WHERE "slug" = 'kids_party');--> statement-breakpoint
+
+DELETE FROM "event_type_policies"
+WHERE "event_type_id" IN (SELECT "id" FROM "event_types" WHERE "slug" = 'kids_party');--> statement-breakpoint
+
+DELETE FROM "event_types" WHERE "slug" = 'kids_party';--> statement-breakpoint
 
 /* "Other" stays last: it is the escape hatch, not a suggestion. */
 UPDATE "event_types" SET "position" = 4 WHERE "slug" = 'other';--> statement-breakpoint

@@ -52,10 +52,11 @@ export interface PolicyOption {
  * Every kind of event ever offered, retired ones included, in catalogue order.
  *
  * The base the picker filters down from — and what anything rendering an
- * *existing* event must use, because an event whose kind was retired still has
- * that kind. The first retirement (the kids' party, folded into the party)
- * made this concrete: its one event still needs its label on the agenda and
- * its own entry in the edit form's picker.
+ * *existing* event must use, because an event whose kind was retired still
+ * has that kind: it needs its label on the agenda and its own entry in the
+ * edit form's picker. No kind is retired right now — the kids' party, the
+ * first candidate, ended up deleted with its events folded into the party —
+ * but retirement is the designed path for a kind with events still on it.
  */
 export async function loadAllEventTypes(
   locale: Locale,
