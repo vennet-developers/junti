@@ -25,9 +25,11 @@ const eslintConfig = defineConfig([
       output produces findings nobody can act on.
     */
     "source/**",
-    // Nitro build output and the generated route tree — build artifacts.
+    // Build artifacts: Nitro's local output, its Vercel Build-Output-API
+    // layout, and the generated route tree.
     ".output/**",
     ".nitro/**",
+    ".vercel/**",
     "src/routeTree.gen.ts",
   ]),
   {
