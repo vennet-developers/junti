@@ -8,13 +8,13 @@ import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
 import { Checkbox } from "@stackmyth/checkbox";
 import { EmptyState } from "@stackmyth/empty-state";
-// No image glyph in the set; the eye is what "look at it" means here.
-import { CheckCircleIcon, EyeIcon } from "@stackmyth/icons";
+import { CheckCircleIcon } from "@stackmyth/icons";
 import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
+import { EvidenceImage } from "@/components/evidence-image";
 
 import { approveSubmissions } from "./actions";
 
@@ -38,8 +38,8 @@ export interface ApprovalRow {
  * comes here on Thursday night with a dozen identical transfers to wave
  * through, and the cost that matters is the number of times they have to aim at
  * something. So the whole list is one tap to select, one tap to approve, and
- * the rows carry enough — who, which event, what they wrote, the receipt a tap
- * away — to decide without opening anything.
+ * the rows carry enough — who, which event, what they wrote, and the receipt
+ * itself — to decide without opening anything.
  *
  * **Only approval is bulk.** Rejecting sends a reason back to the participant,
  * and a reason written once for twenty people is not a reason. The row links
@@ -172,6 +172,23 @@ export function ApprovalQueue({ rows }: { rows: ApprovalRow[] }) {
                   </Box>
                 </Flex>
 
+                {/* The receipt itself, organizer-only and served from the
+                    event's own route. Here rather than a tab away: deciding on
+                    a transfer is reading an amount off it, and doing that
+                    elsewhere meant approving from memory. */}
+                {row.hasEvidence ? (
+                  <EvidenceImage
+                    src={row.evidencePath}
+                    alt={row.participantName}
+                    expandLabel={copy.approvals.expandReceipt(row.participantName)}
+                    goneLabel={copy.approvals.receiptGone}
+                  />
+                ) : (
+                  <Text variant="small" color="muted">
+                    {copy.approvals.noReceipt}
+                  </Text>
+                )}
+
                 <Divider />
 
                 <Flex justify="between" align="center" gap="3" wrap="wrap">
@@ -179,28 +196,9 @@ export function ApprovalQueue({ rows }: { rows: ApprovalRow[] }) {
                     {copy.approvals.waitingSince(row.waitingSince)}
                   </Text>
 
-                  <Flex gap="2" align="center" wrap="nowrap">
-                    {row.hasEvidence ? (
-                      <Button asChild size="sm" variant="outline" shape="pill">
-                        {/* The receipt itself, organizer-only and served from
-                            the event's own route. */}
-                        <Link href={row.evidencePath} target="_blank" rel="noopener noreferrer">
-                          <Flex gap="2" align="center">
-                            <EyeIcon size={14} aria-hidden="true" />
-                            {copy.approvals.seeReceipt}
-                          </Flex>
-                        </Link>
-                      </Button>
-                    ) : (
-                      <Text variant="small" color="muted">
-                        {copy.approvals.noReceipt}
-                      </Text>
-                    )}
-
-                    <Button asChild size="sm" variant="ghost" shape="pill">
-                      <Link href={row.managePath}>{copy.approvals.openEvent}</Link>
-                    </Button>
-                  </Flex>
+                  <Button asChild size="sm" variant="ghost" shape="pill">
+                    <Link href={row.managePath}>{copy.approvals.openEvent}</Link>
+                  </Button>
                 </Flex>
               </Stack>
             </CardContent>

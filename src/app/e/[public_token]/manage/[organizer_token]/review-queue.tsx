@@ -6,10 +6,11 @@ import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
 import { Field, FieldLabel } from "@stackmyth/field";
 import { Input } from "@stackmyth/input";
-import { Box, Flex, Stack } from "@stackmyth/layout";
+import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
+import { EvidenceImage } from "@/components/evidence-image";
 
 import { reviewSubmission } from "./actions";
 
@@ -27,11 +28,13 @@ export interface ReviewItem {
 /**
  * What the organizer has to decide on.
  *
- * The receipt opens in a new tab rather than being shown inline. Two reasons:
- * a bank screenshot is portrait and tall, so inlining several of them turns
- * this into a scroll marathon on a phone; and pulling every image into the page
- * would mean loading a few hundred kilobytes per row to render a queue the
- * organizer may only skim.
+ * The receipt is shown on the row. It used to open in a new tab, for two
+ * reasons that a thumbnail answers better than a link did: a bank screenshot
+ * is portrait and tall, so several of them inline at full size would be a
+ * scroll marathon on a phone — hence a fixed collapsed height, expanded only
+ * on request; and every image is a few hundred kilobytes on a queue that may
+ * only be skimmed — hence lazy loading, so nothing below the fold is fetched
+ * until it is reached. See `EvidenceImage`, shared with `/approvals`.
  */
 export function ReviewQueue({
   publicToken,
@@ -102,13 +105,12 @@ function ReviewRow({
           {item.note ? <Text variant="small">{item.note}</Text> : null}
 
           {item.hasEvidence ? (
-            <Button asChild size="md" variant="secondary" fullWidth>
-              {/* Box(as="a") so `asChild` clones a Stackmyth primitive — same
-                  reason as the WhatsApp button above. */}
-              <Box as="a" href={item.evidenceUrl} target="_blank" rel="noopener noreferrer">
-                {copy.review.viewEvidence}
-              </Box>
-            </Button>
+            <EvidenceImage
+              src={item.evidenceUrl}
+              alt={item.participantName}
+              expandLabel={copy.review.expandEvidence(item.participantName)}
+              goneLabel={copy.review.evidenceGone}
+            />
           ) : (
             <Text variant="small" color="muted">
               {copy.review.noEvidence}

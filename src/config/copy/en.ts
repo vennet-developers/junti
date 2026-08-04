@@ -260,7 +260,6 @@ export const en: Copy = {
     heading: "To review",
     empty: "Nothing waiting to be reviewed.",
     pendingCount: (n: number) => (n === 1 ? "1 to review" : `${n} to review`),
-    viewEvidence: "View receipt",
     approve: "Approve",
     reject: "Reject",
     reasonLabel: "Why?",
@@ -270,6 +269,8 @@ export const en: Copy = {
     approvedNotice: "Approved.",
     rejectedNotice: "Rejected. They can send it again now.",
     noEvidence: "No photo attached.",
+    expandEvidence: (name: string) => `See ${name}’s receipt full size`,
+    evidenceGone: "The receipt is no longer there.",
   },
 
   money: {
@@ -534,7 +535,8 @@ export const en: Copy = {
       n === 1 ? "You approved 1 receipt." : `You approved ${n} receipts.`,
     nothingLeft: "Those were already resolved.",
     openEvent: "Open the event",
-    seeReceipt: "See receipt",
+    expandReceipt: (name: string) => `See ${name}’s receipt full size`,
+    receiptGone: "The receipt is no longer there.",
     noReceipt: "No image",
     waitingSince: (when: string) => `Since ${when}`,
     rejectHint: "Rejecting one? That happens inside the event, with the reason.",

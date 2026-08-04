@@ -297,3 +297,58 @@ body {
     margin-top: -6.25rem;
   }
 }
+
+/*
+  A submitted receipt in the approvals queues.
+
+  Sized to be recognised, not read: the collapsed height is enough to tell a
+  Nequi screenshot from a Bancolombia one and match it to the row, and short of
+  what somebody across the room could take a name off. Reading it is the tap —
+  see `evidence-image.tsx` for why that split is deliberate rather than a
+  loading trick.
+
+  `cover` while collapsed so every row is the same height whatever shape the
+  photo is — a queue of ragged thumbnails is harder to scan than the receipts
+  are to read. `contain` when open, because that is the moment the whole image
+  matters and cropping it would hide the very line being checked.
+*/
+.evidence {
+  display: block;
+  padding: 0;
+  border: 1px solid var(--sm-border);
+  border-radius: var(--sm-radius-md);
+  background: var(--sm-surface-muted);
+  cursor: zoom-in;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.evidence[aria-expanded="true"] {
+  cursor: zoom-out;
+  width: 100%;
+}
+
+.evidence:focus-visible {
+  outline: 2px solid var(--sm-primary);
+  outline-offset: 2px;
+}
+
+.evidence__img {
+  display: block;
+  height: 5.5rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+.evidence__img--open {
+  height: auto;
+  width: 100%;
+  /*
+    Capped against the viewport, not the card: a bank screenshot is portrait
+    and tall, and at full width an unbounded one pushes the approve button off
+    screen — which would trade one round trip for a scroll.
+  */
+  max-height: 70dvh;
+  object-fit: contain;
+}

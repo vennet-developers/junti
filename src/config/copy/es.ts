@@ -266,7 +266,6 @@ export const es = {
     heading: "Por revisar",
     empty: "No hay nada pendiente de revisar.",
     pendingCount: (n: number) => (n === 1 ? "1 por revisar" : `${n} por revisar`),
-    viewEvidence: "Ver comprobante",
     approve: "Aprobar",
     reject: "Rechazar",
     reasonLabel: "¿Por qué?",
@@ -276,6 +275,8 @@ export const es = {
     approvedNotice: "Aprobado.",
     rejectedNotice: "Rechazado. La persona ya puede volver a enviarlo.",
     noEvidence: "Sin foto adjunta.",
+    expandEvidence: (name: string) => `Ver el comprobante de ${name} en grande`,
+    evidenceGone: "El comprobante ya no está.",
   },
 
   money: {
@@ -543,7 +544,8 @@ export const es = {
       n === 1 ? "Aprobaste 1 comprobante." : `Aprobaste ${n} comprobantes.`,
     nothingLeft: "Esos ya estaban resueltos.",
     openEvent: "Abrir el evento",
-    seeReceipt: "Ver comprobante",
+    expandReceipt: (name: string) => `Ver el comprobante de ${name} en grande`,
+    receiptGone: "El comprobante ya no está.",
     noReceipt: "Sin imagen",
     waitingSince: (when: string) => `Desde ${when}`,
     rejectHint: "¿Vas a rechazar alguno? Se hace dentro del evento, con el motivo.",
