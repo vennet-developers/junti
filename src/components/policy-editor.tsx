@@ -4,18 +4,18 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Card } from "@stackmyth/card";
-import { ChevronDownIcon, ChevronRightIcon } from "@stackmyth/icons";
+import { ChevronDownIcon, ChevronRightIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { Field, FieldLabel } from "@stackmyth/field";
 import { useFormContext } from "@stackmyth/form";
 import { Input } from "@stackmyth/input";
 import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Switch } from "@stackmyth/switch";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
 
 import { MAX_POLICIES_PER_EVENT } from "@/lib/validation";
 
 import { useCopy } from "./copy-provider";
-import { Notice } from "./notice";
 
 /**
  * One catalogue entry, as the server resolved it for this reader.
@@ -236,7 +236,7 @@ export function PolicyEditor({
                       have. It blocks nobody — see ParticipantCompliance —
                       but the organizer should know why nothing happens. */}
                   {on && !option.isSupported ? (
-                    <Notice tone="warning" title={copy.policies.unsupported} />
+                    <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.policies.unsupported} />
                   ) : null}
 
                   {on ? (

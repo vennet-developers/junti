@@ -4,15 +4,15 @@ import { useEffect, useId, useState, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Field, FieldError, FieldLabel } from "@stackmyth/field";
-import { GoogleIcon } from "@stackmyth/icons";
+import { GoogleIcon, InfoIcon } from "@stackmyth/icons";
 import { Divider, Stack } from "@stackmyth/layout";
 import { Input } from "@stackmyth/input";
 import { Spinner } from "@stackmyth/spinner";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
 
 import { useCopy } from "@/components/copy-provider";
 import { ROUTES } from "@/config/routes";
-import { Notice } from "@/components/notice";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /**
@@ -164,9 +164,9 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
       depends on mail arriving at all.
     */
     return (
-      <Notice tone="info" title={copy.auth.emailSent(sentTo)}>
+      <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.auth.emailSent(sentTo)}>
         {copy.auth.emailSentHelp}
-      </Notice>
+      </Banner>
     );
   }
 

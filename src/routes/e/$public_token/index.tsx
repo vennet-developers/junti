@@ -1,13 +1,14 @@
 import { Badge } from "@stackmyth/badge";
 import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
+import { TriangleAlertIcon } from "@stackmyth/icons";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
 import { MoneySummary } from "@/components/money-summary";
-import { Notice } from "@/components/notice";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RosterGroup } from "@/components/roster-list";
 import { TimeZoneSync } from "@/components/time-zone-sync";
@@ -373,7 +374,7 @@ function ParticipantPage() {
         {/* The RSVP box comes BEFORE the roster: answering is the point,
             who else is coming is merely interesting. */}
         {event.isClosed ? (
-          <Notice tone="warning" title={copy.event.closedNotice} />
+          <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.event.closedNotice} />
         ) : signedIn && account ? (
           <JoinPanel
             publicToken={publicToken}

@@ -4,13 +4,13 @@ import { useState, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
-import { CheckCircleIcon } from "@stackmyth/icons";
+import { CheckCircleIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
 import { useRouter } from "@tanstack/react-router";
 
 import { useCopy } from "@/components/copy-provider";
-import { Notice } from "@/components/notice";
 import { PersonAvatar } from "@/components/person-avatar";
 
 import { joinOneTapFn, type RsvpState } from "./-fns";
@@ -89,7 +89,7 @@ export function OneTapJoin({
             </Text>
           ) : null}
 
-          {isFull ? <Notice tone="warning" title={copy.rsvp.willBeWaitlisted} /> : null}
+          {isFull ? <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.rsvp.willBeWaitlisted} /> : null}
 
           <Flex gap="3" align="center">
             <PersonAvatar src={avatarUrl} name={displayName} size="md" />

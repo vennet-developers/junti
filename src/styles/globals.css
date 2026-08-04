@@ -152,47 +152,6 @@ body {
   }
 }
 
-/*
-  The attendee avatar palette.
-
-  Six classes rather than inline styles, because Stackmyth components take their
-  appearance from props, LayoutProps or tokens — never from `style=` — and the
-  two things that vary here are exactly the two custom properties the Avatar
-  reads. A stable hash of the guest's name picks the class, so the same person
-  keeps the same colour across every event without anything being stored.
-
-  Each pair is a `soft` surface with its matching `soft-text`, which core
-  redefines for dark mode, so the stack inverts with the page.
-*/
-.attendee-avatar--1 {
-  --sm-avatar-bg: var(--sm-info-soft);
-  --sm-avatar-fallback-text: var(--sm-info-soft-text);
-}
-
-.attendee-avatar--2 {
-  --sm-avatar-bg: var(--sm-success-soft);
-  --sm-avatar-fallback-text: var(--sm-success-soft-text);
-}
-
-.attendee-avatar--3 {
-  --sm-avatar-bg: var(--sm-warning-soft);
-  --sm-avatar-fallback-text: var(--sm-warning-soft-text);
-}
-
-.attendee-avatar--4 {
-  --sm-avatar-bg: var(--sm-error-soft);
-  --sm-avatar-fallback-text: var(--sm-error-soft-text);
-}
-
-.attendee-avatar--5 {
-  --sm-avatar-bg: var(--sm-accent-soft);
-  --sm-avatar-fallback-text: var(--sm-accent-soft-text);
-}
-
-.attendee-avatar--6 {
-  --sm-avatar-bg: var(--sm-primary-soft);
-  --sm-avatar-fallback-text: var(--sm-primary-soft-text);
-}
 
 /*
   next/link renders a plain <a>, which the browser underlines. A brand mark

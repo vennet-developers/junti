@@ -1,29 +1,29 @@
 # Stackmyth — friction log
 
-> **Status: the original sixteen are resolved. One new entry (#17) is open.**
+> **Status: #17–#20 remain open. #18, #19 and #20 were appended after the
+> summary below was written and it never caught up — the header said "one new
+> entry" while three more sat underneath it, which is exactly the kind of
+> stale index that makes a log stop being read.**
 >
 > Fifteen gaps fixed across three releases, one entry withdrawn as intended
-> behaviour (#3), and one found later while building against 0.22.0 (#17).
-> This app consumes `@stackmyth/*` **0.22.0** and `@stackmyth/manifests`
-> **0.2.0**, and every status below was verified against the installed
-> artifacts, not the repo.
+> behaviour (#3), and four found later while building against 0.22.0–0.25.2.
+> This app consumes `@stackmyth/*` **0.25.4**.
 >
 > | Release | Gaps fixed                                                                                                                                                                                                                                                    |
 > | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 > | 0.20.0  | #4 (`loadingLabel`), #5 (`Select name`), #6 (`Alert live`), #12 (`DatePicker locale`), #15 (`reValidateMode`)                                                                                                                                                 |
 > | 0.21.0  | #11 (`valueFormat="date"`)                                                                                                                                                                                                                                    |
 > | 0.22.0  | #1 (css self-contained), #2+#16 (manifests populated + `require()` fixed), #7 (RSC-safe pure packages), #8 (`Container`/`Section` LayoutProps), #9 (state accent tokens), #10 (`<Form>` element), #13 (documented), #14 (Stack aliases + SelectValue devWarn) |
+> | 0.25.4  | #21 (`Banner live`), #22 (`Avatar tone` + `AvatarFallback name`), #23 (`ConfirmDialog`) — see below                                                                                                                                                            |
 >
 > Workarounds retired in this app as each release landed: the composed
 > disabled-Button-plus-Spinner (#4), the Select hidden-input mirror (#5),
 > thirty `*.vars.css` imports in the root layout (#1), the
 > `<Container><Stack px>` wrapper on every page (#8), the
 > `{({ handleSubmit }) => <form …>}` render-prop dance in all four forms
-> (#10), and Notice's icon now uses `--sm-<state>-accent` (#9). Still
-> standing by choice, not necessity: `Notice` itself (static notices are a
-> different a11y animal than alerts even with `live` available) and the
-> composed date field (#12's fix works, but the two-field wall-clock model
-> is what the server stores).
+> (#10), and Notice's icon now uses `--sm-<state>-accent` (#9). **0.25.4
+> retired three more: `notice.tsx`, the six `.attendee-avatar--N` classes
+> with their two divergent initials helpers, and `confirm-dialog.tsx`.**
 >
 > **One entry was wrong and has been withdrawn:** #3 said `Badge dot`
 > silently discards its children. It does, but deliberately — a test asserts
@@ -841,3 +841,80 @@ Stating this because a gaps file that is only complaints is not honest feedback.
   `aria-invalid` propagate to the control and description without being asked.
   The a11y tree of the smoke page came out clean on the first try.
 - **`Button asChild`** made `next/link` integration a non-event.
+
+---
+
+## 21. `Banner` is a live region unconditionally — FIXED in 0.25.4
+
+> **Status: FIXED in 0.25.4.** `live` on `Banner`, same three values and the
+> same role map as `Alert`. Unset still derives the role from `variant`, so
+> nothing that existed changed.
+
+**What I was building.** Every static notice in this app: "the event is
+closed", "you will be waitlisted", "this link is incomplete".
+
+**What happened.** I had written `notice.tsx` — a `Card` plus a tinted icon —
+because `Alert` was an assertive live region and a notice that is part of the
+page on arrival must not interrupt a screen reader. #6 fixed that for `Alert`
+in 0.20.0. What I did not know, for four releases, is that **`Banner` already
+existed and is exactly this component**: variant, icon, title, body, action,
+dismiss. It was never installed here, and the file I wrote instead reasons at
+length about `Alert` vs `Card` without ever mentioning it.
+
+Adopting it would have reintroduced the bug #6 fixed, though: `Banner`
+hardcoded `role="alert"` for error/warning and `role="status"` otherwise, with
+no way out. Two components in the same category, one of which had learned the
+lesson.
+
+**What I would have wanted.** The prop, which now exists — and, separately, a
+way to notice that `banner` is in the published inventory. The manifests
+package does list all 73 packages; the failure was mine for not reading it.
+See #16, which is about the same discoverability problem from the other end.
+
+---
+
+## 22. `Avatar color` sets a background with no readable foreground — FIXED in 0.25.4
+
+> **Status: FIXED in 0.25.4.** `tone` sets `--sm-avatar-bg` and
+> `--sm-avatar-fallback-text` from one palette pair; `textColor` fills in the
+> other half of `color`; `AvatarFallback name` derives the initials and
+> `initialsFrom` is exported.
+
+**What I was building.** A roster where each person's avatar is tinted from a
+hash of their name, so the same person is the same colour on every screen.
+
+**What happened.** `Avatar` took `color`, which sets the background only. The
+fallback keeps `--sm-avatar-fallback-text` — near-white — so a pale tint gave
+invisible initials. There was no prop for the second half, so this app carried
+six classes in `globals.css` setting both custom properties by hand, and a
+`palette.ts` whose job was to pick one of them.
+
+**And the initials themselves.** `AvatarFallback` took children, so both
+`person-avatar.tsx` and `attendee-stack.tsx` wrote their own helper. They had
+drifted: one used `Array.from(word)[0]`, the other `word[0]` — which returns a
+UTF-16 code unit and cuts a name beginning with an emoji in half. Two copies of
+a two-line function in one repo, disagreeing.
+
+**What I would have wanted**, and now have: a `tone` that speaks the palette,
+and a fallback that can derive initials itself.
+
+---
+
+## 23. Every app rebuilds the confirmation dialog — FIXED in 0.25.4
+
+> **Status: FIXED in 0.25.4.** `ConfirmDialog` in `@stackmyth/dialog`.
+
+**What I was building.** "Delete this group?" and "Leave this group?".
+
+**What happened.** I reached for `window.confirm` first, which is wrong three
+ways — it looks like the browser, it cannot be translated, and it blocks the
+page — and then composed `Dialog alert` + header + footer by hand. The
+composition is not hard; it is that four invisible decisions ride on it:
+Escape and backdrop must not dismiss, focus belongs on the confirming button,
+the dialog has to survive the async work it started, and the question needs to
+reach a screen reader as the dialog's name. `Dialog alert` had the first two.
+The Storybook's own "Alert Dialog" story got the third wrong — its confirm was
+wrapped in `DialogClose`, so it closed before any real work could finish.
+
+**What I would have wanted.** The component, which now exists, with the
+buttons as slots so the dialog package stays free of a dependency on `button`.

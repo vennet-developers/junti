@@ -3,10 +3,11 @@
 import { Box, Stack } from "@stackmyth/layout";
 import { AutoSkeleton } from "@stackmyth/skeleton/auto";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
+import { InfoIcon } from "@stackmyth/icons";
 
 import { useCopy } from "@/components/copy-provider";
 import { Link } from "@/components/link";
-import { Notice } from "@/components/notice";
 
 import { AGENDA_SKELETON_NAME } from "./-agenda-fallback";
 import { EventList, type EventListItem } from "./-event-list";
@@ -68,7 +69,7 @@ export function Agenda({
           notice already knew.
         */}
         {pending.length > 0 ? (
-          <Notice tone="info" title={copy.auth.pendingTitle(pending.length)}>
+          <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.auth.pendingTitle(pending.length)}>
             <Stack gap="2" pt="2">
               <Text variant="small" color="muted">
                 {copy.auth.pendingHelp}
@@ -81,7 +82,7 @@ export function Agenda({
                 </Box>
               ))}
             </Stack>
-          </Notice>
+          </Banner>
         ) : null}
 
         <EventList events={items} />

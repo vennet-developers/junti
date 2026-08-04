@@ -2,6 +2,8 @@ import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
+import { InfoIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -10,7 +12,6 @@ import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
 import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
-import { Notice } from "@/components/notice";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RosterGroup } from "@/components/roster-list";
 import { getCopy } from "@/config/copy";
@@ -395,14 +396,14 @@ function ManagePage() {
                   copyLabel={copy.share.copyOrganizerLink}
                 />
 
-                <Notice tone="info" title={copy.eventCreated.organizerLinkNote} />
+                <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.eventCreated.organizerLinkNote} />
               </Stack>
             </Disclosure>
 
             {roster.promotable > 0 ? (
-              <Notice tone="info" title={copy.manage.slotOpenedTitle}>
+              <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.manage.slotOpenedTitle}>
                 {copy.manage.slotOpenedBody(roster.promotable)}
-              </Notice>
+              </Banner>
             ) : null}
 
             {/* Above the money and the roster, because it is the only thing
@@ -426,9 +427,9 @@ function ManagePage() {
             ) : null}
 
             {roster.discrepancies.map((discrepancy) => (
-              <Notice
+              <Banner
                 key={discrepancy.participantId}
-                tone="warning"
+                variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
                 title={copy.manage.splitWarningTitle}
               >
                 {copy.manage.splitWarningBody(
@@ -436,7 +437,7 @@ function ManagePage() {
                   formatMoneyLocal(discrepancy.confirmedAmountMinor, event.currency, copy.intlLocale),
                   formatMoneyLocal(discrepancy.computedAmountMinor, event.currency, copy.intlLocale),
                 )}
-              </Notice>
+              </Banner>
             ))}
 
             <Divider />
@@ -449,9 +450,9 @@ function ManagePage() {
               <RosterHeading copy={copy} count={roster.confirmed.length} />
 
               {roster.members.length === 0 ? (
-                <Notice tone="info" title={copy.manage.noParticipants}>
+                <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.manage.noParticipants}>
                   {copy.manage.noParticipantsHelp}
-                </Notice>
+                </Banner>
               ) : (
                 <>
                   <RosterGroup
@@ -599,7 +600,7 @@ function ManagePage() {
                   collectedMinor={roster.collectedMinor}
                 />
               ) : (
-                <Notice tone="info" title={copy.manage.editNotYours} />
+                <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.manage.editNotYours} />
               )}
             </Disclosure>
 

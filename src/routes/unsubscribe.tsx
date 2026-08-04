@@ -1,11 +1,12 @@
 import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
+import { InfoIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { pageTitle } from "@/lib/page-title";
 import { useCopy } from "@/components/copy-provider";
-import { Notice } from "@/components/notice";
 
 /**
  * Where an unsubscribe link lands.
@@ -87,13 +88,13 @@ function UnsubscribePage() {
           </Text>
 
           {parsed.success ? (
-            <Notice tone="info" title={copy.unsubscribe.doneTitle(parsed.data)}>
+            <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.unsubscribe.doneTitle(parsed.data)}>
               {copy.unsubscribe.doneHelp}
-            </Notice>
+            </Banner>
           ) : (
-            <Notice tone="warning" title={copy.unsubscribe.badLinkTitle}>
+            <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.unsubscribe.badLinkTitle}>
               {copy.unsubscribe.badLinkHelp}
-            </Notice>
+            </Banner>
           )}
         </Stack>
       </Container>

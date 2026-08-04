@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@stackmyth/avatar";
 
 import type { AvatarSize } from "@stackmyth/avatar";
 
-import { avatarPaletteClass } from "@/lib/palette";
+import { avatarToneFor } from "@/lib/palette";
 
 /**
  * A participant's photo.
@@ -14,7 +14,10 @@ import { avatarPaletteClass } from "@/lib/palette";
  * The fallback matters more than it looks: a Google avatar URL is served by
  * Google and can start 404ing when someone changes their photo, and the URL
  * stored on the row is a copy taken at RSVP time. When that happens the initials
- * appear and the roster still reads correctly.
+ * appear and the roster still reads correctly. `AvatarFallback` derives them
+ * from the name since 0.25.4 — this file used to carry its own version, and so
+ * did `attendee-stack.tsx`, and the two had drifted apart on how they handle a
+ * name that starts outside the BMP.
  *
  * The colour is seeded from the name, so somebody without a photo is the same
  * colour here as in the stack on their event card, and a list of them reads as
@@ -30,27 +33,10 @@ export function PersonAvatar({
   size?: AvatarSize;
 }) {
   return (
-    <Avatar size={size} className={avatarPaletteClass(name)}>
+    <Avatar size={size} tone={avatarToneFor(name)}>
       {src ? <AvatarImage src={src} alt="" /> : null}
-      <AvatarFallback>{initials(name)}</AvatarFallback>
+      <AvatarFallback name={name} />
     </Avatar>
   );
 }
 
-/**
- * Up to two initials from a display name.
- *
- * Uses `Array.from` rather than indexing, because a name beginning with an
- * emoji or an accented character outside the BMP would otherwise be cut in half
- * and render as a replacement glyph.
- */
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-
-  const letters = words
-    .slice(0, 2)
-    .map((word) => Array.from(word)[0] ?? "")
-    .join("");
-
-  return letters.toLocaleUpperCase() || "?";
-}

@@ -3,12 +3,12 @@
 import { useState, useTransition } from "react";
 
 import { Button } from "@stackmyth/button";
+import { ConfirmDialog } from "@stackmyth/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Flex, Stack } from "@stackmyth/layout";
 import { Input } from "@stackmyth/input";
 import { toast } from "@stackmyth/toast";
 
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCopy } from "@/components/copy-provider";
 import { GROUP_NAME_MAX } from "@/domain/groups";
 
@@ -117,9 +117,17 @@ export function DeleteGroupControl({ groupId, name }: { groupId: string; name: s
       }
       title={copy.groups.deleteConfirm(name)}
       description={copy.groups.deleteConfirmBody}
-      confirmLabel={copy.groups.delete}
+      confirm={
+        <Button type="button" size="md" variant="destructive">
+          {pending ? copy.groups.deleting : copy.groups.delete}
+        </Button>
+      }
+      cancel={
+        <Button type="button" size="md" variant="secondary">
+          {copy.common.cancel}
+        </Button>
+      }
       pending={pending}
-      pendingLabel={copy.groups.deleting}
       onConfirm={remove}
     />
   );
@@ -219,9 +227,17 @@ export function LeaveGroupControl({ groupId, name }: { groupId: string; name: st
       }
       title={copy.groups.leaveConfirm(name)}
       description={copy.groups.leaveConfirmBody}
-      confirmLabel={copy.groups.leave}
+      confirm={
+        <Button type="button" size="md" variant="destructive">
+          {pending ? copy.groups.leaving : copy.groups.leave}
+        </Button>
+      }
+      cancel={
+        <Button type="button" size="md" variant="secondary">
+          {copy.common.cancel}
+        </Button>
+      }
       pending={pending}
-      pendingLabel={copy.groups.leaving}
       onConfirm={leave}
     />
   );

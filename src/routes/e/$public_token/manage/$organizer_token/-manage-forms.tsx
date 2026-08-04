@@ -6,6 +6,8 @@ import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
 import { Textarea } from "@stackmyth/textarea";
 import { toast } from "@stackmyth/toast";
+import { Banner } from "@stackmyth/banner";
+import { TriangleAlertIcon } from "@stackmyth/icons";
 
 import { DateTimeField } from "@/components/date-time-field";
 import {
@@ -18,7 +20,6 @@ import {
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
-import { Notice } from "@/components/notice";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
 import {
@@ -323,12 +324,11 @@ export function EditEventForm({
               was pesos and is about to mean dollars. Say so while the field
               is on screen and editable. */}
           {costMode !== "none" && currency !== event.currency ? (
-            <Notice tone="warning" title={copy.manage.currencyChanged(currency)} />
+            <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.manage.currencyChanged(currency)} />
           ) : null}
 
           {costMode === "none" && event.costMode !== "none" && collectedMinor > 0 ? (
-            <Notice
-              tone="warning"
+            <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
               title={copy.manage.removingCostWithCollected(
                 formatMoney(collectedMinor, event.currency, copy.intlLocale),
               )}

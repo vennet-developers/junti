@@ -1,10 +1,11 @@
 import { Center, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { Banner } from "@stackmyth/banner";
+import { TriangleAlertIcon } from "@stackmyth/icons";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
-import { Notice } from "@/components/notice";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { SignInForm } from "@/components/sign-in-form";
 import { pageTitle } from "@/lib/page-title";
@@ -75,13 +76,13 @@ function SignInPage() {
           {/* Why they are back here, when they are back here. Naming the
               cause is what turns a dead end into an instruction. */}
           {error === "browser" ? (
-            <Notice tone="warning" title={copy.auth.linkWrongBrowser}>
+            <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.auth.linkWrongBrowser}>
               {copy.auth.linkWrongBrowserHelp}
-            </Notice>
+            </Banner>
           ) : error ? (
-            <Notice tone="warning" title={copy.auth.linkFailed}>
+            <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.auth.linkFailed}>
               {copy.auth.linkFailedHelp}
-            </Notice>
+            </Banner>
           ) : null}
 
           <SignInForm redirectTo={redirectTo} />

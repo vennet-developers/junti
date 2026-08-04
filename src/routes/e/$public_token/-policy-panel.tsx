@@ -11,9 +11,10 @@ import { Input } from "@stackmyth/input";
 import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { toast } from "@stackmyth/toast";
+import { Banner } from "@stackmyth/banner";
+import { InfoIcon, TriangleAlertIcon } from "@stackmyth/icons";
 
 import { useCopy } from "@/components/copy-provider";
-import { Notice } from "@/components/notice";
 import type { PolicyState } from "@/domain/policies";
 import { findHandler } from "@/domain/policy-handlers";
 import { downscaleImage, EVIDENCE_ACCEPT } from "@/lib/image-downscale";
@@ -58,7 +59,7 @@ export function PolicyPanel({
       </CardHeader>
       <CardContent>
         <Stack gap="5">
-          {allDone ? <Notice tone="info" title={copy.policies.allDone} /> : null}
+          {allDone ? <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.policies.allDone} /> : null}
 
           {items.map((item, index) => (
             <Stack gap="4" key={item.id}>
@@ -204,8 +205,7 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
       ) : null}
 
       {item.state === "rejected" ? (
-        <Notice
-          tone="warning"
+        <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
           title={
             item.reviewNote
               ? copy.policies.rejectedNotice(item.reviewNote)

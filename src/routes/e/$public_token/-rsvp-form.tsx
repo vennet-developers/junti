@@ -8,6 +8,8 @@ import { Input } from "@stackmyth/input";
 import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { toast } from "@stackmyth/toast";
+import { Banner } from "@stackmyth/banner";
+import { TriangleAlertIcon } from "@stackmyth/icons";
 
 import {
   ControlledField,
@@ -19,7 +21,6 @@ import {
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
-import { Notice } from "@/components/notice";
 import { RadioField } from "@/components/radio-field";
 import { makeRsvpSchema } from "@/lib/validation";
 
@@ -115,7 +116,7 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
                   makes people distrust a form. Not shown to someone who
                   already holds a spot — they are not going anywhere. */}
               {isFull && mine?.attendance !== "in" && !serverState.waitlisted ? (
-                <Notice tone="warning" title={copy.rsvp.willBeWaitlisted} />
+                <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.rsvp.willBeWaitlisted} />
               ) : null}
 
               <FormError message={serverState.errors._form} />

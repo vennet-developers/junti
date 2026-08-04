@@ -2,7 +2,7 @@ import { Avatar, AvatarFallback, AvatarGroup } from "@stackmyth/avatar";
 import { Flex } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { avatarPaletteClass } from "@/lib/palette";
+import { avatarToneFor } from "@/lib/palette";
 
 /**
  * The overlapping faces on an event card.
@@ -17,18 +17,12 @@ import { avatarPaletteClass } from "@/lib/palette";
  * To stop it reading as a row of identical grey discs, each name gets a colour
  * derived from the name itself, which means the same person keeps the same
  * colour across every event and across reloads without anything being stored.
+ *
+ * The initials come from `AvatarFallback name`. The copy that used to live
+ * here indexed the string — `name[0]` — which returns a UTF-16 code unit
+ * rather than a character and cut a name beginning with an emoji in half.
  */
 
-function initialsOf(name: string): string {
-  return (
-    name
-      .trim()
-      .split(/\s+/)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase() ?? "")
-      .join("") || "?"
-  );
-}
 
 export function AttendeeStack({
   names,
@@ -59,8 +53,8 @@ export function AttendeeStack({
         {names.map((name, index) => (
           // The name is the identity here, and two guests can share one. The
           // index keeps React's list keys unique without pretending otherwise.
-          <Avatar key={`${name}-${index}`} size="sm" bordered className={avatarPaletteClass(name)}>
-            <AvatarFallback>{initialsOf(name)}</AvatarFallback>
+          <Avatar key={`${name}-${index}`} size="sm" bordered tone={avatarToneFor(name)}>
+            <AvatarFallback name={name} />
           </Avatar>
         ))}
       </AvatarGroup>
