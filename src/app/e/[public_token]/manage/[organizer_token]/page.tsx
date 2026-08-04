@@ -236,38 +236,72 @@ export default async function ManagePage({
             ]}
           />
 
-          {/* The event itself comes first. On a return visit that is what the
+          {/*
+            Two columns from `lg`: the record on the left, the tools on the
+            right.
+
+            This is the densest screen in the product and the one an organizer
+            opens at a desk. The left column is everything that happened — which
+            event this is, who answered, what they owe — and it is long. The
+            right is everything you do: invite, edit, close. Short, and reached
+            for and put down. Stacked, that meant scrolling past the entire
+            roster to invite one more person.
+
+            **The split starts at the event header, not below it.** It used to
+            begin further down, on the reasoning that the header was context
+            that "applies to the whole page" and so deserved full width. It
+            never used that width: the details column is a handful of short
+            lines, so on a laptop the top third of the screen was header on the
+            left and nothing at all on the right, with the tools pushed below
+            the fold for no reason anybody could see.
+
+            **The DOM order is the phone's order, unchanged.** No `order`
+            juggling: on a single column this still renders header, links,
+            what-is-waiting, money, roster, invite, edit, close — the sequence
+            it always rendered. The grid only decides where things sit once
+            there is a second column to sit in. The share panel stays at the top
+            of the left column for the same reason it was never moved into the
+            aside: it opens expanded on a just-created event, and burying the
+            links somebody was sent here to copy would be a regression on the
+            one visit that matters most.
+
+            `align="start"` so the aside keeps its own height instead of
+            stretching to match a roster of forty people.
+          */}
+          <Grid columns={{ base: "1", lg: "1.7fr 1fr" }} gap="6" align="start">
+            <Stack gap="6">
+              {/* The event itself comes first. On a return visit that is what the
               organizer opened the page for; the links are one tap away below. */}
-          <EventHeader
-            event={event}
-            attendingCount={roster.attending.length}
-            copy={copy}
-            readerTimeZone={readerTimeZone}
-            openSlots={roster.openSlots}
-          />
-
-          {justCreated ? (
-            <>
-              {/* "Your event is created" floats — it is a fact about a moment.
-                "Keep these two links" stays on the page, because losing them
-                is unrecoverable and a message that expires cannot carry that. */}
-              <CreatedToast />
-              <Text color="muted">{copy.eventCreated.subheading}</Text>
-            </>
-          ) : null}
-
-          {/* Expanded only right after creation, when the links ARE the task.
-            Collapsed on every later visit. */}
-          <Disclosure id="share" label={copy.manage.shareSection} defaultOpen={justCreated}>
-            <Stack gap="5">
-              <LinkPanel
-                label={copy.eventCreated.participantLinkLabel}
-                help={copy.eventCreated.participantLinkHelp}
-                url={participantUrl}
-                copyLabel={copy.share.copyParticipantLink}
+              <EventHeader
+                event={event}
+                attendingCount={roster.attending.length}
+                copy={copy}
+                readerTimeZone={readerTimeZone}
+                openSlots={roster.openSlots}
               />
 
-              {/*
+              {justCreated ? (
+                <>
+                  {/* "Your event is created" floats — it is a fact about a moment.
+                "Keep these two links" stays on the page, because losing them
+                is unrecoverable and a message that expires cannot carry that. */}
+                  <CreatedToast />
+                  <Text color="muted">{copy.eventCreated.subheading}</Text>
+                </>
+              ) : null}
+
+              {/* Expanded only right after creation, when the links ARE the task.
+            Collapsed on every later visit. */}
+              <Disclosure id="share" label={copy.manage.shareSection} defaultOpen={justCreated}>
+                <Stack gap="5">
+                  <LinkPanel
+                    label={copy.eventCreated.participantLinkLabel}
+                    help={copy.eventCreated.participantLinkHelp}
+                    url={participantUrl}
+                    copyLabel={copy.share.copyParticipantLink}
+                  />
+
+                  {/*
             Box(as="a"), so the element Button clones is still a Stackmyth
             primitive — `asChild` needs a single child element, which is the
             only reason there is a wrapper here.
@@ -277,104 +311,76 @@ export default async function ManagePage({
             artifact — a production build renders the merged classes identically
             on both sides and logs nothing. See STACKMYTH-GAPS.md #13.
           */}
-              <Button asChild fullWidth size="lg">
-                <Box
-                  as="a"
-                  href={whatsAppShareUrl(shareMessage)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {copy.eventCreated.shareWhatsApp}
-                </Box>
-              </Button>
+                  <Button asChild fullWidth size="lg">
+                    <Box
+                      as="a"
+                      href={whatsAppShareUrl(shareMessage)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {copy.eventCreated.shareWhatsApp}
+                    </Box>
+                  </Button>
 
-              <LinkPanel
-                label={copy.eventCreated.organizerLinkLabel}
-                help={copy.eventCreated.organizerLinkHelp}
-                url={manageUrl}
-                copyLabel={copy.share.copyOrganizerLink}
-              />
+                  <LinkPanel
+                    label={copy.eventCreated.organizerLinkLabel}
+                    help={copy.eventCreated.organizerLinkHelp}
+                    url={manageUrl}
+                    copyLabel={copy.share.copyOrganizerLink}
+                  />
 
-              {/* The warning that used to sit here said losing this link meant
+                  {/* The warning that used to sit here said losing this link meant
                 losing the event, which was true when the token was the only
                 identity there was. The event is in your history now; the link
                 is for handing to somebody else. */}
-              <Notice tone="info" title={copy.eventCreated.organizerLinkNote} />
-            </Stack>
-          </Disclosure>
+                  <Notice tone="info" title={copy.eventCreated.organizerLinkNote} />
+                </Stack>
+              </Disclosure>
 
-          {roster.promotable > 0 ? (
-            <Notice tone="info" title={copy.manage.slotOpenedTitle}>
-              {copy.manage.slotOpenedBody(roster.promotable)}
-            </Notice>
-          ) : null}
+              {roster.promotable > 0 ? (
+                <Notice tone="info" title={copy.manage.slotOpenedTitle}>
+                  {copy.manage.slotOpenedBody(roster.promotable)}
+                </Notice>
+              ) : null}
 
-          {/* Confirmed payments that no longer match the computed share. Never
+              {/* Confirmed payments that no longer match the computed share. Never
             reconciled automatically — the organizer sorts it out in person. */}
-          {/* Above the money and the roster, because it is the only thing on this
+              {/* Above the money and the roster, because it is the only thing on this
             page that somebody else is actively waiting on. */}
-          {roster.policies.length > 0 ? (
-            <Disclosure
-              id="review"
-              label={
-                reviewItems.length > 0
-                  ? `${copy.review.heading} · ${copy.review.pendingCount(reviewItems.length)}`
-                  : copy.review.heading
-              }
-              defaultOpen={reviewItems.length > 0}
-            >
-              <ReviewQueue
-                publicToken={publicToken}
-                organizerToken={organizerToken}
-                items={reviewItems}
-              />
-            </Disclosure>
-          ) : null}
+              {roster.policies.length > 0 ? (
+                <Disclosure
+                  id="review"
+                  label={
+                    reviewItems.length > 0
+                      ? `${copy.review.heading} · ${copy.review.pendingCount(reviewItems.length)}`
+                      : copy.review.heading
+                  }
+                  defaultOpen={reviewItems.length > 0}
+                >
+                  <ReviewQueue
+                    publicToken={publicToken}
+                    organizerToken={organizerToken}
+                    items={reviewItems}
+                  />
+                </Disclosure>
+              ) : null}
 
-          {roster.discrepancies.map((discrepancy) => (
-            <Notice
-              key={discrepancy.participantId}
-              tone="warning"
-              title={copy.manage.splitWarningTitle}
-            >
-              {copy.manage.splitWarningBody(
-                nameOf(discrepancy.participantId),
-                formatMoney(discrepancy.confirmedAmountMinor, event.currency, copy.intlLocale),
-                formatMoney(discrepancy.computedAmountMinor, event.currency, copy.intlLocale),
-              )}
-            </Notice>
-          ))}
+              {roster.discrepancies.map((discrepancy) => (
+                <Notice
+                  key={discrepancy.participantId}
+                  tone="warning"
+                  title={copy.manage.splitWarningTitle}
+                >
+                  {copy.manage.splitWarningBody(
+                    nameOf(discrepancy.participantId),
+                    formatMoney(discrepancy.confirmedAmountMinor, event.currency, copy.intlLocale),
+                    formatMoney(discrepancy.computedAmountMinor, event.currency, copy.intlLocale),
+                  )}
+                </Notice>
+              ))}
 
-          <Divider />
+              <Divider />
 
-          {/*
-            Two columns from `lg`: the record on the left, the tools on the
-            right.
-
-            This is the densest screen in the product and the one an organizer
-            opens at a desk. Everything above this line is context — which event,
-            what is waiting on you — and stays full width because it is read once
-            and applies to the whole page. Below it the page does two different
-            jobs: the roster is the record of who answered and what they owe, and
-            it is long; inviting, editing and closing are tools you reach for and
-            put down, and they are short. Stacked, that meant scrolling past the
-            entire roster to invite one more person.
-
-            **The DOM order is the phone's order, unchanged.** No `order`
-            juggling and no reordering to make the columns work: on a single
-            column this renders money, roster, invite, edit, close — exactly the
-            sequence it rendered before. The grid only decides where things sit
-            once there is a second column to sit in, which is also why the share
-            panel stayed above rather than moving into the aside. It opens
-            expanded on a just-created event, and burying the links somebody was
-            sent here to copy would be a regression on the one visit that matters
-            most.
-
-            `align="start"` so the aside keeps its own height instead of
-            stretching to match a roster of forty people.
-          */}
-          <Grid columns={{ base: "1", lg: "1.7fr 1fr" }} gap="6" align="start">
-            <Stack gap="6">
               <MoneySummary roster={roster} copy={copy} />
 
               {showMoney ? <Divider /> : null}
