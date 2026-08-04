@@ -68,7 +68,13 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: juntiCss },
+      /*
+        Next generated these three tags from files inside src/app; the files
+        moved to /public with the migration and the tags are written out here.
+      */
       { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/apple-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
@@ -135,10 +141,6 @@ function RootDocument({
       the server so a dark-mode reader is never flashed a white first paint.
     */
     <html lang={getCopy(locale).intlLocale} data-mode={theme ?? undefined}>
-      {/* eslint-disable-next-line @next/next/no-head-element --
-          Next's rule, firing on a TanStack file. The document really is ours
-          to write here; the whole eslint-config-next preset leaves with the
-          last Next file in phase 6. */}
       <head>
         <HeadContent />
       </head>

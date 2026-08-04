@@ -1,6 +1,6 @@
 "use client";
 
-import { Link } from "@/components/link";
+import { Link } from "@tanstack/react-router";
 import { useRouter } from "@tanstack/react-router";
 import { useState, useTransition, type MouseEvent } from "react";
 
@@ -210,7 +210,7 @@ export function ProfileMenu({
                   `flush` drops the button's own inline padding so the icons
                   line up with the section labels below. */}
               <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
-                <Link href={ROUTES.myEvents} onClick={closeUnlessOpeningElsewhere}>
+                <Link to={ROUTES.myEvents} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <CalendarIcon size={18} aria-hidden="true" />
                     {copy.auth.myEventsLink}
@@ -221,7 +221,7 @@ export function ProfileMenu({
               {/* Second, right under the events: it is where an organizer goes
                   when something is waiting, and it reads across all of them. */}
               <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
-                <Link href={ROUTES.approvals} onClick={closeUnlessOpeningElsewhere}>
+                <Link to={ROUTES.approvals} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <CheckCircleIcon size={18} aria-hidden="true" />
                     {copy.approvals.link}
@@ -230,7 +230,7 @@ export function ProfileMenu({
               </Button>
 
               <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
-                <Link href={ROUTES.profile} onClick={closeUnlessOpeningElsewhere}>
+                <Link to={ROUTES.profile} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <UserIcon size={18} aria-hidden="true" />
                     {copy.profile.link}
@@ -239,7 +239,7 @@ export function ProfileMenu({
               </Button>
 
               <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
-                <Link href={ROUTES.messages} onClick={closeUnlessOpeningElsewhere}>
+                <Link to={ROUTES.messages} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <MessageCircleIcon size={18} aria-hidden="true" />
                     {copy.messages.link}

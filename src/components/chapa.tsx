@@ -50,7 +50,6 @@ export function Chapa({ width = 88 }: { width?: number }) {
     before the file arrives and nothing shifts around it while it loads.
   */
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src="/brand/junti-chapa-principal.svg"
       alt={BRAND_NAME}
@@ -68,7 +67,6 @@ export function Chapa({ width = 88 }: { width?: number }) {
  */
 export function Monograma({ size = 32 }: { size?: number }) {
   return (
-    // eslint-disable-next-line @next/next/no-img-element
     <img src="/brand/junti-icono-app-naranja.svg" alt={BRAND_NAME} width={size} height={size} />
   );
 }

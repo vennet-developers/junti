@@ -83,7 +83,6 @@ export function AppFooter() {
             aria-label={copy.footer.vennetLabel}
             className="vennet-mark"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/vennet-mark-ink.svg"
               alt=""
@@ -91,7 +90,6 @@ export function AppFooter() {
               height={22}
               className="vennet-mark__art vennet-mark__art--light"
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/brand/vennet-mark-white.svg"
               alt=""

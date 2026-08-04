@@ -7,7 +7,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
-import { Link } from "@/components/link";
+import { Link } from "@tanstack/react-router";
 import { BRAND_DESCRIPTION } from "@/config/brand";
 import { ROUTES } from "@/config/routes";
 
@@ -73,14 +73,14 @@ function HomePage() {
                 like something you press. */}
             <Box width="100%" maxWidth={{ base: "100%", md: "20rem" }}>
               <Button asChild fullWidth size="lg">
-                <Link href={ROUTES.newEvent}>{copy.home.cta}</Link>
+                <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
               </Button>
             </Box>
             {/* Secondary on purpose: both destinations ask for the same
                 account, so the primary is the one that says what this is for. */}
             <Box width="100%" maxWidth={{ base: "100%", md: "20rem" }}>
               <Button asChild fullWidth size="md" variant="ghost">
-                <Link href={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
+                <Link to={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
               </Button>
             </Box>
 

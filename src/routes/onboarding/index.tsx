@@ -47,7 +47,7 @@ const gate = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/onboarding/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { next?: string } => ({
     next: typeof search.next === "string" ? search.next : undefined,
   }),
   loaderDeps: ({ search }) => ({ next: search.next }),

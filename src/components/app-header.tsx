@@ -1,4 +1,4 @@
-import { Link } from "@/components/link";
+import { Link } from "@tanstack/react-router";
 
 import { Box, Container, Flex } from "@stackmyth/layout";
 
@@ -81,7 +81,7 @@ export function AppHeader({
             No aria-label either: the vector carries `role="img"` and
             `aria-label="junti."`, and the img's alt names the link.
           */}
-          <Link href={organizer ? ROUTES.myEvents : ROUTES.home} className="brand-link">
+          <Link to={organizer ? ROUTES.myEvents : ROUTES.home} className="brand-link">
             <Chapa />
           </Link>
 

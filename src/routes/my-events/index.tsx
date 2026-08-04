@@ -8,7 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
 import { CreatedToast } from "@/components/created-toast";
-import { Link } from "@/components/link";
+import { Link } from "@tanstack/react-router";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
 
@@ -146,7 +146,7 @@ const getAgenda = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const Route = createFileRoute("/my-events/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { created?: string } => ({
     created: typeof search.created === "string" ? search.created : undefined,
   }),
   loader: () => getAgenda(),
@@ -204,7 +204,7 @@ function MyEventsPage() {
         */}
         <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
           <Button asChild size="lg" fullWidth>
-            <Link href={ROUTES.newEvent}>
+            <Link to={ROUTES.newEvent}>
               {/*
                 A Flex here, unlike a plain Button. Button normally wraps its
                 children in `.sm-button__content`, which supplies the 8px gap —

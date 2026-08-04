@@ -73,7 +73,7 @@ const getCreateContext = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/new/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { from?: string } => ({
     from: typeof search.from === "string" ? search.from : undefined,
   }),
   loaderDeps: ({ search }) => ({ from: search.from }),

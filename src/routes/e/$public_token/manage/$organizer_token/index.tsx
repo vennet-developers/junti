@@ -179,7 +179,7 @@ const getManagePage = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/e/$public_token/manage/$organizer_token/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { created?: string } => ({
     created: typeof search.created === "string" ? search.created : undefined,
   }),
   loader: ({ params }) =>
