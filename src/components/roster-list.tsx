@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { Badge } from "@stackmyth/badge";
 import { Box, Flex, Stack } from "@stackmyth/layout";
 import { List, ListItem } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
@@ -28,6 +29,16 @@ export interface RosterGroupProps {
    * REQUISITO 1", which reads as two groups until you notice it is one.
    */
   showHeading?: boolean;
+  /**
+   * How loud the heading is.
+   *
+   * `section` matches the money summary beside it — this group IS the section,
+   * as on the organizer's page. `label` is the quieter uppercase caption, for
+   * a group that sits *under* a heading of its own: the participant page
+   * already says "Quién viene" above these, and two lines of the same size
+   * saying nearly the same thing is not a hierarchy.
+   */
+  headingSize?: "section" | "label";
   /** Organizer-only controls, rendered per member. */
   renderActions?: (member: RosterMember) => ReactNode;
   /** A line under the name — what a pending participant is still waiting on. */
@@ -55,19 +66,39 @@ export function RosterGroup({
   showMoney,
   numbered = false,
   showHeading = true,
+  headingSize = "section",
   renderActions,
   renderNote,
 }: RosterGroupProps) {
   return (
-    <Stack gap="2">
+    <Stack gap="3">
+      {/*
+        Titled like the money section beside it, because it is the same rank of
+        thing: "Cuentas" and "Vienen" are the two halves of what an organizer
+        opens this page for. It used to be a small uppercase label in muted
+        grey with the count floating loose at the far end of the row — which at
+        eight rows read as a caption belonging to the list above it rather than
+        a heading for the list below, and left the number looking dropped.
+
+        The count goes in a pill so it is an object with an edge instead of a
+        digit adrift in the whitespace. Deliberately NOT `junti-chapita`: a
+        sticker in this app means a state somebody is in, and this is a
+        quantity.
+      */}
       {showHeading ? (
-        <Flex justify="between" align="baseline" gap="2">
-          <Text variant="small" weight="semibold" textTransform="uppercase" color="muted">
-            {title}
-          </Text>
-          <Text variant="small" color="muted">
+        <Flex justify="between" align="center" gap="3">
+          {headingSize === "section" ? (
+            <Text variant="h3" fontFamily="var(--junti-display)">
+              {title}
+            </Text>
+          ) : (
+            <Text variant="small" weight="semibold" textTransform="uppercase" color="muted">
+              {title}
+            </Text>
+          )}
+          <Badge variant="secondary" size={headingSize === "section" ? "md" : "sm"} soft>
             {members.length}
-          </Text>
+          </Badge>
         </Flex>
       ) : null}
 

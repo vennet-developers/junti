@@ -166,6 +166,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
         ) : (
           <>
             <RosterGroup
+              headingSize="label"
               title={copy.roster.inTitle}
               members={roster.confirmed}
               currency={event.currency}
@@ -192,6 +193,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
                     {copy.roster.pendingPolicyHelp}
                   </Text>
                   <RosterGroup
+                    headingSize="label"
                     title={copy.roster.pendingPolicyTitle}
                     members={roster.pendingPolicy}
                     currency={event.currency}
@@ -205,6 +207,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
 
             {roster.waitlisted.length > 0 ? (
               <RosterGroup
+                headingSize="label"
                 title={copy.roster.waitlistedTitle}
                 members={roster.waitlisted}
                 currency={event.currency}
@@ -215,6 +218,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             ) : null}
             {roster.maybe.length > 0 ? (
               <RosterGroup
+                headingSize="label"
                 title={copy.roster.maybeTitle}
                 members={roster.maybe}
                 currency={event.currency}
@@ -224,6 +228,7 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
             ) : null}
             {roster.notAttending.length > 0 ? (
               <RosterGroup
+                headingSize="label"
                 title={copy.roster.outTitle}
                 members={roster.notAttending}
                 currency={event.currency}
