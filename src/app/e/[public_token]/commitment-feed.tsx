@@ -78,7 +78,14 @@ export function CommitmentFeed({
                   <PersonAvatar src={item.authorAvatarUrl} name={item.authorName} size="sm" />
                 </Box>
 
-                <Box minWidth="0">
+                {/*
+                  `flexGrow` is what pushes the reaction and the delete control
+                  to the right edge. Without it every row packed left and the
+                  "Borrar" landed wherever the name happened to end — a
+                  different place on each row, which reads as debris rather
+                  than as a column of controls.
+                */}
+                <Box minWidth="0" flexGrow={1}>
                   <Stack gap="1">
                     <Flex gap="2" align="baseline" wrap="wrap">
                       <Text weight="medium">{item.authorName}</Text>
@@ -91,28 +98,26 @@ export function CommitmentFeed({
                   </Stack>
                 </Box>
 
-                {item.reaction ? (
-                  <Box flexShrink={0}>
-                    {/* Decorative beside the name it belongs to; the author is
-                        already announced, so a screen reader gains nothing
-                        from "soccer ball" here. */}
+                <Flex gap="2" align="center" flexShrink={0}>
+                  {item.reaction ? (
+                    /* Decorative beside the name it belongs to; the author is
+                       already announced, so a screen reader gains nothing from
+                       "soccer ball" here. */
                     <Text aria-hidden="true">{item.reaction}</Text>
-                  </Box>
-                ) : null}
+                  ) : null}
 
-                {canDeleteCommitment({
-                  authorParticipantId: item.participantId,
-                  readerParticipantId,
-                  readerIsOrganizer,
-                }) ? (
-                  <Box flexShrink={0}>
+                  {canDeleteCommitment({
+                    authorParticipantId: item.participantId,
+                    readerParticipantId,
+                    readerIsOrganizer,
+                  }) ? (
                     <RemoveButton
                       publicToken={publicToken}
                       noteId={item.id}
                       authorName={item.authorName}
                     />
-                  </Box>
-                ) : null}
+                  ) : null}
+                </Flex>
               </Flex>
             </Box>
           </Box>

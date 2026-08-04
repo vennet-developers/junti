@@ -4,7 +4,7 @@ import { eq, inArray } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 
 import { db } from "@/db/client";
-import { events, eventTypes, participants, payments } from "@/db/schema";
+import { eventNotes, events, eventTypes, participants, payments } from "@/db/schema";
 
 /**
  * The roster the organizer screens are designed against: a busy one.
@@ -33,15 +33,22 @@ const ORGANIZER_TOKEN = "seeddemo8de10organizer0000000000";
  * Names with and without a surname on purpose: the avatar falls back to
  * initials, and one letter has to look deliberate beside two.
  */
-const ROSTER: { name: string; attendance: "in"; payment: "pending" | "confirmed" | "waived" }[] = [
-  { name: "Andrés Mejía", attendance: "in", payment: "confirmed" },
-  { name: "Caro", attendance: "in", payment: "confirmed" },
-  { name: "Juan Pablo Restrepo", attendance: "in", payment: "pending" },
+const ROSTER: {
+  name: string;
+  attendance: "in";
+  payment: "pending" | "confirmed" | "waived";
+  /** What they said they are bringing, if anything. */
+  note?: string;
+  reaction?: string;
+}[] = [
+  { name: "Andrés Mejía", attendance: "in", payment: "confirmed", note: "Yo llevo el balón", reaction: "⚽" },
+  { name: "Caro", attendance: "in", payment: "confirmed", note: "Llevo hielo y vasos" },
+  { name: "Juan Pablo Restrepo", attendance: "in", payment: "pending", reaction: "🔥" },
   { name: "Manu", attendance: "in", payment: "pending" },
-  { name: "Sara Villegas", attendance: "in", payment: "confirmed" },
-  { name: "El Flaco", attendance: "in", payment: "pending" },
-  { name: "Diana Ospina", attendance: "in", payment: "waived" },
-  { name: "Nico", attendance: "in", payment: "pending" },
+  { name: "Sara Villegas", attendance: "in", payment: "confirmed", note: "Yo pongo la música", reaction: "🥁" },
+  { name: "El Flaco", attendance: "in", payment: "pending", note: "Llego 15 min tarde, arranquen sin mí" },
+  { name: "Diana Ospina", attendance: "in", payment: "waived", reaction: "🎉" },
+  { name: "Nico", attendance: "in", payment: "pending", note: "Allí estaré", reaction: "🏃" },
 ];
 
 /** Whoever owns the other seeded events, so this one lands in the same account. */
@@ -108,6 +115,7 @@ async function main() {
 
     if (old.length > 0) {
       const ids = old.map((row) => row.id);
+      await db.delete(eventNotes).where(inArray(eventNotes.participantId, ids));
       await db.delete(payments).where(inArray(payments.participantId, ids));
       await db.delete(participants).where(inArray(participants.id, ids));
     }
@@ -129,6 +137,8 @@ async function main() {
     // Spread the join times so the rounding remainder has an order to follow.
     createdAt: new Date(Date.now() - (ROSTER.length - index) * 3_600_000),
     payment: person.payment,
+    note: person.note,
+    reaction: person.reaction,
   }));
 
   await db.insert(participants).values(
@@ -152,10 +162,32 @@ async function main() {
     })),
   );
 
+  /*
+    Notes on some rows and not others, with one of each shape: note only,
+    reaction only, both, and neither. A feed where every row looks the same is
+    a feed that was never really looked at.
+  */
+  const spoken = rows.filter((row) => row.note || row.reaction);
+
+  if (spoken.length > 0) {
+    await db.insert(eventNotes).values(
+      spoken.map((row) => ({
+        id: uuidv7(),
+        eventId,
+        participantId: row.id,
+        note: row.note ?? null,
+        reaction: row.reaction ?? null,
+        createdAt: row.createdAt,
+      })),
+    );
+  }
+
   const paid = ROSTER.filter((p) => p.payment === "confirmed").length;
 
   console.log(`${existing ? "Actualizado" : "Creado"}: ${fields.title}`);
-  console.log(`  ${ROSTER.length} de ${fields.capacity} cupos · ${paid} pagaron`);
+  console.log(
+    `  ${ROSTER.length} de ${fields.capacity} cupos · ${paid} pagaron · ${spoken.length} dijeron qué llevan`,
+  );
   console.log(`  invitados:   /e/${PUBLIC_TOKEN}`);
   console.log(`  organizador: /e/${PUBLIC_TOKEN}/manage/${ORGANIZER_TOKEN}`);
 
