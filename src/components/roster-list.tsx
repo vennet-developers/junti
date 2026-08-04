@@ -127,9 +127,9 @@ export function RosterGroup({
               <ListItem key={member.id} className="junti-fila-roster">
                 <Stack gap="2" width="100%">
                   {/* Identity + status: one line, name allowed to shrink. */}
-                  <Flex justify="between" align="center" gap="3">
+                  <Flex justify="between" align="start" gap="3">
                     <Box minWidth="0">
-                      <Flex gap="2" align="center">
+                      <Flex gap="2" align="start">
                         {numbered ? (
                           /* Box for flexShrink — Text has no LayoutProps (gap #8). */
                           <Box flexShrink={0}>
@@ -155,7 +155,19 @@ export function RosterGroup({
                           />
                         </Box>
 
-                        <Text weight="medium">{member.displayName}</Text>
+                        {/*
+                          Name and note in one column, so the note lines up
+                          under the name rather than under the avatar. It used
+                          to sit outside this block and start at the row's left
+                          edge, which read as a caption for the whole row
+                          instead of as something this person said.
+                        */}
+                        <Box minWidth="0">
+                          <Stack gap="1">
+                            <Text weight="medium">{member.displayName}</Text>
+                            {note}
+                          </Stack>
+                        </Box>
                       </Flex>
                     </Box>
 
@@ -174,8 +186,6 @@ export function RosterGroup({
                       ) : null}
                     </Flex>
                   </Flex>
-
-                  {note ? <Box>{note}</Box> : null}
 
                   {/* Controls get the full width of the row. */}
                   {renderActions ? (

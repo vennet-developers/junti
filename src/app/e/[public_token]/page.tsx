@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { Container, Divider, Stack } from "@stackmyth/layout";
+import { Badge } from "@stackmyth/badge";
+import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { MoneySummary } from "@/components/money-summary";
+import { canDeleteCommitment } from "@/domain/commitments";
 import { loadCommitments, loadOwnCommitment } from "@/lib/commitments";
-import { formatEventDateTimeShort } from "@/lib/format";
 import { Notice } from "@/components/notice";
 import { RosterGroup } from "@/components/roster-list";
 import { TimeZoneSync } from "@/components/time-zone-sync";
@@ -30,7 +31,7 @@ import { and, eq } from "drizzle-orm";
 
 import { GatedPreview } from "./gated-preview";
 import { JoinPanel } from "./join-panel";
-import { CommitmentFeed, type CommitmentFeedItem } from "./commitment-feed";
+import { CommitmentNote } from "./commitment-note";
 import { CommitmentPanel } from "./commitment-panel";
 import { PolicyPanel, type PolicyPanelItem } from "./policy-panel";
 import { SignInToJoin } from "./sign-in-to-join";
@@ -110,20 +111,42 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
 
     It is the reason somebody opens the link a second time — "who is bringing
     what" changes between visits when nothing else does — so a spinner where
-    the answer should be would defeat the point of having it.
+    the answer should be would defeat the point of having it. Rendered under
+    each name in the roster rather than as a feed of its own; see
+    `CommitmentNote`.
   */
   const commitments = await loadCommitments(eventRow.id);
   const ownCommitment = mineRow ? await loadOwnCommitment(mineRow.id) : null;
 
-  const commitmentItems: CommitmentFeedItem[] = commitments.map((item) => ({
-    id: item.id,
-    participantId: item.participantId,
-    authorName: item.authorName,
-    authorAvatarUrl: item.authorAvatarUrl,
-    note: item.note,
-    reaction: item.reaction,
-    when: formatEventDateTimeShort(item.createdAt, eventRow.timeZone, copy.intlLocale),
-  }));
+  /*
+    A person's commitment, rendered under their name in the roster.
+
+    Keyed by participant so the lookup is one map read per row rather than a
+    scan of the feed for each of them.
+  */
+  const commitmentByParticipant = new Map(commitments.map((item) => [item.participantId, item]));
+
+  const readerIsOrganizer = organizer !== null && eventRow.organizerId === organizer.id;
+
+  const commitmentNote = (member: { id: string; displayName: string }) => {
+    const item = commitmentByParticipant.get(member.id);
+    if (!item) return null;
+
+    return (
+      <CommitmentNote
+        publicToken={publicToken}
+        noteId={item.id}
+        note={item.note}
+        reaction={item.reaction}
+        authorName={member.displayName}
+        canDelete={canDeleteCommitment({
+          authorParticipantId: item.participantId,
+          readerParticipantId: mineRow?.id ?? null,
+          readerIsOrganizer,
+        })}
+      />
+    );
+  };
 
   // What this person still owes the event, if anything. Only their own — never
   // anyone else's standing, which is the organizer's business.
@@ -176,37 +199,40 @@ export default async function ParticipantPage({ params }: { params: Promise<Para
     <Stack gap="6">
       <Divider />
 
-      {/* Above the money and the roster: this is the part that changes
-          between visits, and it is the argument for coming. */}
-      <CommitmentFeed
-        publicToken={publicToken}
-        items={commitmentItems}
-        readerParticipantId={mineRow?.id ?? null}
-        readerIsOrganizer={organizer !== null && eventRow.organizerId === organizer.id}
-      />
-
-      <Divider />
-
       <MoneySummary roster={roster} copy={copy} />
 
       {showMoney ? <Divider /> : null}
 
       <Stack gap="5">
-        <Text variant="h3" fontFamily="var(--junti-display)">
-          {copy.roster.heading}
-        </Text>
+        {/*
+          The count sits with "Quién viene" rather than with the group under
+          it. There were two headings for one list — a section title and then
+          an uppercase "VIENEN" caption repeating it — and the number belonged
+          to neither of them clearly. One heading, one count.
+        */}
+        <Flex justify="between" align="center" gap="3">
+          <Text variant="h3" fontFamily="var(--junti-display)">
+            {copy.roster.heading}
+          </Text>
+          <Badge variant="secondary" size="md" soft>
+            {roster.confirmed.length}
+          </Badge>
+        </Flex>
 
         {roster.members.length === 0 ? (
           <Text color="muted">{copy.roster.empty}</Text>
         ) : (
           <>
+            {/* No caption: the heading above already names this list. The
+                other groups keep theirs, because they need telling apart. */}
             <RosterGroup
-              headingSize="label"
+              showHeading={false}
               title={copy.roster.inTitle}
               members={roster.confirmed}
               currency={event.currency}
               copy={copy}
               showMoney={showMoney}
+              renderNote={commitmentNote}
             />
 
             {/*
