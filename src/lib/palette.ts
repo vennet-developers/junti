@@ -30,3 +30,15 @@ export function paletteIndexFor(seed: string): number {
 
   return hash % PALETTE_SIZE;
 }
+
+/**
+ * A person's avatar colour, as one of the `.attendee-avatar--N` classes.
+ *
+ * Shared by the roster and the stack on an event card so the same person is the
+ * same colour in both — which is the whole point of seeding from the name. It
+ * used to live privately inside `attendee-stack.tsx`, back when that was the
+ * only place drawing initials.
+ */
+export function avatarPaletteClass(name: string): string {
+  return `attendee-avatar--${paletteIndexFor(name) + 1}`;
+}

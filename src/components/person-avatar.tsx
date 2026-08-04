@@ -2,6 +2,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@stackmyth/avatar";
 
 import type { AvatarSize } from "@stackmyth/avatar";
 
+import { avatarPaletteClass } from "@/lib/palette";
+
 /**
  * A participant's photo.
  *
@@ -13,6 +15,10 @@ import type { AvatarSize } from "@stackmyth/avatar";
  * Google and can start 404ing when someone changes their photo, and the URL
  * stored on the row is a copy taken at RSVP time. When that happens the initials
  * appear and the roster still reads correctly.
+ *
+ * The colour is seeded from the name, so somebody without a photo is the same
+ * colour here as in the stack on their event card, and a list of them reads as
+ * people rather than as a column of identical grey discs.
  */
 export function PersonAvatar({
   name,
@@ -24,7 +30,7 @@ export function PersonAvatar({
   size?: AvatarSize;
 }) {
   return (
-    <Avatar size={size}>
+    <Avatar size={size} className={avatarPaletteClass(name)}>
       {src ? <AvatarImage src={src} alt="" /> : null}
       <AvatarFallback>{initials(name)}</AvatarFallback>
     </Avatar>

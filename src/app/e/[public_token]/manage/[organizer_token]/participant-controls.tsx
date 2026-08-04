@@ -56,12 +56,21 @@ export function PaymentControls({
 
   const toggleTarget: PaymentStatus = status === "confirmed" ? "pending" : "confirmed";
 
+  /*
+    One filled button per row, the rest as ink.
+
+    Every control here used to carry a background, so a roster of twelve people
+    was thirty-six coloured rectangles and the eye had nothing to land on. The
+    act the organizer actually repeats — marking somebody paid — keeps its fill
+    and everything else steps back to text. Same controls, same single tap; only
+    the weight changed.
+  */
   return (
-    <Flex gap="2" align="center" wrap="wrap" justify="end">
+    <Flex gap="1" align="center" wrap="wrap" justify="end">
       <Button
         type="button"
-        size="md"
-        variant={status === "confirmed" ? "outline" : "success"}
+        size="sm"
+        variant={status === "confirmed" ? "ghost" : "success"}
         soft={status !== "confirmed"}
         disabled={pending}
         onClick={() => set(toggleTarget)}
@@ -72,7 +81,7 @@ export function PaymentControls({
       {status !== "waived" ? (
         <Button
           type="button"
-          size="md"
+          size="sm"
           variant="ghost"
           disabled={pending}
           onClick={() => set("waived")}
@@ -96,7 +105,7 @@ export function PromoteControl({ publicToken, organizerToken, participantId }: C
   }
 
   return (
-    <Button type="button" size="md" variant="primary" soft disabled={pending} onClick={promote}>
+    <Button type="button" size="sm" variant="primary" soft disabled={pending} onClick={promote}>
       {copy.manage.promote}
     </Button>
   );
@@ -117,11 +126,14 @@ export function RemoveControl({ publicToken, organizerToken, participantId, disp
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {/* Ghost like its neighbours, but the ink stays destructive — see
+          `.junti-accion-peligro`. Without it "Quitar" and "No le cobro" look
+          identical, and only one of them deletes a person. */}
       <Button
         type="button"
-        size="md"
-        variant="destructive"
-        soft
+        size="sm"
+        variant="ghost"
+        className="junti-accion-peligro"
         onClick={() => setOpen(true)}
         aria-label={`${copy.manage.removeParticipant} ${displayName}`}
       >

@@ -20,6 +20,14 @@ export interface RosterGroupProps {
   showMoney: boolean;
   /** Position number, shown for the waitlist so people know where they stand. */
   numbered?: boolean;
+  /**
+   * Drop the group's own heading and count.
+   *
+   * For a group inside a disclosure that already names it: the panel said
+   * "Falta un requisito (1)" and the list under it repeated "FALTA UN
+   * REQUISITO 1", which reads as two groups until you notice it is one.
+   */
+  showHeading?: boolean;
   /** Organizer-only controls, rendered per member. */
   renderActions?: (member: RosterMember) => ReactNode;
   /** A line under the name — what a pending participant is still waiting on. */
@@ -46,19 +54,22 @@ export function RosterGroup({
   copy,
   showMoney,
   numbered = false,
+  showHeading = true,
   renderActions,
   renderNote,
 }: RosterGroupProps) {
   return (
     <Stack gap="2">
-      <Flex justify="between" align="baseline" gap="2">
-        <Text variant="small" weight="semibold" textTransform="uppercase" color="muted">
-          {title}
-        </Text>
-        <Text variant="small" color="muted">
-          {members.length}
-        </Text>
-      </Flex>
+      {showHeading ? (
+        <Flex justify="between" align="baseline" gap="2">
+          <Text variant="small" weight="semibold" textTransform="uppercase" color="muted">
+            {title}
+          </Text>
+          <Text variant="small" color="muted">
+            {members.length}
+          </Text>
+        </Flex>
+      ) : null}
 
       {members.length === 0 ? (
         <Text variant="small" color="muted">
@@ -82,7 +93,7 @@ export function RosterGroup({
             const note = renderNote?.(member);
 
             return (
-              <ListItem key={member.id}>
+              <ListItem key={member.id} className="junti-fila-roster">
                 <Stack gap="2" width="100%">
                   {/* Identity + status: one line, name allowed to shrink. */}
                   <Flex justify="between" align="center" gap="3">
@@ -97,18 +108,21 @@ export function RosterGroup({
                           </Box>
                         ) : null}
 
-                        {/* Only signed-in participants have one. Everyone else
-                            keeps the plain name they always had — no initials
-                            placeholder, which would imply an account. */}
-                        {member.avatarUrl ? (
-                          <Box flexShrink={0}>
-                            <PersonAvatar
-                              src={member.avatarUrl}
-                              name={member.displayName}
-                              size="sm"
-                            />
-                          </Box>
-                        ) : null}
+                        {/* Everyone gets a disc: the photo when there is one,
+                            their initials when there is not. This used to be
+                            photo-or-nothing, on the reasoning that initials
+                            would imply an account somebody may not have — but
+                            a half-filled column of faces reads as a rendering
+                            fault, not as a fact about accounts, and the
+                            initials are seeded to the same colour the person
+                            already has on their event card. */}
+                        <Box flexShrink={0}>
+                          <PersonAvatar
+                            src={member.avatarUrl}
+                            name={member.displayName}
+                            size="sm"
+                          />
+                        </Box>
 
                         <Text weight="medium">{member.displayName}</Text>
                       </Flex>
@@ -125,7 +139,7 @@ export function RosterGroup({
                         </Text>
                       ) : null}
                       {showMoney && member.share.owes ? (
-                        <PaymentBadge status={member.share.status} copy={copy} />
+                        <PaymentBadge status={member.share.status} copy={copy} compact />
                       ) : null}
                     </Flex>
                   </Flex>

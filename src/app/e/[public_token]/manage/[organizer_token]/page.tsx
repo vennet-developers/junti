@@ -412,12 +412,15 @@ export default async function ManagePage({
                           <Text variant="small" color="muted">
                             {copy.roster.pendingPolicyHelp}
                           </Text>
+                          {/* No heading: the disclosure above already says
+                              "Falta un requisito" and gives the count. */}
                           <RosterGroup
                             title={copy.roster.pendingPolicyTitle}
                             members={roster.pendingPolicy}
                             currency={event.currency}
                             copy={copy}
                             showMoney={showMoney}
+                            showHeading={false}
                             renderNote={pendingNote}
                             renderActions={participantActions}
                           />

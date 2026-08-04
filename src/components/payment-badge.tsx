@@ -29,7 +29,22 @@ const STATUS_STICKER = {
   waived: { variant: "secondary", soft: true, extra: "" },
 } as const;
 
-export function PaymentBadge({ status, copy }: { status: PaymentStatus; copy: Copy }) {
+export function PaymentBadge({
+  status,
+  copy,
+  compact = false,
+}: {
+  status: PaymentStatus;
+  copy: Copy;
+  /**
+   * Roster size: same sticker, smaller.
+   *
+   * In a list the state sits beside a name and repeats every row, and at full
+   * size it outweighs the name it describes. Everywhere the state IS the thing
+   * being read — the money summary, an event card — it stays full size.
+   */
+  compact?: boolean;
+}) {
   const sticker = STATUS_STICKER[status];
 
   const label = {
@@ -43,7 +58,7 @@ export function PaymentBadge({ status, copy }: { status: PaymentStatus; copy: Co
       variant={sticker.variant}
       size="sm"
       soft={sticker.soft}
-      className={`junti-chapita${sticker.extra}`}
+      className={`junti-chapita${compact ? " junti-chapita--compacta" : ""}${sticker.extra}`}
     >
       {label}
     </Badge>

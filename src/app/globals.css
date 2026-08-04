@@ -317,7 +317,10 @@ body {
   padding: 0;
   border: 1px solid var(--sm-border);
   border-radius: var(--sm-radius-md);
-  background: var(--sm-surface-muted);
+  /* Warm neutral, not `--sm-surface-muted` — that one is not defined in this
+     theme and resolved to transparent, leaving the frame empty while the
+     image loaded. */
+  background: var(--sm-neutral-soft);
   cursor: zoom-in;
   overflow: hidden;
   max-width: 100%;
@@ -351,4 +354,31 @@ body {
   */
   max-height: 70dvh;
   object-fit: contain;
+}
+
+/*
+  A roster row lights up under the pointer.
+
+  The organizer works these rows one at a time — mark paid, waive, remove — and
+  each row is three lines tall with the controls at the bottom, far from the
+  name at the top. Tinting the whole row says which person the buttons under the
+  cursor belong to, which a list of twelve otherwise leaves you counting.
+
+  `hover: hover` so it never fires on a phone, where a tap would leave the tint
+  stuck on the last row touched.
+
+  `--sm-neutral-soft` rather than the raised surface: this brand's page is a
+  warm cream (250,247,242) and the raised surface is pure white, so the tint
+  that reads as "lifted" on a white app is all but invisible here. The soft
+  neutral (237,232,224) is the same warm family a shade down — the tint the
+  page would actually make if you dimmed it.
+*/
+@media (hover: hover) {
+  .junti-fila-roster {
+    transition: background-color 120ms ease;
+  }
+
+  .junti-fila-roster:hover {
+    background-color: var(--sm-neutral-soft);
+  }
 }

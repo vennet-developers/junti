@@ -69,6 +69,38 @@
   --sm-warning-soft-text: var(--junti-debe-fg);
 }
 
+/*
+  The sticker at roster size.
+
+  The full chapita is 14px on 8/13 padding, which is right where a state is
+  the thing you are looking at — the money summary, an event card. In a list of
+  twelve people it is not: there it sits beside a name, repeats every row, and
+  at full size it outweighs the name it describes.
+
+  Same sticker, same lean, same colours — the proportions scale together
+  (13/8 in, 7/4 here) so it still reads as stuck on rather than printed.
+*/
+.junti-chapita--compacta {
+  --sm-badge-font-size-md: 12px;
+  --sm-badge-font-size-sm: 12px;
+  --sm-badge-radius: 7px;
+
+  padding: 4px 7px;
+}
+
+/*
+  A ghost button that still says "this one deletes somebody".
+
+  The per-person controls dropped their filled backgrounds to stop a roster of
+  twelve from being a wall of buttons, and dropping the destructive fill took
+  the only warning with it — leaving "Quitar" looking exactly like "No le
+  cobro". Scoping the token the ghost variant already reads puts the warning
+  back in the ink, which is as much as it needs beside a confirmation dialog.
+*/
+.junti-accion-peligro {
+  --sm-text-primary: var(--sm-error);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    La marca de Vennet · the house's mark in the footer
 
