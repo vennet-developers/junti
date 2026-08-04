@@ -280,6 +280,25 @@ export const es = {
     evidenceGone: "El comprobante ya no está.",
   },
 
+  commitments: {
+    heading: "¿Llevas algo?",
+    help: "Cuéntale al grupo qué llevas. Lo ven todos los que abran el link.",
+    notePlaceholder: "Yo llevo el balón",
+    reactionLabel: "O elige un emoji",
+    save: "Publicar",
+    saving: "Publicando…",
+    update: "Actualizar",
+    remove: "Borrar lo mío",
+    removeOne: "Borrar",
+    feedHeading: "Quién lleva qué",
+    feedEmpty: "Todavía nadie ha dicho qué lleva. Sé el primero.",
+    mustJoinFirst: "Primero dinos que vienes.",
+    errorEmpty: "Escribe algo o elige un emoji.",
+    errorTooLong: (max: number) => `Máximo ${max} caracteres.`,
+    errorReaction: "Ese emoji no está disponible.",
+    quickPicks: ["Yo llevo el balón ⚽", "Llevo la torta 🎂", "Yo pongo la música 🥁", "Allí estaré 🏃"],
+  },
+
   money: {
     heading: "Cuentas",
     owesLabel: "Debe",
@@ -714,6 +733,7 @@ export const es = {
       `La imagen pesa demasiado (máximo ${maxKb} KB después de reducirla).`,
     evidenceWrongType: "Solo aceptamos imágenes JPG, PNG o WebP.",
     evidenceUnreadable: "No pudimos leer esa imagen. Intenta con otra foto.",
+    notAllowed: "No puedes hacer eso.",
     signInRequired: "Entra a tu cuenta para hacer eso.",
   },
 };

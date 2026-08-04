@@ -274,6 +274,25 @@ export const en: Copy = {
     evidenceGone: "The receipt is no longer there.",
   },
 
+  commitments: {
+    heading: "Bringing anything?",
+    help: "Tell the group what you are bringing. Everyone with the link sees it.",
+    notePlaceholder: "I'll bring the ball",
+    reactionLabel: "Or pick an emoji",
+    save: "Post",
+    saving: "Posting…",
+    update: "Update",
+    remove: "Delete mine",
+    removeOne: "Delete",
+    feedHeading: "Who is bringing what",
+    feedEmpty: "Nobody has said what they are bringing yet. Be the first.",
+    mustJoinFirst: "Tell us you are coming first.",
+    errorEmpty: "Write something or pick an emoji.",
+    errorTooLong: (max: number) => `${max} characters max.`,
+    errorReaction: "That emoji is not available.",
+    quickPicks: ["I'll bring the ball ⚽", "I'll bring the cake 🎂", "I'm on music 🥁", "I'll be there 🏃"],
+  },
+
   money: {
     heading: "The money",
     owesLabel: "Owes",
@@ -704,6 +723,7 @@ export const en: Copy = {
       `That image is too heavy (${maxKb} KB max after shrinking).`,
     evidenceWrongType: "We only accept JPG, PNG or WebP images.",
     evidenceUnreadable: "We could not read that image. Try a different photo.",
+    notAllowed: "You cannot do that.",
     signInRequired: "Sign in to do that.",
   },
 };

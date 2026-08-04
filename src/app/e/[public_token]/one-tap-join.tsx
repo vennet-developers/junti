@@ -107,7 +107,21 @@ export function OneTapJoin({
               <Text weight="medium">{isFull ? copy.rsvp.waitlistedShort : copy.rsvp.saved}</Text>
             </Flex>
           ) : (
-            <form action={formAction} onSubmit={() => setJoined(true)}>
+            <form
+              /*
+                The optimistic flip happens INSIDE the action, not in
+                `onSubmit`. React only allows `useOptimistic` to be set within
+                a transition, and a form's submit handler is not one — doing it
+                there still looked right on screen but logged an error and is
+                not something to rely on. Passing a function to `action` puts
+                both the flip and the server call in the same transition, which
+                is also what makes the automatic rollback on failure work.
+              */
+              action={(data) => {
+                setJoined(true);
+                formAction(data);
+              }}
+            >
               <Button type="submit" size="lg" fullWidth disabled={pending}>
                 {pending ? copy.rsvp.oneTapSubmitting : copy.rsvp.oneTapSubmit(displayName)}
               </Button>

@@ -92,6 +92,13 @@
       "when": 1785781242000,
       "tag": "0012_catalogue_second_pass",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1785823236842,
+      "tag": "0013_fair_madripoor",
+      "breakpoints": true
     }
   ]
 }

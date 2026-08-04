@@ -8,8 +8,19 @@ import { uuidv7 } from "uuidv7";
 import { getCopy } from "@/config/copy";
 import type { Copy } from "@/config/copy";
 import { db } from "@/db/client";
-import { eventPolicies, participants, policyDefinitions, policySubmissions } from "@/db/schema";
+import {
+  eventNotes,
+  eventPolicies,
+  participants,
+  policyDefinitions,
+  policySubmissions,
+} from "@/db/schema";
 import type { EventRow } from "@/db/schema";
+import {
+  NOTE_MAX,
+  canDeleteCommitment,
+  checkCommitment,
+} from "@/domain/commitments";
 import { findHandler, initialStatusFor } from "@/domain/policy-handlers";
 import { resolveAttendance } from "@/domain/waitlist";
 import { checkEvidence, EVIDENCE_MAX_BYTES, putEvidence } from "@/lib/evidence-store";
@@ -36,6 +47,8 @@ import {
 
 export type RsvpState = {
   errors: Record<string, string>;
+  /** Set when the action succeeded and the caller wants to say so. */
+  ok?: boolean;
   /** Set when the submission was accepted onto the waitlist rather than the roster. */
   waitlisted?: boolean;
 };
@@ -486,4 +499,135 @@ async function findMyParticipantRow(eventId: string) {
     .limit(1);
 
   return row ?? null;
+}
+
+/** Thirty edits an hour: enough to fix a typo, not enough to flood a feed. */
+const COMMITMENT_LIMIT = 30;
+const COMMITMENT_WINDOW_MS = 60 * 60_000;
+
+/**
+ * Finds the reader's own row on this event, or null.
+ *
+ * Every commitment action is scoped through this: you can only speak as
+ * somebody who is actually on the roster, and only as yourself. The organizer
+ * token is not accepted here — an organizer who is not a participant has
+ * nothing to commit to bringing.
+ */
+async function ownParticipant(eventId: string, userId: string) {
+  const [row] = await db
+    .select({ id: participants.id })
+    .from(participants)
+    .where(and(eq(participants.eventId, eventId), eq(participants.userId, userId)))
+    .limit(1);
+
+  return row ?? null;
+}
+
+/**
+ * Saves what somebody is bringing, or updates it.
+ *
+ * Upsert on the participant rather than insert: there is one note per person
+ * and editing it is the expected path, so a second save is a correction rather
+ * than a second line in the feed contradicting the first.
+ */
+export async function saveCommitment(
+  publicToken: string,
+  _previous: RsvpState,
+  formData: FormData,
+): Promise<RsvpState> {
+  const ip = clientIp(await headers());
+  const limit = rateLimit(`commitment:${ip}`, COMMITMENT_LIMIT, COMMITMENT_WINDOW_MS);
+
+  const event = await findEventByPublicToken(publicToken);
+  if (!event) {
+    return { errors: { _form: getCopy(await resolveEventLocale("es")).errors.notFound } };
+  }
+
+  const copy = await eventCopy(event.locale);
+
+  if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
+  if (event.closedAt !== null) return { errors: { _form: copy.errors.eventClosed } };
+
+  const organizer = await getOrganizer();
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+  const mine = await ownParticipant(event.id, organizer.id);
+  if (!mine) return { errors: { _form: copy.commitments.mustJoinFirst } };
+
+  const check = checkCommitment({
+    note: field(formData, "note"),
+    reaction: field(formData, "reaction"),
+  });
+
+  if (!check.ok || !check.value) {
+    const message = {
+      empty: copy.commitments.errorEmpty,
+      "too-long": copy.commitments.errorTooLong(NOTE_MAX),
+      "unknown-reaction": copy.commitments.errorReaction,
+    }[check.problem ?? "empty"];
+
+    return { errors: { _form: message } };
+  }
+
+  await db
+    .insert(eventNotes)
+    .values({
+      id: uuidv7(),
+      eventId: event.id,
+      participantId: mine.id,
+      note: check.value.note,
+      reaction: check.value.reaction,
+    })
+    .onConflictDoUpdate({
+      target: eventNotes.participantId,
+      set: { note: check.value.note, reaction: check.value.reaction, updatedAt: new Date() },
+    });
+
+  revalidatePath(participantPath(publicToken));
+  return { errors: {}, ok: true };
+}
+
+/**
+ * Removes a note — the author's own, or anybody's if the reader owns the event.
+ *
+ * The permission decision is `canDeleteCommitment`, which is pure and tested;
+ * this resolves the two identities it needs and then does what it says.
+ */
+export async function deleteCommitment(
+  publicToken: string,
+  noteId: string,
+): Promise<RsvpState> {
+  const event = await findEventByPublicToken(publicToken);
+  if (!event) {
+    return { errors: { _form: getCopy(await resolveEventLocale("es")).errors.notFound } };
+  }
+
+  const copy = await eventCopy(event.locale);
+
+  const organizer = await getOrganizer();
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+  // Scoped by event id: a note id from another event must not be reachable.
+  const [note] = await db
+    .select({ id: eventNotes.id, participantId: eventNotes.participantId })
+    .from(eventNotes)
+    .where(and(eq(eventNotes.id, noteId), eq(eventNotes.eventId, event.id)))
+    .limit(1);
+
+  if (!note) return { errors: {} };
+
+  const mine = await ownParticipant(event.id, organizer.id);
+
+  const allowed = canDeleteCommitment({
+    authorParticipantId: note.participantId,
+    readerParticipantId: mine?.id ?? null,
+    readerIsOrganizer: event.organizerId === organizer.id,
+  });
+
+  if (!allowed) return { errors: { _form: copy.errors.notAllowed } };
+
+  await db.delete(eventNotes).where(eq(eventNotes.id, note.id));
+
+  revalidatePath(participantPath(publicToken));
+  return { errors: {}, ok: true };
 }

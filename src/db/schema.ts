@@ -809,6 +809,55 @@ export const heartbeat = pgTable("heartbeat", {
   beatAt: timestamp("beat_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * What somebody says they are bringing.
+ *
+ * The social half of an RSVP: "yo llevo el balón", "llevo la torta", a thumbs
+ * up. Attendance answers whether the event happens; this is what makes people
+ * come back to the page before it does.
+ *
+ * **One row per participant, not a thread.** Editable, so changing your mind
+ * about the ice is an edit rather than a second line contradicting the first,
+ * and the feed stays as long as the roster instead of growing without bound.
+ *
+ * The note and the reaction are separate columns because they are separate
+ * things: a reaction is picked from a fixed list and can be counted, a note is
+ * free text and can only be read. Packing the emoji into the string would make
+ * both of those impossible.
+ *
+ * `event_id` is denormalised from the participant on purpose — the feed reads
+ * by event, and carrying it here keeps that a single indexed scan instead of a
+ * join back through the roster.
+ */
+export const eventNotes = pgTable(
+  "event_notes",
+  {
+    id: uuid("id").primaryKey(),
+
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+
+    /** Cascade: somebody removed from the roster takes their note with them. */
+    participantId: uuid("participant_id")
+      .notNull()
+      .references(() => participants.id, { onDelete: "cascade" }),
+
+    /** Free text, capped in the domain layer. Null when only a reaction. */
+    note: text("note"),
+
+    /** One emoji from the allowed list. Null when only a note. */
+    reaction: text("reaction"),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("event_notes_participant_unique").on(table.participantId),
+    index("event_notes_event_created_idx").on(table.eventId, table.createdAt),
+  ],
+);
+
 // ── Inferred types ───────────────────────────────────────────────────────────
 
 export type EventRow = typeof events.$inferSelect;
@@ -824,6 +873,8 @@ export type UserProfileRow = typeof userProfiles.$inferSelect;
 export type EventTypeRow = typeof eventTypes.$inferSelect;
 export type PolicyDefinitionRow = typeof policyDefinitions.$inferSelect;
 export type EventTypePolicyRow = typeof eventTypePolicies.$inferSelect;
+export type EventNoteRow = typeof eventNotes.$inferSelect;
+export type NewEventNoteRow = typeof eventNotes.$inferInsert;
 export type PolicySubmissionRow = typeof policySubmissions.$inferSelect;
 export type NewPolicySubmissionRow = typeof policySubmissions.$inferInsert;
 
