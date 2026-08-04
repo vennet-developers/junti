@@ -1,7 +1,7 @@
 import "@/server/assert-server";
 
 import { eq } from "drizzle-orm";
-import { cookies, headers } from "next/headers";
+import { deleteCookie, getCookie, getRequestHeader, setCookie } from "@tanstack/react-start/server";
 
 import {
   DEFAULT_LOCALE,
@@ -109,11 +109,9 @@ function readCookieTimeZone(value: string | undefined): string | null {
  * request.
  */
 export async function resolvePreferences(): Promise<ResolvedPreferences> {
-  const cookieStore = await cookies();
-
-  const cookieLocale = readCookieLocale(cookieStore.get(LOCALE_COOKIE)?.value);
-  const timeZone = readCookieTimeZone(cookieStore.get(TIME_ZONE_COOKIE)?.value);
-  const themeValue = cookieStore.get(THEME_COOKIE)?.value;
+  const cookieLocale = readCookieLocale(getCookie(LOCALE_COOKIE));
+  const timeZone = readCookieTimeZone(getCookie(TIME_ZONE_COOKIE));
+  const themeValue = getCookie(THEME_COOKIE);
   const theme = isTheme(themeValue) ? themeValue : null;
 
   if (cookieLocale) {
@@ -126,8 +124,7 @@ export async function resolvePreferences(): Promise<ResolvedPreferences> {
     };
   }
 
-  const headerStore = await headers();
-  const fromHeader = localeFromAcceptLanguage(headerStore.get("accept-language"));
+  const fromHeader = localeFromAcceptLanguage(getRequestHeader("accept-language") ?? null);
 
   if (fromHeader) {
     return {
@@ -234,14 +231,12 @@ export async function saveStoredPreferences(
  * event link from WhatsApp still arrives with the reader's settings.
  */
 export async function writePreferenceCookie(name: string, value: string | null): Promise<void> {
-  const cookieStore = await cookies();
-
   if (value === null) {
-    cookieStore.delete(name);
+    deleteCookie(name);
     return;
   }
 
-  cookieStore.set(name, value, {
+  setCookie(name, value, {
     maxAge: PREFERENCE_COOKIE_MAX_AGE,
     path: "/",
     sameSite: "lax",

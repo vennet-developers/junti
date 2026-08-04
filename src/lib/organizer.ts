@@ -1,8 +1,8 @@
 import "@/server/assert-server";
 
-import { cache } from "react";
-
 import type { User } from "@supabase/supabase-js";
+
+import { memoPerRequest } from "@/server/request-memo";
 
 import { getCurrentUser } from "./supabase/server";
 
@@ -61,14 +61,16 @@ export function toOrganizer(user: User): Organizer {
 /**
  * The current organizer, or null when nobody is signed in.
  *
- * Wrapped in `React.cache` because two places now ask per request: the root
- * layout (for the header) and whichever page is rendering (for its own
- * authorization). `getCurrentUser` revalidates the session against Supabase
- * over the network — the right call to make once, and the wrong one to make
- * twice for the same request. The cache is per-request by design, so this is
- * dedupe, not staleness: a sign-out is a new request and a fresh check.
+ * Memoised per request because two places ask: the root shell (for the
+ * header) and whichever route is rendering (for its own authorization).
+ * `getCurrentUser` revalidates the session against Supabase over the network
+ * — the right call to make once, and the wrong one to make twice for the same
+ * request. Under Next this was `React.cache`; that only deduplicates inside
+ * an RSC render, which TanStack loaders are not, so the scope moved to the
+ * request itself — see `memoPerRequest`. Dedupe, not staleness: a sign-out is
+ * a new request and a fresh check.
  */
-export const getOrganizer = cache(async (): Promise<Organizer | null> => {
+export const getOrganizer = memoPerRequest("organizer", async (): Promise<Organizer | null> => {
   const user = await getCurrentUser();
   return user ? toOrganizer(user) : null;
 });

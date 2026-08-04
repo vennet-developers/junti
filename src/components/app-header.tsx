@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/components/link";
 
 import { Box, Container, Flex } from "@stackmyth/layout";
 
@@ -68,7 +68,7 @@ export function AppHeader({
             51.3px tall, which is the account capsule's own height beside it.
             The two things in this bar are the same size on purpose.
 
-            `brand-link` keeps next/link's anchor underline off it. That cannot
+            `brand-link` keeps the router link's anchor underline off it. That cannot
             be done from inside: `text-decoration` set by an ancestor is drawn
             across its descendants, and a child declaring `none` does not remove
             it. An underline crossing the badge would read as a mistake.

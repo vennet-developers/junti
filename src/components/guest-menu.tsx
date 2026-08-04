@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import { usePathname } from "next/navigation";
+import { useLocation, useRouter } from "@tanstack/react-router";
 
 import { Avatar, AvatarFallback } from "@stackmyth/avatar";
 import { Button } from "@stackmyth/button";
@@ -24,7 +24,7 @@ import { DrawerContent } from "@/components/drawer-content";
 import { LanguageChoice } from "@/components/language-choice";
 import { SignInForm } from "@/components/sign-in-form";
 import { ROUTES } from "@/config/routes";
-import { setTheme } from "@/lib/theme-actions";
+import { setThemeFn } from "@/lib/preference-fns";
 
 /**
  * The header control for someone without an account.
@@ -74,7 +74,8 @@ export function GuestMenu({ theme }: { theme: "light" | "dark" | null }) {
     sending them there directly skips a hop through a page that will bounce
     them.
   */
-  const pathname = usePathname();
+  const router = useRouter();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const returnTo =
     pathname === ROUTES.home || pathname.startsWith(ROUTES.signIn) ? ROUTES.myEvents : pathname;
 
@@ -82,7 +83,12 @@ export function GuestMenu({ theme }: { theme: "light" | "dark" | null }) {
     // ToggleGroup reports "" when the pressed item is pressed again. One of the
     // three is always in force, so a deselect is not a state this has.
     if (!value) return;
-    startTransition(() => void setTheme(value === "system" ? null : value));
+    startTransition(async () => {
+      await setThemeFn({ data: { theme: value === "system" ? null : value } });
+      // The cookie changed; re-running the loaders is what repaints <html
+      // data-mode> everywhere. Next's revalidatePath, said the TanStack way.
+      await router.invalidate();
+    });
   }
 
   const appearances = [

@@ -1,7 +1,7 @@
 import { Box, Container, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { getViewerCopy } from "@/lib/locale";
+import { useCopy } from "@/components/copy-provider";
 
 /**
  * Who made this, at the bottom of every page.
@@ -38,14 +38,19 @@ import { getViewerCopy } from "@/lib/locale";
  * covers the page, and on a phone it cannot land on the button somebody is
  * reaching for.
  */
-export async function AppFooter() {
-  const { copy } = await getViewerCopy();
-
+export function AppFooter() {
   /*
-    Rendered on the server, so the year is the server's rather than the
-    reader's device clock — a phone with the wrong date cannot make the notice
-    claim a different one.
+    From the provider now, not from `getViewerCopy()`. Under Next this was an
+    async server component and reading the cookie machinery directly was
+    free; under TanStack the shell hydrates, so a footer importing the
+    preferences module would drag the database client into the browser — the
+    tripwire caught exactly that on this file's first render. The provider
+    already holds the same resolved copy, one hop up.
   */
+  const { copy } = useCopy();
+
+  // Server-rendered on first paint, so the year the notice claims comes from
+  // the server's clock; hydration re-runs it with the same value.
   const year = new Date().getFullYear();
 
   return (

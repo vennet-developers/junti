@@ -1,7 +1,7 @@
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 
 /**
@@ -19,6 +19,23 @@ import tsConfigPaths from "vite-tsconfig-paths";
  *   plain Node pipeline they always ran on, so the 172 of them neither know
  *   nor care which framework serves the app.
  */
-export default defineConfig({
-  plugins: [tsConfigPaths(), tanstackStart(), nitro(), react()],
+export default defineConfig(({ mode }) => {
+  /*
+    Next injected NEXT_PUBLIC_* into client code as `process.env.X`; Vite only
+    exposes its own prefix, through `import.meta.env`. Rather than rename the
+    variables in every environment (local, Vercel, the docs), define the two
+    the browser actually needs. They are publishable by design — the anon key
+    and the project URL — which is the only reason a define is acceptable.
+  */
+  const env = loadEnv(mode, process.cwd(), "");
+
+  return {
+    plugins: [tsConfigPaths(), tanstackStart(), nitro(), react()],
+    define: {
+      "process.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL ?? ""),
+      "process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
+        env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
+      ),
+    },
+  };
 });

@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@/components/link";
+import { useRouter } from "@tanstack/react-router";
 import { useState, useTransition, type MouseEvent } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@stackmyth/avatar";
@@ -35,7 +35,7 @@ import { DrawerContent } from "@/components/drawer-content";
 import { LanguageChoice } from "@/components/language-choice";
 import { ROUTES } from "@/config/routes";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { setTheme } from "@/lib/theme-actions";
+import { setThemeFn } from "@/lib/preference-fns";
 
 /**
  * The account panel: who you are, where you can go, how it should look.
@@ -50,7 +50,7 @@ import { setTheme } from "@/lib/theme-actions";
  * The destinations are real anchors now. As menu items they could not be:
  * DropdownMenuItem renders a div and exposes no `asChild`, so cmd-click could
  * never open one in a new tab (STACKMYTH-GAP #17). Outside a menu, `Button
- * asChild` + next/link gives a genuine link with a genuine href.
+ * asChild` + a router link gives a genuine anchor with a genuine href.
  *
  * Language sits here beside appearance, for the same reason appearance does:
  * both are look-at-it-now choices, and a signed-in reader had no quick way to
@@ -87,7 +87,10 @@ export function ProfileMenu({
 
     // "system" is this panel's word for "no stored preference". The server
     // stores null, and null is what lets `prefers-color-scheme` take over.
-    startTransition(() => void setTheme(next === "system" ? null : next));
+    startTransition(async () => {
+      await setThemeFn({ data: { theme: next === "system" ? null : next } });
+      await router.invalidate();
+    });
   }
 
   /**
@@ -112,10 +115,10 @@ export function ProfileMenu({
   function signOut() {
     startTransition(async () => {
       await createSupabaseBrowserClient().auth.signOut();
-      // refresh() re-runs the server components so the session disappears
+      // invalidate() re-runs every loader so the session disappears
       // everywhere at once, not just on this page.
-      router.refresh();
-      router.push(ROUTES.home);
+      await router.invalidate();
+      await router.navigate({ to: ROUTES.home });
     });
   }
 

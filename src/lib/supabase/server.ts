@@ -1,7 +1,7 @@
 import "@/server/assert-server";
 
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { getCookies, setCookie } from "@tanstack/react-start/server";
 
 import { supabasePublishableKey, supabaseUrl } from "@/config/supabase-env";
 
@@ -13,21 +13,18 @@ import { supabasePublishableKey, supabaseUrl } from "@/config/supabase-env";
  * DECISIONS.md, "Supabase Auth for identity, Drizzle for data".
  */
 export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
-
   return createServerClient(supabaseUrl, supabasePublishableKey, {
     cookies: {
       getAll() {
-        return cookieStore.getAll();
+        return Object.entries(getCookies()).map(([name, value]) => ({ name, value }));
       },
       setAll(cookiesToSet) {
-        try {
-          for (const { name, value, options } of cookiesToSet) {
-            cookieStore.set(name, value, options);
-          }
-        } catch {
-          // Server Components cannot set cookies. Harmless: src/proxy.ts
-          // refreshes the session on the routes that need it.
+        // No try/catch any more: unlike a Server Component, every server
+        // context here (middleware, loader, server function, route handler)
+        // may write response headers, so a refreshed session cookie always
+        // makes it out.
+        for (const { name, value, options } of cookiesToSet) {
+          setCookie(name, value, options);
         }
       },
     },

@@ -8,7 +8,9 @@ import { Text } from "@stackmyth/text";
 import { useCopy } from "@/components/copy-provider";
 import { LanguageCombobox } from "@/components/language-combobox";
 import { LOCALES, getCopy, type Locale } from "@/config/copy";
-import { setLocale } from "@/lib/locale-actions";
+import { useRouter } from "@tanstack/react-router";
+
+import { setLocaleFn } from "@/lib/preference-fns";
 
 /**
  * The language switch in the account drawer, for signed-in and signed-out
@@ -24,6 +26,7 @@ import { setLocale } from "@/lib/locale-actions";
  */
 export function LanguageChoice() {
   const { copy, locale } = useCopy();
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   return (
@@ -36,7 +39,10 @@ export function LanguageChoice() {
         value={locale}
         onValueChange={(next) => {
           if (next === locale) return;
-          startTransition(() => void setLocale(next));
+          startTransition(async () => {
+            await setLocaleFn({ data: { locale: next } });
+            await router.invalidate();
+          });
         }}
         options={LOCALES.map((option: Locale) => ({
           value: option,

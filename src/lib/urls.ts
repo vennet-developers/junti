@@ -1,6 +1,6 @@
 import "@/server/assert-server";
 
-import { headers } from "next/headers";
+import { getRequestHeader } from "@tanstack/react-start/server";
 
 /**
  * Absolute URLs for the two access links.
@@ -10,12 +10,11 @@ import { headers } from "next/headers";
  * production domain without any environment variable to keep in sync.
  */
 export async function origin(): Promise<string> {
-  const headerList = await headers();
-
-  // Vercel sets both; a local dev server sets neither.
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "localhost:3000";
+  // Vercel sets both; a local dev server sets neither. Still async although
+  // the helpers are sync now, so its many call sites keep their `await`.
+  const host = getRequestHeader("x-forwarded-host") ?? getRequestHeader("host") ?? "localhost:3000";
   const protocol =
-    headerList.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+    getRequestHeader("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
 
   return `${protocol}://${host}`;
 }
