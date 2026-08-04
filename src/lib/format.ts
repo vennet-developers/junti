@@ -36,6 +36,46 @@ const MINOR_UNIT_EXPONENT: Record<string, number> = {
   VND: 0,
 };
 
+/**
+ * The currencies an event may be priced in.
+ *
+ * A product list, not a technical one — `Intl` would happily format hundreds
+ * more. It exists because the amount parser has to know how many decimals a
+ * currency has to read "50,50" correctly, and accepting an arbitrary
+ * three-letter code meant accepting one whose conventions we had not thought
+ * about. Adding one is a line here plus a check that its exponent is right.
+ *
+ * COP first because it is the only one the UI offers today.
+ */
+export const SUPPORTED_CURRENCIES = [
+  "COP",
+  "USD",
+  "EUR",
+  "MXN",
+  "ARS",
+  "CLP",
+  "PEN",
+  "BRL",
+] as const;
+
+export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
+
+export function isSupportedCurrency(currency: string): boolean {
+  return (SUPPORTED_CURRENCIES as readonly string[]).includes(currency.toUpperCase());
+}
+
+/**
+ * How many decimal places this currency is written with: 0 for COP, 2 for USD.
+ *
+ * Exported because parsing what the organizer typed needs it — see
+ * `parseCostAmount`. Reading "50.50" as five thousand and fifty is a factor of
+ * a hundred, and the only thing standing between those two readings is this
+ * number.
+ */
+export function minorUnitExponent(currency: string): number {
+  return exponentFor(currency);
+}
+
 function exponentFor(currency: string): number {
   return MINOR_UNIT_EXPONENT[currency.toUpperCase()] ?? 2;
 }

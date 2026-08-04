@@ -173,6 +173,17 @@ export async function setPaymentStatus(
     })
     .where(eq(payments.participantId, participant.id));
 
+  /*
+    Undoing a confirmation puts the row back under the split's control.
+
+    While it was confirmed, the stored amount was frozen at whatever was
+    actually handed over, and `syncPayments` skipped it on every pass. Reverting
+    the status without this leaves that frozen figure on a now-pending row: the
+    reader recomputes and hides it, but the ledger itself keeps a number the
+    roster no longer supports, waiting for the first thing that trusts it.
+  */
+  if (status.data !== "confirmed") await syncPayments(event);
+
   refresh(publicToken, organizerToken);
   return { errors: {}, ok: true };
 }

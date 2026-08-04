@@ -3,7 +3,13 @@ import { z } from "zod";
 import type { Copy } from "@/config/copy";
 import { LOCALES } from "@/config/copy";
 
-import { DEFAULT_TIME_ZONE, fromDateTimeLocalValue, toMinorUnits } from "./format";
+import {
+  DEFAULT_TIME_ZONE,
+  fromDateTimeLocalValue,
+  isSupportedCurrency,
+  minorUnitExponent,
+  toMinorUnits,
+} from "./format";
 import { isValidTimeZone } from "./time-zones";
 
 /**
@@ -68,12 +74,20 @@ const timeZoneSchema = (copy: Copy) =>
 export const rsvpAttendanceSchema = (copy: Copy) =>
   z.enum(["in", "out", "maybe"], { message: copy.errors.attendanceInvalid });
 
+/**
+ * One of the currencies the app knows how to read and write.
+ *
+ * Was any three uppercase letters, which quietly meant "any currency, parsed
+ * as though it were pesos". The amount parser below needs to know how many
+ * decimals a code carries; a code nobody vetted is a code whose decimals are a
+ * guess. See `SUPPORTED_CURRENCIES`.
+ */
 const currencySchema = z
   .string()
   .trim()
   .toUpperCase()
   .length(3)
-  .regex(/^[A-Z]{3}$/)
+  .refine(isSupportedCurrency)
   .default("COP");
 
 /**
@@ -130,6 +144,54 @@ const capacitySchema = (copy: Copy) =>
  */
 const costAmountSchema = z.string().trim();
 
+/**
+ * The largest amount an event may cost, in major units.
+ *
+ * Money is stored as `bigint({ mode: "number" })`, which is a JavaScript number
+ * and therefore exact only below 2^53. A cap far under that means a typo can
+ * never reach the precision cliff, where amounts would start rounding silently
+ * on their way to Postgres. A trillion pesos is roughly a thousand times
+ * Colombia's GDP; nobody is splitting that with four friends.
+ */
+const COST_MAX_MAJOR = 1e12;
+
+/**
+ * Turns what somebody typed into a plain decimal string, or null if it is not
+ * a number at all.
+ *
+ * The separator problem: `1.500` is fifteen hundred to a Colombian and one and
+ * a half to an American, and both are typing into the same box. The rule that
+ * settles it uses the currency, which is the only party that actually knows:
+ *
+ * - **Zero-decimal currency (COP, CLP, …)** — every `.` and `,` is a thousands
+ *   separator, because the currency has no decimals to separate. `1.500` is
+ *   fifteen hundred, always.
+ * - **Two-decimal currency (USD, EUR, …)** — a trailing separator followed by
+ *   one or two digits is the decimal point; anything else groups thousands. So
+ *   `50.50` and `50,50` are both fifty and a half, `1.234,56` and `1,234.56`
+ *   are both a thousand two hundred thirty four and a half, and `1.500` — three
+ *   digits, so not a decimal fraction — stays fifteen hundred.
+ *
+ * Before this, the separators were stripped unconditionally for every currency.
+ * `50.50` in dollars became `5050`, which `toMinorUnits` then multiplied by a
+ * hundred: a bill for $5.050,00 where fifty dollars and fifty cents was meant.
+ * The UI pins the currency to COP today, which is the only reason nobody was
+ * ever billed that way — the server action accepted whatever it was sent.
+ *
+ * Exported for direct testing, like `evenShares`: this is the other place where
+ * being subtly wrong costs somebody real money.
+ */
+export function toDecimalString(raw: string, exponent: number): string {
+  const compact = raw.replace(/\s/g, "");
+  if (exponent === 0) return compact.replace(/[.,]/g, "");
+
+  const decimal = new RegExp(`^(.*)[.,](\\d{1,${exponent}})$`).exec(compact);
+  if (!decimal) return compact.replace(/[.,]/g, "");
+
+  const [, whole, fraction] = decimal;
+  return `${whole.replace(/[.,]/g, "")}.${fraction}`;
+}
+
 function parseCostAmount(
   raw: string,
   currency: string,
@@ -137,7 +199,7 @@ function parseCostAmount(
   path: string,
   copy: Copy,
 ): number | null {
-  const cleaned = raw.replace(/[\s.,]/g, "");
+  const cleaned = toDecimalString(raw, minorUnitExponent(currency));
 
   if (cleaned.length === 0) {
     ctx.addIssue({ code: "custom", message: copy.errors.costRequired, path: [path] });
@@ -145,7 +207,7 @@ function parseCostAmount(
   }
 
   const parsed = Number(cleaned);
-  if (!Number.isFinite(parsed) || parsed < 0) {
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > COST_MAX_MAJOR) {
     ctx.addIssue({ code: "custom", message: copy.errors.costInvalid, path: [path] });
     return null;
   }
