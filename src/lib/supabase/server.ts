@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";

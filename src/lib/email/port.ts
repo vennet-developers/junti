@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 /**
  * What sending a message means here, independent of who sends it.

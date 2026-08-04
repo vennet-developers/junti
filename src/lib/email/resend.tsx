@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { render } from "@react-email/render";
 

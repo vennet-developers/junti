@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { eq } from "drizzle-orm";
 import { cookies, headers } from "next/headers";

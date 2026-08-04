@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { and, eq } from "drizzle-orm";
 

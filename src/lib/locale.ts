@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { getCopy, isLocale, type Copy, type Locale } from "@/config/copy";
 

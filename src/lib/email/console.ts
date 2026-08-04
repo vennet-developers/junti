@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import type { EmailPort, OutboundMessage, SendResult } from "./port";
 

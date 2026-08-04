@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { suppressedAmong } from "@/lib/consent";
 import { sendMessage } from "@/lib/email/provider";

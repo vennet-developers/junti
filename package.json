@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-client-bundle.mjs",
     "start": "node .output/server/index.mjs",
     "lint": "eslint",
     "format": "prettier --write .",

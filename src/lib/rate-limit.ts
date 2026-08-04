@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 /**
  * A fixed-window rate limiter held in the process's memory.

@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";

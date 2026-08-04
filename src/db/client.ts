@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";

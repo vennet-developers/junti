@@ -1,4 +1,4 @@
-import "server-only";
+import "@/server/assert-server";
 
 import type { User } from "@supabase/supabase-js";
 import { eq } from "drizzle-orm";
