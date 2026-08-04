@@ -349,6 +349,8 @@ export const es = {
     editNotYours:
       "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos. Todo lo demás —pagos, invitaciones, lista de espera, cerrarlo— sí puedes hacerlo desde este link.",
     editEventSaved: "Cambios guardados.",
+    currencyChanged: (currency: string) =>
+      `El monto queda tal como está escrito, ahora en ${currency}. Revísalo antes de guardar.`,
     removingCostWithCollected: (collected: string) =>
       `Ya recibiste ${collected}. Si lo dejas sin costo, ese registro deja de verse — no se borra, y vuelve si le pones costo otra vez.`,
     shareSection: "Links",
@@ -692,6 +694,10 @@ export const es = {
     languageLabel: "Idioma",
     languageAuto: "El de mi navegador",
     timeZoneLabel: "Zona horaria",
+    currencyLabel: "Moneda",
+    currencyHelp:
+      "La moneda con la que arrancan tus eventos nuevos. Cada evento fija la suya al crearse.",
+    currencyDefault: "Peso colombiano (COP)",
     timeZoneAuto: "La de mi dispositivo",
     timeZoneHelp:
       "Las horas de los eventos se te muestran en esta zona. Cuando el evento es en otra, verás también la hora del lugar.",
@@ -717,6 +723,8 @@ export const es = {
     startsAtInvalid: "Esa fecha no es válida.",
     capacityInvalid: "El cupo debe ser un número mayor que cero.",
     costRequired: "Escribe el monto.",
+    currencyLocked:
+      "No se puede cambiar la moneda: ya hay pagos confirmados en la moneda actual.",
     costInvalid: "El monto debe ser un número mayor o igual a cero.",
     nameRequired: "Escribe tu nombre.",
     nameTooLong: "Máximo 40 caracteres.",

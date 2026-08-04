@@ -47,6 +47,11 @@ const getCreateContext = createServerFn({ method: "GET" })
     // their profile while living in Madrid should not re-pick it every event.
     const { timeZone: preferredTimeZone } = await resolvePreferences();
 
+    // The stored default currency — same idea as the zone, read from the row
+    // rather than a cookie because only this form ever needs it.
+    const { loadStoredPreferences } = await import("@/lib/preferences");
+    const stored = await loadStoredPreferences(organizer.id);
+
     const prefill = data.from
       ? await dup.loadEventAsFormValues(data.from, organizer.id, locale)
       : null;
@@ -60,6 +65,7 @@ const getCreateContext = createServerFn({ method: "GET" })
       title: copy.createEvent.title,
       locale,
       defaultTimeZone: preferredTimeZone ?? DEFAULT_TIME_ZONE,
+      defaultCurrency: stored.currency ?? "COP",
       eventTypes,
       policyOptionsByType,
       /*
@@ -86,7 +92,7 @@ export const Route = createFileRoute("/new/")({
 
 function NewEventPage() {
   const { copy } = useCopy();
-  const { locale, defaultTimeZone, eventTypes, policyOptionsByType, prefill } =
+  const { locale, defaultTimeZone, defaultCurrency, eventTypes, policyOptionsByType, prefill } =
     Route.useLoaderData();
 
   return (
@@ -113,6 +119,7 @@ function NewEventPage() {
             first paint shows. */}
         <CreateEventForm
           defaultTimeZone={defaultTimeZone}
+          defaultCurrency={defaultCurrency}
           defaultLocale={locale}
           eventTypes={eventTypes}
           policyOptionsByType={policyOptionsByType}

@@ -26,6 +26,7 @@ import {
 import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
+import { currencyOptions } from "@/lib/format";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
 
@@ -33,6 +34,8 @@ import { createEventFn, type CreateEventState } from "./-fns";
 
 export interface CreateEventFormProps {
   defaultTimeZone: string;
+  /** From the organizer's stored preference, else COP. */
+  defaultCurrency: string;
   defaultLocale: string;
   /** From the `event_types` catalogue, already resolved for this reader. */
   eventTypes: { id: string; slug: string; label: string }[];
@@ -61,6 +64,7 @@ export function CreateEventForm(props: CreateEventFormProps) {
 
 function CreateEventFormBody({
   defaultTimeZone,
+  defaultCurrency,
   defaultLocale,
   eventTypes,
   policyOptionsByType,
@@ -142,12 +146,12 @@ function CreateEventFormBody({
       notes: "",
       costMode: "none",
       costAmount: "",
-      currency: "COP",
+      currency: str(draft?.currency) ?? defaultCurrency,
       policies: JSON.stringify(defaultPolicies(policyOptionsByType[eventTypes[0]?.id ?? ""])),
       // A restored draft wins over every default above it.
       ...(draft ?? {}),
     }),
-    [eventTypes, policyOptionsByType, defaultTimeZone, defaultLocale, draft],
+    [eventTypes, policyOptionsByType, defaultTimeZone, defaultCurrency, defaultLocale, draft],
   );
 
   /**
@@ -307,6 +311,22 @@ function CreateEventFormBody({
               onValueChange={setCostMode}
             />
           </ControlledField>
+
+          {costMode !== "none" ? (
+            <ControlledField
+              label={copy.createEvent.fields.currency}
+              error={serverState.errors.currency}
+            >
+              {/* Before the amount on purpose: the currency decides how the
+                  amount is READ ("50.50" is cents in dollars and a typo in
+                  pesos), so it should be settled before typing begins. */}
+              <SelectField
+                name="currency"
+                options={currencyOptions(copy.intlLocale)}
+                defaultValue={str(draft?.currency) ?? defaultCurrency}
+              />
+            </ControlledField>
+          ) : null}
 
           {costMode !== "none" ? (
             <FormField name="costAmount">

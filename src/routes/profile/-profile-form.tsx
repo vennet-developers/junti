@@ -11,8 +11,8 @@ import { useRouter } from "@tanstack/react-router";
 
 import { useCopy } from "@/components/copy-provider";
 import { ControlledField, FormError } from "@/components/form-shell";
-import { LanguageCombobox } from "@/components/language-combobox";
 import { LOCALES, getCopy } from "@/config/copy";
+import { currencyOptions } from "@/lib/format";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 
 import { saveProfileFn, type ProfileState } from "./-fns";
@@ -25,17 +25,16 @@ import { saveProfileFn, type ProfileState } from "./-fns";
  * value turns it on, choosing the automatic option turns it off. One piece of
  * state rather than a checkbox that can disagree with a dropdown next to it.
  *
- * Language is the same {@link LanguageCombobox} the account drawer opens, so
- * the two places a language is chosen look and behave alike — and so a third
- * and fourth language arrive in a list that filters rather than in a row of
- * buttons that wraps. Only the option set differs: this screen is where
- * "follow my browser" lives, and it carries a sentinel value because a
- * combobox item is keyed by a non-empty string while the stored preference for
- * "no override" is empty. The two are mapped at this boundary and nowhere
- * else.
- *
- * The timezone stays a `Select`: its list is a fixed set that is read rather
- * than searched, and it is grouped, which a flat combobox list would lose.
+ * All three fields are the same `Select`, on purpose. Language was briefly
+ * the filterable combobox the account drawer uses, and on this page it stood
+ * out immediately: the combobox trigger is an input and the select trigger is
+ * a button, and the kit gives them different heights — three stacked fields
+ * in two visibly different suits read as a mistake, which is exactly what got
+ * reported. The drawer keeps the combobox, where it stands alone and its
+ * dialog-stacking fix has been through the wars; here, beside two selects,
+ * being identical matters more than filtering a list of two. When the
+ * language list outgrows a select, this is the seam to revisit — the old
+ * control is one revert away in history.
  *
  * Both are used directly rather than through `SelectField`, because this form
  * has no `FormController` around it — two fields and no cross-field rules do
@@ -44,15 +43,16 @@ import { saveProfileFn, type ProfileState } from "./-fns";
  * out immediately: browser chrome in the middle of a styled page.
  */
 
-/** What the combobox calls "follow my browser"; stored as an empty value. */
-const FOLLOW_BROWSER = "auto";
 export function ProfileForm({
   initialLocale,
   initialTimeZone,
+  initialCurrency,
 }: {
   /** Null means the account has no override stored. */
   initialLocale: string | null;
   initialTimeZone: string | null;
+  /** Null means new events start in the app's default, COP. */
+  initialCurrency: string | null;
 }) {
   const { copy } = useCopy();
   const router = useRouter();
@@ -61,6 +61,7 @@ export function ProfileForm({
 
   const [locale, setLocale] = useState(initialLocale ?? "");
   const [timeZone, setTimeZone] = useState(initialTimeZone ?? "");
+  const [currency, setCurrency] = useState(initialCurrency ?? "");
 
   /**
    * What the browser would pick, shown next to the automatic option so the
@@ -83,6 +84,7 @@ export function ProfileForm({
     const formData = new FormData();
     formData.set("locale", locale);
     formData.set("timeZone", timeZone);
+    formData.set("currency", currency);
 
     startTransition(async () => {
       const result = await saveProfileFn({ data: formData });
@@ -112,19 +114,23 @@ export function ProfileForm({
           error={state.errors.locale}
           htmlFor="profile-locale"
         >
-          <LanguageCombobox
-            id="profile-locale"
-            value={locale === "" ? FOLLOW_BROWSER : locale}
-            onValueChange={(next) => setLocale(next === FOLLOW_BROWSER ? "" : next)}
-            options={[
-              { value: FOLLOW_BROWSER, label: copy.profile.languageAuto },
-              ...LOCALES.map((option) => ({
-                value: option,
-                label: getCopy(option).localeName,
-              })),
-            ]}
-            ariaLabel={copy.profile.languageLabel}
-          />
+          {/* The empty value IS "follow my browser" — same convention as the
+              timezone below, no sentinel needed now that a select item may be
+              keyed by "". Each language names itself: "English" is legible to
+              somebody who cannot read the Spanish beside it. */}
+          <Select value={locale} onValueChange={setLocale} id="profile-locale">
+            <SelectTrigger fullWidth size="lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{copy.profile.languageAuto}</SelectItem>
+              {LOCALES.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {getCopy(option).localeName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </ControlledField>
 
         <ControlledField
@@ -140,6 +146,30 @@ export function ProfileForm({
             <SelectContent>
               <SelectItem value="">{copy.profile.timeZoneAuto}</SelectItem>
               {zoneOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </ControlledField>
+
+        <ControlledField
+          label={copy.profile.currencyLabel}
+          description={copy.profile.currencyHelp}
+          error={state.errors.currency}
+          htmlFor="profile-currency"
+        >
+          {/* Same shape as the timezone: a fixed, read-not-searched list, and
+              the empty option IS the default rather than a blank — the same
+              one-piece-of-state rule the other two fields follow. */}
+          <Select value={currency} onValueChange={setCurrency} id="profile-currency">
+            <SelectTrigger fullWidth size="lg">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{copy.profile.currencyDefault}</SelectItem>
+              {currencyOptions(copy.intlLocale).map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>

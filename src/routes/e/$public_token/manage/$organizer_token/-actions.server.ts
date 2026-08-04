@@ -518,10 +518,34 @@ export async function editEvent(
 
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
 
+  const input = parsed.data;
+
+  /*
+    A currency change is refused once money has actually moved.
+
+    The stored amounts are integers in the OLD currency's minor units, and a
+    confirmed payment is a fact about the past — 25.000 pesos handed over do
+    not become 25.000 of anything else because the label changed. Pending
+    rows would re-split fine, but the confirmed ones would sit in the ledger
+    denominated in a currency the event no longer speaks, and every total on
+    the money summary would quietly add pesos to dollars. The UI disables the
+    picker in this state; this is the rule for whoever bypasses the UI.
+  */
+  if (input.currency !== event.currency) {
+    const [confirmedPayment] = await db
+      .select({ id: payments.id })
+      .from(payments)
+      .innerJoin(participants, eq(participants.id, payments.participantId))
+      .where(and(eq(participants.eventId, event.id), eq(payments.status, "confirmed")))
+      .limit(1);
+
+    if (confirmedPayment) {
+      return { errors: { currency: copy.errors.currencyLocked } };
+    }
+  }
+
   const policies = parsePoliciesField(field(formData, "policies"), copy);
   if (!policies.ok) return { errors: { _form: policies.message } };
-
-  const input = parsed.data;
 
   await db
     .update(events)

@@ -21,7 +21,13 @@ import { useCopy } from "@/components/copy-provider";
 import { Notice } from "@/components/notice";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
-import { formatMoney, toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
+import {
+  currencyOptions,
+  formatMoney,
+  toDatePartValue,
+  toMajorUnits,
+  toTimePartValue,
+} from "@/lib/format";
 import type { EventView } from "@/lib/roster";
 import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
@@ -65,6 +71,7 @@ export function EditEventForm({
   const [pending, startTransition] = useTransition();
   const [serverState, setServerState] = useState<ManageState>({ errors: {} });
   const [costMode, setCostMode] = useState<string>(event.costMode);
+  const [currency, setCurrencyChoice] = useState<string>(event.currency);
   const [timeZone, setTimeZone] = useState(event.timeZone);
   const [eventTypeId, setEventTypeId] = useState(event.eventTypeId);
 
@@ -263,6 +270,36 @@ export function EditEventForm({
             and a surprise: the organizer keeps their receipts either way, and
             can put the cost back to see them again.
           */}
+          {costMode !== "none" ? (
+            <ControlledField
+              label={copy.createEvent.fields.currency}
+              description={collectedMinor > 0 ? copy.errors.currencyLocked : undefined}
+              error={serverState.errors.currency}
+            >
+              {/*
+                Disabled the moment anything has been collected, and the help
+                line says why: the stored amounts are integers in THIS
+                currency's minor units, and 25.000 pesos handed over do not
+                become 25.000 of something else because a label changed. The
+                server enforces the same rule for whoever bypasses the form.
+              */}
+              <SelectField
+                name="currency"
+                options={currencyOptions(copy.intlLocale)}
+                defaultValue={event.currency}
+                onValueChange={setCurrencyChoice}
+                disabled={collectedMinor > 0}
+              />
+            </ControlledField>
+          ) : null}
+
+          {/* The amount stays as WRITTEN when the currency changes — 15.000
+              was pesos and is about to mean dollars. Say so while the field
+              is on screen and editable. */}
+          {costMode !== "none" && currency !== event.currency ? (
+            <Notice tone="warning" title={copy.manage.currencyChanged(currency)} />
+          ) : null}
+
           {costMode === "none" && event.costMode !== "none" && collectedMinor > 0 ? (
             <Notice
               tone="warning"

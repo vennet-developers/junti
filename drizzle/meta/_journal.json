@@ -99,6 +99,13 @@
       "when": 1785823236842,
       "tag": "0013_fair_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1785830765243,
+      "tag": "0014_wealthy_mephistopheles",
+      "breakpoints": true
     }
   ]
 }

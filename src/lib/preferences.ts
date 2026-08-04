@@ -14,6 +14,7 @@ import {
 import { db } from "@/db/client";
 import { userPreferences } from "@/db/schema";
 
+import { isSupportedCurrency } from "./format";
 import { isValidTimeZone } from "./time-zones";
 
 /**
@@ -61,6 +62,11 @@ export interface StoredPreferences {
   timeZone: string | null;
   /** NULL means "follow my operating system". */
   theme: Theme | null;
+  /**
+   * The currency new events start in, or NULL for the app's default (COP).
+   * A form default, not a display preference — see the schema note.
+   */
+  currency: string | null;
   /**
    * The organizer's own invitation template, or NULL for the app's.
    *
@@ -162,6 +168,7 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
       locale: userPreferences.locale,
       timeZone: userPreferences.timeZone,
       theme: userPreferences.theme,
+      currency: userPreferences.currency,
       shareMessage: userPreferences.shareMessage,
     })
     .from(userPreferences)
@@ -172,6 +179,7 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
     locale: isLocale(row?.locale) ? row.locale : null,
     timeZone: row?.timeZone && isValidTimeZone(row.timeZone) ? row.timeZone : null,
     theme: isTheme(row?.theme) ? row.theme : null,
+    currency: row?.currency && isSupportedCurrency(row.currency) ? row.currency : null,
     // Validated on the way in, not on the way out: a template that lost its
     // link would leave every share link broken with nothing to explain it.
     shareMessage: row?.shareMessage ?? null,
@@ -208,6 +216,7 @@ export async function saveStoredPreferences(
       locale: next.locale,
       timeZone: next.timeZone,
       theme: next.theme,
+      currency: next.currency,
       shareMessage: next.shareMessage,
     })
     .onConflictDoUpdate({
@@ -216,6 +225,7 @@ export async function saveStoredPreferences(
         locale: next.locale,
         timeZone: next.timeZone,
         theme: next.theme,
+        currency: next.currency,
         shareMessage: next.shareMessage,
         updatedAt: new Date(),
       },

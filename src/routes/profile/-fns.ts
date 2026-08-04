@@ -24,13 +24,14 @@ export type ProfileState = { errors: Record<string, string>; ok?: boolean };
 export const saveProfileFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data: formData }): Promise<ProfileState> => {
-    const [{ isLocale }, { getViewerCopy }, { getOrganizer }, prefs, { isValidTimeZone }, { field }] =
+    const [{ isLocale }, { getViewerCopy }, { getOrganizer }, prefs, { isValidTimeZone }, { isSupportedCurrency }, { field }] =
       await Promise.all([
         import("@/config/copy"),
         import("@/lib/locale"),
         import("@/lib/organizer"),
         import("@/lib/preferences"),
         import("@/lib/time-zones"),
+        import("@/lib/format"),
         import("@/lib/validation"),
       ]);
 
@@ -57,6 +58,16 @@ export const saveProfileFn = createServerFn({ method: "POST" })
       timeZone = rawTimeZone;
     }
 
+    // Empty means "the app's default" (COP), stored as NULL like the others.
+    const rawCurrency = field(formData, "currency");
+    let currency: string | null = null;
+    if (rawCurrency !== "") {
+      if (!isSupportedCurrency(rawCurrency)) {
+        return { errors: { currency: copy.common.unknownError } };
+      }
+      currency = rawCurrency.toUpperCase();
+    }
+
     // The theme lives in the same row but is set from the profile menu, not from
     // this form. Read it back and pass it through, or saving language would
     // silently reset somebody's dark mode.
@@ -68,6 +79,7 @@ export const saveProfileFn = createServerFn({ method: "POST" })
       ...stored,
       locale,
       timeZone,
+      currency,
     });
 
     await prefs.writePreferenceCookie(prefs.LOCALE_COOKIE, locale);

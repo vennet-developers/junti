@@ -782,6 +782,20 @@ export const userPreferences = pgTable("user_preferences", {
   theme: text("theme"),
 
   /**
+   * The currency this organizer's NEW events start in, or NULL for the
+   * app's default (COP).
+   *
+   * A default for a form, not a display preference: an event's own currency
+   * is fixed at creation and every reader sees amounts in it — somebody in
+   * Madrid invited to a Bogotá match owes pesos, not euros. This only decides
+   * what the create form offers before the organizer touches it, which is why
+   * it lives here with the other same-shaped defaults (language, timezone)
+   * and follows their same two rules: nullable, and validated against the
+   * allowlist on the way in rather than trusted on the way out.
+   */
+  currency: char("currency", { length: 3 }),
+
+  /**
    * The invitation this organizer sends, as a template, or NULL for the one
    * the app writes in the reader's language.
    *

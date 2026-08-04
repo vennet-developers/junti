@@ -39,6 +39,7 @@ const gate = createServerFn({ method: "GET" }).handler(async () => {
     title: copy.profile.title,
     initialLocale: stored.locale,
     initialTimeZone: stored.timeZone,
+    initialCurrency: stored.currency,
   };
 });
 
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/profile/")({
 
 function ProfilePage() {
   const { copy } = useCopy();
-  const { initialLocale, initialTimeZone } = Route.useLoaderData();
+  const { initialLocale, initialTimeZone, initialCurrency } = Route.useLoaderData();
 
   return (
     <Container size="2" px="4" py="6">
@@ -80,7 +81,11 @@ function ProfilePage() {
           <Text color="muted">{copy.profile.subheading}</Text>
         </Stack>
 
-        <ProfileForm initialLocale={initialLocale} initialTimeZone={initialTimeZone} />
+        <ProfileForm
+          initialLocale={initialLocale}
+          initialTimeZone={initialTimeZone}
+          initialCurrency={initialCurrency}
+        />
       </Stack>
     </Container>
   );

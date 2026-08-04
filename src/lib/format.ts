@@ -65,6 +65,24 @@ export function isSupportedCurrency(currency: string): boolean {
 }
 
 /**
+ * The currency picker's options, named in the reader's language.
+ *
+ * `Intl.DisplayNames` is what turns "COP" into "peso colombiano" for a
+ * Spanish reader and "Colombian peso" for an English one, with no list of
+ * our own to translate and keep in step with the allowlist. The code stays
+ * in the label because two currencies can share a colloquial name and the
+ * code is what the event will actually store.
+ */
+export function currencyOptions(intlLocale: string): { value: string; label: string }[] {
+  const names = new Intl.DisplayNames(intlLocale, { type: "currency" });
+
+  return SUPPORTED_CURRENCIES.map((code) => {
+    const name = names.of(code);
+    return { value: code, label: name && name !== code ? `${code} — ${name}` : code };
+  });
+}
+
+/**
  * How many decimal places this currency is written with: 0 for COP, 2 for USD.
  *
  * Exported because parsing what the organizer typed needs it — see

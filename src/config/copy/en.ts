@@ -342,6 +342,8 @@ export const en: Copy = {
     editNotYours:
       "This event belongs to another account, so only that one can change its details. Everything else — payments, invitations, the waitlist, closing it — you can do from this link.",
     editEventSaved: "Changes saved.",
+    currencyChanged: (currency: string) =>
+      `The amount stays as written, now in ${currency}. Check it before saving.`,
     removingCostWithCollected: (collected: string) =>
       `You have already received ${collected}. Making this free hides that record — it is not deleted, and comes back if you set a cost again.`,
     shareSection: "Links",
@@ -682,6 +684,10 @@ export const en: Copy = {
     languageLabel: "Language",
     languageAuto: "Whatever my browser uses",
     timeZoneLabel: "Time zone",
+    currencyLabel: "Currency",
+    currencyHelp:
+      "The currency your new events start in. Each event fixes its own when created.",
+    currencyDefault: "Colombian peso (COP)",
     timeZoneAuto: "Whatever my device uses",
     timeZoneHelp:
       "Event times are shown to you in this zone. When an event is somewhere else, you also see the local time there.",
@@ -707,6 +713,8 @@ export const en: Copy = {
     startsAtInvalid: "That date is not valid.",
     capacityInvalid: "Spots must be a number greater than zero.",
     costRequired: "Enter the amount.",
+    currencyLocked:
+      "The currency cannot change: there are confirmed payments in the current one.",
     costInvalid: "The amount must be zero or more.",
     nameRequired: "Enter your name.",
     nameTooLong: "40 characters max.",
