@@ -22,8 +22,14 @@ import { consentEvents, emailSuppressions, invitations } from "@/db/schema";
  * sub-processor, a new destination country — and NOT for a typo. Old rows keep
  * pointing at the text that was actually on screen, which is the only thing
  * that makes them evidence of anything.
+ *
+ * 2026-08-04: groups. One class of data left (addresses supplied by an
+ * organizer, which are no longer stored at all) and another arrived (group
+ * memberships, including the declines). A class leaving is as much a change of
+ * substance as one arriving — the notice described something we were doing and
+ * had stopped doing, which is worse than describing nothing.
  */
-export const POLICY_VERSION = "2026-08-02";
+export const POLICY_VERSION = "2026-08-04";
 
 /**
  * What can be consented to, separately.

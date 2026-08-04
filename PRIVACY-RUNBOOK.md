@@ -51,9 +51,18 @@ where p.user_id = :user_id;
 -- Events they organize
 select title, starts_at from events where organizer_id = :user_id;
 
--- Invitations sent to that address
+-- Invitations sent to them. Keyed by account since groups shipped: an
+-- invitation names a user id, not an address.
 select e.title, i.sent_at, (i.participant_id is not null) as answered
-from invitations i join events e on e.id = i.event_id where i.email = :email;
+from invitations i join events e on e.id = i.event_id where i.user_id = :user_id;
+
+-- Groups they are in, and groups they own. Both are personal data: the first
+-- says who they agreed to hear from, the second is a list of other people.
+select g.name, gm.status, gm.created_at
+from group_members gm join groups g on g.id = gm.group_id
+where gm.user_id = :user_id;
+
+select id, name, created_at from groups where owner_id = :user_id;
 
 -- Whether they are on the suppression list
 select * from email_suppressions where email = :email;
@@ -101,8 +110,8 @@ fact, not an edit to the first.
 
 ## Supresión — delete
 
-**What can go entirely**: the account, the profile, preferences, invitations to
-their address, and any receipt image still stored.
+**What can go entirely**: the account, the profile, preferences, their
+invitations, their group memberships, and any receipt image still stored.
 
 **What cannot, and why to say so plainly**: their participation in events with
 money attached. Removing a participant re-splits the cost across everybody else
@@ -120,7 +129,12 @@ where user_id = :user_id;
 -- 2. Remove everything that is only about them
 delete from user_profiles where user_id = :user_id;
 delete from user_preferences where user_id = :user_id;
-delete from invitations where email = :email;
+delete from invitations where user_id = :user_id;
+
+-- Their memberships. Groups they OWN are a judgement call: deleting one
+-- removes other people's memberships too, which is the opposite of what a
+-- deletion request is for. Ask them whether to delete or hand the group over.
+delete from group_members where user_id = :user_id;
 delete from policy_evidence where submission_id in (
   select ps.id from policy_submissions ps
   join participants p on p.id = ps.participant_id where p.user_id = :user_id);
@@ -152,7 +166,11 @@ the law and silence is not.
   images the moment they are approved. See `src/lib/retention.ts`.
 - **Bounces and complaints** write to `email_suppressions` automatically, so a
   person who marked a message as spam is already not being written to.
-- If a request turns out to be about **an invitation they never asked for**, the
-  answer is the unsubscribe link in that email — and the wider question of what
-  basis we had to hold that address is an open legal spike, not something to
-  improvise in a reply.
+- **An invitation can no longer reach somebody who never agreed to hear from
+  the organizer.** Since groups shipped, an invitation names an account that
+  joined that organizer's group, and the address is read from `auth.users` at
+  send time rather than stored. The old question — what basis we had to hold an
+  address a third party typed in — no longer has a subject.
+- **`email_suppressions` is still keyed by address, and must stay that way.**
+  It is the one protection that has to keep working for somebody who deleted
+  their account, and an id stops meaning anything at that point.

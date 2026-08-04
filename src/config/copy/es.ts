@@ -477,13 +477,13 @@ export const es = {
       "Junti es un producto de Vennet, operado por Iván Elías Ávila Almanza, persona natural domiciliada en Colombia, quien actúa como responsable del tratamiento. Para consultas, reclamos o para ejercer cualquiera de tus derechos, escribe a hello@vennet.dev. Respondemos consultas dentro de los diez días hábiles y reclamos dentro de los quince que fija la Ley 1581 de 2012.",
     dataTitle: "Qué guardamos",
     dataBody:
-      "Tu correo, tu nombre, y tu número de WhatsApp solo si lo diste marcando la casilla. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si alguien te invitó por correo, guardamos esa dirección para poder mandarte la invitación.",
+      "Tu correo, tu nombre, y tu número de WhatsApp solo si lo diste marcando la casilla. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
     purposesTitle: "Para qué",
     purposesBody:
-      "El correo es cómo entras: no hay contraseña, te mandamos un link. El nombre es lo que ven los demás en la lista del evento. El teléfono existe para una sola cosa, y es que el organizador de un evento al que te apuntaste pueda escribirte por WhatsApp.",
+      "El correo es cómo entras: no hay contraseña, te mandamos un link. El nombre es lo que ven los demás en la lista del evento. El teléfono existe para una sola cosa, y es que el organizador de un evento al que te apuntaste pueda escribirte por WhatsApp. Los grupos existen para que no tengamos que escribirle a nadie que no haya aceptado antes: solo recibes invitaciones de alguien cuyo grupo aceptaste, y puedes salirte cuando quieras.",
     sharingTitle: "Quién más lo ve",
     sharingBody:
-      "El organizador de cada evento al que te apuntas ve tu nombre, tu respuesta y —si lo autorizaste— tu WhatsApp. Los demás invitados ven tu nombre y tu respuesta, nunca tu correo ni tu teléfono. No compartimos tus datos con nadie más, no los vendemos, y no vamos a hacerlo: protegerlos es parte de lo que este producto promete.",
+      "El organizador de cada evento al que te apuntas ve tu nombre, tu respuesta y —si lo autorizaste— tu WhatsApp. Quien organiza un grupo que aceptaste ve tu nombre, nunca tu correo: cuando te invita, la dirección la leemos en ese momento y no se la mostramos. Los demás invitados ven tu nombre y tu respuesta, nunca tu correo ni tu teléfono. No compartimos tus datos con nadie más, no los vendemos, y no vamos a hacerlo: protegerlos es parte de lo que este producto promete.",
     processorsTitle: "Con qué herramientas",
     processorsBody:
       "Supabase guarda la base de datos y maneja el ingreso, en Canadá. Resend entrega los correos, en Estados Unidos. Vercel aloja la aplicación. Cada uno trata los datos solo por instrucción nuestra y para lo descrito aquí.",

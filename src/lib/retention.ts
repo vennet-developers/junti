@@ -19,7 +19,17 @@ import { invitations, policyEvidence, policySubmissions, sendCounters } from "@/
  * whom, and quietly erasing it would break the one thing this product is for.
  */
 
-/** Nobody answers an invitation to an event that happened months ago. */
+/**
+ * Nobody answers an invitation to an event that happened months ago.
+ *
+ * Still a defensible guess rather than advice. It was written when an
+ * invitation row held a stranger's email address, and the open question was
+ * how long we could justify keeping one; groups removed the address — the row
+ * now names an account that joined the organizer's group — so what expires
+ * here is a record of "you were asked", not a piece of somebody's contact
+ * details. Lower stakes, same unconfirmed number, and the confirmation belongs
+ * with the rest of the Ley 1581 retention classes rather than in its own spike.
+ */
 const UNANSWERED_INVITATION_DAYS = 180;
 
 /**
