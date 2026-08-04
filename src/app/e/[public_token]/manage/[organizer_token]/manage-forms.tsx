@@ -18,9 +18,10 @@ import {
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
+import { Notice } from "@/components/notice";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
-import { toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
+import { formatMoney, toDatePartValue, toMajorUnits, toTimePartValue } from "@/lib/format";
 import type { EventView } from "@/lib/roster";
 import { timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
@@ -48,9 +49,12 @@ export function EditEventForm({
   policies,
   eventTypes,
   policyOptionsByType,
+  collectedMinor,
 }: Ctx & {
   event: EventView;
   policies: PolicyDraft[];
+  /** Money already confirmed for this event, for the remove-the-cost warning. */
+  collectedMinor: number;
   eventTypes: { id: string; slug: string; label: string }[];
   policyOptionsByType: Record<string, PolicyOptionView[]>;
 }) {
@@ -240,6 +244,24 @@ export function EditEventForm({
               onValueChange={setCostMode}
             />
           </ControlledField>
+
+          {/*
+            Removing the cost from an event that already collected money.
+
+            The record of who paid survives this now — see `planLedger` — but
+            it stops being visible, because there is no money UI on a free
+            event. Saying so beforehand is the difference between a decision
+            and a surprise: the organizer keeps their receipts either way, and
+            can put the cost back to see them again.
+          */}
+          {costMode === "none" && event.costMode !== "none" && collectedMinor > 0 ? (
+            <Notice
+              tone="warning"
+              title={copy.manage.removingCostWithCollected(
+                formatMoney(collectedMinor, event.currency, copy.intlLocale),
+              )}
+            />
+          ) : null}
 
           {costMode !== "none" ? (
             <FormField name="costAmount">

@@ -321,6 +321,8 @@ export const en: Copy = {
     editNotYours:
       "This event belongs to another account, so only that one can change its details. Everything else — payments, invitations, the waitlist, closing it — you can do from this link.",
     editEventSaved: "Changes saved.",
+    removingCostWithCollected: (collected: string) =>
+      `You have already received ${collected}. Making this free hides that record — it is not deleted, and comes back if you set a cost again.`,
     shareSection: "Links",
     splitWarningTitle: "Careful with the numbers",
     splitWarningBody: (name: string, confirmed: string, current: string) =>

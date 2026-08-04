@@ -328,6 +328,8 @@ export const es = {
     editNotYours:
       "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos. Todo lo demás —pagos, invitaciones, lista de espera, cerrarlo— sí puedes hacerlo desde este link.",
     editEventSaved: "Cambios guardados.",
+    removingCostWithCollected: (collected: string) =>
+      `Ya recibiste ${collected}. Si lo dejas sin costo, ese registro deja de verse — no se borra, y vuelve si le pones costo otra vez.`,
     shareSection: "Links",
     splitWarningTitle: "Ojo con las cuentas",
     splitWarningBody: (name: string, confirmed: string, current: string) =>

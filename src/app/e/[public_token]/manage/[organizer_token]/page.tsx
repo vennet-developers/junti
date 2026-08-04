@@ -528,6 +528,7 @@ export default async function ManagePage({
                     }))}
                     eventTypes={eventTypes}
                     policyOptionsByType={policyOptionsByType}
+                    collectedMinor={roster.collectedMinor}
                   />
                 ) : (
                   /* Say why rather than showing nothing. An absent form reads as a
