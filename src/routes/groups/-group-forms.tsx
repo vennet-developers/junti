@@ -8,6 +8,7 @@ import { Flex, Stack } from "@stackmyth/layout";
 import { Input } from "@stackmyth/input";
 import { toast } from "@stackmyth/toast";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useCopy } from "@/components/copy-provider";
 import { GROUP_NAME_MAX } from "@/domain/groups";
 
@@ -77,24 +78,25 @@ export function CreateGroupForm() {
 }
 
 /**
- * Deleting a group, with the confirm the browser already has.
+ * Deleting a group.
  *
- * `confirm` rather than a modal: this is the one destructive control in the
- * feature, it is reached from a page nobody visits by accident, and a dialog
- * component here would be more machinery than the decision deserves.
+ * The dialog stays open while the delete runs — closing it on click would
+ * leave somebody looking at the page they just deleted with no sign anything
+ * happened. It closes when the navigation takes them away, or on failure so
+ * they can read the toast against the screen they are still on.
  */
 export function DeleteGroupControl({ groupId, name }: { groupId: string; name: string }) {
   const { copy } = useCopy();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function remove() {
-    if (!window.confirm(copy.groups.deleteConfirm(name))) return;
-
     startTransition(async () => {
       const result = await deleteGroupFn({ data: { groupId } });
 
       if (result.errors._form) {
+        setOpen(false);
         toast.error(result.errors._form);
         return;
       }
@@ -105,9 +107,21 @@ export function DeleteGroupControl({ groupId, name }: { groupId: string; name: s
   }
 
   return (
-    <Button type="button" size="sm" variant="ghost" onClick={remove} disabled={pending}>
-      {pending ? copy.groups.deleting : copy.groups.delete}
-    </Button>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button type="button" size="sm" variant="ghost">
+          {copy.groups.delete}
+        </Button>
+      }
+      title={copy.groups.deleteConfirm(name)}
+      description={copy.groups.deleteConfirmBody}
+      confirmLabel={copy.groups.delete}
+      pending={pending}
+      pendingLabel={copy.groups.deleting}
+      onConfirm={remove}
+    />
   );
 }
 
@@ -176,13 +190,13 @@ export function AnswerGroupControls({
 export function LeaveGroupControl({ groupId, name }: { groupId: string; name: string }) {
   const { copy } = useCopy();
   const router = useRouter();
+  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function leave() {
-    if (!window.confirm(copy.groups.leaveConfirm(name))) return;
-
     startTransition(async () => {
       const result = await leaveGroupFn({ data: { groupId } });
+      setOpen(false);
 
       if (result.errors._form) {
         toast.error(result.errors._form);
@@ -195,8 +209,20 @@ export function LeaveGroupControl({ groupId, name }: { groupId: string; name: st
   }
 
   return (
-    <Button type="button" size="sm" variant="ghost" onClick={leave} disabled={pending}>
-      {pending ? copy.groups.leaving : copy.groups.leave}
-    </Button>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button type="button" size="sm" variant="ghost">
+          {copy.groups.leave}
+        </Button>
+      }
+      title={copy.groups.leaveConfirm(name)}
+      description={copy.groups.leaveConfirmBody}
+      confirmLabel={copy.groups.leave}
+      pending={pending}
+      pendingLabel={copy.groups.leaving}
+      onConfirm={leave}
+    />
   );
 }

@@ -611,7 +611,10 @@ export const en: Copy = {
       "The group and its memberships go away. Events that used it stay as they are, but can no longer invite from here.",
     delete: "Delete group",
     deleting: "Deleting…",
-    deleteConfirm: (name: string) => `Delete ${name}? This cannot be undone.`,
+    /* The dialog title asks; the body says what is lost. */
+    deleteConfirm: (name: string) => `Delete ${name}?`,
+    deleteConfirmBody:
+      "The memberships go with it: everybody inside would have to accept a new link. Events that used it stay as they are. This cannot be undone.",
     deleted: "Group deleted.",
 
     /* The link page: /g/:token */
@@ -639,7 +642,9 @@ export const en: Copy = {
 
     leave: "Leave group",
     leaving: "Leaving…",
-    leaveConfirm: (name: string) => `Leave ${name}? They will not be able to invite you.`,
+    leaveConfirm: (name: string) => `Leave ${name}?`,
+    leaveConfirmBody:
+      "They will not be able to invite you to their events. If you change your mind, this same link lets you back in.",
     left: "You left the group.",
     rejoin: "Join again",
 

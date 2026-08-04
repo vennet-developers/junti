@@ -619,7 +619,10 @@ export const es = {
       "Se borra el grupo y sus membresías. Los eventos que lo usaban se quedan como están, pero dejan de poder invitar desde acá.",
     delete: "Eliminar grupo",
     deleting: "Eliminando…",
-    deleteConfirm: (name: string) => `¿Eliminar ${name}? Esto no se puede deshacer.`,
+    /* El título del diálogo pregunta; el cuerpo dice qué se pierde. */
+    deleteConfirm: (name: string) => `¿Eliminar ${name}?`,
+    deleteConfirmBody:
+      "Se pierden las membresías: quien esté adentro tendría que volver a aceptar un link nuevo. Los eventos que lo usaban se quedan como están. Esto no se puede deshacer.",
     deleted: "Eliminaste el grupo.",
 
     /* La página del link: /g/:token */
@@ -648,7 +651,9 @@ export const es = {
 
     leave: "Salir del grupo",
     leaving: "Saliendo…",
-    leaveConfirm: (name: string) => `¿Salir de ${name}? Dejarán de poder invitarte.`,
+    leaveConfirm: (name: string) => `¿Salir de ${name}?`,
+    leaveConfirmBody:
+      "Dejarán de poder invitarte a sus eventos. Si cambias de opinión, con este mismo link puedes volver a entrar.",
     left: "Saliste del grupo.",
     rejoin: "Volver a entrar",
 
