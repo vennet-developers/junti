@@ -47,3 +47,10 @@ next-env.d.ts
 
 # Scratch space for manual browser testing. Never committed.
 .tmp-test/
+
+# TanStack Router generates this from src/routes at dev/build time.
+src/routeTree.gen.ts
+
+# Nitro build output
+.output
+.nitro

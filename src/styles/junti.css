@@ -1,0 +1,64 @@
+/*
+  Every stylesheet the app needs, in the one order that works.
+
+  This file is the successor of the import block that lived at the top of the
+  Next root layout, and it preserves that block's two hard rules:
+
+  1. `core.vars.css` FIRST — the 278 global tokens every package resolves
+     against. A component sheet loaded before it reads `var(--sm-…)` as unset
+     and silently renders unstyled.
+  2. The brand files LAST — `brand-theme.css` re-points Stackmyth's tokens at
+     Junti's palette, and it can only override what has already been declared.
+
+  One import per component package: since Stackmyth 0.22.0 every `<name>.css`
+  inlines its own `<name>.vars.css`, so there is no separate vars list to keep
+  in sync. A component whose CSS is missing does not error — it just looks
+  broken (see the dropdown-menu incident notes in git history) — which is why
+  this list is additions-only and removals need a screenshot of the component
+  that supposedly no longer exists.
+*/
+
+@import "@stackmyth/core/core.vars.css";
+
+@import "./brand-fonts.css";
+
+@import "@stackmyth/layout/layout.css";
+@import "@stackmyth/text/text.css";
+@import "@stackmyth/breadcrumb/breadcrumb.css";
+@import "@stackmyth/button/button.css";
+@import "@stackmyth/input/input.css";
+@import "@stackmyth/input-group/input-group.css";
+@import "@stackmyth/textarea/textarea.css";
+@import "@stackmyth/label/label.css";
+@import "@stackmyth/field/field.css";
+@import "@stackmyth/select/select.css";
+@import "@stackmyth/combobox/combobox.css";
+@import "@stackmyth/radio-group/radio-group.css";
+@import "@stackmyth/switch/switch.css";
+@import "@stackmyth/checkbox/checkbox.css";
+@import "@stackmyth/file-upload/file-upload.css";
+@import "@stackmyth/card/card.css";
+@import "@stackmyth/badge/badge.css";
+@import "@stackmyth/alert/alert.css";
+@import "@stackmyth/dialog/dialog.css";
+@import "@stackmyth/dropdown-menu/dropdown-menu.css";
+@import "@stackmyth/tabs/tabs.css";
+@import "@stackmyth/toggle/toggle.css";
+@import "@stackmyth/toast/toast.css";
+@import "@stackmyth/list-item/list-item.css";
+@import "@stackmyth/empty-state/empty-state.css";
+@import "@stackmyth/stat/stat.css";
+@import "@stackmyth/progress/progress.css";
+@import "@stackmyth/spinner/spinner.css";
+@import "@stackmyth/skeleton/skeleton.css";
+@import "@stackmyth/accordion/accordion.css";
+@import "@stackmyth/avatar/avatar.css";
+@import "@stackmyth/popover/popover.css";
+@import "@stackmyth/calendar/calendar.css";
+@import "@stackmyth/date-picker/date-picker.css";
+@import "@stackmyth/time-picker/time-picker.css";
+@import "@stackmyth/form/form.css";
+
+@import "./brand-theme.css";
+@import "./brand-marks.css";
+@import "./globals.css";

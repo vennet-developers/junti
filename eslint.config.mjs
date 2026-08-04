@@ -20,6 +20,11 @@ const eslintConfig = defineConfig([
       else's build output produces ten findings nobody can act on.
     */
     "source/**",
+    // Nitro build output and the generated route tree — build artifacts,
+    // same reasoning as .next above.
+    ".output/**",
+    ".nitro/**",
+    "src/routeTree.gen.ts",
   ]),
 ]);
 
