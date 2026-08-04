@@ -98,6 +98,31 @@ const getManagePage = createServerFn({ method: "GET" })
     // Organizer-only, and the two reads on this page that return contact
     // details. Neither goes anywhere near what the public page uses.
     const invitations = await roster_.loadInvitations(eventRow.id);
+
+    /*
+      The group is what the invite panel picks from. Loaded here rather than in
+      the component because the membership check that makes an invitation
+      legitimate happens on the server, and the panel should show exactly the
+      people that check would let through — not a superset it discovers on
+      submit.
+    */
+    const { loadEventGroup } = await import("@/lib/groups");
+    const { invitableMembers } = await import("@/domain/groups");
+    const eventGroup = await loadEventGroup(eventRow.id);
+
+    // The editor's own groups, for the attach control. A co-organizer running
+    // the day by link owns none, and gets an empty list rather than a lie.
+    const { loadOwnedGroups } = await import("@/lib/groups");
+    const ownedGroups = await loadOwnedGroups(organizer.id);
+    const invitedIds = new Set(invitations.map((row) => row.userId));
+    const groupMembers = eventGroup
+      ? invitableMembers(eventGroup.members).map((member) => ({
+          userId: member.userId,
+          displayName: member.displayName,
+          avatarUrl: member.avatarUrl,
+          invited: invitedIds.has(member.userId),
+        }))
+      : [];
     const contactsMap = await roster_.loadParticipantContacts(eventRow.id);
     const contacts: Record<string, string> = Object.fromEntries(contactsMap);
 
@@ -156,6 +181,9 @@ const getManagePage = createServerFn({ method: "GET" })
       contacts,
       pendingNotes,
       invitations,
+      group: eventGroup ? { id: eventGroup.id, name: eventGroup.name } : null,
+      groupMembers,
+      ownedGroups: ownedGroups.map((group) => ({ id: group.id, name: group.name })),
       reviewItems,
       participantUrl,
       manageUrl,
@@ -202,6 +230,9 @@ function ManagePage() {
     contacts,
     pendingNotes,
     invitations,
+    group,
+    groupMembers,
+    ownedGroups,
     reviewItems,
     participantUrl,
     manageUrl,
@@ -534,7 +565,12 @@ function ManagePage() {
           <Stack gap="6">
             <Disclosure id="invite" label={copy.invites.heading}>
               <Stack gap="5">
-                <InviteForm publicToken={publicToken} organizerToken={organizerToken} />
+                <InviteForm
+                  publicToken={publicToken}
+                  organizerToken={organizerToken}
+                  group={group}
+                  members={groupMembers}
+                />
 
                 <Stack gap="2">
                   <Text variant="small" color="muted">
@@ -558,6 +594,7 @@ function ManagePage() {
                   event={event}
                   policies={policies}
                   eventTypes={eventTypes}
+                  groups={ownedGroups}
                   policyOptionsByType={policyOptionsByType}
                   collectedMinor={roster.collectedMinor}
                 />

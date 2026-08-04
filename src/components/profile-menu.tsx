@@ -24,6 +24,7 @@ import {
   MoonIcon,
   SunIcon,
   UserIcon,
+  UserPlusIcon,
   XIcon,
 } from "@stackmyth/icons";
 import { Box, Divider, Flex, Stack } from "@stackmyth/layout";
@@ -225,6 +226,18 @@ export function ProfileMenu({
                   <Flex gap="3" align="center">
                     <CheckCircleIcon size={18} aria-hidden="true" />
                     {copy.approvals.link}
+                  </Flex>
+                </Link>
+              </Button>
+
+              {/* Groups sit with the organizing tools rather than with the
+                  settings below: a group is something you use to invite, not
+                  something you configure once and forget. */}
+              <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
+                <Link to={ROUTES.groups} onClick={closeUnlessOpeningElsewhere}>
+                  <Flex gap="3" align="center">
+                    <UserPlusIcon size={18} aria-hidden="true" />
+                    {copy.groups.link}
                   </Flex>
                 </Link>
               </Button>

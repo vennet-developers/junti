@@ -43,6 +43,13 @@ export const ROUTES = {
   messages: "/messages",
   /** Every receipt waiting on this organizer, across all of their events. */
   approvals: "/approvals",
+  /**
+   * The organizer's groups: who they invite, over and over.
+   *
+   * Top-level rather than under an event, because a group outlives any one
+   * of them — that is the whole point of having them.
+   */
+  groups: "/groups",
   /** Where Google and the emailed links land. */
   authCallback: "/auth/callback",
 } as const;
@@ -54,6 +61,16 @@ export const ROUTES = {
  * inside a query string and forgetting to encode it is the kind of thing that
  * works until somebody's destination contains an ampersand.
  */
+/** One group's page, for its owner. */
+export function groupPath(groupId: string): string {
+  return `${ROUTES.groups}/${groupId}`;
+}
+
+/** Where a group's join link points. Shared in a chat, like an event link. */
+export function groupJoinPath(joinToken: string): string {
+  return `/g/${joinToken}`;
+}
+
 export function signInPath(next?: string): string {
   if (!next) return ROUTES.signIn;
   return `${ROUTES.signIn}?next=${encodeURIComponent(next)}`;

@@ -56,6 +56,7 @@ export function EditEventForm({
   event,
   policies,
   eventTypes,
+  groups,
   policyOptionsByType,
   collectedMinor,
 }: Ctx & {
@@ -64,6 +65,13 @@ export function EditEventForm({
   /** Money already confirmed for this event, for the remove-the-cost warning. */
   collectedMinor: number;
   eventTypes: { id: string; slug: string; label: string }[];
+  /**
+   * The EDITOR's own groups, which may be none: an event can be edited with
+   * the manage link by a co-organizer who owns nothing. When it is empty the
+   * field still renders, so a co-organizer can see the event has a group even
+   * though they cannot change it — and the server refuses either way.
+   */
+  groups: { id: string; name: string }[];
   policyOptionsByType: Record<string, PolicyOptionView[]>;
 }) {
   const { copy } = useCopy();
@@ -128,6 +136,7 @@ export function EditEventForm({
           ? ""
           : String(toMajorUnits(event.costAmountMinor, event.currency)),
       currency: event.currency,
+      groupId: event.groupId ?? "",
       policies: JSON.stringify(policies),
     }),
     [event, policies],
@@ -189,6 +198,23 @@ export function EditEventForm({
               options={kindOptions}
               defaultValue={event.eventTypeId}
               onValueChange={setEventTypeId}
+            />
+          </ControlledField>
+
+          <ControlledField
+            label={copy.groups.eventFieldLabel}
+            description={
+              groups.length === 0 ? copy.groups.eventFieldEmpty : copy.groups.eventFieldHelp
+            }
+            error={serverState.errors.groupId}
+          >
+            <SelectField
+              name="groupId"
+              options={[
+                { value: "", label: copy.groups.eventFieldNone },
+                ...groups.map((group) => ({ value: group.id, label: group.name })),
+              ]}
+              defaultValue={event.groupId ?? ""}
             />
           </ControlledField>
 

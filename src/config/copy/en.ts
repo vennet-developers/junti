@@ -50,6 +50,7 @@ export const en: Copy = {
     evidence: "Receipt",
     event: "Event",
     signIn: "Sign in",
+    groups: "My groups",
     guestMenuLabel: "Sign in and preferences",
   },
 
@@ -512,34 +513,142 @@ export const en: Copy = {
   },
 
   invites: {
-    heading: "Invite by email",
-    help: "Paste the addresses separated by commas. Each one gets the event link.",
-    label: "Emails",
-    placeholder: "ana@email.com, luis@email.com",
-    submit: "Send invitations",
+    heading: "Invite",
+    help: (group: string) => `Pick who to invite from ${group}. Only people who accepted the group show up here.`,
+    submit: (n: number) => (n === 1 ? "Invite 1" : `Invite ${n}`),
     submitting: "Sending…",
-    /** Who is inviting, when the event is managed by link with no session. */
+    selectAll: "Select everyone",
+    clearSelection: "Clear selection",
+    /** Who is inviting, when managing by link with no session. */
     fromOrganizer: "The organizer",
     sent: (n: number) => (n === 1 ? "Sent 1 invitation." : `Sent ${n} invitations.`),
     skipped: (n: number) =>
       n === 1 ? "1 had already answered." : `${n} had already answered, so we left them alone.`,
     failed: (n: number) =>
       n === 1 ? "1 could not be sent." : `${n} could not be sent. Try those again.`,
+
+    /*
+      The state that replaced the textarea. This used to be where an organizer
+      typed the addresses of people who had never agreed to anything; now, with
+      no group there is nobody to invite, and the thing to do is build the
+      group first.
+    */
+    noGroupTitle: "This event has no group",
+    noGroupHelp:
+      "Invitations go out through a group, so we only ever write to people who agreed to hear from you. Create one, share the link, and come back.",
+    noGroupCta: "Go to my groups",
+    emptyGroupTitle: (group: string) => `Nobody has accepted ${group} yet`,
+    emptyGroupHelp: "Share the group link. As people accept, they show up here.",
+    allInvitedTitle: "You have invited the whole group",
+    allInvitedHelp: "When somebody else joins the group, you will see them here.",
+
     listHeading: "Invited",
-    listHelp: "Who has answered and who has not.",
-    empty: "You have not invited anyone by email yet.",
+    listHelp: "Who answered, and who has not.",
+    empty: "You have not invited anyone yet.",
     answered: (name: string) => `Answered as ${name}`,
     waiting: "No answer yet",
     resend: "Send again",
     resending: "Sending…",
-    resent: "Sent again.",
-    errorEmpty: "Enter at least one email address.",
-    errorInvalid: (list: string) => `This does not look like an email: ${list}`,
+    resent: "Sent it again.",
+    errorEmpty: "Pick at least one person.",
     errorTooMany: (max: number, got: number) =>
-      `That is ${got} addresses and the limit per send is ${max}. Send the rest in another batch.`,
+      `That is ${got} people and the most per send is ${max}. Send the rest in another batch.`,
+    errorNotInGroup: "Someone in that selection is no longer in the group. Reload and try again.",
     errorRateLimited: (max: number) =>
-      `You have sent a lot of invitations in the last hour (the limit is ${max}). Wait a while and carry on.`,
+      `You have sent a lot of invitations in the last hour (the most is ${max}). Give it a while.`,
     errorSendFailed: "We could not send the invitation. Try again.",
+  },
+
+  groups: {
+    /*
+      The feature's vocabulary. A group is "people who agreed to be here", not
+      a contact list: hence accept, leave and come back everywhere, and add or
+      remove nobody. The owner never puts a person in — they share a link and
+      the person decides.
+    */
+    link: "My groups",
+    title: "My groups",
+    heading: "My groups",
+    subheading:
+      "A group is the people who agreed to hear from you. Share the link once, and inviting them to an event becomes picking from a list.",
+
+    emptyTitle: "No groups yet",
+    emptyHelp:
+      "Make one for the people you see often: the Thursday team, the family, the office. Share the link, they accept, and every event after that is two clicks.",
+
+    createHeading: "Create a group",
+    nameLabel: "Group name",
+    namePlaceholder: "Thursday football",
+    nameHelp: (max: number) => `Up to ${max} characters. Everyone with the link sees it.`,
+    create: "Create group",
+    creating: "Creating…",
+    created: (name: string) => `Created ${name}. Share the link so people can join.`,
+    errorNameEmpty: "Give the group a name.",
+    errorNameTooLong: (max: number) => `That name is too long. Up to ${max} characters.`,
+
+    memberCount: (n: number) => (n === 1 ? "1 person" : `${n} people`),
+    memberCountEmpty: "Nobody yet",
+    capacity: (joined: number, max: number) => `${joined} of ${max}`,
+    fullBadge: "Full",
+
+    detailBack: "Back to my groups",
+    membersHeading: "Who is in",
+    membersHelp: "Everyone joined on their own, and can leave whenever they want.",
+    membersEmptyTitle: "Nobody has accepted yet",
+    membersEmptyHelp: "Share the link below. Whoever accepts shows up here.",
+    statusJoined: "In the group",
+    statusDeclined: "Said no",
+    /** Shown as-is: the owner sees names, never addresses. */
+    ownerBadge: "You",
+
+    shareHeading: "Join link",
+    shareHelp: "Anyone with this link can ask to join. They are only a member if they accept.",
+    copyLink: "Copy link",
+    copied: "Copied",
+
+    deleteHeading: "Delete the group",
+    deleteHelp:
+      "The group and its memberships go away. Events that used it stay as they are, but can no longer invite from here.",
+    delete: "Delete group",
+    deleting: "Deleting…",
+    deleteConfirm: (name: string) => `Delete ${name}? This cannot be undone.`,
+    deleted: "Group deleted.",
+
+    /* The link page: /g/:token */
+    joinTitle: (name: string) => `Join ${name}`,
+    joinHeading: (name: string) => `${name}`,
+    joinInvitedBy: (owner: string) => `${owner} is inviting you to their group.`,
+    joinExplainer:
+      "If you accept, they can invite you to their events without asking for your email each time. You can leave whenever you want.",
+    joinAccept: "Accept",
+    joinAccepting: "Accepting…",
+    joinDecline: "Not now",
+    joinDeclining: "Saving…",
+    joinSignIn: "Sign in to accept",
+    joinSignInHelp: "You need an account so the group knows who to invite.",
+
+    stateJoined: (name: string) => `You are in ${name}.`,
+    stateJoinedHelp: "Their events will show up in your agenda when they invite you.",
+    stateDeclined: (name: string) => `You said no to ${name}.`,
+    stateDeclinedHelp: "If you change your mind, you can accept now.",
+    stateOwner: "This group is yours.",
+    stateOwnerHelp: "Share the link so others can join.",
+    stateFull: (name: string) => `${name} is full.`,
+    stateFullHelp: (max: number) => `A group holds up to ${max} people. Talk to whoever runs it.`,
+    stateNotFound: "That group link does not exist any more.",
+
+    leave: "Leave group",
+    leaving: "Leaving…",
+    leaveConfirm: (name: string) => `Leave ${name}? They will not be able to invite you.`,
+    left: "You left the group.",
+    rejoin: "Join again",
+
+    /* On the event forms. */
+    eventFieldLabel: "Group",
+    eventFieldHelp: "This is who you invite from. You can leave it off and just share the link.",
+    eventFieldNone: "No group",
+    eventFieldEmpty: "No groups yet. Make one to invite with a click.",
+    eventFieldCreate: "Create a group",
   },
 
   approvals: {

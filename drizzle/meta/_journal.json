@@ -106,6 +106,20 @@
       "when": 1785830765243,
       "tag": "0014_wealthy_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1785851276069,
+      "tag": "0015_neat_mauler",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785851304424,
+      "tag": "0016_familiar_starhawk",
+      "breakpoints": true
     }
   ]
 }

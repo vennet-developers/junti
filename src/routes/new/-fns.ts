@@ -75,6 +75,7 @@ export const createEventFn = createServerFn({ method: "POST" })
       costMode: field(formData, "costMode"),
       costAmount: field(formData, "costAmount"),
       currency: field(formData, "currency") || "COP",
+      groupId: field(formData, "groupId"),
     });
 
     if (!parsed.success) {
@@ -96,6 +97,22 @@ export const createEventFn = createServerFn({ method: "POST" })
     // endpoint, and "the page would not have shown it" authorizes nothing.
     const organizer = await getOrganizer();
     if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+    /*
+      A group may only be attached by the person who owns it. Checked against
+      the database rather than trusted from the select, because a group id is
+      the key to inviting everybody inside it — pointing an event at somebody
+      else's group would be a way to mail their people.
+    */
+    let groupId: string | null = null;
+    if (input.groupId) {
+      const { loadOwnedGroups } = await import("@/lib/groups");
+      const owned = await loadOwnedGroups(organizer.id);
+      if (!owned.some((group) => group.id === input.groupId)) {
+        return { errors: { groupId: copy.errors.notFound } };
+      }
+      groupId = input.groupId;
+    }
 
     const eventId = uuidv7();
 
@@ -122,6 +139,7 @@ export const createEventFn = createServerFn({ method: "POST" })
         costMode: input.costMode,
         costAmountMinor: input.costAmountMinor,
         currency: input.currency,
+        groupId,
       });
 
       if (policies.value.length > 0) {

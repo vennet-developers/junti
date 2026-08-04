@@ -40,6 +40,12 @@ export interface CreateEventFormProps {
   /** From the `event_types` catalogue, already resolved for this reader. */
   eventTypes: { id: string; slug: string; label: string }[];
   /**
+   * The organizer's own groups. Attaching one is what makes the event
+   * invitable — without it there is nobody who consented to be asked, and the
+   * only way in is the public link.
+   */
+  groups: { id: string; name: string }[];
+  /**
    * What each type offers, keyed by type id. Loaded for every type at once so
    * changing the kind updates the list without a round trip.
    */
@@ -67,6 +73,7 @@ function CreateEventFormBody({
   defaultCurrency,
   defaultLocale,
   eventTypes,
+  groups,
   policyOptionsByType,
   draft,
 }: CreateEventFormProps & { draft: Record<string, unknown> | null }) {
@@ -222,6 +229,26 @@ function CreateEventFormBody({
               options={kindOptions}
               defaultValue={eventTypes[0]?.id ?? ""}
               onValueChange={setEventTypeId}
+            />
+          </ControlledField>
+
+          {/* Optional on purpose. Plenty of events are a link in a chat and
+              nothing more; a required group would turn "make a plan" into
+              "first, build an address book". */}
+          <ControlledField
+            label={copy.groups.eventFieldLabel}
+            description={
+              groups.length === 0 ? copy.groups.eventFieldEmpty : copy.groups.eventFieldHelp
+            }
+            error={serverState.errors.groupId}
+          >
+            <SelectField
+              name="groupId"
+              options={[
+                { value: "", label: copy.groups.eventFieldNone },
+                ...groups.map((group) => ({ value: group.id, label: group.name })),
+              ]}
+              defaultValue={str(draft?.groupId) ?? ""}
             />
           </ControlledField>
 

@@ -177,7 +177,7 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
 
     // Closes the loop for somebody who got here from an invitation email, so
     // the organizer's list stops showing them as still waiting.
-    await linkInvitationToParticipant(event.id, organizer.email, id);
+    await linkInvitationToParticipant(event.id, organizer.id, id);
     await sendRsvpReceipt(event, organizer, attendance, copy);
   }
 
@@ -284,7 +284,7 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
     throw error;
   }
 
-  await linkInvitationToParticipant(event.id, organizer.email, id);
+  await linkInvitationToParticipant(event.id, organizer.id, id);
   await sendRsvpReceipt(event, organizer, attendance, copy);
   await syncPayments(event);
 

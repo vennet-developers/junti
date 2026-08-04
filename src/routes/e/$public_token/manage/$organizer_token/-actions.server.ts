@@ -26,6 +26,7 @@ import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
 import { getOrganizer } from "@/lib/organizer";
 import { authorizeOrganizer, findSubmissionInEvent, loadInvitations } from "@/lib/roster";
+import { invitableMembers } from "@/domain/groups";
 import { ROUTES } from "@/config/routes";
 import { participantPath } from "@/lib/urls";
 import {
@@ -199,6 +200,7 @@ export async function setPaymentStatus(
 function invitationMessage(
   event: EventRow,
   organizerName: string,
+  /** Resolved from the account at send time — never typed by an organizer. */
   email: string,
   unsubscribeToken: string,
   copy: Copy,
@@ -221,19 +223,26 @@ function invitationMessage(
 }
 
 /**
- * Invites people by address, from a pasted list.
+ * Invites people from the event's group.
  *
- * **This replaced adding a participant by hand**, and the difference is whose
- * word the roster carries. Adding by hand wrote somebody's name onto the list,
- * counted them against capacity and could make them owe money — all on the
- * organizer's say-so, for a person who had never seen the event. An invitation
- * claims only what is true: they were asked.
+ * **This replaced a textarea of pasted addresses**, and before that, adding a
+ * participant by hand. Each step gave up a power the organizer should never
+ * have had. Adding by hand wrote somebody's name onto a roster they had never
+ * seen. Pasting addresses wrote to people who had never agreed to hear from
+ * this app at all. What is left claims only what is true: somebody joined this
+ * organizer's group, and is now being asked to one of their events.
+ *
+ * The consent check is the whole point, so it is done here against the
+ * database rather than trusted from the form: the selection arrives as user
+ * ids, and every one must correspond to a `joined` membership of the group
+ * THIS event is attached to. A tampered payload naming a stranger's id finds no
+ * membership and sends nothing.
  *
  * Rows are written BEFORE anything is sent, and a send that fails does not roll
  * one back. An invitation that exists but did not arrive is recoverable — the
  * organizer can see it sitting there and resend. A message that went out with no
- * row behind it is not: it would be invisible here and the same address would be
- * invited again on the next paste.
+ * row behind it is not: it would be invisible here and the same person would be
+ * invited again on the next click.
  */
 export async function inviteToEvent(
   publicToken: string,
@@ -245,10 +254,10 @@ export async function inviteToEvent(
 
   const copy = await eventCopy(event.locale);
 
-  const parsed = makeInviteSchema(copy).safeParse(field(formData, "emails"));
-  if (!parsed.success) return { errors: fieldErrors(parsed.error, "emails") };
+  const parsed = makeInviteSchema(copy).safeParse(formData.getAll("members").map(String));
+  if (!parsed.success) return { errors: fieldErrors(parsed.error, "members") };
 
-  const emails = parsed.data;
+  const picked = parsed.data;
 
   // Whoever is asking, by name. Falls back to the event's title-holder wording
   // when managing purely by token, which is possible for a co-organizer who was
@@ -256,30 +265,55 @@ export async function inviteToEvent(
   const organizer = await getOrganizer();
   const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
 
+  /*
+    The gate. `loadEventGroup` returns null for an event with no group, and
+    that is a hard stop rather than a fallback to "invite anyone": an event
+    without a group has nobody who consented, so it has nobody to invite.
+  */
+  const { loadEventGroup } = await import("@/lib/groups");
+  const group = await loadEventGroup(event.id);
+  if (!group) return { errors: { _form: copy.invites.noGroupTitle } };
+
+  const consented = new Set(invitableMembers(group.members).map((member) => member.userId));
+  if (picked.some((userId) => !consented.has(userId))) {
+    return { errors: { _form: copy.invites.errorNotInGroup } };
+  }
+
+  // Somebody who already answered does not get asked again — the panel hides
+  // them, but a stale page can still submit them.
   const alreadyOn = new Set(
-    (await loadInvitations(event.id)).filter((row) => row.answered).map((row) => row.email),
+    (await loadInvitations(event.id)).filter((row) => row.answered).map((row) => row.userId),
   );
 
-  // Somebody who already answered does not get asked again. The organizer is
-  // pasting a list they keep somewhere else, and it will contain the people who
-  // said yes last week.
   /*
-    Two reasons not to write to somebody, and they are different.
+    Addresses enter the picture here and nowhere earlier: read from the
+    accounts these people verified, at the moment of sending, and never stored.
 
-    `alreadyOn` is a courtesy: they answered, so asking again is noise. The
-    suppression list is not a courtesy — it is somebody who told us to stop, and
-    it is the only protection available to a person who never had an account to
-    revoke with. It is checked here rather than at the port so the organizer can
-    be told how many were skipped.
+    Two reasons not to write to somebody, and they are different. `alreadyOn`
+    is a courtesy: they answered, so asking again is noise. The suppression
+    list is not a courtesy — it is somebody who told us to stop, and it
+    outranks even a group membership, because "I am in your group" is not "keep
+    emailing me". It is checked here rather than at the port so the organizer
+    can be told how many were skipped.
   */
-  const optedOut = await suppressedAmong(emails);
-  const toSend = emails.filter((email) => !alreadyOn.has(email) && !optedOut.has(email));
+  const { loadVerifiedEmails } = await import("@/lib/accounts");
+  const addresses = await loadVerifiedEmails(picked);
+  const optedOut = await suppressedAmong([...addresses.values()]);
+
+  const toSend = picked
+    .filter((userId) => !alreadyOn.has(userId))
+    .map((userId) => ({ userId, email: addresses.get(userId) }))
+    .filter((row): row is { userId: string; email: string } => {
+      // No address means an account we cannot reach. Skipped rather than
+      // failed: there is nothing the organizer could retry.
+      return row.email !== undefined && !optedOut.has(row.email);
+    });
 
   /*
     Claimed before anything is written, and counted per organizer rather than
-    per event: the abuse this guards is one person emailing strangers all
+    per event: the abuse this guards is one person emailing a crowd all
     afternoon, and spreading it across five events they created would otherwise
-    cost them nothing. `MAX_INVITES_PER_SEND` caps one paste; this caps the
+    cost them nothing. `MAX_INVITES_PER_SEND` caps one click; this caps the
     afternoon.
   */
   // `authorize` already required a session, so the organizer is present; the
@@ -291,37 +325,40 @@ export async function inviteToEvent(
   }
 
   if (toSend.length === 0) {
-    return { errors: {}, ok: true, sent: 0, skipped: emails.length };
+    return { errors: {}, ok: true, sent: 0, skipped: picked.length };
   }
 
   const rows = await db
     .insert(invitations)
     .values(
-      toSend.map((email) => ({
+      toSend.map((row) => ({
         id: uuidv7(),
         eventId: event.id,
-        email,
+        userId: row.userId,
       })),
     )
     // A repeat is a resend, not a second row — the unique index on
-    // (event_id, email) is what makes that true, and this is how a pasted list
-    // containing last week's addresses stays one invitation each.
+    // (event_id, user_id) is what makes that true, and this is how inviting a
+    // group twice stays one invitation each.
     .onConflictDoUpdate({
-      target: [invitations.eventId, invitations.email],
+      target: [invitations.eventId, invitations.userId],
       set: { sentAt: new Date() },
     })
     /*
       The row's id IS the unsubscribe token, so the insert has to hand it back.
       `onConflictDoUpdate` rather than `DoNothing` for exactly this reason: a
-      resend to an address already invited must return the existing id, and
+      resend to somebody already invited must return the existing id, and
       `DoNothing` returns nothing at all for the rows it skipped.
     */
-    .returning({ id: invitations.id, email: invitations.email });
+    .returning({ id: invitations.id, userId: invitations.userId });
 
   const results = await Promise.all(
-    rows.map((row) =>
-      sendMessage(invitationMessage(event, organizerName, row.email, row.id, copy)),
-    ),
+    rows.map((row) => {
+      const email = addresses.get(row.userId);
+      if (!email) return Promise.resolve({ status: "skipped" as const });
+
+      return sendMessage(invitationMessage(event, organizerName, email, row.id, copy));
+    }),
   );
 
   const failed = results.filter((result) => result.status === "failed").length;
@@ -331,7 +368,7 @@ export async function inviteToEvent(
     errors: {},
     ok: true,
     sent: toSend.length - failed,
-    skipped: emails.length - toSend.length,
+    skipped: picked.length - toSend.length,
     failed,
   };
 }
@@ -354,7 +391,7 @@ export async function resendInvitation(
   const [row] = await db
     .select({
       id: invitations.id,
-      email: invitations.email,
+      userId: invitations.userId,
       participantId: invitations.participantId,
     })
     .from(invitations)
@@ -366,18 +403,21 @@ export async function resendInvitation(
   // Already answered — there is nothing left to invite them to.
   if (row.participantId !== null) return { errors: {}, ok: true, sent: 0, skipped: 1 };
 
+  // The address, again read from the account rather than from the invitation.
+  const { loadVerifiedEmails } = await import("@/lib/accounts");
+  const email = (await loadVerifiedEmails([row.userId])).get(row.userId);
+  if (!email) return { errors: {}, ok: true, sent: 0, skipped: 1 };
+
   // And a resend is still a send: somebody who unsubscribed does not get one
   // because an organizer pressed a button next to their name.
-  if ((await suppressedAmong([row.email])).size > 0) {
+  if ((await suppressedAmong([email])).size > 0) {
     return { errors: {}, ok: true, sent: 0, skipped: 1 };
   }
 
   const organizer = await getOrganizer();
   const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
 
-  const result = await sendMessage(
-    invitationMessage(event, organizerName, row.email, row.id, copy),
-  );
+  const result = await sendMessage(invitationMessage(event, organizerName, email, row.id, copy));
 
   await db.update(invitations).set({ sentAt: new Date() }).where(eq(invitations.id, id.data));
 
@@ -514,6 +554,7 @@ export async function editEvent(
     costMode: field(formData, "costMode"),
     costAmount: field(formData, "costAmount"),
     currency: field(formData, "currency") || event.currency,
+    groupId: field(formData, "groupId"),
   });
 
   if (!parsed.success) return { errors: fieldErrors(parsed.error) };
@@ -544,6 +585,23 @@ export async function editEvent(
     }
   }
 
+  /*
+    Same ownership check as creation, and it matters more here: an event can
+    be edited with the manage link alone, by a co-organizer who owns no groups
+    at all. Only the account that owns a group may point an event at it.
+  */
+  let groupId: string | null = null;
+  if (input.groupId) {
+    const editor = await getOrganizer();
+    const { loadOwnedGroups } = await import("@/lib/groups");
+    const owned = editor ? await loadOwnedGroups(editor.id) : [];
+
+    if (!owned.some((group) => group.id === input.groupId)) {
+      return { errors: { groupId: copy.errors.notFound } };
+    }
+    groupId = input.groupId;
+  }
+
   const policies = parsePoliciesField(field(formData, "policies"), copy);
   if (!policies.ok) return { errors: { _form: policies.message } };
 
@@ -561,6 +619,7 @@ export async function editEvent(
       costMode: input.costMode,
       costAmountMinor: input.costAmountMinor,
       currency: input.currency,
+      groupId,
     })
     .where(eq(events.id, event.id));
 

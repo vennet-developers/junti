@@ -76,6 +76,8 @@ export interface EventView {
   costMode: EventRow["costMode"];
   costAmountMinor: number | null;
   currency: string;
+  /** The group this event invites from, or null for a one-off. */
+  groupId: string | null;
   closedAt: Date | null;
   isClosed: boolean;
   hasCost: boolean;
@@ -132,6 +134,7 @@ function toEventView(row: EventRow, type: { slug: string; label: string }): Even
     costMode: row.costMode,
     costAmountMinor: row.costAmountMinor,
     currency: row.currency,
+    groupId: row.groupId,
     closedAt: row.closedAt,
     isClosed: row.closedAt !== null,
     hasCost: row.costMode !== "none",
@@ -425,7 +428,7 @@ export interface OrganizerEventSummary {
 /**
  * How one person relates to one event.
  *
- * `invited` is the only one that is not a decision: somebody was emailed and has
+ * `invited` is the only one that is not a decision: somebody was asked and has
  * not answered. It is the state the agenda pins to the top, because it is the
  * only one on the page asking for anything.
  */
@@ -496,7 +499,7 @@ function toCore(row: MyEventRow): MyEventCore {
  * by creation date, which answered "what did I make lately" — a different
  * question, and not the one somebody opens this page with.
  */
-export async function loadMyEvents(userId: string, email: string | null): Promise<MyEvent[]> {
+export async function loadMyEvents(userId: string): Promise<MyEvent[]> {
   const [organized, answered, invited] = await Promise.all([
     db
       .select({ ...myEventColumns, organizerToken: events.organizerToken })
@@ -512,18 +515,11 @@ export async function loadMyEvents(userId: string, email: string | null): Promis
     // Asked and unanswered. `participant_id` is null exactly until they RSVP,
     // so an accepted invitation drops out of here and reappears above with
     // whatever they actually said.
-    email
-      ? db
-          .select(myEventColumns)
-          .from(invitations)
-          .innerJoin(events, eq(events.id, invitations.eventId))
-          .where(
-            and(
-              eq(invitations.email, email.trim().toLowerCase()),
-              isNull(invitations.participantId),
-            ),
-          )
-      : Promise.resolve([]),
+    db
+      .select(myEventColumns)
+      .from(invitations)
+      .innerJoin(events, eq(events.id, invitations.eventId))
+      .where(and(eq(invitations.userId, userId), isNull(invitations.participantId))),
   ]);
 
   const byId = new Map<string, MyEvent>();
@@ -606,8 +602,10 @@ export async function loadParticipantRows(eventId: string): Promise<JoinedRow[]>
 
 export interface InvitationView {
   id: string;
-  /** An address. **Organizer-only** — never reaches a participant-facing view. */
-  email: string;
+  /** The account invited. Groups made this an id rather than an address. */
+  userId: string;
+  /** What to call them: their RSVP name if they answered, else their profile's. */
+  displayName: string;
   /** They signed in and answered. What they answered is the roster's business. */
   answered: boolean;
   /** The name they answered under, when they have. */
@@ -630,19 +628,28 @@ export async function loadInvitations(eventId: string): Promise<InvitationView[]
   const rows = await db
     .select({
       id: invitations.id,
-      email: invitations.email,
+      userId: invitations.userId,
+      invitedName: userProfiles.fullName,
       participantId: invitations.participantId,
       participantName: participants.displayName,
       sentAt: invitations.sentAt,
     })
     .from(invitations)
     .leftJoin(participants, eq(participants.id, invitations.participantId))
+    .leftJoin(userProfiles, eq(userProfiles.userId, invitations.userId))
     .where(eq(invitations.eventId, eventId))
     .orderBy(asc(sql`(${invitations.participantId} is not null)`), desc(invitations.sentAt));
 
   return rows.map((row) => ({
     id: row.id,
-    email: row.email,
+    userId: row.userId,
+    /*
+      A name, where an address used to be. The organizer's question is "did I
+      already ask Caro", and a name answers it — an address only ever answered
+      it by accident, while also putting somebody's contact details on a
+      screen that had no need for them.
+    */
+    displayName: row.participantName ?? row.invitedName ?? "—",
     answered: row.participantId !== null,
     participantName: row.participantName,
     sentAt: row.sentAt,
@@ -652,27 +659,25 @@ export async function loadInvitations(eventId: string): Promise<InvitationView[]
 /**
  * Ties an invitation to the RSVP that answered it.
  *
- * Called on every join, matching the account's **verified** email — the address
- * Supabase confirmed, not anything typed into a form. That is what makes this
- * safe to do automatically: claiming somebody else's invitation would require
- * controlling their inbox, at which point the invitation is the least of it.
+ * Called on every join, matching the signed-in account itself. Once groups
+ * made an invitation name a user id rather than an address, this stopped being
+ * a lookup that could be fooled: there is no string to spoof, only the session
+ * the request already authenticated as.
  *
  * Silent when there is no invitation. Most people arrive from a forwarded link
- * having never been emailed, and that is the normal case, not a miss.
+ * having never been invited by name, and that is the normal case, not a miss.
  */
 export async function linkInvitationToParticipant(
   eventId: string,
-  email: string | null,
+  userId: string | null,
   participantId: string,
 ): Promise<void> {
-  if (!email) return;
+  if (!userId) return;
 
   await db
     .update(invitations)
     .set({ participantId })
-    .where(
-      and(eq(invitations.eventId, eventId), eq(invitations.email, email.trim().toLowerCase())),
-    );
+    .where(and(eq(invitations.eventId, eventId), eq(invitations.userId, userId)));
 }
 
 /**

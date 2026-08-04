@@ -56,9 +56,12 @@ const getCreateContext = createServerFn({ method: "GET" })
       ? await dup.loadEventAsFormValues(data.from, organizer.id, locale)
       : null;
 
-    const [eventTypes, policyOptionsByType] = await Promise.all([
+    const { loadOwnedGroups } = await import("@/lib/groups");
+
+    const [eventTypes, policyOptionsByType, ownedGroups] = await Promise.all([
       catalog.loadEventTypes(locale),
       catalog.loadPolicyOptionsByEventType(locale),
+      loadOwnedGroups(organizer.id),
     ]);
 
     return {
@@ -67,6 +70,7 @@ const getCreateContext = createServerFn({ method: "GET" })
       defaultTimeZone: preferredTimeZone ?? DEFAULT_TIME_ZONE,
       defaultCurrency: stored.currency ?? "COP",
       eventTypes,
+      groups: ownedGroups.map((group) => ({ id: group.id, name: group.name })),
       policyOptionsByType,
       /*
         Typed down from `Record<string, unknown>`: `unknown` is not a
@@ -92,7 +96,15 @@ export const Route = createFileRoute("/new/")({
 
 function NewEventPage() {
   const { copy } = useCopy();
-  const { locale, defaultTimeZone, defaultCurrency, eventTypes, policyOptionsByType, prefill } =
+  const {
+    locale,
+    defaultTimeZone,
+    defaultCurrency,
+    eventTypes,
+    groups,
+    policyOptionsByType,
+    prefill,
+  } =
     Route.useLoaderData();
 
   return (
@@ -122,6 +134,7 @@ function NewEventPage() {
           defaultCurrency={defaultCurrency}
           defaultLocale={locale}
           eventTypes={eventTypes}
+          groups={groups}
           policyOptionsByType={policyOptionsByType}
           prefill={prefill}
         />

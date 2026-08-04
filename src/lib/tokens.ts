@@ -37,6 +37,18 @@ export function createPublicToken(): string {
 }
 
 /**
+ * A group's join link.
+ *
+ * Shared exactly like the participant link — pasted into a chat — and it is
+ * what somebody opens to be asked whether they want to join. Public-token
+ * length rather than organizer-token length on purpose: it grants no control
+ * over anything, only the chance to say yes or no to a name.
+ */
+export function createGroupToken(): string {
+  return token(PUBLIC_TOKEN_BYTES);
+}
+
+/**
  * Organizer access. Full control of the event.
  *
  * Must never be sent to the client on a participant route — not in HTML, not in

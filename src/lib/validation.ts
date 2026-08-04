@@ -224,6 +224,20 @@ const eventFieldsSchema = (copy: Copy) =>
       .min(1, copy.errors.titleRequired)
       .max(TITLE_MAX, copy.errors.titleTooLong),
     eventTypeId: eventTypeIdSchema,
+
+    /**
+     * The group this event invites from, if any.
+     *
+     * Empty string rather than absent when the select sits on "no group" —
+     * that is what a `<select>` submits — and normalised to null here so the
+     * column never holds `""`. Ownership is NOT checked here: a pure schema
+     * cannot ask the database whose group this is, and the action does it.
+     */
+    groupId: z
+      .union([z.uuid(), z.literal("")])
+      .optional()
+      .transform((value) => (value ? value : null)),
+
     startsAtDate: startsAtDateSchema(copy),
     startsAtTime: startsAtTimeSchema(copy),
     timeZone: timeZoneSchema(copy),
@@ -332,57 +346,40 @@ export const makeRsvpSchema = (copy: Copy) =>
 export type RsvpInput = z.infer<ReturnType<typeof makeRsvpSchema>>;
 
 /**
- * How many addresses one paste may carry.
+ * How many people one send may reach.
  *
  * A ceiling on the blast radius of a single click, not on how many people an
- * event can have — invite again for the next twenty. It exists because the
- * failure it prevents is expensive and irreversible: a pasted column from a
- * spreadsheet turning into four hundred emails nobody can recall.
+ * event can have — invite the rest on the next click. Groups already bound this
+ * from the other side (nobody is here who did not join), so this is now the
+ * milder guard of the two: it stops a fifty-person group from becoming fifty
+ * emails at once by accident.
  */
 export const MAX_INVITES_PER_SEND = 20;
 
 /**
- * A pasted list of addresses.
+ * A selection of group members.
  *
- * Splits on commas, semicolons and whitespace, because people paste from
- * wherever they had the addresses and the separator is not a decision they
- * think they are making.
- *
- * Lowercased and deduplicated here rather than at the call site, so the unique
- * index on `(event_id, email)` and this parser agree on what "the same address"
- * means. The address check is deliberately loose — the same reasoning as the
- * sign-in form's: the real validation is whether the message arrives, and a
- * clever regex mostly succeeds at rejecting valid addresses.
+ * This replaced a textarea of pasted addresses, and the change is not
+ * cosmetic: an organizer no longer *names* who gets email, they pick from
+ * people who already agreed to hear from them. So there is nothing to parse
+ * and no address to validate — only ids to check the shape of, before the
+ * caller checks the thing that actually matters, which is whether each one
+ * belongs to this event's group with a `joined` membership.
  */
 export const makeInviteSchema = (copy: Copy) =>
   z
-    .string()
-    .trim()
-    .min(1, copy.invites.errorEmpty)
-    .transform((raw) => {
-      const parts = raw
-        .split(/[,;\s]+/)
-        .map((part) => part.trim().toLowerCase())
-        .filter((part) => part.length > 0);
-
-      return [...new Set(parts)];
-    })
-    .superRefine((emails, ctx) => {
-      if (emails.length === 0) {
+    .array(z.uuid())
+    .transform((ids) => [...new Set(ids)])
+    .superRefine((ids, ctx) => {
+      if (ids.length === 0) {
         ctx.addIssue({ code: "custom", message: copy.invites.errorEmpty });
         return;
       }
 
-      const invalid = emails.filter((email) => !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email));
-
-      if (invalid.length > 0) {
-        ctx.addIssue({ code: "custom", message: copy.invites.errorInvalid(invalid.join(", ")) });
-      }
-
-      if (emails.length > MAX_INVITES_PER_SEND) {
+      if (ids.length > MAX_INVITES_PER_SEND) {
         ctx.addIssue({
           code: "custom",
-          message: copy.invites.errorTooMany(MAX_INVITES_PER_SEND, emails.length),
+          message: copy.invites.errorTooMany(MAX_INVITES_PER_SEND, ids.length),
         });
       }
     });

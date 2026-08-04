@@ -108,21 +108,31 @@ export async function suppressedAmong(emails: string[]): Promise<Set<string>> {
  * person it names rather than whoever clicked it.
  *
  * Reusing the id rather than minting a second secret: it is already unique,
- * already unguessable, already tied to exactly one address and one event, and
+ * already unguessable, already tied to exactly one person and one event, and
  * already deleted when the event is. A separate token column would be a second
  * thing to keep in step for no property this one lacks.
+ *
+ * Since invitations started naming accounts, the address is resolved here
+ * rather than read off the row. The suppression list still works in addresses,
+ * and it has to: it is the one protection that must keep working for somebody
+ * who deleted their account, and an id would stop meaning anything then.
  *
  * Returns null for a token that matches nothing — an invitation deleted with
  * its event, or a link somebody mangled.
  */
 export async function emailForUnsubscribeToken(token: string): Promise<string | null> {
   const [row] = await db
-    .select({ email: invitations.email })
+    .select({ userId: invitations.userId })
     .from(invitations)
     .where(eq(invitations.id, token))
     .limit(1);
 
-  return row?.email ?? null;
+  if (!row) return null;
+
+  const { loadVerifiedEmails } = await import("@/lib/accounts");
+  const emails = await loadVerifiedEmails([row.userId]);
+
+  return emails.get(row.userId) ?? null;
 }
 
 /**

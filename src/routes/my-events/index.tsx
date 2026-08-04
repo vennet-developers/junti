@@ -67,7 +67,7 @@ const getAgenda = createServerFn({ method: "GET" }).handler(async () => {
     rather than re-resolving it inside: doing auth twice per request to save
     two arguments is the wrong trade.
   */
-  const events = await loadMyEvents(organizer.id, organizer.email);
+  const events = await loadMyEvents(organizer.id);
 
   const pending = events.filter((event) => event.role === "invited" && !event.isPast);
 

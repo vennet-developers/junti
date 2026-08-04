@@ -55,6 +55,7 @@ export const es = {
     evidence: "Comprobante",
     event: "Evento",
     signIn: "Entrar",
+    groups: "Mis grupos",
     guestMenuLabel: "Entrar y preferencias",
   },
 
@@ -521,12 +522,12 @@ export const es = {
   },
 
   invites: {
-    heading: "Invitar por correo",
-    help: "Pega los correos separados por coma. A cada uno le llega el link del evento.",
-    label: "Correos",
-    placeholder: "ana@correo.com, luis@correo.com",
-    submit: "Enviar invitaciones",
+    heading: "Invitar",
+    help: (group: string) => `Elige a quién invitar de ${group}. Solo aparecen quienes ya aceptaron estar en el grupo.`,
+    submit: (n: number) => (n === 1 ? "Invitar a 1" : `Invitar a ${n}`),
     submitting: "Enviando…",
+    selectAll: "Seleccionar a todos",
+    clearSelection: "Quitar selección",
     /** Quien invita, cuando se administra solo con el link y no hay sesión. */
     fromOrganizer: "El organizador",
     sent: (n: number) => (n === 1 ? "Enviamos 1 invitación." : `Enviamos ${n} invitaciones.`),
@@ -534,21 +535,129 @@ export const es = {
       n === 1 ? "1 ya había respondido." : `${n} ya habían respondido, así que no les escribimos.`,
     failed: (n: number) =>
       n === 1 ? "1 no pudo salir." : `${n} no pudieron salir. Intenta de nuevo con esas.`,
+
+    /*
+      El estado que reemplazó a la caja de texto. Antes acá se escribían
+      correos de gente que nunca había dicho que sí; ahora, si no hay grupo,
+      no hay a quién invitar, y lo que toca es armar el grupo primero.
+    */
+    noGroupTitle: "Este evento no tiene grupo",
+    noGroupHelp:
+      "Las invitaciones salen desde un grupo: así solo le escribimos a gente que ya aceptó recibirlas. Crea uno, comparte el link y vuelve.",
+    noGroupCta: "Ir a mis grupos",
+    emptyGroupTitle: (group: string) => `Todavía nadie aceptó en ${group}`,
+    emptyGroupHelp: "Comparte el link del grupo. Cuando alguien acepte, aparece acá.",
+    allInvitedTitle: "Ya invitaste a todo el grupo",
+    allInvitedHelp: "Cuando alguien más se una al grupo, lo vas a ver acá.",
+
     listHeading: "Invitados",
     listHelp: "Quién ya respondió y quién sigue sin contestar.",
-    empty: "Todavía no has invitado a nadie por correo.",
+    empty: "Todavía no has invitado a nadie.",
     answered: (name: string) => `Respondió como ${name}`,
     waiting: "Sin responder",
     resend: "Reenviar",
     resending: "Reenviando…",
     resent: "Se lo mandamos otra vez.",
-    errorEmpty: "Escribe al menos un correo.",
-    errorInvalid: (list: string) => `Esto no parece un correo: ${list}`,
+    errorEmpty: "Elige al menos a una persona.",
     errorTooMany: (max: number, got: number) =>
-      `Son ${got} correos y el máximo por envío es ${max}. Manda el resto en otra tanda.`,
+      `Son ${got} personas y el máximo por envío es ${max}. Manda el resto en otra tanda.`,
+    errorNotInGroup: "Alguien de esa selección ya no está en el grupo. Vuelve a cargar y prueba otra vez.",
     errorRateLimited: (max: number) =>
       `Ya enviaste muchas invitaciones en la última hora (el máximo es ${max}). Espera un rato y sigues.`,
     errorSendFailed: "No pudimos enviar la invitación. Intenta de nuevo.",
+  },
+
+  groups: {
+    /*
+      El vocabulario del feature. Un grupo es "gente que aceptó estar", no una
+      lista de contactos: por eso en todos lados se habla de aceptar, salir y
+      volver, y en ningún lado de agregar o quitar personas. El dueño del grupo
+      no mete a nadie; comparte un link y la gente decide.
+    */
+    link: "Mis grupos",
+    title: "Mis grupos",
+    heading: "Mis grupos",
+    subheading:
+      "Un grupo es la gente que aceptó recibir tus invitaciones. Compartes el link una vez y después invitar a un evento es elegir de una lista.",
+
+    emptyTitle: "Todavía no tienes grupos",
+    emptyHelp:
+      "Crea uno para la gente con la que sales seguido: el equipo de los jueves, la familia, la oficina. Compartes el link, aceptan, y los próximos eventos se invitan en dos clics.",
+
+    createHeading: "Crear un grupo",
+    nameLabel: "Nombre del grupo",
+    namePlaceholder: "Fútbol de los jueves",
+    nameHelp: (max: number) => `Máximo ${max} caracteres. Lo van a ver quienes reciban el link.`,
+    create: "Crear grupo",
+    creating: "Creando…",
+    created: (name: string) => `Creaste ${name}. Comparte el link para que se unan.`,
+    errorNameEmpty: "Ponle un nombre al grupo.",
+    errorNameTooLong: (max: number) => `Ese nombre es muy largo. Máximo ${max} caracteres.`,
+
+    memberCount: (n: number) => (n === 1 ? "1 persona" : `${n} personas`),
+    memberCountEmpty: "Sin nadie todavía",
+    capacity: (joined: number, max: number) => `${joined} de ${max}`,
+    fullBadge: "Lleno",
+
+    detailBack: "Volver a mis grupos",
+    membersHeading: "Quién está",
+    membersHelp: "Cada quien entró por su cuenta y puede salir cuando quiera.",
+    membersEmptyTitle: "Nadie ha aceptado todavía",
+    membersEmptyHelp: "Comparte el link de abajo. Quien acepte aparece acá.",
+    statusJoined: "Está en el grupo",
+    statusDeclined: "Dijo que no",
+    /** Se muestra tal cual: el dueño ve nombres, nunca correos. */
+    ownerBadge: "Tú",
+
+    shareHeading: "Link para unirse",
+    shareHelp: "Cualquiera con este link puede pedir entrar. Se vuelve miembro solo si acepta.",
+    copyLink: "Copiar link",
+    copied: "Copiado",
+
+    deleteHeading: "Eliminar el grupo",
+    deleteHelp:
+      "Se borra el grupo y sus membresías. Los eventos que lo usaban se quedan como están, pero dejan de poder invitar desde acá.",
+    delete: "Eliminar grupo",
+    deleting: "Eliminando…",
+    deleteConfirm: (name: string) => `¿Eliminar ${name}? Esto no se puede deshacer.`,
+    deleted: "Eliminaste el grupo.",
+
+    /* La página del link: /g/:token */
+    joinTitle: (name: string) => `Unirte a ${name}`,
+    joinHeading: (name: string) => `${name}`,
+    joinInvitedBy: (owner: string) => `${owner} te está invitando a su grupo.`,
+    joinExplainer:
+      "Si aceptas, esta persona va a poder invitarte a sus eventos sin pedirte el correo cada vez. Puedes salir cuando quieras.",
+    joinAccept: "Aceptar",
+    joinAccepting: "Aceptando…",
+    joinDecline: "Ahora no",
+    joinDeclining: "Guardando…",
+    joinSignIn: "Entra para aceptar",
+    joinSignInHelp: "Necesitas una cuenta para que el grupo sepa a quién invitar.",
+
+    stateJoined: (name: string) => `Ya estás en ${name}.`,
+    stateJoinedHelp: "Vas a ver sus eventos en tu agenda cuando te inviten.",
+    stateDeclined: (name: string) => `Le dijiste que no a ${name}.`,
+    stateDeclinedHelp: "Si cambias de opinión, puedes aceptar ahora.",
+    stateOwner: "Este grupo es tuyo.",
+    stateOwnerHelp: "Comparte el link para que otros se unan.",
+    stateFull: (name: string) => `${name} está lleno.`,
+    stateFullHelp: (max: number) =>
+      `Un grupo admite hasta ${max} personas. Habla con quien lo organiza.`,
+    stateNotFound: "Ese link de grupo no existe o ya no está.",
+
+    leave: "Salir del grupo",
+    leaving: "Saliendo…",
+    leaveConfirm: (name: string) => `¿Salir de ${name}? Dejarán de poder invitarte.`,
+    left: "Saliste del grupo.",
+    rejoin: "Volver a entrar",
+
+    /* En los formularios de evento. */
+    eventFieldLabel: "Grupo",
+    eventFieldHelp: "Desde acá invitas. Puedes dejarlo sin grupo y compartir solo el link.",
+    eventFieldNone: "Sin grupo",
+    eventFieldEmpty: "Todavía no tienes grupos. Crea uno para invitar con un clic.",
+    eventFieldCreate: "Crear un grupo",
   },
 
   approvals: {

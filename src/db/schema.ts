@@ -29,6 +29,17 @@ import {
 
 export const costMode = pgEnum("cost_mode", ["none", "total", "per_person"]);
 
+/**
+ * Whether this organizer may invite this person, and how that was decided.
+ *
+ * Two values, not three: "joined" is a yes, "declined" is a no, and the
+ * absence of a row is "never asked". Leaving a group writes "declined"
+ * rather than deleting the row — a deleted row would read as never-asked and
+ * put the person back in the pool the next time the link circulated, which
+ * is exactly what somebody who left is telling us not to do.
+ */
+export const groupMembership = pgEnum("group_membership", ["joined", "declined"]);
+
 export const attendance = pgEnum("attendance", ["in", "out", "maybe", "waitlisted"]);
 
 export const paymentStatus = pgEnum("payment_status", ["pending", "confirmed", "waived"]);
@@ -248,6 +259,15 @@ export const events = pgTable(
     capacity: integer("capacity"),
     notes: text("notes"),
 
+    /**
+     * The group this event invites from, or NULL for a one-off.
+     *
+     * `set null`, never cascade: deleting a group must not delete the events
+     * that were organised through it — the event happened, and its roster is
+     * a record of who came.
+     */
+    groupId: uuid("group_id").references(() => groups.id, { onDelete: "set null" }),
+
     costMode: costMode("cost_mode").notNull().default("none"),
 
     /** Minor units of `currency`. Null when costMode is 'none'. */
@@ -402,8 +422,17 @@ export const invitations = pgTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" }),
 
-    /** Lowercased before it is written, so uniqueness means what it looks like. */
-    email: text("email").notNull(),
+    /**
+     * The account being invited — never a typed address.
+     *
+     * This column used to be an email string, and it was the whole of the
+     * legal problem: an organizer pasted somebody's address and this app
+     * held it, having never been given it by the person it belonged to.
+     * Groups replaced that: an invitation can only name somebody who already
+     * said yes to this organizer, in the app, by their own act. So the row
+     * points at that account, and no address is stored anywhere.
+     */
+    userId: uuid("user_id").notNull(),
 
     /**
      * What this invitation turned into, once they signed in and answered.
@@ -433,11 +462,16 @@ export const invitations = pgTable(
   },
   (table) => [
     /**
-     * One invitation per address per event. Inviting the same person twice is
-     * a resend, not a second row — which is what stops a pasted list with a
-     * repeated address from sending somebody two identical emails.
+     * One invitation per person per event. Inviting somebody twice is a
+     * resend, not a second row — which is what stops a second tap on the
+     * group's "invite everyone" from sending duplicates.
      */
-    uniqueIndex("invitations_event_email_unique").on(table.eventId, table.email),
+    /**
+     * One invitation per person per event. Inviting somebody twice is a
+     * resend, not a second row — which is what stops a second tap on the
+     * group's "invite everyone" from sending duplicates.
+     */
+    uniqueIndex("invitations_event_user_unique").on(table.eventId, table.userId),
     index("invitations_event_sent_idx").on(table.eventId, table.sentAt.desc()),
   ],
 );
@@ -872,6 +906,71 @@ export const eventNotes = pgTable(
   ],
 );
 
+/**
+ * A set of people who agreed to hear from one organizer.
+ *
+ * The feature exists for the recurring case — Thursday football, the family
+ * asado — where the same dozen people are invited over and over and typing
+ * their addresses every time was both tedious and the only reason this app
+ * ever held a stranger's email.
+ *
+ * **The group is the consent record.** Somebody opens the join link, signs in
+ * and says yes or no, in the app, to a named organizer. That is a specific,
+ * revocable, in-app act by the person themselves — which is a different thing
+ * entirely from an organizer pasting an address into a box on their behalf.
+ * Nothing here stores an email: membership points at accounts.
+ */
+export const groups = pgTable(
+  "groups",
+  {
+    id: uuid("id").primaryKey(),
+
+    /** Whoever created it. They are the only one who may invite from it. */
+    ownerId: uuid("owner_id").notNull(),
+
+    name: text("name").notNull(),
+
+    /**
+     * What the join link carries. Unguessable, and it grants nothing but the
+     * chance to answer — see `createGroupToken`.
+     */
+    joinToken: text("join_token").notNull().unique(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("groups_owner_idx").on(table.ownerId, table.createdAt)],
+);
+
+/** One row per person per group: their answer to the invitation to join. */
+export const groupMembers = pgTable(
+  "group_members",
+  {
+    id: uuid("id").primaryKey(),
+
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+
+    /**
+     * The account. No email, no name copied here — those live on the profile
+     * and are read through it, so somebody who changes their display name
+     * changes it everywhere at once.
+     */
+    userId: uuid("user_id").notNull(),
+
+    status: groupMembership("status").notNull(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    /** Answering twice is a change of mind, not a second membership. */
+    uniqueIndex("group_members_group_user_unique").on(table.groupId, table.userId),
+    index("group_members_user_idx").on(table.userId),
+  ],
+);
+
 // ── Inferred types ───────────────────────────────────────────────────────────
 
 export type EventRow = typeof events.$inferSelect;
@@ -887,6 +986,9 @@ export type UserProfileRow = typeof userProfiles.$inferSelect;
 export type EventTypeRow = typeof eventTypes.$inferSelect;
 export type PolicyDefinitionRow = typeof policyDefinitions.$inferSelect;
 export type EventTypePolicyRow = typeof eventTypePolicies.$inferSelect;
+export type GroupRow = typeof groups.$inferSelect;
+export type GroupMemberRow = typeof groupMembers.$inferSelect;
+export type GroupMembership = (typeof groupMembership.enumValues)[number];
 export type EventNoteRow = typeof eventNotes.$inferSelect;
 export type NewEventNoteRow = typeof eventNotes.$inferInsert;
 export type PolicySubmissionRow = typeof policySubmissions.$inferSelect;

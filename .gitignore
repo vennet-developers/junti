@@ -53,4 +53,7 @@ src/routeTree.gen.ts
 
 # Nitro build output
 .output
+
+# TanStack Start's build-time scratch directory
+.tanstack
 .nitro
