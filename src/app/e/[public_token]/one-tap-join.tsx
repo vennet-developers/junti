@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useActionState, useEffect, useOptimistic } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
+import { CheckCircleIcon } from "@stackmyth/icons";
 import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
@@ -33,6 +34,18 @@ export interface OneTapJoinProps {
  *
  * The name and photo are shown before the tap, not after. This is the one
  * chance to notice that the account about to be added is the wrong one.
+ *
+ * **A real form, submitted to a server action.** It was a `<button onClick>`,
+ * which meant the one screen the whole product funnels into did nothing at all
+ * until React had loaded and hydrated — on the phone, on mobile data, opening a
+ * WhatsApp link. Now the markup posts on its own and JavaScript only makes it
+ * nicer: the same button, the same action, one round trip either way.
+ *
+ * **The answer lands before the server replies.** `useOptimistic` flips the card
+ * to "you're on the list" on the tap, and React rolls it back by itself if the
+ * action comes back with an error. Perceived latency was the entire round trip
+ * before — on a bad connection, long enough to tap twice, which is why the
+ * action is idempotent on the account.
  */
 export function OneTapJoin({
   publicToken,
@@ -42,19 +55,24 @@ export function OneTapJoin({
   onUseForm,
 }: OneTapJoinProps) {
   const { copy } = useCopy();
-  const [pending, startTransition] = useTransition();
-  const [state, setState] = useState<RsvpState>({ errors: {} });
 
-  function join() {
-    startTransition(async () => {
-      const result = await joinOneTap(publicToken);
-      setState(result);
+  const [state, formAction, pending] = useActionState(joinOneTap.bind(null, publicToken), {
+    errors: {},
+  } satisfies RsvpState);
 
-      // The account's name is already on the roster. Nothing to do here but
-      // hand over to the form, where they can pick something else.
-      if (result.errors.nameTaken) onUseForm();
-    });
-  }
+  /*
+    Optimistically "in". The reducer ignores its current value on purpose —
+    there is one transition here and it only ever moves one way. React discards
+    this the moment the action settles, so a failure needs no rollback of its
+    own: the card comes back with the error on it.
+  */
+  const [joined, setJoined] = useOptimistic(false, (_current, next: boolean) => next);
+
+  // The account's name is already on the roster. Nothing to do here but hand
+  // over to the form, where they can pick something else.
+  useEffect(() => {
+    if (state.errors.nameTaken) onUseForm();
+  }, [state.errors.nameTaken, onUseForm]);
 
   return (
     <Card surface="outlined">
@@ -78,9 +96,23 @@ export function OneTapJoin({
             </Text>
           </Flex>
 
-          <Button type="button" size="lg" fullWidth disabled={pending} onClick={join}>
-            {pending ? copy.rsvp.oneTapSubmitting : copy.rsvp.oneTapSubmit(displayName)}
-          </Button>
+          {joined ? (
+            /*
+              Where the button was, so nothing moves under a thumb that is
+              still on the screen. The page re-renders without this card once
+              the server confirms; until then this is the receipt.
+            */
+            <Flex gap="2" align="center" role="status">
+              <CheckCircleIcon size={20} aria-hidden="true" />
+              <Text weight="medium">{isFull ? copy.rsvp.waitlistedShort : copy.rsvp.saved}</Text>
+            </Flex>
+          ) : (
+            <form action={formAction} onSubmit={() => setJoined(true)}>
+              <Button type="submit" size="lg" fullWidth disabled={pending}>
+                {pending ? copy.rsvp.oneTapSubmitting : copy.rsvp.oneTapSubmit(displayName)}
+              </Button>
+            </form>
+          )}
 
           <Text variant="small" color="muted">
             {copy.rsvp.oneTapHelp}

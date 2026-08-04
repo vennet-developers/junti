@@ -17,6 +17,7 @@ import { formatEventDateTime, formatMoney } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
 import { notify } from "@/lib/notify";
 import { getOrganizer } from "@/lib/organizer";
+import { isAlreadyJoined, isNameTaken } from "@/lib/db-errors";
 import { syncPayments } from "@/lib/payments";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import {
@@ -191,7 +192,20 @@ export async function submitRsvp(
  * "Ivan (2)" would put a name on the list that the person never chose and
  * would not recognise.
  */
-export async function joinOneTap(publicToken: string): Promise<RsvpState> {
+export async function joinOneTap(
+  publicToken: string,
+  _previous: RsvpState,
+  formData: FormData,
+): Promise<RsvpState> {
+  /*
+    Both extra parameters exist for the shape `useActionState` and a plain
+    `<form action>` require, not because there is anything to read: the session
+    is the entire input to this action. Declared rather than ignored so the
+    no-JS POST — which really does arrive with a FormData — type-checks against
+    the same function the hydrated page calls.
+  */
+  void formData;
+
   const ip = clientIp(await headers());
   const limit = rateLimit(`rsvp:${ip}`, RSVP_LIMIT, RSVP_WINDOW_MS);
 
@@ -250,8 +264,32 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
       userId: organizer.id,
       avatarUrl: organizer.avatarUrl,
     });
-  } catch {
-    return { errors: { _form: copy.rsvp.oneTapNameTaken, nameTaken: "1" } };
+  } catch (error) {
+    /*
+      Two different unique indexes can fire here, and they mean opposite things.
+
+      `participants_event_user_unique` means this account is already on the
+      roster — a double tap, or a second tab. The row the caller wanted exists,
+      so this is a success: reporting "that name is taken" would send somebody
+      who is already going to a form to pick a different name, which is both
+      wrong and alarming. The read above catches the common case; this catches
+      the one where two taps raced past it.
+
+      `participants_event_name_unique` is the real collision: somebody else on
+      this roster already goes by the name on this account.
+    */
+    if (isAlreadyJoined(error)) {
+      revalidatePath(participantPath(publicToken));
+      return { errors: {} };
+    }
+
+    if (isNameTaken(error)) {
+      return { errors: { _form: copy.rsvp.oneTapNameTaken, nameTaken: "1" } };
+    }
+
+    // Neither index: something else went wrong and the row was not written.
+    // Saying "you're on the list" here would be a lie with consequences.
+    throw error;
   }
 
   await linkInvitationToParticipant(event.id, organizer.email, id);

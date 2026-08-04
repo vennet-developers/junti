@@ -181,6 +181,7 @@ export const en: Copy = {
     changeMine: "Change my answer",
     saved: "Done — you are on the list.",
     savedEditing: "Your answer is updated.",
+    waitlistedShort: "Done — you are on the waitlist.",
     waitlistedNotice:
       "The event is full, so you are on the waitlist. If someone drops out, the organizer will move you up and let you know.",
     willBeWaitlisted:
