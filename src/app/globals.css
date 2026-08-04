@@ -380,5 +380,17 @@ body {
 
   .junti-fila-roster:hover {
     background-color: var(--sm-neutral-soft);
+
+    /*
+      Square, because the rows are ruled.
+
+      A rounded tint pulls away from the divider at each corner, leaving four
+      little notches of page colour pinched between the rule and the fill —
+      the tint stops reading as "this row" and starts reading as a chip
+      sitting on it. Rounding only works once the rules are gone and the fill
+      is the only thing separating one row from the next; with them, the
+      block has to meet the line.
+    */
+    border-radius: 0;
   }
 }
