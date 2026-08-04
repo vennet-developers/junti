@@ -3,7 +3,7 @@ import "server-only";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
-import { isProduction, pooledConnection } from "@/config/env";
+import { isProduction, runtimeConnection } from "@/config/env";
 
 import * as schema from "./schema";
 
@@ -40,7 +40,9 @@ const createClient = () =>
   postgres({
     // Discrete fields, not a URL: the password is passed verbatim, so one
     // containing @ # or % needs no escaping. See src/config/db-connection.ts.
-    ...pooledConnection,
+    // Pooler in production, session mode in development — see `runtimeConnection`
+    // for the dev-server hang this split exists to prevent.
+    ...runtimeConnection,
     prepare: false,
     max: 5,
     idle_timeout: 20,
