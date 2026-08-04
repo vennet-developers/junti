@@ -27,7 +27,9 @@ export default defineConfig(({ mode }) => {
     the browser actually needs. They are publishable by design — the anon key
     and the project URL — which is the only reason a define is acceptable.
   */
-  const env = loadEnv(mode, process.cwd(), "");
+  // `loadEnv` reads .env files; on Vercel's CI the values arrive in
+  // process.env instead, so both sources merge here — files win locally.
+  const env = { ...process.env, ...loadEnv(mode, process.cwd(), "") };
 
   return {
     plugins: [tsConfigPaths(), tanstackStart(), nitro(), react()],

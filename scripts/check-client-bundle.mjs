@@ -11,7 +11,18 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
-const CLIENT_DIRS = [".output/public/assets", "dist/client/assets"];
+/*
+  Local builds emit .output/ (Nitro's node preset); Vercel builds emit
+  .vercel/output/ (the Build Output API, auto-selected when VERCEL=1). Every
+  layout that exists gets scanned — a stale sibling from an earlier build
+  costs a few milliseconds and can only ADD strictness, never hide a leak in
+  the fresh one.
+*/
+const CLIENT_DIRS = [
+  ".output/public/assets",
+  ".vercel/output/static/assets",
+  "dist/client/assets",
+];
 
 const FORBIDDEN = [
   {
@@ -43,22 +54,26 @@ function files(dir) {
   return out;
 }
 
-const dir = CLIENT_DIRS.find((d) => existsSync(d));
-if (!dir) {
+const dirs = CLIENT_DIRS.filter((d) => existsSync(d));
+if (dirs.length === 0) {
   console.error("check-client-bundle: no client assets found — did the build run?");
   process.exit(1);
 }
 
 let failed = false;
-for (const file of files(dir)) {
-  const content = readFileSync(file, "utf8");
-  for (const { token, reason } of FORBIDDEN) {
-    if (content.includes(token)) {
-      console.error(`✖ ${file}: ${reason}`);
-      failed = true;
+let scanned = 0;
+for (const dir of dirs) {
+  for (const file of files(dir)) {
+    scanned += 1;
+    const content = readFileSync(file, "utf8");
+    for (const { token, reason } of FORBIDDEN) {
+      if (content.includes(token)) {
+        console.error(`✖ ${file}: ${reason}`);
+        failed = true;
+      }
     }
   }
 }
 
 if (failed) process.exit(1);
-console.log(`check-client-bundle: limpio (${files(dir).length} assets en ${dir})`);
+console.log(`check-client-bundle: limpio (${scanned} assets en ${dirs.join(", ")})`);
