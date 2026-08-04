@@ -15,6 +15,7 @@ import { RosterGroup } from "@/components/roster-list";
 import { CreatedToast } from "@/components/created-toast";
 import { getCopy } from "@/config/copy";
 import { loadAllEventTypes, loadPolicyOptionsByEventType } from "@/lib/catalog";
+import { loadCommitments } from "@/lib/commitments";
 import { shortEventTime } from "@/lib/event-time";
 import { renderShareMessage } from "@/lib/share-message";
 import { formatEventDateTimeShort, formatMoney } from "@/lib/format";
@@ -39,6 +40,7 @@ import {
   whatsAppShareUrl,
 } from "@/lib/urls";
 
+import { CommitmentNote } from "../../commitment-note";
 import { CloseEventControl } from "./close-event-control";
 import { InviteForm, InvitedList } from "./invite-panel";
 import { EditEventForm } from "./manage-forms";
@@ -114,6 +116,16 @@ export default async function ManagePage({
   const invitations = await loadInvitations(eventRow.id);
   const contacts = await loadParticipantContacts(eventRow.id);
 
+  /*
+    What each person said they are bringing, keyed for a one-read lookup per
+    roster row. Rendered under the name like the phone number is, because on
+    this screen it answers the organizer's actual question — whether they
+    still need to buy the ice.
+  */
+  const commitmentByParticipant = new Map(
+    (await loadCommitments(eventRow.id)).map((item) => [item.participantId, item]),
+  );
+
   // The catalogue, for the edit form's kind picker and policy list. The picker
   // shows what is on offer plus this event's own kind if it has since been
   // retired — retiring a kind must not evict the events that already have it,
@@ -167,9 +179,29 @@ export default async function ManagePage({
     const allSubmitted = compliance.awaitingReview.length === compliance.blocking.length;
 
     return (
-      <Text variant="small" color="muted">
-        {allSubmitted ? copy.roster.inReview(labels) : copy.roster.waitingOn(labels)}
-      </Text>
+      <Stack gap="1">
+        <Text variant="small" color="muted">
+          {allSubmitted ? copy.roster.inReview(labels) : copy.roster.waitingOn(labels)}
+        </Text>
+        {commitmentNote(member)}
+      </Stack>
+    );
+  };
+
+  /** Just the commitment, for the groups whose note slot is already spoken for. */
+  const commitmentNote = (member: RosterMember) => {
+    const commitment = commitmentByParticipant.get(member.id);
+    if (!commitment) return null;
+
+    return (
+      <CommitmentNote
+        publicToken={publicToken}
+        noteId={commitment.id}
+        note={commitment.note}
+        reaction={commitment.reaction}
+        authorName={member.displayName}
+        canDelete={canEdit}
+      />
     );
   };
 
@@ -184,14 +216,41 @@ export default async function ManagePage({
    */
   const contactNote = (member: RosterMember) => {
     const phone = contacts.get(member.id);
-    if (!phone) return null;
+    const commitment = commitmentByParticipant.get(member.id);
 
+    if (!phone && !commitment) return null;
+
+    /*
+      Two facts about the same person, stacked under their name: what they said
+      they are bringing, and how to reach them.
+
+      The commitment matters more here than on the participant page — the
+      organizer is the one deciding whether to buy ice, and "Caro lleva hielo"
+      is the answer. It was missing from this screen entirely when the feature
+      shipped, which was an oversight rather than a decision.
+    */
     return (
-      <Text variant="small" color="muted">
-        <Box as="a" href={whatsAppContactUrl(phone)} target="_blank" rel="noopener noreferrer">
-          {phone}
-        </Box>
-      </Text>
+      <Stack gap="1">
+        {commitment ? (
+          <CommitmentNote
+            publicToken={publicToken}
+            noteId={commitment.id}
+            note={commitment.note}
+            reaction={commitment.reaction}
+            authorName={member.displayName}
+            /* The organizer may remove anybody's — see canDeleteCommitment. */
+            canDelete={canEdit}
+          />
+        ) : null}
+
+        {phone ? (
+          <Text variant="small" color="muted">
+            <Box as="a" href={whatsAppContactUrl(phone)} target="_blank" rel="noopener noreferrer">
+              {phone}
+            </Box>
+          </Text>
+        ) : null}
+      </Stack>
     );
   };
 
