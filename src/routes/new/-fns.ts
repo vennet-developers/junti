@@ -1,0 +1,166 @@
+import { redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+
+import { ROUTES } from "@/config/routes";
+
+export type CreateEventState = {
+  errors: Record<string, string>;
+};
+
+/** Six new events per hour per IP is far past what a real organizer needs. */
+const CREATE_LIMIT = 6;
+const CREATE_WINDOW_MS = 60 * 60_000;
+
+/**
+ * Creates an event and sends the organizer to their control panel.
+ *
+ * The port of `src/app/new/actions.ts` — logic untouched, wrapper changed:
+ * a server function taking the FormData the form already built, with every
+ * server module behind a dynamic import (this file rides to the browser as
+ * part of the route's client bundle; the handler body does not).
+ */
+export const createEventFn = createServerFn({ method: "POST" })
+  .validator((data: FormData) => data)
+  .handler(async ({ data: formData }): Promise<CreateEventState> => {
+    const [
+      { getRequest },
+      { db },
+      schema,
+      { getViewerCopy },
+      { clientIp, rateLimit },
+      { formatEventDateTime },
+      { notify },
+      { getOrganizer },
+      tokens,
+      { participantPath },
+      validation,
+      { uuidv7 },
+    ] = await Promise.all([
+      import("@tanstack/react-start/server"),
+      import("@/db/client"),
+      import("@/db/schema"),
+      import("@/lib/locale"),
+      import("@/lib/rate-limit"),
+      import("@/lib/format"),
+      import("@/lib/notify"),
+      import("@/lib/organizer"),
+      import("@/lib/tokens"),
+      import("@/lib/urls"),
+      import("@/lib/validation"),
+      import("uuidv7"),
+    ]);
+    const { field, fieldErrors, makeEventSchema, parsePoliciesField } = validation;
+
+    const ip = clientIp(getRequest().headers);
+    const limit = rateLimit(`create-event:${ip}`, CREATE_LIMIT, CREATE_WINDOW_MS);
+
+    // The event does not exist yet, so there is no event language to defer to —
+    // this one belongs to whoever is filling in the form.
+    const { copy } = await getViewerCopy();
+
+    if (!limit.ok) {
+      return { errors: { _form: copy.errors.rateLimited } };
+    }
+
+    const parsed = makeEventSchema(copy).safeParse({
+      title: field(formData, "title"),
+      eventTypeId: field(formData, "eventTypeId"),
+      startsAtDate: field(formData, "startsAtDate"),
+      startsAtTime: field(formData, "startsAtTime"),
+      timeZone: field(formData, "timeZone"),
+      locale: field(formData, "locale"),
+      location: field(formData, "location"),
+      capacity: field(formData, "capacity"),
+      notes: field(formData, "notes"),
+      costMode: field(formData, "costMode"),
+      costAmount: field(formData, "costAmount"),
+      currency: field(formData, "currency") || "COP",
+    });
+
+    if (!parsed.success) {
+      return { errors: fieldErrors(parsed.error) };
+    }
+
+    const policies = parsePoliciesField(field(formData, "policies"), copy);
+
+    if (!policies.ok) {
+      return { errors: { _form: policies.message } };
+    }
+
+    const input = parsed.data;
+    const publicToken = tokens.createPublicToken();
+    const organizerToken = tokens.createOrganizerToken();
+
+    // Every event has an owner. The page will not render this form without a
+    // session, but the check belongs here too — a server function is a public
+    // endpoint, and "the page would not have shown it" authorizes nothing.
+    const organizer = await getOrganizer();
+    if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+    const eventId = uuidv7();
+
+    /**
+     * The event and its policies land together or not at all. Without the
+     * transaction, a failure between the two inserts leaves an event whose
+     * organizer chose requirements that silently do not exist — and the
+     * roster would then confirm everybody.
+     */
+    await db.transaction(async (tx) => {
+      await tx.insert(schema.events).values({
+        organizerId: organizer.id,
+        id: eventId,
+        publicToken,
+        organizerToken,
+        title: input.title,
+        eventTypeId: input.eventTypeId,
+        startsAt: input.startsAt,
+        timeZone: input.timeZone,
+        locale: input.locale,
+        location: input.location,
+        capacity: input.capacity,
+        notes: input.notes,
+        costMode: input.costMode,
+        costAmountMinor: input.costAmountMinor,
+        currency: input.currency,
+      });
+
+      if (policies.value.length > 0) {
+        await tx.insert(schema.eventPolicies).values(
+          policies.value.map((policy, index) => ({
+            id: uuidv7(),
+            eventId,
+            policyDefinitionId: policy.definitionId,
+            label: policy.label,
+            description: policy.description,
+            position: index,
+          })),
+        );
+      }
+    });
+
+    /*
+      The link, in their inbox. After the transaction and outside it: the
+      event exists, and a provider having a bad minute must not undo that.
+      `notify` swallows its own failures and checks the suppression list.
+    */
+    if (organizer.email) {
+      await notify({
+        to: organizer.email,
+        template: "event-created",
+        locale: input.locale,
+        values: {
+          eventTitle: input.title,
+          eventWhen: formatEventDateTime(input.startsAt, input.timeZone, copy.intlLocale),
+          eventPath: participantPath(publicToken),
+        },
+      });
+    }
+
+    /*
+      Straight to the history, where the new event is the first card.
+      `?created=1` because the confirmation has to survive the redirect.
+      Thrown from a server function, the redirect serialises to the client
+      and the router navigates — same shape Next's redirect() had.
+    */
+    throw redirect({ to: `${ROUTES.myEvents}?created=1` as never });
+  });

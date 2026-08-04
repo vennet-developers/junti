@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { useRouter } from "next/navigation";
+import { useRouter } from "@tanstack/react-router";
 
 import { detectTimeZone } from "@/lib/time-zones";
 
@@ -36,7 +36,7 @@ export function TimeZoneSync({ hasPreference }: { hasPreference: boolean }) {
     // to a server action. `SameSite=Lax` matches how it is written elsewhere.
     document.cookie = `tz=${encodeURIComponent(detected)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
 
-    router.refresh();
+    void router.invalidate();
   }, [hasPreference, router]);
 
   return null;

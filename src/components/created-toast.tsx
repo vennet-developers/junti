@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useLocation } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 import { toast } from "@stackmyth/toast";
@@ -23,7 +23,7 @@ import { useCopy } from "@/components/copy-provider";
  */
 export function CreatedToast() {
   const { copy } = useCopy();
-  const pathname = usePathname();
+  const pathname = useLocation({ select: (location) => location.pathname });
   const fired = useRef(false);
 
   useEffect(() => {
@@ -36,9 +36,9 @@ export function CreatedToast() {
     toast.success(copy.eventCreated.heading);
 
     /*
-      `history.replaceState`, NOT `router.replace`.
+      `history.replaceState`, NOT a router navigation.
 
-      Both strip the flag, but the router one re-renders the route, and that
+      Both strip the flag, but a router navigate re-renders the route, and that
       re-render lands in the middle of the toast's enter animation: the toast
       stays at opacity 0, translated up and half off screen, and never arrives.
       It looked like a broken toast component and was a navigation fighting it.

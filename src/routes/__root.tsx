@@ -69,6 +69,7 @@ export const Route = createRootRoute({
     links: [
       { rel: "stylesheet", href: juntiCss },
       { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
     ],
   }),
   component: RootComponent,
