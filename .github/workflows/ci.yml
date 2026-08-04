@@ -1,0 +1,84 @@
+# The gate that was missing.
+#
+# Every check in here already existed as a script and was only ever run by
+# somebody remembering to run it. `Add regression tests for contribution and
+# split math` had four of its five criteria met months ago; the fifth — "tests
+# run in CI and block merge on failure" — is this file. Until now nothing
+# stopped a push that failed typecheck, lint, tests or the client-bundle
+# tripwire.
+#
+# ⚠️ THIS DOES NOT GATE THE DEPLOY.
+# Vercel builds from its own GitHub integration and does not wait for Actions.
+# A push that fails here still deploys if Vercel's own build succeeds — and
+# Vercel runs `vite build`, so it catches the build but not the tests. Treat a
+# red run here as "revert or fix", not as "it was blocked". Making the deploy
+# wait means moving it behind this workflow, which is a bigger change than the
+# card asked for.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A second push while the first is still running makes the first result
+# irrelevant. Cancel it rather than pay for both and read the stale one.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Only reads the repository. Nothing here needs to write.
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # No version pinned on purpose: `packageManager` in package.json is the
+      # single source of truth, and pnpm/action-setup reads it. Two places
+      # naming a version is two places to forget.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+
+      # `--frozen-lockfile` is the default in CI, stated anyway: an install
+      # that quietly updates the lockfile is testing something other than what
+      # the commit says.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # ── Build FIRST, and do not reorder this ──────────────────────────────
+      #
+      # `src/routeTree.gen.ts` is generated and gitignored, so a fresh checkout
+      # does not have it. The Vite plugin writes it during the build. Running
+      # typecheck before this produces ~50 import errors that look like real
+      # breakage and are not.
+      #
+      # The build also runs `scripts/check-client-bundle.mjs`, the tripwire
+      # that fails if server-only code fingerprints land in a browser bundle.
+      # That check has caught two real leaks and only exists at build time.
+      - name: Build
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      # No environment variables anywhere in this job, and that is a property
+      # worth keeping: the build was verified to complete with none set. If a
+      # step ever starts needing a database, it is doing something at build
+      # time that belongs at request time.
