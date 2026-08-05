@@ -918,3 +918,45 @@ wrapped in `DialogClose`, so it closed before any real work could finish.
 
 **What I would have wanted.** The component, which now exists, with the
 buttons as slots so the dialog package stays free of a dependency on `button`.
+
+---
+
+## 24. There is no link component, so every anchor is browser blue
+
+**What I was building.** A footer with "Privacidad" and "Condiciones" on it.
+
+**What happened.** They rendered in the browser's default blue — on a warm
+paper palette, beside type set in the brand's own ink. Then I looked further
+and it was every anchor in the app: the "Mis eventos" link on `/welcome`, the
+cross-reference at the bottom of the terms, the sign-in return links. The app
+had been shipping unstyled links since it was built and nobody had said so,
+because each one appears alone on a screen and a blue link does not look
+broken. Two of them side by side in a footer does.
+
+**The colour was never the missing part.** `--sm-text-color-link` resolves to
+this app's `--junti-enlace`, which brand-theme.css picked and measured — #B6541A
+rather than the brand's #D9541F, one step down specifically to clear 4.5:1 on
+paper at body size. The token is correct, the mapping is correct, and nothing
+consumes either, because consuming a colour token requires something to put it
+on and there is nothing to put it on.
+
+**What is missing.** An anchor primitive. `Text` renders a text node, not a
+destination; `Button asChild` wraps a link but is a button in every other
+respect, and half of these are not buttons. What is left is a bare `<a>`, which
+no component in the library can reach.
+
+**What I did instead.** A `:where(a)` rule in `globals.css`, which that file
+otherwise forbids — it targets `html`, `body` and `:focus-visible` on the
+stated grounds that no component library can style them, and a bare anchor is
+now in that same category. `:where()` keeps specificity at zero so any
+component that styles its own anchors still wins.
+
+**What I would have wanted.** `<Link>` in `@stackmyth/text` or its own package:
+an `<a>` with the library's link tokens applied, `asChild` for router
+integration, and the underline behaviour as a prop. The router's `Link` and
+`next/link` both render a plain anchor and both need somewhere to put a
+`className`, so `asChild` is the whole of the integration surface.
+
+Adjacent to #17, which is the same shape one level up: `DropdownMenuItem`
+cannot become a link either. The pattern across both is that the library has
+buttons and menu items and text, and no concept of "a place to go".

@@ -154,6 +154,56 @@ body {
 
 
 /*
+  ── Links ────────────────────────────────────────────────────────────────────
+
+  Every anchor in this app was rendering in the browser's default blue, on a
+  warm paper palette, next to type in the brand's own ink. The footer made it
+  obvious; it was true on `/welcome`, in the breadcrumb trail, and everywhere
+  else a link appears.
+
+  **Nothing here invents a colour.** `--sm-text-color-link` already resolves to
+  `--junti-enlace`, which brand-theme.css defines and measures: #B6541A, chosen
+  one step down from the brand's #D9541F specifically so it clears 4.5:1 on
+  paper at body size. The work of picking it was done; nothing applied it.
+
+  **An element selector, which this file otherwise forbids — deliberately, and
+  this is the exception the preamble describes.** The rule is that anything a
+  component can own is owned by a Stackmyth component. Stackmyth ships no
+  anchor primitive: there is no Link, no Anchor, and `Text` renders a text node
+  rather than a destination. So a bare `<a>` is in the same category as `html`,
+  `body` and `:focus-visible` — an element no component library can reach.
+  Logged in STACKMYTH-GAPS.md rather than left as a silent local decision.
+
+  **`:not([class])` is doing real work, and I found out the hard way.** The
+  first version was a bare `:where(a)`, on the theory that zero specificity
+  would let any component out-rank it. It does not: `Button asChild` clones its
+  child, so the anchor IS the button, and `.sm-button` sets its foreground on an
+  inner span rather than on the element itself — nothing was there to out-rank.
+  Every call-to-action in the app turned orange, including white-on-ink buttons.
+
+  So the rule claims only anchors that carry no class at all, which is exactly
+  the set nothing else styles. A Button, a breadcrumb item, `.brand-link` on the
+  chapa — all carry one, all keep what they had.
+
+  `:visited` is set to the same colour on purpose. The usual argument for a
+  distinct visited state is navigation through a large body of documents; this
+  app has a handful of destinations, all of them things you return to, and a
+  faded "you already went there" on «Mis eventos» would be describing the wrong
+  thing.
+*/
+:where(a:not([class])) {
+  color: var(--sm-text-color-link);
+}
+
+:where(a:not([class])):visited {
+  color: var(--sm-text-color-link);
+}
+
+:where(a:not([class])):hover {
+  color: var(--sm-text-color-link-hover);
+}
+
+/*
   next/link renders a plain <a>, which the browser underlines. A brand mark
   that carries a hyperlink underline reads as a stray link.
 
