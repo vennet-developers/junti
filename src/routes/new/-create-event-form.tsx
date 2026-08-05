@@ -383,7 +383,12 @@ function CreateEventFormBody({
               the thing it is about is a question nobody answers. */}
           <DraftOffer onRestore={restoreDraft} />
 
-          <WizardProgress step={step} total={totalSteps(costMode)} />
+          <WizardProgress
+            step={step}
+            total={totalSteps(costMode)}
+            pending={pending}
+            onBack={() => goTo(previousStep(step))}
+          />
 
           {/* Every step's fields stay mounted and hidden rather than being
               unmounted. `FormController` holds the values either way, but a
@@ -646,7 +651,6 @@ function CreateEventFormBody({
             pending={pending}
             freeEvent={isMoneyStepEmpty(costMode)}
             finished={finished}
-            onGoTo={goTo}
           />
         </Stack>
       </Form>
@@ -684,13 +688,11 @@ function WizardControls({
   pending,
   freeEvent,
   finished,
-  onGoTo,
 }: {
   step: WizardStep;
   pending: boolean;
   freeEvent: boolean;
   finished: boolean;
-  onGoTo: (next: WizardStep) => void;
 }) {
   const form = useFormContext();
 
@@ -721,7 +723,6 @@ function WizardControls({
         step={step}
         pending={pending}
         freeEvent={freeEvent}
-        onBack={() => onGoTo(previousStep(step))}
       />
     </>
   );

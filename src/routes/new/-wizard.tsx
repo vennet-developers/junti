@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { Button } from "@stackmyth/button";
+import { ChevronLeftIcon } from "@stackmyth/icons";
 import { Box, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
@@ -57,7 +58,17 @@ export function StepPanel({ active, children }: { active: boolean; children: Rea
  * that makes the steps mean anything, and a control that is sometimes allowed
  * and sometimes not is worse than one that is never there.
  */
-export function WizardProgress({ step, total }: { step: WizardStep; total: number }) {
+export function WizardProgress({
+  step,
+  total,
+  pending,
+  onBack,
+}: {
+  step: WizardStep;
+  total: number;
+  pending: boolean;
+  onBack: () => void;
+}) {
   const { copy } = useCopy();
 
   // Only the steps this event actually has. A free event is two steps long and
@@ -67,6 +78,30 @@ export function WizardProgress({ step, total }: { step: WizardStep; total: numbe
 
   return (
     <Stack gap="2">
+      {/*
+        Back lives here, with the position indicator, rather than beside the
+        advance button at the foot of the form. Two reasons, and the first is
+        the one that bites: these steps are long, so a back control at the
+        bottom means scrolling past everything you have already dealt with in
+        order to fix something at the top. The second is that going back is
+        navigation and the button below is a commitment — putting them in the
+        same cluster invites pressing the wrong one, and one of them costs you
+        your place.
+
+        A ghost is right here for the same reason it was wrong down there: it
+        is not competing with a filled primary an inch away.
+      */}
+      {step > 1 ? (
+        <Flex>
+          <Button type="button" size="sm" variant="ghost" disabled={pending} onClick={onBack}>
+            <Flex gap="1" align="center">
+              <ChevronLeftIcon size={16} aria-hidden="true" />
+              {copy.createEvent.wizard.back}
+            </Flex>
+          </Button>
+        </Flex>
+      ) : null}
+
       <Flex gap="2" align="center" aria-hidden="true">
         {shown.map((n) => (
           // `Box background` takes named surfaces, not colours. The filled
@@ -91,24 +126,22 @@ export function WizardProgress({ step, total }: { step: WizardStep; total: numbe
 }
 
 /**
- * Back, and forward.
+ * The one thing to press.
  *
- * The advance control is the last thing in the DOM and the only primary
- * button on screen, which is AC-8's real requirement: on a 375px viewport the
- * thing you press next has to be reachable without scrolling past content you
- * have already dealt with.
+ * Just the advance control — back moved up to the progress indicator. This is
+ * the last thing in the DOM and the only primary button on screen, which is
+ * AC-8's real requirement: on a 375px viewport the thing you press next has to
+ * be reachable without scrolling past content you have already dealt with.
  */
 export function WizardNav({
   step,
   pending,
   freeEvent,
-  onBack,
 }: {
   step: WizardStep;
   pending: boolean;
   /** No money on this event, so step 3 has nothing to ask. */
   freeEvent: boolean;
-  onBack: () => void;
 }) {
   const { copy } = useCopy();
 
@@ -121,8 +154,7 @@ export function WizardNav({
   const submits = step === 3 || (step === 2 && freeEvent);
 
   return (
-    <Stack gap="3">
-      <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+    <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
         {/* Always a submit. Advancing and creating both go through the form's
             own validation — that is what puts the errors inline beside each
             field instead of in a summary this component would have to invent. */}
@@ -132,20 +164,8 @@ export function WizardNav({
             : submits
               ? copy.createEvent.submit
               : copy.createEvent.wizard.next}
-        </Button>
-      </Box>
-
-      {/* `outline`, not `ghost`. A ghost button under a filled primary reads
-          as a caption rather than a control — it was there and nobody could
-          see it. Going back is a real move in a wizard and needs an edge. */}
-      {step > 1 ? (
-        <Flex>
-          <Button type="button" size="md" variant="outline" disabled={pending} onClick={onBack}>
-            {copy.createEvent.wizard.back}
-          </Button>
-        </Flex>
-      ) : null}
-    </Stack>
+      </Button>
+    </Box>
   );
 }
 
