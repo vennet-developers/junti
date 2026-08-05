@@ -1168,6 +1168,94 @@ export const outboxMessages = pgTable(
   ],
 );
 
+/**
+ * The in-app inbox: one row per thing somebody should know about.
+ *
+ * **A real record, not a log of toasts.** The card's own words for what this
+ * must not be: "a UI shell over ephemeral toasts". A toast is gone when the
+ * page navigates and was never anywhere but one browser tab; this survives a
+ * reload, a new phone, and being read three days late — which is the entire
+ * difference between telling somebody and hoping they were looking.
+ *
+ * **What it does not hold is a sentence.** No title, no body, no URL. The row
+ * says WHAT happened (`type`), WHICH event it happened on, and the few facts
+ * needed to phrase it (`payload`); the sentence and the link are built at read
+ * time. Two reasons, and the first is not stylistic: this app is bilingual, and
+ * a stored sentence would freeze each notification into whichever language its
+ * reader happened to be using that day — so somebody who switches to English
+ * would find their history still in Spanish forever. The second is that a
+ * stored URL is a copy of a routing decision, and copies rot.
+ *
+ * Generated beside the domain change itself, from the same call sites that feed
+ * the outbox, so email and in-app cannot describe different worlds.
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    /**
+     * uuidv7, like every other id here — and load-bearing rather than merely
+     * consistent. It sorts by creation, so "newest first" is a primary-key
+     * scan and the cursor for the next page is just "id less than this one".
+     * That is what makes AC-7's pagination keyset rather than `OFFSET`, which
+     * gets slower the further somebody scrolls and skips rows when a new
+     * notification arrives mid-read.
+     */
+    id: uuid("id").primaryKey(),
+
+    /**
+     * Who is being told. No foreign key, for the same reason `analytics_events`
+     * has none: accounts live in Supabase's schema, not this one.
+     */
+    userId: uuid("user_id").notNull(),
+
+    /** From `NOTIFICATION_TYPES` in `src/domain/notifications.ts`. */
+    type: text("type").notNull(),
+
+    /**
+     * The event this is about. Every v1 type is event-scoped, so this is not
+     * nullable — a notification with no context to open is not something worth
+     * writing down. Cascades, because a deleted event's notifications point at
+     * a screen that no longer exists.
+     */
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+
+    /**
+     * The handful of facts the sentence needs — a display name, an attendance,
+     * a payment status, the list of fields that changed.
+     *
+     * **Ids and enums and names that are already on the roster**, nothing more.
+     * A participant's display name is here because "Ana va" is the whole value
+     * of the notification and re-joining the roster for every row to recover a
+     * name that is deliberately public within the event buys nothing.
+     */
+    payload: jsonb("payload").notNull().default({}),
+
+    /**
+     * When it was read, or null. One nullable timestamp rather than a boolean
+     * plus a date, because "read" and "when" are the same fact and storing them
+     * apart is how they end up disagreeing.
+     */
+    readAt: timestamp("read_at", { withTimezone: true }),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // The drawer's only query: this person's notifications, newest first.
+    index("notifications_user_idx").on(table.userId, table.id.desc()),
+    /*
+      The badge's query, and the reason it is partial: the count only ever asks
+      for unread rows, and a partial index holds only those — so it stays small
+      even for an account with a year of read history behind it, and it shrinks
+      as things are read rather than growing forever.
+    */
+    index("notifications_unread_idx")
+      .on(table.userId)
+      .where(sql`${table.readAt} is null`),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type NewEventRow = typeof events.$inferInsert;
 export type ParticipantRow = typeof participants.$inferSelect;
@@ -1197,3 +1285,5 @@ export type AppSettingRow = typeof appSettings.$inferSelect;
 export type OutboxMessageRow = typeof outboxMessages.$inferSelect;
 export type AnalyticsEventRow = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEventRow = typeof analyticsEvents.$inferInsert;
+export type NotificationRow = typeof notifications.$inferSelect;
+export type NewNotificationRow = typeof notifications.$inferInsert;

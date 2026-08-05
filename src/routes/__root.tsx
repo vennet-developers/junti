@@ -36,10 +36,26 @@ const getShell = createServerFn({ method: "GET" }).handler(async () => {
     getOrganizer(),
   ]);
 
-  return { locale, theme, organizer } as {
+  /*
+    The COUNT, and deliberately not the list.
+
+    This runs on every page, so what it costs matters: one bounded scan on the
+    partial unread index, capped at ten because the badge stops counting there
+    anyway. The rows themselves are fetched when somebody opens the panel — see
+    `NotificationBell` — because loading twenty of them into every screen to
+    render a number would be paying for the whole feature on every navigation.
+
+    Nothing for a visitor with no session: there is no inbox to count.
+  */
+  const unread = organizer
+    ? await import("@/lib/notifications").then((module) => module.unreadCount(organizer.id))
+    : 0;
+
+  return { locale, theme, organizer, unread } as {
     locale: Locale;
     theme: Theme | null;
     organizer: Organizer | null;
+    unread: number;
   };
 });
 
@@ -82,14 +98,14 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const { locale, theme, organizer } = Route.useLoaderData();
+  const { locale, theme, organizer, unread } = Route.useLoaderData();
 
   return (
     <RootDocument locale={locale} theme={theme}>
       <CopyProvider locale={locale}>
         {/* The frame's top edge, mirror of the footer at the bottom. In the
             root so it survives pending states and cannot be forgotten. */}
-        <AppHeader organizer={organizer} theme={theme} />
+        <AppHeader organizer={organizer} theme={theme} unread={unread} />
 
         <Outlet />
 

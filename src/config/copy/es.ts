@@ -753,6 +753,51 @@ export const es = {
     rejectHint: "¿Vas a rechazar alguno? Se hace dentro del evento, con el motivo.",
   },
 
+  /**
+   * The in-app inbox.
+   *
+   * Every sentence is built here rather than stored, which is what lets
+   * somebody switch language and find their whole history rewritten instead of
+   * a Spanish archive under an English interface.
+   *
+   * Written in the third person and in the past, because that is what a
+   * notification is: a report of something that already happened to somebody
+   * else. The one exception is `paymentRecorded`, which is about the reader's
+   * own money and would sound absurd narrated at them.
+   */
+  notifications: {
+    link: "Notificaciones",
+    open: "Ver notificaciones",
+    title: "Notificaciones",
+    unread: (n: number) => (n === 1 ? "1 sin leer" : `${n} sin leer`),
+    markAllRead: "Marcar todo como leído",
+    more: "Ver más",
+    emptyTitle: "Nada nuevo",
+    emptyHelp: "Cuando alguien responda o cambie algo en tus eventos, te avisamos acá.",
+
+    /** What each type says. The event's own title goes on the line below. */
+    types: {
+      rsvpReceived: (name: string, attendance: string) => `${name}: ${attendance}`,
+      approvalPending: (name: string) => `${name} mandó un comprobante`,
+      paymentConfirmed: "Tu pago quedó registrado",
+      paymentWaived: "El organizador te eximió del pago",
+      eventUpdated: (fields: string) => `El organizador cambió ${fields}`,
+      eventCancelled: "Se canceló el evento",
+    },
+
+    /**
+     * What moved, for `eventUpdated`. Lowercase and article-first, because they
+     * are read inside the sentence above and never on their own.
+     */
+    fields: {
+      title: "el nombre",
+      startsAt: "la fecha",
+      location: "el lugar",
+      capacity: "el cupo",
+      cost: "el precio",
+    },
+  },
+
   messages: {
     link: "Mensajes",
     title: "Mensajes a invitados",

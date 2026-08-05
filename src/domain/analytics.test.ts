@@ -133,6 +133,29 @@ describe("props cannot carry what must not be recorded", () => {
     expect(dropped).toEqual(["reason"]);
   });
 
+  /**
+   * `event_edited` carries the field names an organizer went back to change,
+   * which is a list by nature. It is the only shape allowed to be one.
+   */
+  it("keeps a list of field names", () => {
+    const { props, dropped } = stripUnsafeProps({
+      event_id: "e1",
+      changed: ["startsAt", "location"],
+    });
+
+    expect(dropped).toEqual([]);
+    expect(props).toEqual({ event_id: "e1", changed: ["startsAt", "location"] });
+  });
+
+  it("drops a list that is hiding prose", () => {
+    const { props, dropped } = stripUnsafeProps({
+      changed: ["startsAt", "el organizador dijo que la cancha ya no estaba disponible el jueves"],
+    });
+
+    expect(props).toEqual({});
+    expect(dropped).toEqual(["changed"]);
+  });
+
   it("keeps a short string, because that is what an enum looks like", () => {
     const { props, dropped } = stripUnsafeProps({ decision: "rejected" });
     expect(dropped).toEqual([]);

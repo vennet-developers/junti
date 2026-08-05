@@ -743,6 +743,34 @@ export const en: Copy = {
     rejectHint: "Rejecting one? That happens inside the event, with the reason.",
   },
 
+  notifications: {
+    link: "Notifications",
+    open: "See notifications",
+    title: "Notifications",
+    unread: (n: number) => (n === 1 ? "1 unread" : `${n} unread`),
+    markAllRead: "Mark all as read",
+    more: "See more",
+    emptyTitle: "Nothing new",
+    emptyHelp: "When somebody answers or something changes on your events, you will hear about it here.",
+
+    types: {
+      rsvpReceived: (name: string, attendance: string) => `${name}: ${attendance}`,
+      approvalPending: (name: string) => `${name} sent a receipt`,
+      paymentConfirmed: "Your payment is on the record",
+      paymentWaived: "The organizer waived your payment",
+      eventUpdated: (fields: string) => `The organizer changed ${fields}`,
+      eventCancelled: "The event was cancelled",
+    },
+
+    fields: {
+      title: "the name",
+      startsAt: "the date",
+      location: "the place",
+      capacity: "the capacity",
+      cost: "the price",
+    },
+  },
+
   messages: {
     link: "Messages",
     title: "Guest messages",

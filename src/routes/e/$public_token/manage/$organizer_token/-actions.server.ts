@@ -31,6 +31,7 @@ import { getOrganizer } from "@/lib/organizer";
 import { authorizeOrganizer, findSubmissionInEvent, loadInvitations } from "@/lib/roster";
 import { track } from "@/lib/analytics";
 import { invitableMembers } from "@/domain/groups";
+import { changedFields, type ChangedField } from "@/domain/notifications";
 import { ROUTES } from "@/config/routes";
 import { participantPath } from "@/lib/urls";
 import {
@@ -146,7 +147,7 @@ export async function setPaymentStatus(
   // Scoped by event id so an organizer of one event cannot touch another's rows
   // by passing a foreign participant id.
   const [participant] = await db
-    .select({ id: participants.id })
+    .select({ id: participants.id, userId: participants.userId })
     .from(participants)
     .where(and(eq(participants.id, participantId.data), eq(participants.eventId, event.id)))
     .limit(1);
@@ -184,6 +185,36 @@ export async function setPaymentStatus(
     roster no longer supports, waiting for the first thing that trusts it.
   */
   if (status.data !== "confirmed") await syncPayments(event);
+
+  /*
+    Told, and only about the two settled outcomes.
+
+    Moving somebody back to `pending` is an organizer correcting their own
+    bookkeeping, and "your payment is no longer on the record" is an accusation
+    delivered by a robot. If the money really did not arrive, that is a
+    conversation between two people, not a notification.
+
+    Nothing here carries the amount, for the same reason the analytics event
+    does not: the ledger is exact and is where money lives.
+  */
+  const settled = status.data === "confirmed" || status.data === "waived";
+
+  if (participant.userId && settled && existing?.status !== status.data) {
+    const { record } = await import("@/lib/notifications");
+    const actor = await getOrganizer();
+
+    await record(
+      [
+        {
+          userId: participant.userId,
+          type: "payment_recorded",
+          eventId: event.id,
+          payload: { status: status.data },
+        },
+      ],
+      actor?.id ?? null,
+    );
+  }
 
   // The status, never the amount. The ledger is exact and is the only place
   // money belongs; a weaker second copy here would be a liability.
@@ -629,6 +660,27 @@ async function announceCancellation(event: EventRow, copy: Copy): Promise<void> 
   const userIds = attending.map((row) => row.userId).filter((id): id is string => id !== null);
   if (userIds.length === 0) return;
 
+  /*
+    The in-app copy goes to the same list, from the same call — which is the
+    card's guidance about the two channels made literal. An email that lands in
+    spam and an inbox that says nothing is the failure mode this closes; whoever
+    reads either one learns the same thing.
+
+    Written before the sends rather than after, because the sends are the part
+    that can take seconds and fail, and the row costs nothing.
+  */
+  const { record } = await import("@/lib/notifications");
+  const owner = await getOrganizer();
+
+  await record(
+    userIds.map((userId) => ({
+      userId,
+      type: "event_cancelled" as const,
+      eventId: event.id,
+    })),
+    owner?.id ?? null,
+  );
+
   const addresses = await loadVerifiedEmails(userIds);
 
   // Who has money recorded against this event, so the note about refunds only
@@ -774,6 +826,22 @@ export async function editEvent(
   const policies = parsePoliciesField(field(formData, "policies"), copy);
   if (!policies.ok) return { errors: { _form: policies.message } };
 
+  /*
+    What actually moved, worked out before the write while the old row is still
+    in hand. It answers two questions at once: which fields to name in the
+    notification, and what to record as `changed` — which is what `ANALYTICS.md`
+    has always said this event carries, against a `field_count` that only ever
+    counted the size of the form.
+  */
+  const changed = changedFields(event, {
+    title: input.title,
+    startsAt: input.startsAt,
+    location: input.location,
+    capacity: input.capacity,
+    costMode: input.costMode,
+    costAmountMinor: input.costAmountMinor,
+  });
+
   await db
     .update(events)
     .set({
@@ -797,7 +865,12 @@ export async function editEvent(
 
   // Field names, never values: which fields an organizer goes back to change
   // is the question; what they changed them to is their business.
-  track("event_edited", { event_id: event.id, field_count: Object.keys(input).length }, editor?.id ?? null);
+  track("event_edited", { event_id: event.id, changed }, editor?.id ?? null);
+
+  // Only the people who are counting on it, and only when something they would
+  // recognise has moved. See `changedFields` for what is deliberately not on
+  // that list.
+  if (changed.length > 0) await announceUpdate(event.id, changed, editor?.id ?? null);
 
   await reconcilePolicies(event.id, policies.value);
 
@@ -806,6 +879,50 @@ export async function editEvent(
   if (updated) await syncPayments(updated);
 
   return { errors: {}, ok: true };
+}
+
+/**
+ * Tells the people who are counting on this event that it moved.
+ *
+ * **Only those who said they are coming**, which is the same rule
+ * {@link announceCancellation} uses and for the same reason: somebody who
+ * answered "no" made other plans, and somebody who never answered was never
+ * holding the slot. A "maybe" is the arguable one — they get nothing, because a
+ * change to a plan you have not committed to is not news, and the event page
+ * has the current details whenever they come back to decide.
+ *
+ * Waitlisted people are told. They are waiting on this exact slot, and a
+ * reschedule is precisely what would make them stop waiting.
+ */
+async function announceUpdate(
+  eventId: string,
+  changed: ChangedField[],
+  actorId: string | null,
+): Promise<void> {
+  const { record } = await import("@/lib/notifications");
+
+  const affected = await db
+    .select({ userId: participants.userId })
+    .from(participants)
+    .where(
+      and(
+        eq(participants.eventId, eventId),
+        inArray(participants.attendance, ["in", "waitlisted"]),
+      ),
+    );
+
+  await record(
+    affected
+      .map((row) => row.userId)
+      .filter((id): id is string => id !== null)
+      .map((userId) => ({
+        userId,
+        type: "event_updated" as const,
+        eventId,
+        payload: { changed },
+      })),
+    actorId,
+  );
 }
 
 /**

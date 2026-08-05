@@ -103,7 +103,18 @@ export function isClientEvent(name: string): name is AnalyticsEvent {
  * half the guard; the other half is `stripUnsafeProps` below and the review
  * that reads a diff adding a property.
  */
-export type PropValue = string | number | boolean | null;
+/**
+ * A list is allowed, and only a list of the same narrow thing.
+ *
+ * `event_edited` carries `changed: string[]` — the FIELD NAMES an organizer went
+ * back to alter, which is the question that event exists to answer and cannot
+ * be asked of a single value. The values themselves are never here.
+ *
+ * Every element goes through the same length check as a bare string below, so
+ * the list cannot become the hiding place for the prose the scalar rule keeps
+ * out.
+ */
+export type PropValue = string | number | boolean | null | string[];
 export type AnalyticsProps = Record<string, PropValue>;
 
 /**
@@ -162,6 +173,14 @@ export function stripUnsafeProps(props: AnalyticsProps): StripResult {
     // the free-text case the key blocklist cannot: `{ reason: "no me sirve
     // la foto que mandó Ana" }` has an innocent key.
     if (typeof value === "string" && value.length > 64) {
+      dropped.push(key);
+      continue;
+    }
+
+    // A list is held to the same rule, element by element. One long string in
+    // it is enough to drop the whole property: a partially-sanitised list would
+    // be a silently different answer to the question the event asks.
+    if (Array.isArray(value) && value.some((item) => typeof item !== "string" || item.length > 64)) {
       dropped.push(key);
       continue;
     }

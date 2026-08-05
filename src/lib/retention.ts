@@ -1,9 +1,17 @@
 import "@/server/assert-server";
 
-import { and, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { analyticsEvents, invitations, outboxMessages, policyEvidence, policySubmissions, sendCounters } from "@/db/schema";
+import {
+  analyticsEvents,
+  invitations,
+  notifications,
+  outboxMessages,
+  policyEvidence,
+  policySubmissions,
+  sendCounters,
+} from "@/db/schema";
 
 /**
  * Data that expires, and when.
@@ -75,12 +83,28 @@ const REJECTED_EVIDENCE_DAYS = 90;
 /** Windows older than this are arithmetic nobody will ever read again. */
 const SEND_COUNTER_DAYS = 2;
 
+/**
+ * How long a notification that has been read stays in the inbox.
+ *
+ * Ninety days is long enough that scrolling back to "when did Ana say she was
+ * coming?" still works for a season of weekly matches, and short enough that an
+ * account which has been here two years is not carrying every answer anybody
+ * ever gave it.
+ *
+ * **Read ones only.** Something unread is something nobody has seen yet, and
+ * deleting it would mean the app quietly decided on the reader's behalf that it
+ * no longer mattered. An unread notification from a year ago is a bad sign
+ * about the product, not a row to clean up.
+ */
+const READ_NOTIFICATION_DAYS = 90;
+
 export interface RetentionReport {
   invitations: number;
   analyticsEvents: number;
   outboxMessages: number;
   rejectedEvidence: number;
   sendCounters: number;
+  notifications: number;
 }
 
 function daysAgo(days: number): Date {
@@ -158,11 +182,24 @@ export async function runRetention(): Promise<RetentionReport> {
     .where(lt(sendCounters.windowStart, daysAgo(SEND_COUNTER_DAYS)))
     .returning({ key: sendCounters.key });
 
+  // Read and old. Never anything still waiting to be seen — see the note on
+  // the constant.
+  const oldNotifications = await db
+    .delete(notifications)
+    .where(
+      and(
+        isNotNull(notifications.readAt),
+        lt(notifications.readAt, daysAgo(READ_NOTIFICATION_DAYS)),
+      ),
+    )
+    .returning({ id: notifications.id });
+
   return {
     invitations: staleInvitations.length,
     analyticsEvents: staleAnalytics.length,
     outboxMessages: staleOutbox.length,
     rejectedEvidence: rejected.length,
     sendCounters: counters.length,
+    notifications: oldNotifications.length,
   };
 }

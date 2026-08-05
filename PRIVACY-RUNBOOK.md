@@ -122,6 +122,17 @@ honour an obligation between the parties.
 The defensible middle, and what to do:
 
 ```sql
+-- 0. Their name where it was copied into somebody else's inbox.
+--
+-- FIRST, and that ordering is the whole point: an organizer's notification
+-- reads "Ana Torres: Voy", so Ana's name sits in `payload` on a row addressed
+-- to somebody else. It is a copy of the roster name — which step 1 is about to
+-- overwrite — so running this afterwards would look for a name that no longer
+-- exists and leave this table as the one place the old one survived.
+update notifications set payload = payload - 'name'
+where payload->>'name' in (
+  select display_name from participants where user_id = :user_id);
+
 -- 1. Anonymise the roster entry rather than removing it
 update participants set display_name = 'Participante retirado', avatar_url = null
 where user_id = :user_id;
@@ -138,6 +149,10 @@ delete from group_members where user_id = :user_id;
 delete from policy_evidence where submission_id in (
   select ps.id from policy_submissions ps
   join participants p on p.id = ps.participant_id where p.user_id = :user_id);
+
+-- Their own inbox. Nobody else reads it and nothing depends on it.
+-- (Their name in OTHER people's inboxes is step 0, above.)
+delete from notifications where user_id = :user_id;
 
 -- 3. The account
 -- Supabase dashboard → Authentication → Users → delete, or the admin API.
@@ -163,7 +178,10 @@ the law and silence is not.
 
 - **The retention job already deletes some of this on its own**: unanswered
   invitations after 180 days, rejected receipt images after 90, approved receipt
-  images the moment they are approved. See `src/lib/retention.ts`.
+  images the moment they are approved, and read notifications after 90. Unread
+  notifications are never swept — nobody has seen them yet, and deleting one
+  would be the app deciding on the reader's behalf that it did not matter. See
+  `src/lib/retention.ts`.
 - **Bounces and complaints** write to `email_suppressions` automatically, so a
   person who marked a message as spam is already not being written to.
 - **An invitation can no longer reach somebody who never agreed to hear from

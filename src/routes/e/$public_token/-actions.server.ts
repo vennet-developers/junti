@@ -146,6 +146,10 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
     existing: owned?.attendance ?? null,
   });
 
+  // Read before the write, because "did the answer change" is the whole test
+  // for whether the organizer hears about this at all.
+  const wasAttending = owned?.attendance ?? null;
+
   if (owned) {
     await db
       .update(participants)
@@ -185,6 +189,16 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
 
   await syncPayments(event);
 
+  /*
+    Only when the answer itself moved. Somebody correcting the spelling of
+    their own name, or re-submitting the same form, is not news — and an inbox
+    that fills with "Ana: Voy" three times because Ana was fixing a typo is one
+    people learn to ignore, which costs the notifications that do matter.
+  */
+  if (attendance !== wasAttending) {
+    await tellOrganizer(event, displayName, attendance, organizer.id);
+  }
+
   track(
     "rsvp_completed",
     { event_id: event.id, attendance, one_tap: false, waitlisted: attendance === "waitlisted" },
@@ -192,6 +206,38 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
   );
 
   return { errors: {}, waitlisted: attendance === "waitlisted" };
+}
+
+/**
+ * Tells the organizer somebody answered.
+ *
+ * The one notification the whole feature is really for: an organizer's day is
+ * built out of who is coming, and until now the only way to learn it was to
+ * open the panel and look.
+ *
+ * `record` drops a notification addressed to whoever caused it, so an organizer
+ * answering their own event is silently skipped here rather than guarded at
+ * every call.
+ */
+async function tellOrganizer(
+  event: EventRow,
+  displayName: string,
+  attendance: string,
+  actorId: string,
+): Promise<void> {
+  const { record } = await import("@/lib/notifications");
+
+  await record(
+    [
+      {
+        userId: event.organizerId,
+        type: "rsvp_received",
+        eventId: event.id,
+        payload: { name: displayName, attendance },
+      },
+    ],
+    actorId,
+  );
 }
 
 /**
@@ -300,6 +346,7 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
   await linkInvitationToParticipant(event.id, organizer.id, id);
   await sendRsvpReceipt(event, organizer, attendance, copy);
   await syncPayments(event);
+  await tellOrganizer(event, displayName, attendance, organizer.id);
 
   track(
     "rsvp_completed",
@@ -482,6 +529,33 @@ export async function submitPolicyResponse(
     await putEvidence(row.id, evidence);
   }
 
+  /*
+    Only what somebody has to look at. An acknowledgement settles itself — the
+    tick was the whole of what was asked — and telling the organizer that a box
+    was ticked is a notification with no action behind it.
+
+    This is also the one type with no email behind it: the `pending-approval`
+    template exists and has never had a call site. The two channels are meant to
+    agree, and right now they agree by both being quiet; wiring the email is a
+    separate decision about how much mail an organizer wants, and the in-app
+    inbox is the cheaper half to be wrong about.
+  */
+  if (status === "submitted") {
+    const { record } = await import("@/lib/notifications");
+
+    await record(
+      [
+        {
+          userId: event.organizerId,
+          type: "approval_pending",
+          eventId: event.id,
+          payload: { name: participant.displayName },
+        },
+      ],
+      participant.userId,
+    );
+  }
+
   track("policy_submitted", { event_id: event.id, status, has_evidence: Boolean(evidence) });
 
   return { errors: {}, done: true };
@@ -498,8 +572,14 @@ async function findMyParticipantRow(eventId: string) {
   const organizer = await getOrganizer();
   if (!organizer) return null;
 
+  // The name comes back too: it is what the organizer's notification says, and
+  // the roster's copy of it is the one this event knows this person by.
   const [row] = await db
-    .select({ id: participants.id })
+    .select({
+      id: participants.id,
+      displayName: participants.displayName,
+      userId: participants.userId,
+    })
     .from(participants)
     .where(and(eq(participants.eventId, eventId), eq(participants.userId, organizer.id)))
     .limit(1);

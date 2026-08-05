@@ -162,6 +162,13 @@
       "when": 1785949184954,
       "tag": "0022_windy_serpent_society",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1785950299872,
+      "tag": "0023_smart_the_order",
+      "breakpoints": true
     }
   ]
 }

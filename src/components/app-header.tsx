@@ -4,6 +4,7 @@ import { Box, Container, Flex } from "@stackmyth/layout";
 
 import { Chapa } from "@/components/chapa";
 import { GuestMenu } from "@/components/guest-menu";
+import { NotificationBell } from "@/components/notification-bell";
 import { ProfileMenu } from "@/components/profile-menu";
 import { ROUTES } from "@/config/routes";
 import type { Organizer } from "@/lib/organizer";
@@ -51,9 +52,12 @@ import type { Theme } from "@/lib/preferences";
 export function AppHeader({
   organizer,
   theme,
+  unread,
 }: {
   organizer: Organizer | null;
   theme: Theme | null;
+  /** How many notifications are waiting. Always 0 without a session. */
+  unread: number;
 }) {
   return (
     <Box as="header" borderBottom="1px solid var(--sm-border-default)">
@@ -86,7 +90,16 @@ export function AppHeader({
           </Link>
 
           {organizer ? (
-            <ProfileMenu organizer={organizer} theme={theme} />
+            /*
+              Two controls now, and the order is the point: the bell is what
+              changes between visits, the account capsule is what never does.
+              Reading right to left from the edge, the thing worth checking is
+              the one you reach first.
+            */
+            <Flex gap="2" align="center">
+              <NotificationBell unread={unread} />
+              <ProfileMenu organizer={organizer} theme={theme} />
+            </Flex>
           ) : (
             <GuestMenu theme={theme} />
           )}
