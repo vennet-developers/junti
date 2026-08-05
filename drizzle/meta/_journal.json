@@ -127,6 +127,13 @@
       "when": 1785888784712,
       "tag": "0017_windy_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785901000221,
+      "tag": "0018_green_amazoness",
+      "breakpoints": true
     }
   ]
 }

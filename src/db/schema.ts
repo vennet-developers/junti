@@ -1033,6 +1033,30 @@ export const analyticsEvents = pgTable(
   ],
 );
 
+/**
+ * The handful of numbers that must change without a deploy.
+ *
+ * AC-3 of the send-limits card, and the reason it stayed open: the limits were
+ * constants in the source, so raising one during an incident meant a commit, a
+ * build and a deploy — at the exact moment somebody is abusing the send path
+ * and the useful response is to turn it down, now.
+ *
+ * **Integers only, and a closed set of keys.** A general-purpose key/value
+ * settings table is a config system, and a config system grows until nobody
+ * knows what reads it. This holds rate limits, the defaults live in code, and
+ * a row is an override rather than the source of truth — so an empty table is
+ * a working app.
+ */
+export const appSettings = pgTable("app_settings", {
+  /** From `SETTING_KEYS` in `src/lib/settings.ts`. Not free text. */
+  key: text("key").primaryKey(),
+
+  value: integer("value").notNull(),
+
+  /** Who changed it and when is the audit this deserves, at this size. */
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export type EventRow = typeof events.$inferSelect;
 export type NewEventRow = typeof events.$inferInsert;
 export type ParticipantRow = typeof participants.$inferSelect;
@@ -1058,5 +1082,6 @@ export type CostMode = (typeof costMode.enumValues)[number];
 export type Attendance = (typeof attendance.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatus.enumValues)[number];
 export type PolicySubmissionStatus = (typeof policySubmissionStatus.enumValues)[number];
+export type AppSettingRow = typeof appSettings.$inferSelect;
 export type AnalyticsEventRow = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEventRow = typeof analyticsEvents.$inferInsert;

@@ -18,6 +18,7 @@ import {
 import type { EventRow } from "@/db/schema";
 import { suppressedAmong } from "@/lib/consent";
 import { claimSends } from "@/lib/send-limit";
+import { getSetting } from "@/lib/settings";
 import { deleteEvidence } from "@/lib/evidence-store";
 import { sendMessage } from "@/lib/email/provider";
 import type { OutboundMessage } from "@/lib/email/port";
@@ -64,13 +65,8 @@ export type ManageState = { errors: Record<string, string>; ok?: boolean };
  * were skipped as already answered, some failed at the provider. A single "done"
  * would hide the third, and the third is the one worth telling somebody about.
  */
-/**
- * Invitations one organizer may send in an hour, across all their events.
- *
- * Well above a real evening of organizing — twenty a paste, a handful of
- * pastes — and far below the volume that gets a sending domain noticed.
- */
-const INVITES_PER_HOUR = 100;
+// The limits moved to `app_settings` so they can be turned down without a
+// deploy — see `src/lib/settings.ts`. The defaults still live in code.
 
 export type InviteState = ManageState & {
   sent?: number;
@@ -259,7 +255,8 @@ export async function inviteToEvent(
 
   const copy = await eventCopy(event.locale);
 
-  const parsed = makeInviteSchema(copy).safeParse(formData.getAll("members").map(String));
+  const maxPerSend = await getSetting("maxInvitesPerSend");
+  const parsed = makeInviteSchema(copy, maxPerSend).safeParse(formData.getAll("members").map(String));
   if (!parsed.success) return { errors: fieldErrors(parsed.error, "members") };
 
   const picked = parsed.data;
@@ -324,9 +321,10 @@ export async function inviteToEvent(
   // `authorize` already required a session, so the organizer is present; the
   // event id is a fallback that can only be reached if that ever stops holding.
   const limitKey = `invite:${organizer?.id ?? event.id}`;
-  const allowance = await claimSends(limitKey, INVITES_PER_HOUR, toSend.length);
+  const perHour = await getSetting("invitesPerHour");
+  const allowance = await claimSends(limitKey, perHour, toSend.length);
   if (!allowance.ok) {
-    return { errors: { _form: copy.invites.errorRateLimited(INVITES_PER_HOUR) } };
+    return { errors: { _form: copy.invites.errorRateLimited(perHour) } };
   }
 
   if (toSend.length === 0) {

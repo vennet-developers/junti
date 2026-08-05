@@ -106,6 +106,10 @@ function Funnel({ title, help, steps }: { title: string; help: string; steps: { 
 function FunnelPage() {
   const report = Route.useLoaderData();
 
+  // The hourly limit is what "unusual" is measured against, so the badge turns
+  // colour relative to the live setting rather than a number baked in here.
+  const peakLimit = report.limits.find((l) => l.name === "invitesPerHour")?.value ?? 100;
+
   return (
     <Container size="3" px="4" py="6">
       <Stack gap="6">
@@ -136,6 +140,82 @@ function FunnelPage() {
           help="Si el link se vuelve membresía, y cuántos dicen que no."
           steps={report.groups}
         />
+
+        {/* AC-7 of the send-limits card. Here rather than on a second admin
+            page: there is one owner-gated screen in this product and a second
+            one would be a second thing to remember exists. */}
+        <Card surface="outlined">
+          <CardContent>
+            <Stack gap="4">
+              <Stack gap="1">
+                <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
+                  Envíos por organizador
+                </Text>
+                <Text variant="small" color="muted">
+                  Últimas 24 horas. El pico de una hora es la señal: cien envíos
+                  repartidos en un día es alguien ocupado; cien en una hora es
+                  alguien probando hasta dónde llega esto.
+                </Text>
+              </Stack>
+
+              {report.sends.length === 0 ? (
+                <Text variant="small" color="muted">
+                  Nadie ha enviado nada en el último día.
+                </Text>
+              ) : (
+                <Stack gap="2">
+                  {report.sends.map((row) => (
+                    <Flex key={row.key} gap="3" align="center" justify="between">
+                      <Text variant="small" fontFamily="ui-monospace, SFMono-Regular, monospace">
+                        {row.key}
+                      </Text>
+                      <Flex gap="3" align="center">
+                        <Text variant="small" color="muted">
+                          {row.day} en el día
+                        </Text>
+                        <Badge
+                          variant={row.peakHour >= peakLimit ? "error" : row.peakHour >= peakLimit / 2 ? "warning" : "outline"}
+                          size="sm"
+                          soft
+                        >
+                          pico {row.peakHour}
+                        </Badge>
+                      </Flex>
+                    </Flex>
+                  ))}
+                </Stack>
+              )}
+
+              <Divider />
+
+              <Stack gap="1">
+                <Text variant="small" weight="semibold">
+                  Límites vigentes
+                </Text>
+                <Text variant="small" color="muted">
+                  Se cambian con una fila en <code>app_settings</code>, sin desplegar. Borrar la
+                  fila vuelve al valor por defecto.
+                </Text>
+              </Stack>
+
+              <Stack gap="2">
+                {report.limits.map((limit) => (
+                  <Flex key={limit.name} gap="3" align="center" justify="between">
+                    <Text variant="small" fontFamily="ui-monospace, SFMono-Regular, monospace">
+                      {limit.name}
+                    </Text>
+                    <Flex gap="2" align="center">
+                      <Text weight="semibold">{limit.value}</Text>
+                      <Badge variant={limit.isDefault ? "outline" : "warning"} size="sm" soft>
+                        {limit.isDefault ? "por defecto" : "ajustado"}
+                      </Badge>
+                    </Flex>
+                  </Flex>
+                ))}
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
 
         <Card surface="outlined">
           <CardContent>

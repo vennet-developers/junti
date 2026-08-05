@@ -389,6 +389,10 @@ export type RsvpInput = z.infer<ReturnType<typeof makeRsvpSchema>>;
  * from the other side (nobody is here who did not join), so this is now the
  * milder guard of the two: it stops a fifty-person group from becoming fifty
  * emails at once by accident.
+ *
+ * The **default**. The live value comes from `app_settings` and is passed in
+ * by the caller, because this module is imported by client code and settings
+ * are server-only. See `src/lib/settings.ts`.
  */
 export const MAX_INVITES_PER_SEND = 20;
 
@@ -402,7 +406,7 @@ export const MAX_INVITES_PER_SEND = 20;
  * caller checks the thing that actually matters, which is whether each one
  * belongs to this event's group with a `joined` membership.
  */
-export const makeInviteSchema = (copy: Copy) =>
+export const makeInviteSchema = (copy: Copy, maxPerSend: number = MAX_INVITES_PER_SEND) =>
   z
     .array(z.uuid())
     .transform((ids) => [...new Set(ids)])
@@ -412,10 +416,10 @@ export const makeInviteSchema = (copy: Copy) =>
         return;
       }
 
-      if (ids.length > MAX_INVITES_PER_SEND) {
+      if (ids.length > maxPerSend) {
         ctx.addIssue({
           code: "custom",
-          message: copy.invites.errorTooMany(MAX_INVITES_PER_SEND, ids.length),
+          message: copy.invites.errorTooMany(maxPerSend, ids.length),
         });
       }
     });

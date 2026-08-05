@@ -24,6 +24,16 @@ export interface FunnelStep {
   count: number;
 }
 
+/** One organizer's send volume, for spotting the afternoon nobody meant. */
+export interface SendVolume {
+  /** The counter key — `invite:<user id>`. Not a name: this is an operator view. */
+  key: string;
+  /** Sends in the last 24 hours. */
+  day: number;
+  /** The busiest single hour in that window, which is what looks unusual. */
+  peakHour: number;
+}
+
 export interface FunnelReport {
   days: number;
   /** Visit → RSVP. The question is where participants drop. */
@@ -34,6 +44,10 @@ export interface FunnelReport {
   groups: FunnelStep[];
   /** Everything recorded in the window, newest first — the raw feed. */
   recent: { name: string; at: Date; source: string }[];
+  /** AC-7 of the send-limits card: unusual volume, per organizer. */
+  sends: SendVolume[];
+  /** The live limits, and whether each is a default or an override. */
+  limits: { name: string; value: number; isDefault: boolean }[];
 }
 
 /**
@@ -62,12 +76,32 @@ const ORGANIZER = ["create_started", "create_step_completed", "event_created", "
 const GROUPS = ["group_created", "group_link_viewed", "group_answered", "group_left"] as const;
 
 export async function loadFunnel(days = 30): Promise<FunnelReport> {
-  const [counts, recent] = await Promise.all([
+  const { getAllSettings } = await import("@/lib/settings");
+
+  const [counts, recent, sends, limits] = await Promise.all([
     countOf([...PARTICIPANT, ...ORGANIZER, ...GROUPS], days),
     db.execute<{ name: string; at: Date; source: string }>(sql`
       select name, at, source from analytics_events
       order by at desc limit 50
     `),
+
+    /*
+      Volume per key over a day, plus the busiest single hour in it. The peak
+      is the signal: a hundred sends spread over a day is a busy organizer, and
+      a hundred in one hour is somebody testing how far this goes.
+    */
+    db.execute<{ key: string; day: string; peak: string }>(sql`
+      select key,
+             sum(count)::text as day,
+             max(count)::text as peak
+      from send_counters
+      where window_start > now() - interval '24 hours'
+      group by key
+      order by sum(count) desc
+      limit 20
+    `),
+
+    getAllSettings(),
   ]);
 
   const step = (name: string): FunnelStep => ({ name, count: counts.get(name) ?? 0 });
@@ -78,5 +112,11 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
     organizer: ORGANIZER.map(step),
     groups: GROUPS.map(step),
     recent: [...recent],
+    sends: [...sends].map((row) => ({
+      key: row.key,
+      day: Number(row.day),
+      peakHour: Number(row.peak),
+    })),
+    limits: limits.map((l) => ({ name: l.name, value: l.value, isDefault: l.isDefault })),
   };
 }
