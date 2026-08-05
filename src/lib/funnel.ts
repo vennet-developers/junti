@@ -78,7 +78,7 @@ async function countOf(names: readonly string[], days: number): Promise<Map<stri
 }
 
 const PARTICIPANT = ["event_viewed", "rsvp_started", "rsvp_completed", "policy_submitted"] as const;
-const ORGANIZER = ["create_started", "create_step_completed", "event_created", "invite_sent"] as const;
+const ORGANIZER = ["landing_viewed", "create_started", "event_created", "invite_sent"] as const;
 const GROUPS = ["group_created", "group_link_viewed", "group_answered", "group_left"] as const;
 
 export async function loadFunnel(days = 30): Promise<FunnelReport> {

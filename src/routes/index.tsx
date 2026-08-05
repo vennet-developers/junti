@@ -7,8 +7,9 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
+import { TrackView } from "@/components/track-view";
 import { Link } from "@tanstack/react-router";
-import { BRAND_DESCRIPTION } from "@/config/brand";
+import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
 import { ROUTES } from "@/config/routes";
 
 /**
@@ -28,14 +29,79 @@ const gate = createServerFn({ method: "GET" }).handler(async () => {
   }
 
   const { copy } = await getViewerCopy();
-  return { title: copy.home.title };
+
+  // Absolute, because Open Graph and JSON-LD both require it — a relative
+  // image URL in a card is an image no scraper can fetch.
+  const { origin } = await import("@/lib/urls");
+
+  return { title: copy.home.title, origin: await origin() };
 });
 
 export const Route = createFileRoute("/")({
   loader: () => gate(),
-  head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title }, { name: "description", content: BRAND_DESCRIPTION }],
-  }),
+  head: ({ loaderData }) => {
+    const origin = loaderData?.origin ?? "";
+    const title = loaderData?.title ?? BRAND_NAME;
+
+    /*
+      The card the link becomes when somebody shares it.
+
+      This product spreads by one person pasting a link into a group chat, so
+      the preview WhatsApp draws is not a marketing detail — it is the first
+      thing most people will ever see of Junti. A link with no card is a grey
+      rectangle and a URL.
+
+      The image is the brand mark rather than a screenshot: a screenshot of an
+      event page would be somebody's roster, and a mock one goes stale the
+      first time the UI changes.
+    */
+    const image = `${origin}/brand/junti-chapa-principal.png`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: BRAND_DESCRIPTION },
+
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: BRAND_NAME },
+        { property: "og:title", content: title },
+        { property: "og:description", content: BRAND_DESCRIPTION },
+        { property: "og:url", content: `${origin}/` },
+        { property: "og:image", content: image },
+        { property: "og:locale", content: "es_CO" },
+
+        // `summary_large_image` rather than `summary`: the small card crops to
+        // a square and the mark is wider than it is tall.
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: BRAND_DESCRIPTION },
+        { name: "twitter:image", content: image },
+      ],
+      links: [{ rel: "canonical", href: `${origin}/` }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          /*
+            `WebApplication` rather than `Organization`: what somebody searching
+            would want to find is the thing they can use, not the company. No
+            `offers` block — pricing is a positioning decision that has not been
+            made, and the card's own guidance says omitting it beats inventing
+            it.
+          */
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            name: BRAND_NAME,
+            description: BRAND_DESCRIPTION,
+            url: `${origin}/`,
+            applicationCategory: "LifestyleApplication",
+            operatingSystem: "Any",
+            inLanguage: "es-CO",
+          }),
+        },
+      ],
+    };
+  },
   component: HomePage,
 });
 
@@ -50,6 +116,11 @@ function HomePage() {
     */
     <Container size="2" px="4" py="7">
       <Stack gap="6">
+        {/* AC-8: the top of the organizer funnel. Without it, `create_started`
+            has no denominator and "how many people who landed here made an
+            event" is unanswerable. */}
+        <TrackView name="landing_viewed" />
+
         {/* The tagline is the heading, not the brand name: the header says
             "Junti" one line above, and repeating it as <h1> reads as a
             stutter. */}

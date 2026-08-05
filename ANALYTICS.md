@@ -1,10 +1,13 @@
 # Analytics — the event taxonomy
 
-> **Status: taxonomy agreed, nothing instrumented yet.** This document is
-> AC-1 of *Instrument product funnel analytics*, and it exists before any
-> code on purpose: renaming an event after data accumulates loses the history
-> it was collected for, and a property added later is null for everything
-> before it.
+> **Status: instrumented.** This document is AC-1 of *Instrument product
+> funnel analytics* and was written before any code on purpose: renaming an
+> event after data accumulates loses the history it was collected for, and a
+> property added later is null for everything before it.
+>
+> The taxonomy is enforced by a closed union in `src/domain/analytics.ts`, with
+> tests asserting the two cannot drift. Adding a name here means adding it
+> there, and vice versa.
 
 ## What this is for
 
@@ -12,8 +15,8 @@ Two questions, and the taxonomy is designed backwards from them:
 
 1. **Where do participants drop?** Between receiving a link and being counted
    as coming.
-2. **Where do organizers abandon?** Between opening the create form and having
-   an event that exists.
+2. **Where do organizers abandon?** Between landing on the page that explains
+   the product and having an event that exists.
 
 Anything that does not help answer one of those is not in the list. The
 temptation with analytics is to record everything because storage is cheap and
@@ -56,6 +59,7 @@ re-renders is not a second view.
 
 | Event | Fired | `props` |
 | --- | --- | --- |
+| `landing_viewed` | Client, on `/` — which only renders for a visitor with no session | `{}` |
 | `create_started` | Client, when `/new` renders for a signed-in organizer | `{ from_duplicate: boolean }` |
 | `create_step_viewed` | Client, on each wizard step | `{ step: 1\|2\|3 }` |
 | `create_step_completed` | Client, when a step validates and advances | `{ step: 1\|2\|3 }` |
@@ -63,6 +67,7 @@ re-renders is not a second view.
 | `event_created` | **Server**, in `createEventFn` after the transaction | `{ event_id, has_cost: boolean, cost_mode, has_group: boolean, policy_count: number }` |
 | `event_edited` | **Server**, in `editEvent` | `{ event_id, changed: string[] }` — field names, never values |
 | `event_closed` | **Server**, in `setEventClosed` | `{ event_id, closed: boolean }` |
+| `event_cancelled` | **Server**, in `cancelEvent` | `{ event_id }` |
 
 The three `create_step_*` events are the whole reason the wizard card lists
 analytics as a dependency: without them "the simplified form is better" is an

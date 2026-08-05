@@ -15,6 +15,7 @@
 /** Every event this app may record. Adding one means adding it to ANALYTICS.md. */
 export const ANALYTICS_EVENTS = [
   // Organizer funnel
+  "landing_viewed",
   "create_started",
   "create_step_viewed",
   "create_step_completed",
@@ -55,6 +56,7 @@ export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
  * server knows those happened.
  */
 export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
+  landing_viewed: "client",
   create_started: "client",
   create_step_viewed: "client",
   create_step_completed: "client",
