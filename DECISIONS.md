@@ -1025,6 +1025,125 @@ Beyond the section 7 list, which I did not touch:
 
 ---
 
+## The axis is role, not device
+
+### 73. "Desktop dashboard plus lite mobile" was the wrong framing, and this replaces it
+
+The original plan named two products: a desktop dashboard for organizers and a
+lite mobile view for everyone else. It is a tempting shape because it matches
+who uses what — organizers really do skew laptop, participants really do arrive
+on a phone from a WhatsApp link — and it is wrong anyway, for a reason that has
+nothing to do with taste: **it makes the device the axis, and the device is a
+proxy for the thing that actually differs.**
+
+What differs is the *role*. An organizer on a phone still needs to see who
+paid. A participant on a laptop still only needs to answer. Two device
+codepaths deliver the opposite: the organizer on the phone gets the lite view
+and loses the thing they opened the app for, and the maintenance cost is paid
+forever, on every screen, by everyone.
+
+So the split is **two role-oriented surfaces, each responsive across every
+width**, and it already exists:
+
+| Surface | Route | Who |
+| --- | --- | --- |
+| Participant flow | `/e/:public_token` | Somebody who was invited |
+| Organizer console | `/e/:public_token/manage/:organizer_token` | Whoever is running the day |
+
+Everything else — `/my-events`, `/approvals`, `/groups`, `/messages`, `/new` —
+hangs off the organizer side, and `/welcome` and `/sign-in` belong to neither
+because they are about the account rather than about an event.
+
+### 74. Most of this ticket had already been paid for, and by a different one
+
+Decision #46's responsive pass shipped the layout half: every route has a
+declared behaviour at `base`, `md` and `lg`; six of twelve deliberately stay
+narrow; density and type step down for a pointer; nothing regressed at 390px.
+That pass also established the two rules this decision would otherwise have to
+argue for — **one codepath per surface**, and **width is the input, never the
+user agent**. Both were re-checked here rather than assumed:
+
+- `grep` for `userAgent` and `navigator.platform` across `src/`: **no hits.**
+- The only `isMobile` reads are in `DrawerContent` and `NotificationBell`, and
+  both swap a *component* — a top sheet for a side panel, a sheet for a
+  popover. That is the sanctioned use. Neither hides or shows content.
+
+### 75. What was NOT done, and it was the part that mattered
+
+The criterion that had never been satisfied is the one about progressive
+disclosure: **organizer-only affordances must be absent for participants, not
+merely hidden.** A conditional in a component cannot deliver that. Whatever the
+loader returns is in the HTML whether or not anything renders it, so "absent"
+is a statement about the payload, not about the JSX.
+
+The participant page was building its payload like this:
+
+```ts
+roster: { ...roster, compliance: undefined } as unknown as Omit<RosterView, "compliance">
+```
+
+The `compliance` map was removed because a `Map` does not serialise. Everything
+else came along because nothing stopped it. Measured against the running app,
+what a **signed-out** visitor holding the link received in the page source:
+
+| Field | What it is | Who renders it |
+| --- | --- | --- |
+| `pendingReview` | receipts waiting on the organizer | the console's review badge |
+| `promotable` | how many could come off the waitlist | the console's promote control |
+| `discrepancies` | who paid an amount that does not match their share | the console's money panel |
+| `userId` × 8 | an account id for every person on the roster | **nothing, anywhere** |
+
+None of it was displayed. That is exactly why it survived: a leak that renders
+nothing looks identical to a page that is correct.
+
+**The fix is a projection, not a check.** `toParticipantView` in
+`src/domain/roster-projection.ts` returns a narrower type, the cast is gone, and
+a new organizer-only field on `RosterView` now has to be added to the projection
+deliberately instead of arriving by spread. A test asserts the *shape* of the
+result rather than any particular field, so the next field fails it too.
+
+It lives in `domain/` because `lib/roster.ts` imports the database client at
+module scope and could not be unit tested — and this is precisely a rule that
+has to be tested rather than reviewed.
+
+### 76. The projection made the payload bigger before it made it smaller
+
+First version mapped each of the seven member lists separately. They are
+overlapping views of the same people — `confirmed` and `pendingPolicy`
+partition `attending`, which is a subset of `members` — and the loader's
+serialiser writes a shared object once and refers back to it afterwards. Seven
+independent `map`s produce seven distinct objects per person, so the same names
+were written out three and four times.
+
+An eight-person roster went **37,797 → 39,414 bytes while removing four
+fields.** Stripping once into a `Map` and having every list point at the same
+objects lands it at **37,358** — 439 bytes below where it started, and the gap
+widens with the roster.
+
+Worth recording because the mistake is invisible in review: the code was
+correct, the output was correct, and the only symptom was a number nobody
+thought to look at.
+
+### 77. One thing found and deliberately left for a decision
+
+For a signed-out reader the roster and the money render inside `GatedPreview` —
+a mask, `inert`, `aria-hidden`, with a sign-in card riding up over it. It is
+unreachable by tab and by screen reader, which is what that component set out
+to do, and the names are still **in the HTML in plain text**.
+
+That is a different axis from this decision. AC-5 is about organizer versus
+participant; this is authenticated versus anonymous, and the link is the access
+control for the whole page anyway — anyone holding it can sign in and read the
+roster legitimately. It is also not entirely accidental: `SignInToJoin`
+deliberately shows five real attending faces as social proof.
+
+Still, the app currently fades a roster it has already handed over. Making the
+gate real means sending a placeholder instead of the data, which changes what
+the teaser is and what the funnel shows. **That is a product call, not a
+refactor**, so it is written down here rather than decided in passing.
+
+---
+
 ## The mistake worth recording
 
 **Every Stackmyth package ships two stylesheets and I imported only one.**

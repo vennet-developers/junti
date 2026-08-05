@@ -17,7 +17,7 @@ import { getCopy } from "@/config/copy";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES } from "@/config/routes";
 import { canDeleteCommitment } from "@/domain/commitments";
-import type { RosterMember, RosterView } from "@/lib/roster";
+import type { ParticipantRosterMember } from "@/lib/roster";
 
 import { CommitmentNote } from "./-commitment-note";
 import { CommitmentPanel } from "./-commitment-panel";
@@ -163,11 +163,22 @@ const getEventPage = createServerFn({ method: "GET" })
         reaction: item.reaction,
       })),
       /*
-        The full roster view crosses the boundary minus its one map — Dates
-        and arrays serialise, the compliance Map was flattened above into
-        `pendingNotes`, which is all this page read from it.
+        The participant projection, not the full view.
+
+        This used to be `{ ...roster, compliance: undefined }` with a cast —
+        the compliance Map was removed because it does not serialise, and
+        everything else came along because nothing stopped it. What came along
+        was `pendingReview`, `promotable`, `discrepancies` and an account id per
+        member: four things only the organizer console renders, sitting in the
+        HTML of every reader's page including a signed-out one.
+
+        Nothing was displaying them, which is exactly the point the card makes —
+        "absent for participants, not merely hidden". `toParticipantView` is
+        where absent is enforced, and the cast is gone with it, so adding an
+        organizer-only field to `RosterView` from now on does not silently
+        arrive here.
       */
-      roster: { ...roster, compliance: undefined } as unknown as Omit<RosterView, "compliance">,
+      roster: roster_.toParticipantView(roster),
     };
   });
 
@@ -228,7 +239,7 @@ function ParticipantPage() {
   };
 
   /** "Waiting on: receipt" under a pending person's name. */
-  const pendingNote = (member: RosterMember) => {
+  const pendingNote = (member: ParticipantRosterMember) => {
     const text = pendingNotes[member.id];
     if (!text) return null;
 
@@ -249,7 +260,7 @@ function ParticipantPage() {
     <Stack gap="6">
       <Divider />
 
-      <MoneySummary roster={roster as never} copy={copy} />
+      <MoneySummary roster={roster} copy={copy} />
 
       {showMoney ? <Divider /> : null}
 

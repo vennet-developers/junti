@@ -7,14 +7,14 @@ import { Text } from "@stackmyth/text";
 
 import type { Copy } from "@/config/copy";
 import { formatMoney } from "@/lib/format";
-import type { RosterMember } from "@/lib/roster";
+import type { ParticipantRosterMember } from "@/lib/roster";
 
 import { PaymentBadge } from "./payment-badge";
 import { PersonAvatar } from "./person-avatar";
 
 export interface RosterGroupProps {
   title: string;
-  members: RosterMember[];
+  members: ParticipantRosterMember[];
   currency: string;
   copy: Copy;
   /** Money is hidden entirely when the event has no cost. */
@@ -40,9 +40,9 @@ export interface RosterGroupProps {
    */
   headingSize?: "section" | "label";
   /** Organizer-only controls, rendered per member. */
-  renderActions?: (member: RosterMember) => ReactNode;
+  renderActions?: (member: ParticipantRosterMember) => ReactNode;
   /** A line under the name — what a pending participant is still waiting on. */
-  renderNote?: (member: RosterMember) => ReactNode;
+  renderNote?: (member: ParticipantRosterMember) => ReactNode;
 }
 
 /**

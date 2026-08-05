@@ -19,7 +19,7 @@ import { formatMoney as formatMoneyLocal } from "@/lib/format";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
 import { managePath, participantPath, whatsAppContactUrl, whatsAppShareUrl } from "@/lib/paths";
-import type { RosterMember, RosterView } from "@/lib/roster";
+import type { ParticipantRosterMember, RosterView } from "@/lib/roster";
 
 import { CommitmentNote } from "../../-commitment-note";
 import { CancelEventControl, CloseEventControl } from "./-close-event-control";
@@ -257,7 +257,7 @@ function ManagePage() {
     roster.members.find((m) => m.id === participantId)?.displayName ?? "";
 
   /** Just the commitment, for groups whose note slot is already spoken for. */
-  const commitmentNote = (member: RosterMember) => {
+  const commitmentNote = (member: ParticipantRosterMember) => {
     const commitment = commitmentByParticipant.get(member.id);
     if (!commitment) return null;
 
@@ -274,7 +274,7 @@ function ManagePage() {
   };
 
   /** What a pending participant still owes the event. */
-  const pendingNote = (member: RosterMember) => {
+  const pendingNote = (member: ParticipantRosterMember) => {
     const text = pendingNotes[member.id];
     if (!text) return null;
 
@@ -293,7 +293,7 @@ function ManagePage() {
    * are bringing. The commitment matters more here than on the participant
    * page: the organizer is the one deciding whether to buy the ice.
    */
-  const contactNote = (member: RosterMember) => {
+  const contactNote = (member: ParticipantRosterMember) => {
     const phone = contacts[member.id];
     const commitment = commitmentByParticipant.get(member.id);
 
@@ -314,7 +314,7 @@ function ManagePage() {
     );
   };
 
-  const participantActions = (member: RosterMember) => (
+  const participantActions = (member: ParticipantRosterMember) => (
     <>
       {showMoney ? (
         <PaymentControls

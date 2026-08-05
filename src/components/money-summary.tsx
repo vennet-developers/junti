@@ -5,13 +5,25 @@ import { Text } from "@stackmyth/text";
 
 import type { Copy } from "@/config/copy";
 import { formatMoney } from "@/lib/format";
-import type { RosterView } from "@/lib/roster";
+import type { ParticipantRosterView } from "@/lib/roster";
 
 /**
  * A server component, so `copy` comes down as a prop rather than through the
  * context hook — and it can, because nothing crosses the client boundary here.
+ *
+ * Takes the PARTICIPANT view, which both surfaces satisfy — the organizer's
+ * full `RosterView` is a superset, so the console passes without a cast and
+ * the participant page passes without one either. It used to take the full
+ * view and the participant page reached it through `as never`, which is the
+ * shape of cast that exists precisely because a boundary is being crossed
+ * that the types would otherwise object to.
+ *
+ * The money is deliberately shared between the two roles. An event where four
+ * people split a cancha is one where everybody can see the pot; what nobody
+ * but the organizer sees is who paid an amount that does not match their
+ * share, which is `discrepancies` and is not in this type.
  */
-export function MoneySummary({ roster, copy }: { roster: RosterView; copy: Copy }) {
+export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; copy: Copy }) {
   const { event, collectedMinor, outstandingMinor, waivedMinor, totalComputedMinor } = roster;
   const money = (amount: number) => formatMoney(amount, event.currency, copy.intlLocale);
 

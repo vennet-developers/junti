@@ -978,3 +978,9 @@ export async function loadPendingApprovals(organizerId: string): Promise<Pending
     hasEvidence: row.evidenceId !== null,
   }));
 }
+
+export type {
+  ParticipantRosterMember,
+  ParticipantRosterView,
+} from "@/domain/roster-projection";
+export { toParticipantView } from "@/domain/roster-projection";
