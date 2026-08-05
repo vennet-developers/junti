@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
 import { CreatedToast } from "@/components/created-toast";
+import { WelcomePrompt } from "@/components/welcome-prompt";
 import { Link } from "@tanstack/react-router";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
@@ -142,7 +143,17 @@ const getAgenda = createServerFn({ method: "GET" }).handler(async () => {
     eventPath: urls.participantPath(event.publicToken),
   }));
 
-  return { title: copy.auth.myEventsTitle, items, pending: invites };
+  /*
+    The welcome is offered once, and only on an empty agenda: somebody with
+    events already knows what this is. Once they have finished or dismissed it
+    the offer stops for good — the screen stays reachable from the account
+    menu, which is the difference between "seen once" and "never wanted again".
+  */
+  const { loadStoredPreferences } = await import("@/lib/preferences");
+  const stored = await loadStoredPreferences(organizer.id);
+  const offerWelcome = stored.welcomeSeenAt === null && items.length === 0;
+
+  return { title: copy.auth.myEventsTitle, items, pending: invites, offerWelcome };
 });
 
 export const Route = createFileRoute("/my-events/")({
@@ -163,7 +174,7 @@ export const Route = createFileRoute("/my-events/")({
 function MyEventsPage() {
   const { copy } = useCopy();
   const { created } = Route.useSearch();
-  const { items, pending } = Route.useLoaderData();
+  const { items, pending, offerWelcome } = Route.useLoaderData();
 
   return (
     /*
@@ -219,6 +230,14 @@ function MyEventsPage() {
             </Link>
           </Button>
         </Box>
+
+        {/*
+          Offered, not imposed, and below the heading and the primary action
+          rather than above them: an empty agenda is the one moment where
+          explaining the product is the most useful thing on the screen, but it
+          is still the second most useful — creating an event is the first.
+        */}
+        {offerWelcome ? <WelcomePrompt /> : null}
 
         <Agenda items={items} pending={pending} />
       </Stack>

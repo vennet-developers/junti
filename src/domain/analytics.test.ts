@@ -50,6 +50,7 @@ describe("the taxonomy is closed and complete", () => {
   it("only lets the browser report what the server cannot know", () => {
     expect(CLIENT_EVENTS).toEqual([
       "landing_viewed",
+      "welcome_step_viewed",
       "create_started",
       "create_step_viewed",
       "create_step_completed",

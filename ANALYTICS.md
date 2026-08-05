@@ -60,6 +60,8 @@ re-renders is not a second view.
 | Event | Fired | `props` |
 | --- | --- | --- |
 | `landing_viewed` | Client, on `/` — which only renders for a visitor with no session | `{}` |
+| `welcome_step_viewed` | Client, on each step of `/welcome` | `{ step: number }` |
+| `welcome_finished` | **Server**, when the welcome is completed or dismissed | `{ step: number, skipped: boolean }` |
 | `create_started` | Client, when `/new` renders for a signed-in organizer | `{ from_duplicate: boolean }` |
 | `create_step_viewed` | Client, on each wizard step | `{ step: 1\|2\|3 }` |
 | `create_step_completed` | Client, when a step validates and advances | `{ step: 1\|2\|3 }` |

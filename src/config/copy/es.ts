@@ -59,6 +59,38 @@ export const es = {
     guestMenuLabel: "Entrar y preferencias",
   },
 
+  welcome: {
+    /*
+      Escrito para quien llegó como invitado a un evento de otro y ahora tiene
+      cuenta. No sabe que puede organizar; eso es lo único que esta pantalla
+      tiene que lograr. Nada de tour, nada de checklist.
+    */
+    link: "Cómo funciona",
+    title: "Cómo funciona Junti",
+    steps: [
+      {
+        heading: "Ya sabes la mitad",
+        body: "Te apuntaste a un evento con un link, sin contraseñas ni instalar nada. Eso es todo lo que tus invitados van a tener que hacer también.",
+      },
+      {
+        heading: "Del otro lado se ve quién viene",
+        body: "Cuando tú organizas, ves la lista en vivo: quién dijo que sí, quién falta por responder y quién quedó en lista de espera si se llenó el cupo.",
+      },
+      {
+        heading: "Y quién ya pagó",
+        body: "Si el evento tiene costo, Junti reparte la cuenta y lleva el registro de quién pagó. La plata te la transfieren a ti directo — Junti no la toca, solo lleva la cuenta.",
+      },
+    ],
+    next: "Siguiente",
+    back: "Atrás",
+    skip: "Saltar",
+    finish: "Crear mi primer evento",
+    finishSecondary: "Ahora no",
+    /* En la agenda vacía, como invitación y no como interrupción. */
+    promptTitle: "¿Nunca has organizado uno?",
+    promptBody: "Toma un minuto ver cómo se ve del otro lado.",
+    promptCta: "Ver cómo funciona",
+  },
   home: {
     title: `${BRAND_NAME} — organiza sin perseguir a nadie`,
     heading: BRAND_NAME,

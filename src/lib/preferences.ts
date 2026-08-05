@@ -57,6 +57,13 @@ export function isTheme(value: unknown): value is Theme {
 }
 
 export interface StoredPreferences {
+  /**
+   * When this account finished or dismissed the welcome, or NULL if never.
+   *
+   * NULL is what makes the agenda offer it. Once set, the offer stops for
+   * good — the welcome itself stays reachable from the account menu.
+   */
+  welcomeSeenAt: Date | null;
   /** NULL means "follow my browser". */
   locale: Locale | null;
   timeZone: string | null;
@@ -170,6 +177,7 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
       theme: userPreferences.theme,
       currency: userPreferences.currency,
       shareMessage: userPreferences.shareMessage,
+      welcomeSeenAt: userPreferences.welcomeSeenAt,
     })
     .from(userPreferences)
     .where(eq(userPreferences.userId, userId))
@@ -183,6 +191,7 @@ export async function loadStoredPreferences(userId: string): Promise<StoredPrefe
     // Validated on the way in, not on the way out: a template that lost its
     // link would leave every share link broken with nothing to explain it.
     shareMessage: row?.shareMessage ?? null,
+    welcomeSeenAt: row?.welcomeSeenAt ?? null,
   };
 }
 

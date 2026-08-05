@@ -1,0 +1,1 @@
+ALTER TABLE "user_preferences" ADD COLUMN "welcome_seen_at" timestamp with time zone;
