@@ -1092,6 +1092,68 @@ export const appSettings = pgTable("app_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Messages, written before they are sent.
+ *
+ * The card's own words for the gap this closes: writing after the transaction
+ * commits "prevents 'email sent, event rolled back' but not 'event created, no
+ * email'". A row here goes in with the domain change, so a process that dies
+ * between the two leaves something to find rather than silence.
+ *
+ * **The happy path still sends immediately.** This is not a queue somebody
+ * waits on: `enqueue` writes the row and the caller dispatches it right away.
+ * The sweep exists for the rows that failed or were never reached — a safety
+ * net, not the mechanism.
+ */
+export const outboxMessages = pgTable(
+  "outbox_messages",
+  {
+    id: uuid("id").primaryKey(),
+
+    /**
+     * What makes two sends the same message. See `dedupeKey` in
+     * `src/domain/outbox.ts` for why it is four parts and not three.
+     *
+     * Unique, which is where idempotency actually lives: a second enqueue of
+     * the same message is a conflict the insert swallows, not a decision any
+     * call site has to remember to make.
+     */
+    dedupeKey: text("dedupe_key").notNull(),
+
+    template: text("template").notNull(),
+    recipient: text("recipient").notNull(),
+    locale: text("locale").notNull(),
+
+    /** The template's own values, and any attachments, as they were built. */
+    payload: jsonb("payload").notNull(),
+
+    /** `pending` | `sent` | `failed` | `suppressed`. */
+    status: text("status").notNull().default("pending"),
+
+    attempts: integer("attempts").notNull().default(0),
+
+    /** When the sweep may try again. Null once the row is terminal. */
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+
+    /**
+     * The provider's own explanation of the last failure.
+     *
+     * Kept because `notify()` swallows failures on purpose — so a send that
+     * did not happen is otherwise invisible, which is the second half of what
+     * this card was for.
+     */
+    lastError: text("last_error"),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("outbox_messages_dedupe_unique").on(table.dedupeKey),
+    // The sweep's query: what is pending and due, oldest first.
+    index("outbox_messages_due_idx").on(table.status, table.nextAttemptAt),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type NewEventRow = typeof events.$inferInsert;
 export type ParticipantRow = typeof participants.$inferSelect;
@@ -1118,5 +1180,6 @@ export type Attendance = (typeof attendance.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatus.enumValues)[number];
 export type PolicySubmissionStatus = (typeof policySubmissionStatus.enumValues)[number];
 export type AppSettingRow = typeof appSettings.$inferSelect;
+export type OutboxMessageRow = typeof outboxMessages.$inferSelect;
 export type AnalyticsEventRow = typeof analyticsEvents.$inferSelect;
 export type NewAnalyticsEventRow = typeof analyticsEvents.$inferInsert;

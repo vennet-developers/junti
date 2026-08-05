@@ -43,7 +43,6 @@ export const createEventFn = createServerFn({ method: "POST" })
       { getViewerCopy },
       { clientIp, rateLimit },
       { formatEventDateTime },
-      { notify },
       { getOrganizer },
       tokens,
       { participantPath },
@@ -56,7 +55,6 @@ export const createEventFn = createServerFn({ method: "POST" })
       import("@/lib/locale"),
       import("@/lib/rate-limit"),
       import("@/lib/format"),
-      import("@/lib/notify"),
       import("@/lib/organizer"),
       import("@/lib/tokens"),
       import("@/lib/urls"),
@@ -64,6 +62,7 @@ export const createEventFn = createServerFn({ method: "POST" })
       import("uuidv7"),
     ]);
     const { field, fieldErrors, makeEventSchema, parsePoliciesField } = validation;
+    const { enqueue, dispatchPending } = await import("@/lib/outbox");
 
     const ip = clientIp(getRequest().headers);
     const limit = rateLimit(`create-event:${ip}`, CREATE_LIMIT, CREATE_WINDOW_MS);
@@ -156,6 +155,34 @@ export const createEventFn = createServerFn({ method: "POST" })
         groupId,
       });
 
+      /*
+        The message goes in with the event, which is the gap this card names:
+        writing after the transaction commits prevents "email sent, event
+        rolled back" but not "event created, no email". Inside, the two either
+        both exist or neither does.
+
+        Dispatched below, after the commit — a provider must not be called
+        from inside a transaction it could hold open.
+      */
+      if (organizer.email) {
+        await enqueue(
+          {
+            message: {
+              to: organizer.email,
+              template: "event-created",
+              locale: input.locale,
+              values: {
+                eventTitle: input.title,
+                eventWhen: formatEventDateTime(input.startsAt, input.timeZone, copy.intlLocale),
+                eventPath: participantPath(publicToken),
+              },
+            },
+            eventId,
+          },
+          tx,
+        );
+      }
+
       if (policies.value.length > 0) {
         await tx.insert(schema.eventPolicies).values(
           policies.value.map((policy, index) => ({
@@ -186,22 +213,11 @@ export const createEventFn = createServerFn({ method: "POST" })
     );
 
     /*
-      The link, in their inbox. After the transaction and outside it: the
-      event exists, and a provider having a bad minute must not undo that.
-      `notify` swallows its own failures and checks the suppression list.
+      Now that the event exists, try to send. The row is already written, so a
+      failure here is a retry the sweep will pick up rather than a message
+      nobody knows was lost.
     */
-    if (organizer.email) {
-      await notify({
-        to: organizer.email,
-        template: "event-created",
-        locale: input.locale,
-        values: {
-          eventTitle: input.title,
-          eventWhen: formatEventDateTime(input.startsAt, input.timeZone, copy.intlLocale),
-          eventPath: participantPath(publicToken),
-        },
-      });
-    }
+    await dispatchPending(5);
 
     /*
       Straight to the history, where the new event is the first card.

@@ -1,7 +1,5 @@
 import "@/server/assert-server";
 
-import { suppressedAmong } from "@/lib/consent";
-import { sendMessage } from "@/lib/email/provider";
 import type { OutboundMessage } from "@/lib/email/port";
 
 /**
@@ -23,16 +21,32 @@ import type { OutboundMessage } from "@/lib/email/port";
  * itself must not be undone because a provider had a bad minute. The result is
  * returned for a caller that wants to log it; nobody has to check it.
  */
-export async function notify(message: OutboundMessage): Promise<"sent" | "suppressed" | "failed"> {
+export async function notify(
+  message: OutboundMessage,
+  /** For the dedupe key. See `src/domain/outbox.ts`. */
+  context: { eventId?: string | null; trigger?: string | null } = {},
+): Promise<"sent" | "suppressed" | "failed"> {
   try {
-    if ((await suppressedAmong([message.to])).size > 0) return "suppressed";
+    const { enqueueAndSend } = await import("@/lib/outbox");
 
-    const result = await sendMessage(message);
-    return result.status === "sent"
-      ? "sent"
-      : result.status === "suppressed"
-        ? "suppressed"
-        : "failed";
+    /*
+      Through the outbox, so every existing call site gets the record for free.
+      The row is written before the send, which is what makes a message that
+      never went out findable — this function still swallows the outcome, and
+      that used to mean a failed send left no trace anywhere.
+
+      A duplicate is reported as sent: the message exists and somebody already
+      dealt with it, which is the answer the caller wants.
+    */
+    const status = await enqueueAndSend({
+      message,
+      eventId: context.eventId,
+      trigger: context.trigger,
+    });
+
+    if (status === "sent" || status === "duplicate") return "sent";
+    if (status === "suppressed") return "suppressed";
+    return "failed";
   } catch {
     // A send that throws must never take the action that triggered it with it.
     return "failed";

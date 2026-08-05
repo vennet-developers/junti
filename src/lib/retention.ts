@@ -3,7 +3,7 @@ import "@/server/assert-server";
 import { and, eq, inArray, isNull, lt } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { analyticsEvents, invitations, policyEvidence, policySubmissions, sendCounters } from "@/db/schema";
+import { analyticsEvents, invitations, outboxMessages, policyEvidence, policySubmissions, sendCounters } from "@/db/schema";
 
 /**
  * Data that expires, and when.
@@ -36,6 +36,20 @@ import { analyticsEvents, invitations, policyEvidence, policySubmissions, sendCo
 const ANALYTICS_EVENT_DAYS = 365;
 
 /**
+ * How long a delivered message stays in the outbox.
+ *
+ * Thirty days answers "did that invitation go out?" for as long as anybody
+ * asks it, and the row holds a recipient's address — so keeping it forever
+ * would quietly turn a dispatch log into a second copy of everyone Junti has
+ * ever written to.
+ *
+ * **Only settled rows.** Anything still pending is waiting for something and
+ * deleting it would lose the message; anything `failed` is the operator's
+ * evidence of what went wrong and is worth more than the space it costs.
+ */
+const SENT_OUTBOX_DAYS = 30;
+
+/**
  * Nobody answers an invitation to an event that happened months ago.
  *
  * Still a defensible guess rather than advice. It was written when an
@@ -64,6 +78,7 @@ const SEND_COUNTER_DAYS = 2;
 export interface RetentionReport {
   invitations: number;
   analyticsEvents: number;
+  outboxMessages: number;
   rejectedEvidence: number;
   sendCounters: number;
 }
@@ -92,6 +107,16 @@ export async function runRetention(): Promise<RetentionReport> {
       ),
     )
     .returning({ id: invitations.id });
+
+  const staleOutbox = await db
+    .delete(outboxMessages)
+    .where(
+      and(
+        inArray(outboxMessages.status, ["sent", "suppressed"]),
+        lt(outboxMessages.createdAt, daysAgo(SENT_OUTBOX_DAYS)),
+      ),
+    )
+    .returning({ id: outboxMessages.id });
 
   const staleAnalytics = await db
     .delete(analyticsEvents)
@@ -136,6 +161,7 @@ export async function runRetention(): Promise<RetentionReport> {
   return {
     invitations: staleInvitations.length,
     analyticsEvents: staleAnalytics.length,
+    outboxMessages: staleOutbox.length,
     rejectedEvidence: rejected.length,
     sendCounters: counters.length,
   };

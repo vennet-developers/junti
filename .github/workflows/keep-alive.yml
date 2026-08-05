@@ -8,6 +8,11 @@
 # GitHub Actions rather than Vercel Cron: Hobby cron is limited in both
 # frequency and count, and Actions is free and more flexible.
 #
+# Three jobs share this one workflow — the heartbeat, the outbox sweep and
+# retention — because a second workflow is a second thing GitHub disables after
+# sixty quiet days, and two of these failing silently have consequences that
+# take weeks to notice.
+#
 # ⚠️ THE FAILURE MODE BEHIND THE FAILURE MODE
 # GitHub disables scheduled workflows automatically after ~60 days of
 # repository inactivity, and emails the repo owner when it does. If this app is
@@ -19,10 +24,16 @@ name: Keep database awake
 
 on:
   schedule:
-    # 07:17 UTC every second day. The odd minute avoids the top-of-hour rush
-    # when GitHub's scheduler is most heavily contended and most likely to
-    # delay or drop a run.
-    - cron: "17 7 */2 * *"
+    # Every six hours, at an odd minute — the odd minute avoids the top-of-hour
+    # rush when GitHub's scheduler is most contended and most likely to delay
+    # or drop a run.
+    #
+    # It used to be every second day, which is all the database pause needs.
+    # The outbox sweep is what raised it: a failed invitation retried two days
+    # later is not a retry, it is an apology. Four runs a day is still nothing
+    # against the Actions allowance, and more frequent pings make the pause
+    # protection strictly better.
+    - cron: "17 */6 * * *"
   # Lets you verify the setup without waiting two days.
   workflow_dispatch:
 
@@ -71,6 +82,43 @@ jobs:
 
           echo "::error::keep-alive did not return 200 after 3 attempts."
           exit 1
+
+      # The outbox sweep: anything written down and not sent. Almost always
+      # nothing — every message is dispatched the moment it is enqueued — so
+      # this is here for what failed, what is waiting out a backoff, and what
+      # was enqueued by a process that died before sending it.
+      #
+      # `continue-on-error` for the same reason as retention below: keeping the
+      # database awake is the job this workflow is named for.
+      - name: Dispatch the outbox
+        continue-on-error: true
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+          RETENTION_SECRET: ${{ secrets.RETENTION_SECRET }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${RETENTION_SECRET:-}" ]; then
+            echo "::warning::RETENTION_SECRET is not set — skipping the outbox."
+            exit 0
+          fi
+
+          code=$(curl --silent --show-error --location \
+                      --max-time 60 \
+                      --request POST \
+                      --header "Authorization: Bearer ${RETENTION_SECRET}" \
+                      --output outbox.json \
+                      --write-out '%{http_code}' \
+                      "${APP_URL%/}/api/outbox" || echo "000")
+
+          if [ "$code" = "200" ]; then
+            echo "Dispatched:"
+            cat outbox.json
+            exit 0
+          fi
+
+          echo "::warning::outbox returned HTTP $code"
+          [ -s outbox.json ] && cat outbox.json
 
       # Retention runs on the same schedule and in the same workflow, because a
       # second workflow is a second thing GitHub can disable after 60 days of

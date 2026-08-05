@@ -48,6 +48,12 @@ export interface FunnelReport {
   sends: SendVolume[];
   /** The live limits, and whether each is a default or an override. */
   limits: { name: string; value: number; isDefault: boolean }[];
+  /** What is stuck in the outbox, and why. */
+  outbox: {
+    pending: number;
+    failed: number;
+    recentErrors: { template: string; error: string; attempts: number }[];
+  };
 }
 
 /**
@@ -76,9 +82,12 @@ const ORGANIZER = ["create_started", "create_step_completed", "event_created", "
 const GROUPS = ["group_created", "group_link_viewed", "group_answered", "group_left"] as const;
 
 export async function loadFunnel(days = 30): Promise<FunnelReport> {
-  const { getAllSettings } = await import("@/lib/settings");
+  const [{ getAllSettings }, { outboxHealth }] = await Promise.all([
+    import("@/lib/settings"),
+    import("@/lib/outbox"),
+  ]);
 
-  const [counts, recent, sends, limits] = await Promise.all([
+  const [counts, recent, sends, limits, outbox] = await Promise.all([
     countOf([...PARTICIPANT, ...ORGANIZER, ...GROUPS], days),
     db.execute<{ name: string; at: Date; source: string }>(sql`
       select name, at, source from analytics_events
@@ -102,6 +111,7 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
     `),
 
     getAllSettings(),
+    outboxHealth(),
   ]);
 
   const step = (name: string): FunnelStep => ({ name, count: counts.get(name) ?? 0 });
@@ -118,5 +128,6 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
       peakHour: Number(row.peak),
     })),
     limits: limits.map((l) => ({ name: l.name, value: l.value, isDefault: l.isDefault })),
+    outbox,
   };
 }

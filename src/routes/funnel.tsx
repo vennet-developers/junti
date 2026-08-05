@@ -217,6 +217,62 @@ function FunnelPage() {
           </CardContent>
         </Card>
 
+        {/* The half of the email card that was never about volume: `notify()`
+            swallows failures on purpose, so before the outbox a send that did
+            not happen was invisible everywhere. This is where it is visible. */}
+        <Card surface="outlined">
+          <CardContent>
+            <Stack gap="4">
+              <Stack gap="1">
+                <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
+                  Correos
+                </Text>
+                <Text variant="small" color="muted">
+                  Pendiente es normal por un momento: cada mensaje se intenta al
+                  escribirlo y el barrido corre cada seis horas. Fallido es que
+                  se agotaron los cinco intentos.
+                </Text>
+              </Stack>
+
+              <Flex gap="4" align="center">
+                <Flex gap="2" align="center">
+                  <Text weight="semibold">{report.outbox.pending}</Text>
+                  <Text variant="small" color="muted">
+                    pendientes
+                  </Text>
+                </Flex>
+                <Flex gap="2" align="center">
+                  <Text weight="semibold">{report.outbox.failed}</Text>
+                  <Badge variant={report.outbox.failed > 0 ? "error" : "outline"} size="sm" soft>
+                    fallidos
+                  </Badge>
+                </Flex>
+              </Flex>
+
+              {report.outbox.recentErrors.length > 0 ? (
+                <Stack gap="2">
+                  <Divider />
+                  {report.outbox.recentErrors.map((row, index) => (
+                    <Stack key={index} gap="1">
+                      <Flex gap="2" align="center" justify="between">
+                        <Text variant="small" fontFamily="ui-monospace, SFMono-Regular, monospace">
+                          {row.template}
+                        </Text>
+                        <Text variant="small" color="muted">
+                          {row.attempts} intentos
+                        </Text>
+                      </Flex>
+                      <Text variant="small" color="error">
+                        {row.error}
+                      </Text>
+                    </Stack>
+                  ))}
+                </Stack>
+              ) : null}
+            </Stack>
+          </CardContent>
+        </Card>
+
         <Card surface="outlined">
           <CardContent>
             <Stack gap="3">

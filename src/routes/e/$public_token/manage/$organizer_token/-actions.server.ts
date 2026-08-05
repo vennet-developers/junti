@@ -20,10 +20,10 @@ import { suppressedAmong } from "@/lib/consent";
 import { claimSends } from "@/lib/send-limit";
 import { getSetting } from "@/lib/settings";
 import { deleteEvidence } from "@/lib/evidence-store";
-import { sendMessage } from "@/lib/email/provider";
 import { notify } from "@/lib/notify";
 import type { OutboundAttachment, OutboundMessage } from "@/lib/email/port";
 import { calendarAttachment } from "@/lib/calendar";
+import { enqueueAndSend } from "@/lib/outbox";
 import { formatEventDateTime } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
@@ -372,13 +372,24 @@ export async function inviteToEvent(
   const results = await Promise.all(
     rows.map((row) => {
       const email = addresses.get(row.userId);
-      if (!email) return Promise.resolve({ status: "skipped" as const });
+      if (!email) return Promise.resolve("skipped" as const);
 
-      return sendMessage(invitationMessage(event, organizerName, email, row.id, copy, calendar));
+      /*
+        Through the outbox: the row is written before the send, so an
+        invitation that never went out is findable instead of silent. The
+        dedupe key is (template, recipient, event, trigger) — no trigger here,
+        which is what makes a repeat of the same batch a no-op.
+      */
+      return enqueueAndSend({
+        message: invitationMessage(event, organizerName, email, row.id, copy, calendar),
+        eventId: event.id,
+      });
     }),
   );
 
-  const failed = results.filter((result) => result.status === "failed").length;
+  // `duplicate` is not a failure: the message already exists and somebody
+  // already dealt with it, which is the answer the organizer wants.
+  const failed = results.filter((result) => result === "failed").length;
 
 
   return {
@@ -435,14 +446,23 @@ export async function resendInvitation(
   const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
 
   const calendar = await calendarAttachment(event);
-  const result = await sendMessage(
-    invitationMessage(event, organizerName, email, row.id, copy, calendar),
-  );
+
+  /*
+    `trigger` is what makes a resend a second message rather than a duplicate
+    the outbox swallows. Keyed on the attempt count, so pressing resend twice
+    in a row genuinely sends twice — which is what the organizer just asked
+    for — while a double-submitted click does not.
+  */
+  const result = await enqueueAndSend({
+    message: invitationMessage(event, organizerName, email, row.id, copy, calendar),
+    eventId: event.id,
+    trigger: `resend:${Date.now()}`,
+  });
 
   await db.update(invitations).set({ sentAt: new Date() }).where(eq(invitations.id, id.data));
 
 
-  return result.status === "failed"
+  return result === "failed"
     ? { errors: { _form: copy.invites.errorSendFailed }, sent: 0, failed: 1 }
     : { errors: {}, ok: true, sent: 1 };
 }
@@ -632,18 +652,21 @@ async function announceCancellation(event: EventRow, copy: Copy): Promise<void> 
       const email = row.userId ? addresses.get(row.userId) : undefined;
       if (!email) return Promise.resolve("failed" as const);
 
-      return notify({
-        to: email,
-        template: "event-cancelled",
-        locale: event.locale,
-        attachments: calendar ? [calendar] : undefined,
-        values: {
-          eventTitle: event.title,
-          eventWhen: when,
-          eventPath: participantPath(event.publicToken),
-          hadPaid: paid.has(row.participantId) ? "1" : "",
+      return notify(
+        {
+          to: email,
+          template: "event-cancelled",
+          locale: event.locale,
+          attachments: calendar ? [calendar] : undefined,
+          values: {
+            eventTitle: event.title,
+            eventWhen: when,
+            eventPath: participantPath(event.publicToken),
+            hadPaid: paid.has(row.participantId) ? "1" : "",
+          },
         },
-      });
+        { eventId: event.id, trigger: "cancel" },
+      );
     }),
   );
 }
