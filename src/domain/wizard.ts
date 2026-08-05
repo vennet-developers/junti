@@ -19,17 +19,25 @@ export type WizardStep = (typeof WIZARD_STEPS)[number];
  * Step 1 — **what, when, where.** Everything that makes the event a thing on a
  * calendar. Somebody who fills only this has a complete event.
  *
- * Step 2 — **who.** The group it invites from, the cap, and what a person has
- * to do to count as confirmed. `policies` lives here rather than with the
- * money on purpose: "Leí las indicaciones" has nothing to do with cost, and
- * putting it in the skippable step would make it unreachable for a free event.
+ * Step 2 — **who, and whether it costs.** The group it invites from, the cap,
+ * what a person has to do to count as confirmed, and the yes/no on money.
  *
- * Step 3 — **money.** Skippable, and the only step that is.
+ * `costMode` belongs here rather than on step 3, and the first version got it
+ * wrong: the question "does this cost anything?" decides whether step 3 is
+ * reached, so asking it *on* step 3 is circular. It also made the wizard claim
+ * three steps to an organizer who would only ever fill two.
+ *
+ * `policies` is here for a related reason: "Leí las indicaciones" has nothing
+ * to do with cost, and on the skippable step it would be unreachable for a
+ * free event.
+ *
+ * Step 3 — **how much.** Only the amount and the currency, and only reached
+ * when step 2 said there is a cost.
  */
 export const STEP_FIELDS = {
   1: ["title", "eventTypeId", "startsAtDate", "startsAtTime", "timeZone", "location", "notes"],
-  2: ["groupId", "capacity", "policies"],
-  3: ["costMode", "currency", "costAmount"],
+  2: ["groupId", "capacity", "policies", "costMode"],
+  3: ["currency", "costAmount"],
 } as const satisfies Record<WizardStep, readonly string[]>;
 
 /** Every field the wizard knows about, flattened. Used to prove the mapping. */
@@ -59,14 +67,24 @@ export function firstStepWithError(fields: readonly string[]): WizardStep | null
 /**
  * Whether step 3 has anything to ask.
  *
- * AC-1 says it is skippable "for events with no money", and the honest reading
- * is that an event with no cost has nothing on that screen but the control
- * that says so. The control itself lives on step 3, so this is about what the
- * *advance* button says on step 2 — "Siguiente" or "Crear evento" — rather
- * than about hiding the step.
+ * With `costMode` on step 2, this is knowable before the organizer gets there,
+ * which is what lets the wizard be honest about its own length: a free event
+ * is a two-step wizard and says so, rather than promising a third screen it
+ * will never show.
  */
 export function isMoneyStepEmpty(costMode: string): boolean {
   return costMode === "none";
+}
+
+/**
+ * How many steps this event actually has.
+ *
+ * The progress indicator's denominator. "Paso 1 de 3" on a form somebody will
+ * finish in two is a small lie that gets noticed — it reads as a step that
+ * went missing.
+ */
+export function totalSteps(costMode: string): number {
+  return isMoneyStepEmpty(costMode) ? 2 : WIZARD_STEPS.length;
 }
 
 /** Clamps anything arriving from a URL. `?step=9` is a typo, not a crash. */

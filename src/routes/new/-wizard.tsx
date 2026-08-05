@@ -57,13 +57,18 @@ export function StepPanel({ active, children }: { active: boolean; children: Rea
  * that makes the steps mean anything, and a control that is sometimes allowed
  * and sometimes not is worse than one that is never there.
  */
-export function WizardProgress({ step }: { step: WizardStep }) {
+export function WizardProgress({ step, total }: { step: WizardStep; total: number }) {
   const { copy } = useCopy();
+
+  // Only the steps this event actually has. A free event is two steps long and
+  // the bar says two — a third segment that never fills reads as something
+  // that went wrong.
+  const shown = WIZARD_STEPS.slice(0, total);
 
   return (
     <Stack gap="2">
       <Flex gap="2" align="center" aria-hidden="true">
-        {WIZARD_STEPS.map((n) => (
+        {shown.map((n) => (
           // `Box background` takes named surfaces, not colours. The filled
           // segment borrows the Progress component's own token so the bar
           // matches every other progress indicator in the app.
@@ -78,7 +83,7 @@ export function WizardProgress({ step }: { step: WizardStep }) {
       </Flex>
 
       <Text variant="small" color="muted">
-        {copy.createEvent.wizard.progress(step, WIZARD_STEPS.length)} ·{" "}
+        {copy.createEvent.wizard.progress(step, total)} ·{" "}
         {copy.createEvent.wizard.stepTitle[step]}
       </Text>
     </Stack>
@@ -130,9 +135,12 @@ export function WizardNav({
         </Button>
       </Box>
 
+      {/* `outline`, not `ghost`. A ghost button under a filled primary reads
+          as a caption rather than a control — it was there and nobody could
+          see it. Going back is a real move in a wizard and needs an edge. */}
       {step > 1 ? (
         <Flex>
-          <Button type="button" size="md" variant="ghost" disabled={pending} onClick={onBack}>
+          <Button type="button" size="md" variant="outline" disabled={pending} onClick={onBack}>
             {copy.createEvent.wizard.back}
           </Button>
         </Flex>

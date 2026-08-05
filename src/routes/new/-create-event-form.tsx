@@ -45,6 +45,7 @@ import {
   nextStep as advance,
   previousStep,
   stepOf,
+  totalSteps,
   type WizardStep,
 } from "@/domain/wizard";
 import {
@@ -382,7 +383,7 @@ function CreateEventFormBody({
               the thing it is about is a question nobody answers. */}
           <DraftOffer onRestore={restoreDraft} />
 
-          <WizardProgress step={step} />
+          <WizardProgress step={step} total={totalSteps(costMode)} />
 
           {/* Every step's fields stay mounted and hidden rather than being
               unmounted. `FormController` holds the values either way, but a
@@ -529,9 +530,10 @@ function CreateEventFormBody({
             )}
           </FormField>
 
-          </StepPanel>
-
-          <StepPanel active={step === 3}>
+          {/* The yes/no on money closes step 2, because the answer decides
+              whether there is a step 3 at all. Asking it on step 3 was
+              circular, and made the wizard promise three steps to somebody
+              who would only fill two. */}
           <ControlledField label={copy.createEvent.fields.costMode}>
             <SelectField
               name="costMode"
@@ -540,6 +542,9 @@ function CreateEventFormBody({
               onValueChange={setCostMode}
             />
           </ControlledField>
+          </StepPanel>
+
+          <StepPanel active={step === 3}>
 
           {costMode !== "none" ? (
             <ControlledField

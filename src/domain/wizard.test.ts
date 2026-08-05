@@ -11,6 +11,7 @@ import {
   normaliseStep,
   previousStep,
   stepOf,
+  totalSteps,
 } from "./wizard";
 
 /**
@@ -54,6 +55,17 @@ describe("every field has exactly one home", () => {
     // money. On step 3 it would be unreachable for a free event.
     expect(STEP_FIELDS[2]).toContain("policies");
     expect(STEP_FIELDS[3]).not.toContain("policies");
+  });
+
+  /**
+   * The circularity the first version had: "does this cost anything?" decides
+   * whether step 3 is reached, so it cannot live there. It also made the
+   * wizard promise three steps to somebody who would only fill two.
+   */
+  it("asks whether there is a cost before the step that depends on the answer", () => {
+    expect(STEP_FIELDS[2]).toContain("costMode");
+    expect(STEP_FIELDS[3]).not.toContain("costMode");
+    expect(STEP_FIELDS[3]).toEqual(["currency", "costAmount"]);
   });
 
   it("knows which step a field is on", () => {
@@ -110,5 +122,13 @@ describe("the money step", () => {
     expect(isMoneyStepEmpty("none")).toBe(true);
     expect(isMoneyStepEmpty("total")).toBe(false);
     expect(isMoneyStepEmpty("per_person")).toBe(false);
+  });
+
+  it("says the wizard is two steps long for a free event", () => {
+    // The denominator the progress indicator shows. Promising three steps to
+    // somebody who fills two reads as a step that went missing.
+    expect(totalSteps("none")).toBe(2);
+    expect(totalSteps("per_person")).toBe(3);
+    expect(totalSteps("total")).toBe(3);
   });
 });
