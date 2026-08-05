@@ -25,7 +25,12 @@ import "@/server/assert-server";
  * name here without writing its renderer does not compile.
  */
 export type MessageTemplate =
-  "pending-approval" | "event-invitation" | "auth-link" | "event-created" | "rsvp-confirmed";
+  | "pending-approval"
+  | "event-invitation"
+  | "auth-link"
+  | "event-created"
+  | "rsvp-confirmed"
+  | "event-cancelled";
 
 export interface OutboundMessage {
   /** Where it goes. An email address today; a phone number for WhatsApp. */

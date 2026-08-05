@@ -100,7 +100,7 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
     return { errors: { _form: copy.errors.rateLimited } };
   }
 
-  if (event.closedAt !== null) {
+  if (event.closedAt !== null || event.cancelledAt !== null) {
     return { errors: { _form: copy.errors.eventClosed } };
   }
 
@@ -219,7 +219,12 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
   const copy = await eventCopy(event.locale);
 
   if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
-  if (event.closedAt !== null) return { errors: { _form: copy.errors.eventClosed } };
+  // Cancelled counts as closed for every write: an event that is not
+  // happening must not take new answers, and the banner above the form has
+  // already said why.
+  if (event.closedAt !== null || event.cancelledAt !== null) {
+    return { errors: { _form: copy.errors.eventClosed } };
+  }
 
   const organizer = await getOrganizer();
   if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
@@ -386,7 +391,12 @@ export async function submitPolicyResponse(
   const copy = await eventCopy(event.locale);
 
   if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
-  if (event.closedAt !== null) return { errors: { _form: copy.errors.eventClosed } };
+  // Cancelled counts as closed for every write: an event that is not
+  // happening must not take new answers, and the banner above the form has
+  // already said why.
+  if (event.closedAt !== null || event.cancelledAt !== null) {
+    return { errors: { _form: copy.errors.eventClosed } };
+  }
 
   const policyId = policyIdSchema.safeParse(field(formData, "policyId"));
   if (!policyId.success) return { errors: { _form: copy.errors.notFound } };
@@ -538,7 +548,12 @@ export async function saveCommitment(publicToken: string, formData: FormData): P
   const copy = await eventCopy(event.locale);
 
   if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
-  if (event.closedAt !== null) return { errors: { _form: copy.errors.eventClosed } };
+  // Cancelled counts as closed for every write: an event that is not
+  // happening must not take new answers, and the banner above the form has
+  // already said why.
+  if (event.closedAt !== null || event.cancelledAt !== null) {
+    return { errors: { _form: copy.errors.eventClosed } };
+  }
 
   const organizer = await getOrganizer();
   if (!organizer) return { errors: { _form: copy.errors.signInRequired } };

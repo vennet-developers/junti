@@ -22,6 +22,7 @@ export const ANALYTICS_EVENTS = [
   "event_created",
   "event_edited",
   "event_closed",
+  "event_cancelled",
 
   // Participant funnel
   "invite_sent",
@@ -61,6 +62,7 @@ export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
   event_created: "server",
   event_edited: "server",
   event_closed: "server",
+  event_cancelled: "server",
 
   invite_sent: "server",
   event_viewed: "client",

@@ -22,7 +22,7 @@ import { managePath, participantPath, whatsAppContactUrl, whatsAppShareUrl } fro
 import type { RosterMember, RosterView } from "@/lib/roster";
 
 import { CommitmentNote } from "../../-commitment-note";
-import { CloseEventControl } from "./-close-event-control";
+import { CancelEventControl, CloseEventControl } from "./-close-event-control";
 import { InviteForm, InvitedList } from "./-invite-panel";
 import { EditEventForm } from "./-manage-forms";
 import { PaymentControls, PromoteControl, RemoveControl } from "./-participant-controls";
@@ -605,6 +605,26 @@ function ManagePage() {
             </Disclosure>
 
             {/* Closing is deliberately last and low-key. */}
+            {/* Cancelling sits under closing and reads quieter, because the
+                two are one misread apart and only one of them can be undone. */}
+            {event.isCancelled ? null : (
+              <Stack gap="2">
+                <Text variant="small" weight="semibold">
+                  {copy.manage.cancelHeading}
+                </Text>
+                <Text variant="small" color="muted">
+                  {copy.manage.cancelHelp}
+                </Text>
+                <Flex>
+                  <CancelEventControl
+                    publicToken={publicToken}
+                    organizerToken={organizerToken}
+                    title={event.title}
+                  />
+                </Flex>
+              </Stack>
+            )}
+
             <CloseEventControl
               publicToken={publicToken}
               organizerToken={organizerToken}

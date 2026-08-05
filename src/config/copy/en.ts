@@ -328,6 +328,17 @@ export const en: Copy = {
   },
 
   manage: {
+    cancelHeading: "Cancel the event",
+    cancelHelp:
+      "Different from closing it. Closing freezes confirmations and the event still happens; cancelling says it is off, emails everyone who said they were coming, and removes it from their calendar.",
+    cancel: "Cancel event",
+    cancelling: "Cancelling…",
+    cancelConfirm: (title: string) => `Cancel ${title}?`,
+    cancelConfirmBody:
+      "We email everyone who said they were coming and remove the event from their calendar. This cannot be undone. The record of who paid what stays exactly as it is.",
+    cancelled: "You cancelled the event.",
+    cancelledNotice: "This event was cancelled.",
+    cancelledNoticeBody: "The organizer called it off. It is not happening.",
     title: "Organizer panel",
     heading: "Organizer panel",
     subheading: "Only you see this screen. Do not share this link.",
@@ -394,6 +405,16 @@ export const en: Copy = {
 
   /** What goes out by email. Each template, beside its subject. */
   emails: {
+  eventCancelled: {
+    subject: (title: string) => `Cancelled: ${title}`,
+    preview: (title: string) => `${title} was cancelled`,
+    heading: "The event was cancelled",
+    body: (title: string) => `${title} is not happening. The organizer cancelled it.`,
+    calendarNote: "We removed it from your calendar if you had added it.",
+    moneyNote:
+      "If you had already paid them, that is between you and the organizer — Junti never moved that money, it only kept the count.",
+    cta: "See the event",
+  },
     pendingApproval: {
       subject: (name: string) => `${name} sent a receipt`,
       preview: (name: string) => `${name} is waiting on your go-ahead.`,

@@ -335,6 +335,17 @@ export const es = {
   },
 
   manage: {
+    cancelHeading: "Cancelar el evento",
+    cancelHelp:
+      "Distinto de cerrarlo. Cerrar congela las confirmaciones y el evento igual se hace; cancelar avisa que no va, le llega un correo a quien dijo que venía, y se les quita del calendario.",
+    cancel: "Cancelar evento",
+    cancelling: "Cancelando…",
+    cancelConfirm: (title: string) => `¿Cancelar ${title}?`,
+    cancelConfirmBody:
+      "Le avisamos por correo a todos los que dijeron que venían y les quitamos el evento del calendario. Esto no se puede deshacer. Las cuentas de quién pagó qué se quedan como están.",
+    cancelled: "Cancelaste el evento.",
+    cancelledNotice: "Este evento se canceló.",
+    cancelledNoticeBody: "El organizador lo canceló. Ya no va.",
     title: "Panel de organizador",
     heading: "Panel de organizador",
     subheading: "Solo tú ves esta pantalla. No compartas este link.",
@@ -402,6 +413,16 @@ export const es = {
 
   /** Lo que sale por correo. Cada plantilla, junto a su asunto. */
   emails: {
+  eventCancelled: {
+    subject: (title: string) => `Se canceló: ${title}`,
+    preview: (title: string) => `Se canceló ${title}`,
+    heading: "Se canceló el evento",
+    body: (title: string) => `${title} no se va a hacer. El organizador lo canceló.`,
+    calendarNote: "Lo quitamos de tu calendario si lo habías agregado.",
+    moneyNote:
+      "Si ya le habías pagado, eso queda entre tú y quien organiza — Junti nunca movió esa plata, solo llevó la cuenta.",
+    cta: "Ver el evento",
+  },
     pendingApproval: {
       subject: (name: string) => `${name} mandó un comprobante`,
       preview: (name: string) => `${name} está esperando tu visto bueno.`,

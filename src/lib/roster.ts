@@ -80,6 +80,8 @@ export interface EventView {
   groupId: string | null;
   closedAt: Date | null;
   isClosed: boolean;
+  /** Called off. A different fact from closed — see the schema. */
+  isCancelled: boolean;
   hasCost: boolean;
 }
 
@@ -137,6 +139,7 @@ function toEventView(row: EventRow, type: { slug: string; label: string }): Even
     groupId: row.groupId,
     closedAt: row.closedAt,
     isClosed: row.closedAt !== null,
+    isCancelled: row.cancelledAt !== null,
     hasCost: row.costMode !== "none",
   };
 }

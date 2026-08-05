@@ -21,6 +21,7 @@ import { claimSends } from "@/lib/send-limit";
 import { getSetting } from "@/lib/settings";
 import { deleteEvidence } from "@/lib/evidence-store";
 import { sendMessage } from "@/lib/email/provider";
+import { notify } from "@/lib/notify";
 import type { OutboundAttachment, OutboundMessage } from "@/lib/email/port";
 import { calendarAttachment } from "@/lib/calendar";
 import { formatEventDateTime } from "@/lib/format";
@@ -525,6 +526,126 @@ export async function setEventClosed(
   track("event_closed", { event_id: event.id, closed });
 
   return { errors: {}, ok: true };
+}
+
+/**
+ * Calls the event off, and tells everyone who was counting on it.
+ *
+ * **Not the same as closing, and the difference is the whole point.** Closing
+ * freezes confirmations for an event that still happens. Cancelling says the
+ * thing is off — which is what a calendar needs to hear before it will remove
+ * the entry from everybody who added it, and what a person needs to hear
+ * before they stop planning their Thursday around it.
+ *
+ * **Owner only.** Every other organizer power is delegable to whoever holds
+ * the manage link, because running the day is delegable. Calling the event off
+ * is not: it is the one action a co-organizer should not be able to take on
+ * the owner's behalf, and it cannot be undone.
+ *
+ * **Payments are not touched.** Somebody who paid for an event that will not
+ * happen is owed money by the organizer, and erasing the record of who paid
+ * what would destroy the only evidence either of them has. Junti never held
+ * that money and cannot refund it; what it can do is keep the count honest.
+ */
+export async function cancelEvent(
+  publicToken: string,
+  organizerToken: string,
+): Promise<ManageState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const organizer = await getOrganizer();
+  if (!organizer || organizer.id !== event.organizerId) {
+    return { errors: { _form: copy.manage.editNotYours } };
+  }
+
+  // Already off. Cancelling twice would send a second round of messages about
+  // something everybody already heard about.
+  if (event.cancelledAt) return { errors: {}, ok: true };
+
+  const cancelledAt = new Date();
+  const sequence = event.calendarSequence + 1;
+
+  await db
+    .update(events)
+    .set({ cancelledAt, calendarSequence: sequence })
+    .where(eq(events.id, event.id));
+
+  track("event_cancelled", { event_id: event.id }, organizer.id);
+
+  /*
+    Told after the fact is recorded, and outside any transaction. The event
+    being cancelled is the fact; a provider having a bad minute must not undo
+    it, and a message that failed to send is recoverable in a way that a
+    half-cancelled event is not.
+  */
+  await announceCancellation({ ...event, cancelledAt, calendarSequence: sequence }, copy);
+
+  return { errors: {}, ok: true };
+}
+
+/**
+ * The messages, and the calendar file that empties the slot.
+ *
+ * Sent only to people who said they were coming. Somebody who answered "no"
+ * already made other plans, and somebody who never answered was never counting
+ * on it — writing to either is noise about a thing they had already let go of.
+ */
+async function announceCancellation(event: EventRow, copy: Copy): Promise<void> {
+  const [{ loadVerifiedEmails }, { calendarAttachment }, { formatEventDateTime }] =
+    await Promise.all([
+      import("@/lib/accounts"),
+      import("@/lib/calendar"),
+      import("@/lib/format"),
+    ]);
+
+  const attending = await db
+    .select({ userId: participants.userId, participantId: participants.id })
+    .from(participants)
+    .where(and(eq(participants.eventId, event.id), eq(participants.attendance, "in")));
+
+  const userIds = attending.map((row) => row.userId).filter((id): id is string => id !== null);
+  if (userIds.length === 0) return;
+
+  const addresses = await loadVerifiedEmails(userIds);
+
+  // Who has money recorded against this event, so the note about refunds only
+  // reaches the people it concerns. Inventing a debt for somebody who owes
+  // nothing is its own kind of alarming.
+  const paid = new Set(
+    (
+      await db
+        .select({ participantId: payments.participantId })
+        .from(payments)
+        .innerJoin(participants, eq(participants.id, payments.participantId))
+        .where(and(eq(participants.eventId, event.id), eq(payments.status, "confirmed")))
+    ).map((row) => row.participantId),
+  );
+
+  const calendar = await calendarAttachment(event, "CANCEL");
+  const when = formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale);
+
+  await Promise.all(
+    attending.map((row) => {
+      const email = row.userId ? addresses.get(row.userId) : undefined;
+      if (!email) return Promise.resolve("failed" as const);
+
+      return notify({
+        to: email,
+        template: "event-cancelled",
+        locale: event.locale,
+        attachments: calendar ? [calendar] : undefined,
+        values: {
+          eventTitle: event.title,
+          eventWhen: when,
+          eventPath: participantPath(event.publicToken),
+          hadPaid: paid.has(row.participantId) ? "1" : "",
+        },
+      });
+    }),
+  );
 }
 
 /**

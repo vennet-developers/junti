@@ -359,6 +359,19 @@ function ParticipantPage() {
             tracking parameter on the link. */}
         <TrackView name="event_viewed" props={{ event_id: event.id, signed_in: signedIn }} />
 
+        {/* Above everything, including the title. Somebody opening this link
+            after the announcement needs the answer before the details. */}
+        {event.isCancelled ? (
+          <Banner
+            variant="error"
+            live="off"
+            icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
+            title={copy.manage.cancelledNotice}
+          >
+            {copy.manage.cancelledNoticeBody}
+          </Banner>
+        ) : null}
+
         <PageBreadcrumb
           label={copy.nav.breadcrumbLabel}
           items={[
@@ -379,7 +392,7 @@ function ParticipantPage() {
 
         {/* The RSVP box comes BEFORE the roster: answering is the point,
             who else is coming is merely interesting. */}
-        {event.isClosed ? (
+        {event.isClosed && !event.isCancelled ? (
           <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.event.closedNotice} />
         ) : signedIn && account ? (
           <JoinPanel
@@ -391,18 +404,18 @@ function ParticipantPage() {
         ) : null}
 
         {/* Immediately under the answer — the rest of the same act. */}
-        {!event.isClosed && myPolicies.length > 0 ? (
+        {!event.isClosed && !event.isCancelled && myPolicies.length > 0 ? (
           <PolicyPanel publicToken={publicToken} items={myPolicies} />
         ) : null}
 
         {/* The sentence after "I'm in". Only for somebody on the roster. */}
-        {!event.isClosed && mineId ? (
+        {!event.isClosed && !event.isCancelled && mineId ? (
           <CommitmentPanel publicToken={publicToken} own={ownCommitment} />
         ) : null}
 
         {/* For a signed-out reader the rest is the teaser with the card on
             top. Somebody who can act on these numbers reads them plainly. */}
-        {signedIn || event.isClosed ? (
+        {signedIn || event.isClosed || event.isCancelled ? (
           eventTail
         ) : (
           <GatedPreview

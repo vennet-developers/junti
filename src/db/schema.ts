@@ -279,6 +279,26 @@ export const events = pgTable(
     closedAt: timestamp("closed_at", { withTimezone: true }),
 
     /**
+     * The event is not happening.
+     *
+     * **A different fact from `closed_at`, and the difference matters.**
+     * Closing freezes confirmations for an event that still happens — the
+     * roster is settled, nobody else gets in. Cancelling says the thing itself
+     * is off, which is what a calendar needs to hear in order to remove the
+     * entry from everybody who added it.
+     *
+     * One-way on purpose. Cancelling sends a message to every person who said
+     * they were coming and pulls the event out of their calendar; un-cancelling
+     * would mean a second announcement contradicting the first, and "actually
+     * it is back on" is a thing to say in the group chat, not a button.
+     *
+     * Payments are never touched. People who paid for something that will not
+     * happen are owed money by the organizer, and erasing the record of who
+     * paid what is the opposite of helpful.
+     */
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+
+    /**
      * How many times this event has changed, for calendar clients.
      *
      * A counter rather than a timestamp because that is what RFC 5545 wants:

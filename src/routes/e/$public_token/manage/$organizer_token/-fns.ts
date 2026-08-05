@@ -75,6 +75,13 @@ export const setEventClosedFn = createServerFn({ method: "POST" })
     return setEventClosed(data.publicToken, data.organizerToken, data.closed);
   });
 
+export const cancelEventFn = createServerFn({ method: "POST" })
+  .validator((data: Tokens) => data)
+  .handler(async ({ data }): Promise<ManageState> => {
+    const { cancelEvent } = await import("./-actions.server");
+    return cancelEvent(data.publicToken, data.organizerToken);
+  });
+
 export const editEventFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }): Promise<ManageState> => {

@@ -16,6 +16,11 @@ import {
 } from "./templates/rsvp-confirmed";
 import { AuthLinkEmail, authLinkSubject, type AuthLinkValues } from "./templates/auth-link";
 import {
+  EventCancelledEmail,
+  eventCancelledSubject,
+  type EventCancelledValues,
+} from "./templates/event-cancelled";
+import {
   EventInvitationEmail,
   eventInvitationSubject,
   type EventInvitationValues,
@@ -136,6 +141,19 @@ async function compose(
 
       return {
         subject: rsvpConfirmedSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "event-cancelled": {
+      const values = message.values as unknown as EventCancelledValues;
+      const element = (
+        <EventCancelledEmail values={values} locale={message.locale} origin={origin} />
+      );
+
+      return {
+        subject: eventCancelledSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };
