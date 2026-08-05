@@ -36,6 +36,7 @@ import {
   loadParticipantRows,
 } from "@/lib/roster";
 import { participantPath } from "@/lib/urls";
+import { track } from "@/lib/analytics";
 import {
   field,
   fieldErrors,
@@ -183,6 +184,12 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
 
   await syncPayments(event);
 
+  track(
+    "rsvp_completed",
+    { event_id: event.id, attendance, one_tap: false, waitlisted: attendance === "waitlisted" },
+    organizer.id,
+  );
+
   return { errors: {}, waitlisted: attendance === "waitlisted" };
 }
 
@@ -287,6 +294,12 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
   await linkInvitationToParticipant(event.id, organizer.id, id);
   await sendRsvpReceipt(event, organizer, attendance, copy);
   await syncPayments(event);
+
+  track(
+    "rsvp_completed",
+    { event_id: event.id, attendance, one_tap: true, waitlisted: attendance === "waitlisted" },
+    organizer.id,
+  );
 
   return { errors: {}, waitlisted: attendance === "waitlisted" };
 }
@@ -453,6 +466,7 @@ export async function submitPolicyResponse(
     await putEvidence(row.id, evidence);
   }
 
+  track("policy_submitted", { event_id: event.id, status, has_evidence: Boolean(evidence) });
 
   return { errors: {}, done: true };
 }

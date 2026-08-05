@@ -3,7 +3,7 @@ import "@/server/assert-server";
 import { and, eq, inArray, isNull, lt } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { invitations, policyEvidence, policySubmissions, sendCounters } from "@/db/schema";
+import { analyticsEvents, invitations, policyEvidence, policySubmissions, sendCounters } from "@/db/schema";
 
 /**
  * Data that expires, and when.
@@ -18,6 +18,22 @@ import { invitations, policyEvidence, policySubmissions, sendCounters } from "@/
  * touched: a five-a-side from two years ago is still the record of who paid
  * whom, and quietly erasing it would break the one thing this product is for.
  */
+
+/**
+ * A year of funnel history, and then it goes.
+ *
+ * Long enough to compare this September with last one, which is the longest
+ * comparison anybody has asked of a product this age. Not kept forever: the
+ * 500 MB allowance is shared with receipt images, which are the real pressure,
+ * and an analytics table that only grows is the kind of leak nobody notices
+ * until the database is full of the least valuable rows in it.
+ *
+ * Deleting rather than rolling up. A monthly rollup would keep the counts and
+ * cost more code than the space it saves at this volume — a couple of MB a
+ * month — and rollups are the sort of thing that quietly disagree with the
+ * raw data they replaced.
+ */
+const ANALYTICS_EVENT_DAYS = 365;
 
 /**
  * Nobody answers an invitation to an event that happened months ago.
@@ -47,6 +63,7 @@ const SEND_COUNTER_DAYS = 2;
 
 export interface RetentionReport {
   invitations: number;
+  analyticsEvents: number;
   rejectedEvidence: number;
   sendCounters: number;
 }
@@ -75,6 +92,11 @@ export async function runRetention(): Promise<RetentionReport> {
       ),
     )
     .returning({ id: invitations.id });
+
+  const staleAnalytics = await db
+    .delete(analyticsEvents)
+    .where(lt(analyticsEvents.at, daysAgo(ANALYTICS_EVENT_DAYS)))
+    .returning({ id: analyticsEvents.id });
 
   /*
     The image only. The submission row stays, so the roster still shows that
@@ -113,6 +135,7 @@ export async function runRetention(): Promise<RetentionReport> {
 
   return {
     invitations: staleInvitations.length,
+    analyticsEvents: staleAnalytics.length,
     rejectedEvidence: rejected.length,
     sendCounters: counters.length,
   };

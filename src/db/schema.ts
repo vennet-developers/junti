@@ -973,6 +973,66 @@ export const groupMembers = pgTable(
 
 // ── Inferred types ───────────────────────────────────────────────────────────
 
+/**
+ * Product analytics, in the database that is already here.
+ *
+ * The alternative was a hosted analytics service, and it was rejected for the
+ * same reason the shared send counter was: Postgres is already running, already
+ * shared by every instance, and already what a request has to talk to. What a
+ * SaaS would have added on top is a funnel UI — and it would have added a
+ * sub-processor to the privacy notice, another international transfer, and a
+ * third-party script receiving behavioural data from a product that spent a
+ * whole card getting rid of exactly that. The funnel UI is four fixed queries.
+ *
+ * **Nothing here is personal data**, and that is load-bearing rather than
+ * incidental: `actor_id` is an account or nothing, and `props` holds ids and
+ * enums, enforced by `stripUnsafeProps`. It is why AC-7 — behaviour under
+ * withdrawn consent — has nothing to withdraw from. The day an event needs a
+ * name or an amount in `props`, that stops being true and the answer changes
+ * with it. See `ANALYTICS.md`.
+ *
+ * Storage: ~250 bytes a row against a 500 MB allowance whose real pressure is
+ * receipt images. Real use is a couple of MB a month, and the retention job
+ * keeps it from being a slow leak.
+ */
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: uuid("id").primaryKey(),
+
+    /** From the closed union in `src/domain/analytics.ts`, never free text. */
+    name: text("name").notNull(),
+
+    /**
+     * The server's clock, always — including for events a browser reported.
+     * A client clock is a guess, sometimes wrong by hours, and occasionally a
+     * lie. Ordering a funnel by it produces steps that happen before the step
+     * before them.
+     */
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+
+    /**
+     * The account, or null for somebody who has not signed in.
+     *
+     * No foreign key on purpose. A deletion request anonymises this to null
+     * (see PRIVACY-RUNBOOK.md) rather than removing the row, because the
+     * counts are what the events are for and one fewer denominator is a
+     * silently wrong number. A cascade would delete them instead.
+     */
+    actorId: uuid("actor_id"),
+
+    /** Which layer fired it — AC-6. Checked against `EVENT_SOURCE`. */
+    source: text("source").notNull(),
+
+    props: jsonb("props").notNull().default({}),
+  },
+  (table) => [
+    // The shape every funnel query has: one event name, newest first, usually
+    // bounded by a date. Nothing reads a single row by id.
+    index("analytics_events_name_at_idx").on(table.name, table.at.desc()),
+  ],
+);
+
 export type EventRow = typeof events.$inferSelect;
 export type NewEventRow = typeof events.$inferInsert;
 export type ParticipantRow = typeof participants.$inferSelect;
@@ -998,3 +1058,5 @@ export type CostMode = (typeof costMode.enumValues)[number];
 export type Attendance = (typeof attendance.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatus.enumValues)[number];
 export type PolicySubmissionStatus = (typeof policySubmissionStatus.enumValues)[number];
+export type AnalyticsEventRow = typeof analyticsEvents.$inferSelect;
+export type NewAnalyticsEventRow = typeof analyticsEvents.$inferInsert;

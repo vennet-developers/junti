@@ -26,6 +26,7 @@ import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
 import { getOrganizer } from "@/lib/organizer";
 import { authorizeOrganizer, findSubmissionInEvent, loadInvitations } from "@/lib/roster";
+import { track } from "@/lib/analytics";
 import { invitableMembers } from "@/domain/groups";
 import { ROUTES } from "@/config/routes";
 import { participantPath } from "@/lib/urls";
@@ -185,6 +186,10 @@ export async function setPaymentStatus(
     roster no longer supports, waiting for the first thing that trusts it.
   */
   if (status.data !== "confirmed") await syncPayments(event);
+
+  // The status, never the amount. The ledger is exact and is the only place
+  // money belongs; a weaker second copy here would be a liability.
+  track("payment_recorded", { event_id: event.id, status: status.data, method: method ?? null });
 
   return { errors: {}, ok: true };
 }
@@ -352,6 +357,12 @@ export async function inviteToEvent(
     */
     .returning({ id: invitations.id, userId: invitations.userId });
 
+  track(
+    "invite_sent",
+    { event_id: event.id, group_id: group.id, batch_size: toSend.length },
+    organizer?.id ?? null,
+  );
+
   const results = await Promise.all(
     rows.map((row) => {
       const email = addresses.get(row.userId);
@@ -503,6 +514,8 @@ export async function setEventClosed(
     .set({ closedAt: closed ? new Date() : null })
     .where(eq(events.id, event.id));
 
+  track("event_closed", { event_id: event.id, closed });
+
   return { errors: {}, ok: true };
 }
 
@@ -590,9 +603,13 @@ export async function editEvent(
     be edited with the manage link alone, by a co-organizer who owns no groups
     at all. Only the account that owns a group may point an event at it.
   */
+  // Hoisted: both the group check and the analytics event below need to know
+  // who is editing, and a co-organizer working purely from the manage link is
+  // legitimately nobody.
+  const editor = await getOrganizer();
+
   let groupId: string | null = null;
   if (input.groupId) {
-    const editor = await getOrganizer();
     const { loadOwnedGroups } = await import("@/lib/groups");
     const owned = editor ? await loadOwnedGroups(editor.id) : [];
 
@@ -622,6 +639,10 @@ export async function editEvent(
       groupId,
     })
     .where(eq(events.id, event.id));
+
+  // Field names, never values: which fields an organizer goes back to change
+  // is the question; what they changed them to is their business.
+  track("event_edited", { event_id: event.id, field_count: Object.keys(input).length }, editor?.id ?? null);
 
   await reconcilePolicies(event.id, policies.value);
 
@@ -702,6 +723,10 @@ export async function reviewSubmission(
     what and when, which is the part a dispute actually turns on.
   */
   if (parsed.data.decision === "approved") await deleteEvidence(submission.id);
+
+  // The decision, not the reason. A rejection reason is free text somebody
+  // typed about another person.
+  track("policy_reviewed", { event_id: event.id, decision: parsed.data.decision });
 
   return { errors: {}, ok: true };
 }

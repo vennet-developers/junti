@@ -156,6 +156,21 @@ export const createEventFn = createServerFn({ method: "POST" })
       }
     });
 
+    // After the transaction and outside it, like the email below: an event
+    // that exists is the fact, and neither a chart nor a provider undoes it.
+    const { track } = await import("@/lib/analytics");
+    track(
+      "event_created",
+      {
+        event_id: eventId,
+        has_cost: input.costMode !== "none",
+        cost_mode: input.costMode,
+        has_group: groupId !== null,
+        policy_count: policies.value.length,
+      },
+      organizer.id,
+    );
+
     /*
       The link, in their inbox. After the transaction and outside it: the
       event exists, and a provider having a bad minute must not undo that.

@@ -5,6 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { TrackView } from "@/components/track-view";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
 
@@ -129,6 +130,9 @@ function NewEventPage() {
             zone (Intl there answers with the server's own, UTC on Vercel), so
             the form detects the real one on mount and this is only what the
             first paint shows. */}
+        {/* The organizer funnel starts here. The per-step events land with the
+              wizard — see ANALYTICS.md. */}
+        <TrackView name="create_started" props={{ from_duplicate: Boolean(prefill) }} />
         <CreateEventForm
           defaultTimeZone={defaultTimeZone}
           defaultCurrency={defaultCurrency}

@@ -10,6 +10,7 @@ import { GROUP_NAME_MAX, MAX_GROUP_MEMBERS, checkGroupName, groupJoinState } fro
 import { resolvePreferences } from "@/lib/preferences";
 import { getOrganizer } from "@/lib/organizer";
 import { createGroupToken } from "@/lib/tokens";
+import { track } from "@/lib/analytics";
 
 /**
  * Group mutations: making one, deleting one, and answering somebody's link.
@@ -59,12 +60,16 @@ export async function createGroup(formData: FormData): Promise<GroupState> {
     };
   }
 
+  const groupId = uuidv7();
+
   await db.insert(groups).values({
-    id: uuidv7(),
+    id: groupId,
     ownerId: organizer.id,
     name: checked.value,
     joinToken: createGroupToken(),
   });
+
+  track("group_created", { group_id: groupId }, organizer.id);
 
   return { errors: {}, ok: true };
 }
@@ -146,6 +151,11 @@ export async function answerGroup(
     status: answer,
   });
 
+  // The decline is the number that matters here: if most people say no, the
+  // consent model is friction rather than a feature, and that is worth
+  // knowing early. See ANALYTICS.md.
+  track("group_answered", { group_id: group.id, answer }, organizer.id);
+
   return { errors: {}, ok: true };
 }
 
@@ -170,6 +180,8 @@ export async function leaveGroup(groupId: string): Promise<GroupState> {
     .update(groupMembers)
     .set({ status: "declined", updatedAt: new Date() })
     .where(and(eq(groupMembers.groupId, id.data), eq(groupMembers.userId, organizer.id)));
+
+  track("group_left", { group_id: id.data }, organizer.id);
 
   return { errors: {}, ok: true };
 }

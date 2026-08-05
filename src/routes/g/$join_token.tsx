@@ -6,6 +6,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
+import { TrackView } from "@/components/track-view";
 import { MAX_GROUP_MEMBERS } from "@/domain/groups";
 import type { GroupJoinState } from "@/domain/groups";
 import { pageTitle } from "@/lib/page-title";
@@ -123,6 +124,13 @@ function JoinGroupPage() {
 
   return (
     <Container size="2" px="4" py="6">
+      {/* Whether a shared link turns into a membership is the only measure of
+          whether groups work. `state` is what the reader was shown. */}
+      <TrackView
+        name="group_link_viewed"
+        props={{ group_id: group.id, state: data.state ?? "signed_out" }}
+      />
+
       <Card surface="outlined">
         <CardContent>
           <Stack gap="5">

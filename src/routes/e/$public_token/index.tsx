@@ -12,6 +12,7 @@ import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RosterGroup } from "@/components/roster-list";
 import { TimeZoneSync } from "@/components/time-zone-sync";
+import { TrackView } from "@/components/track-view";
 import { getCopy } from "@/config/copy";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES } from "@/config/routes";
@@ -352,6 +353,11 @@ function ParticipantPage() {
         {/* Writes this device's zone into a cookie on a first visit, so the
             server renders every later paint on the right clock. */}
         <TimeZoneSync hasPreference={hasTimeZonePreference} />
+
+        {/* The top of the participant funnel. `signedIn` is the closest thing
+            to "did they arrive from an invitation" that does not require a
+            tracking parameter on the link. */}
+        <TrackView name="event_viewed" props={{ event_id: event.id, signed_in: signedIn }} />
 
         <PageBreadcrumb
           label={copy.nav.breadcrumbLabel}
