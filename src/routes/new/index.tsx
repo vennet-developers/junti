@@ -84,8 +84,17 @@ const getCreateContext = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/new/")({
-  validateSearch: (search: Record<string, unknown>): { from?: string } => ({
+  /*
+    `step` lives in the URL so the browser's back button and the wizard's own
+    back control are the same thing — AC-3 asks for exactly that, and any
+    other implementation makes back leave the form entirely.
+
+    Deliberately NOT a loader dependency: changing step must not refetch the
+    catalogue. `loaderDeps` names only `from`.
+  */
+  validateSearch: (search: Record<string, unknown>): { from?: string; step?: number } => ({
     from: typeof search.from === "string" ? search.from : undefined,
+    step: search.step === undefined ? undefined : Number(search.step),
   }),
   loaderDeps: ({ search }) => ({ from: search.from }),
   loader: ({ deps }) => getCreateContext({ data: { from: deps.from } }),

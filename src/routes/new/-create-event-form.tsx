@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
 import {
@@ -9,7 +9,9 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@stackmyth/input-group";
-import { Stack } from "@stackmyth/layout";
+import { Banner } from "@stackmyth/banner";
+import { Button } from "@stackmyth/button";
+import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
@@ -20,15 +22,36 @@ import {
   FormController,
   FormError,
   FormField,
-  SubmitButton,
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
+import { useFormContext } from "@stackmyth/form";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
 import { currencyOptions } from "@/lib/format";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
+import {
+  firstStepWithError,
+  normaliseStep,
+  isMoneyStepEmpty,
+  nextStep as advance,
+  previousStep,
+  stepOf,
+  type WizardStep,
+} from "@/domain/wizard";
+import {
+  clearDraft,
+  dismissDraft,
+  getDraftSnapshot,
+  getServerDraftSnapshot,
+  isWorthRestoring,
+  saveDraft,
+  subscribeDraft,
+} from "@/lib/event-draft";
+import { trackClient } from "@/lib/track-client";
+
+import { StepPanel, StepTracking, WizardNav, WizardProgress } from "./-wizard";
 
 import { createEventFn, type CreateEventState } from "./-fns";
 
@@ -129,6 +152,51 @@ function CreateEventFormBody({
 
   const resolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
 
+  /*
+    The step is React state pushed into history by hand, rather than a router
+    search param — and the difference is not stylistic.
+
+    Driving it through the router remounts this component on every step, which
+    reconstructs `FormController` and silently empties everything typed on the
+    previous step. That is AC-3's "back navigation preserves entered data"
+    failing in the least visible way there is: the form looks fine, it is just
+    blank. Freezing `defaultValues` was not enough — a remount is a remount.
+
+    `pushState` keeps the component mounted, and `popstate` is what makes the
+    browser's back button and the wizard's own back control the same action,
+    which is the other half of AC-3.
+  */
+  const [step, setStep] = useState<WizardStep>(() =>
+    typeof window === "undefined"
+      ? 1
+      : normaliseStep(new URLSearchParams(window.location.search).get("step")),
+  );
+
+  const goTo = useCallback((next: WizardStep) => {
+    setStep(next);
+
+    const url = new URL(window.location.href);
+    if (next === 1) url.searchParams.delete("step");
+    else url.searchParams.set("step", String(next));
+
+    window.history.pushState({ step: next }, "", url);
+  }, []);
+
+  useEffect(() => {
+    function onPop(event: PopStateEvent) {
+      // `state` is what this component pushed; the URL is the fallback for the
+      // entry the router created before the wizard took over.
+      const fromState = (event.state as { step?: number } | null)?.step;
+      setStep(normaliseStep(fromState ?? new URLSearchParams(window.location.search).get("step")));
+    }
+
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  /** Set on a successful create, so the abandonment listener stays quiet. */
+  const [finished, setFinished] = useState(false);
+
   /**
    * Memoised, and it has to be.
    *
@@ -158,14 +226,45 @@ function CreateEventFormBody({
       // A restored draft wins over every default above it.
       ...(draft ?? {}),
     }),
-    [eventTypes, policyOptionsByType, defaultTimeZone, defaultCurrency, defaultLocale, draft],
+    /*
+      Empty deps, deliberately, and this is the second time this object has
+      caused a silent data loss.
+
+      The comment above explains that a new identity is treated as a reset.
+      What it did not anticipate is the wizard: `step` comes from the URL, so
+      changing step re-renders this component, and the loader data arriving as
+      fresh object identities was enough to rebuild this and wipe everything
+      typed on the previous step — AC-3's "back navigation preserves entered
+      data", failing in the least visible way possible.
+
+      Defaults are read exactly once, at construction, so computing them more
+      than once cannot be right. The lint rule wants the deps listed; the
+      component wants them ignored.
+    */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   /**
    * Client validation has passed. Hand the raw values to the server action,
    * which re-validates them before touching the database.
    */
+  /**
+   * Validation passed. On the last step that means create; before it, advance.
+   *
+   * Routing both through the form's own submit is what makes the errors land
+   * inline beside each field — the library paints them, this component does
+   * not invent a second way to show them. AC-2.
+   */
   function submit(data: Record<string, unknown>) {
+    const lastStep = step === 3 || (step === 2 && isMoneyStepEmpty(String(data.costMode ?? "none")));
+
+    if (!lastStep) {
+      trackClient("create_step_completed", { step });
+      goTo(advance(step));
+      return;
+    }
+
     const formData = new FormData();
     for (const [key, value] of Object.entries(data)) {
       formData.set(key, value == null ? "" : String(value));
@@ -173,9 +272,57 @@ function CreateEventFormBody({
 
     startTransition(async () => {
       const result = await createEventFn({ data: formData });
+
       // A successful create redirects, so anything returned is a failure.
-      if (result) setServerState(result);
+      if (!result) {
+        // Only here. Somebody who closed the tab is exactly who the draft is
+        // for; the age check is what eventually cleans up after them.
+        setFinished(true);
+        clearDraft();
+        return;
+      }
+
+      setServerState(result);
+
+      /*
+        The server re-validates everything and can reject a field the client
+        thought was fine — a group that stopped existing between steps, a
+        currency no longer supported. Landing on the last step with an error
+        about the title is how a form becomes unusable, so walk back to the
+        earliest step that carries one.
+      */
+      const back = firstStepWithError(Object.keys(result.errors ?? {}));
+      if (back !== null && back !== step) goTo(back);
     });
+  }
+
+  /**
+   * Validation failed. Whether that blocks the organizer depends on WHERE.
+   *
+   * The resolver checks the whole event, so a missing amount on step 3 fails
+   * while somebody is standing on step 1 — with the error painted on a field
+   * they cannot see. That is the trap this handler exists for: if nothing that
+   * failed belongs to the current step, the failure is not theirs yet and the
+   * wizard advances. `firstStepWithError` then walks them to the earliest step
+   * that does have a problem, so the error is always on screen when it blocks.
+   */
+  function handleInvalid(errors: Record<string, string[]>) {
+    const fields = Object.keys(errors);
+    const blocking = fields.filter((f) => stepOf(f) === step);
+
+    if (blocking.length > 0) return;
+
+    // Nothing on this step is wrong. Advance — or, on the last step, send them
+    // back to whichever earlier step is actually blocking the create.
+    const isLast = step === 3 || (step === 2 && isMoneyStepEmpty(costMode));
+    if (!isLast) {
+      trackClient("create_step_completed", { step });
+      goTo(advance(step));
+      return;
+    }
+
+    const back = firstStepWithError(fields);
+    if (back !== null) goTo(back);
   }
 
   /*
@@ -195,10 +342,18 @@ function CreateEventFormBody({
       mode="onSubmit"
       reValidateMode="onChange"
     >
-      <Form onValid={submit}>
+      <Form onValid={submit} onInvalid={handleInvalid}>
         <Stack gap="5">
           <FormError message={serverState.errors._form} />
 
+          <WizardProgress step={step} />
+
+          {/* Every step's fields stay mounted and hidden rather than being
+              unmounted. `FormController` holds the values either way, but a
+              hidden input keeps its DOM state — a half-typed date, a picker
+              mid-open — and coming back to a step you left should be exactly
+              where you left it, not a re-render of it. */}
+          <StepPanel active={step === 1}>
           <FormField name="title">
             {({ fieldProps, error }) => (
               <ControlledField
@@ -235,6 +390,9 @@ function CreateEventFormBody({
           {/* Optional on purpose. Plenty of events are a link in a chat and
               nothing more; a required group would turn "make a plan" into
               "first, build an address book". */}
+          </StepPanel>
+
+          <StepPanel active={step === 2}>
           <ControlledField
             label={copy.groups.eventFieldLabel}
             description={
@@ -251,7 +409,9 @@ function CreateEventFormBody({
               defaultValue={str(draft?.groupId) ?? ""}
             />
           </ControlledField>
+          </StepPanel>
 
+          <StepPanel active={step === 1}>
           <ControlledField
             label={copy.createEvent.fields.startsAt}
             description={copy.createEvent.fields.startsAtHelp(
@@ -300,6 +460,9 @@ function CreateEventFormBody({
             )}
           </FormField>
 
+          </StepPanel>
+
+          <StepPanel active={step === 2}>
           <FormField name="capacity">
             {({ fieldProps, error }) => (
               <ControlledField
@@ -330,6 +493,9 @@ function CreateEventFormBody({
             )}
           </FormField>
 
+          </StepPanel>
+
+          <StepPanel active={step === 3}>
           <ControlledField label={copy.createEvent.fields.costMode}>
             <SelectField
               name="costMode"
@@ -392,6 +558,9 @@ function CreateEventFormBody({
             </FormField>
           ) : null}
 
+          </StepPanel>
+
+          <StepPanel active={step === 1}>
           <FormField name="notes">
             {({ fieldProps }) => (
               <ControlledField
@@ -416,6 +585,9 @@ function CreateEventFormBody({
             )}
           </FormField>
 
+          </StepPanel>
+
+          <StepPanel active={step === 2}>
           {/* Remounted when the kind changes (`key`), so switching from a
               match to a party swaps the suggestions AND the pre-added rows
               instead of leaving the previous type's choices behind. */}
@@ -426,10 +598,15 @@ function CreateEventFormBody({
             defaultValue={defaultPolicies(policyOptionsByType[eventTypeId])}
           />
 
-          <SubmitButton
+          </StepPanel>
+
+          <WizardControls
+            step={step}
             pending={pending}
-            idleLabel={copy.createEvent.submit}
-            pendingLabel={copy.createEvent.submitting}
+            freeEvent={isMoneyStepEmpty(costMode)}
+            finished={finished}
+            copy={copy}
+            onGoTo={goTo}
           />
         </Stack>
       </Form>
@@ -453,4 +630,116 @@ function defaultPolicies(options: PolicyOptionView[] | undefined): PolicyDraft[]
 /** A draft value as a string, or undefined when it is absent or not one. */
 function str(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+/**
+ * The step gate, the draft and the per-step analytics.
+ *
+ * A child of `<Form>` rather than part of the body above, because all three
+ * need the form store and `useFormContext` only reaches it from inside. It
+ * renders the navigation and nothing else.
+ */
+function WizardControls({
+  step,
+  pending,
+  freeEvent,
+  finished,
+  copy,
+  onGoTo,
+}: {
+  step: WizardStep;
+  pending: boolean;
+  freeEvent: boolean;
+  finished: boolean;
+  copy: ReturnType<typeof useCopy>["copy"];
+  onGoTo: (next: WizardStep) => void;
+}) {
+  const form = useFormContext();
+
+  /**
+   * The draft, offered rather than applied.
+   *
+   * Read in an effect because `localStorage` does not exist on the server and
+   * `FormController` reads its defaults once at construction — so restoring
+   * cannot happen before mount without a hydration mismatch. Offering is also
+   * the better behaviour: silently repopulating a form somebody opened for a
+   * different event is worse than an empty one, because nobody re-reads a
+   * form that looks complete.
+   */
+  const stored = useSyncExternalStore(
+    subscribeDraft,
+    getDraftSnapshot,
+    getServerDraftSnapshot,
+  );
+
+  // Local, so dismissing re-renders this component. The module-level snapshot
+  // is what stops the offer coming back on the next render.
+  const [dismissed, setDismissed] = useState(false);
+  const offered = dismissed ? null : stored;
+
+  /*
+    Saved on a timer rather than on every keystroke: `localStorage` is
+    synchronous and writing on each character of a title is work on the main
+    thread during typing, which is the one moment a form must not stutter.
+    Two seconds is well inside "I closed the tab by accident".
+  */
+  useEffect(() => {
+    if (finished) return;
+
+    const timer = window.setInterval(() => {
+      const values = form?.store.getValues();
+      if (values && isWorthRestoring(values)) saveDraft(values);
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, [form, finished]);
+
+  return (
+    <>
+      <StepTracking step={step} finished={finished} />
+
+      {offered ? (
+        <Banner
+          variant="info"
+          live="off"
+          title={copy.createEvent.wizard.draftFound}
+          action={
+            <Flex gap="2" wrap="wrap">
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  form?.store.reset(offered);
+                  dismissDraft();
+                  setDismissed(true);
+                }}
+              >
+                {copy.createEvent.wizard.draftRestore}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  clearDraft();
+                  dismissDraft();
+                  setDismissed(true);
+                }}
+              >
+                {copy.createEvent.wizard.draftDiscard}
+              </Button>
+            </Flex>
+          }
+        />
+      ) : null}
+
+      <WizardNav
+        step={step}
+        pending={pending}
+        freeEvent={freeEvent}
+        onBack={() => onGoTo(previousStep(step))}
+      />
+    </>
+  );
 }

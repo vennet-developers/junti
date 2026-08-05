@@ -353,3 +353,30 @@ body {
     border-radius: 0;
   }
 }
+
+/*
+  The wizard's progress bar.
+
+  `Box background` takes named surfaces — "raised", "overlay" — and not
+  colours, so a two-state segment cannot be expressed with props alone. Two
+  classes rather than a `style=`: Stackmyth components take their appearance
+  from props or tokens and never from inline style, and this is a plain Box
+  standing in for a component the library does not have.
+
+  Worth a `Stepper` upstream — @stackmyth/stepper exists and is not installed
+  here; it was not adopted because this bar is three segments and a line of
+  text, and the component is a larger thing. Logged as the smallest possible
+  version of that idea.
+*/
+.junti-wizard-dot,
+.junti-wizard-dot--on {
+  transition: background-color 160ms ease;
+}
+
+.junti-wizard-dot {
+  background-color: var(--sm-neutral-soft);
+}
+
+.junti-wizard-dot--on {
+  background-color: var(--sm-primary);
+}

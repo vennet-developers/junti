@@ -78,6 +78,19 @@ export const es = {
   },
 
   createEvent: {
+    wizard: {
+      progress: (step: number, total: number) => `Paso ${step} de ${total}`,
+      stepTitle: {
+        1: "Qué, cuándo y dónde",
+        2: "A quién y con qué requisitos",
+        3: "Cuánto cuesta",
+      } as Record<number, string>,
+      next: "Siguiente",
+      back: "Atrás",
+      draftFound: "Tenías un evento a medio llenar.",
+      draftRestore: "Seguir con ese",
+      draftDiscard: "Empezar de cero",
+    },
     title: "Crear evento",
     heading: "Nuevo evento",
     subheading: "Solo toma un minuto.",

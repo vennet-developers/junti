@@ -334,6 +334,42 @@ export const makeEventClientSchema = (copy: Copy) =>
     }
   });
 
+/**
+ * One step's fields, picked out of the schema the server also parses.
+ *
+ * The card's guidance is explicit: per-step and final validation must derive
+ * from a single schema so they cannot drift. This is that derivation — a
+ * `.pick()` over `eventFieldsSchema`, the same object `makeEventSchema` wraps.
+ * Adding a rule to a field applies it on the step and on submit, and there is
+ * no second place to forget.
+ *
+ * Step 3 carries the cost cross-check as well, because "an amount is required
+ * when there is a cost" is a rule *between* two fields on that step and would
+ * otherwise only fire at the end — on a screen the organizer has left.
+ */
+export function makeStepSchema(copy: Copy, fields: readonly string[]) {
+  const mask = Object.fromEntries(fields.map((f) => [f, true as const]));
+  const picked = eventFieldsSchema(copy).pick(mask as never);
+
+  if (!fields.includes("costAmount")) return picked;
+
+  return picked.superRefine((values: Record<string, unknown>, ctx: z.RefinementCtx) => {
+    if (values.costMode === "none") return;
+
+    const cleaned = String(values.costAmount ?? "").replace(/[\s.,]/g, "");
+
+    if (cleaned.length === 0) {
+      ctx.addIssue({ code: "custom", message: copy.errors.costRequired, path: ["costAmount"] });
+      return;
+    }
+
+    const parsed = Number(cleaned);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      ctx.addIssue({ code: "custom", message: copy.errors.costInvalid, path: ["costAmount"] });
+    }
+  });
+}
+
 const displayNameSchema = (copy: Copy) =>
   z.string().trim().min(1, copy.errors.nameRequired).max(NAME_MAX, copy.errors.nameTooLong);
 

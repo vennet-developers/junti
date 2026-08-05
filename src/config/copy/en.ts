@@ -73,6 +73,19 @@ export const en: Copy = {
   },
 
   createEvent: {
+    wizard: {
+      progress: (step: number, total: number) => `Step ${step} of ${total}`,
+      stepTitle: {
+        1: "What, when and where",
+        2: "Who, and what they must do",
+        3: "What it costs",
+      } as Record<number, string>,
+      next: "Next",
+      back: "Back",
+      draftFound: "You had an event half filled in.",
+      draftRestore: "Carry on with it",
+      draftDiscard: "Start over",
+    },
     title: "Create event",
     heading: "New event",
     subheading: "Takes a minute.",
