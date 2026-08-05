@@ -1,7 +1,10 @@
-import { Box, Container, Stack } from "@stackmyth/layout";
+import { Box, Container, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { Link } from "@tanstack/react-router";
+
 import { useCopy } from "@/components/copy-provider";
+import { ROUTES } from "@/config/routes";
 
 /**
  * Who made this, at the bottom of every page.
@@ -98,6 +101,26 @@ export function AppFooter() {
               className="vennet-mark__art vennet-mark__art--dark"
             />
           </a>
+
+          {/*
+            The two legal pages, and until now neither had a link anywhere a
+            person could find. `/privacy` was reachable from exactly one place —
+            a line inside the onboarding form — which means somebody who signed
+            in with Google never saw it at all, and the terms did not exist.
+
+            A footer is where people look for these, and Google's OAuth consent
+            review expects both to be reachable from the app rather than only
+            from the URLs handed to the form. Router links, not plain anchors:
+            these are pages of this app, unlike the Vennet mark above.
+          */}
+          <Flex gap="4" justify="center" wrap="wrap">
+            <Text variant="small" color="muted">
+              <Link to={ROUTES.privacy}>{copy.footer.privacyLink}</Link>
+            </Text>
+            <Text variant="small" color="muted">
+              <Link to={ROUTES.terms}>{copy.footer.termsLink}</Link>
+            </Text>
+          </Flex>
 
           <Text variant="small" color="muted" align="center">
             {copy.footer.legal(year)}

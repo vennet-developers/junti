@@ -436,6 +436,8 @@ export const es = {
   },
 
   footer: {
+    privacyLink: "Privacidad",
+    termsLink: "Condiciones",
     /*
       La atribución del pie, en app y en correo, idéntica en ambos: «© <año>
       Junti by Vennet». Más corta que la línea legal que el manual de Vennet
@@ -568,6 +570,77 @@ export const es = {
     retentionBody:
       "Mientras tengas cuenta. Si la borras, quitamos tus datos personales y dejamos solo lo que el evento necesita para que las cuentas de los demás sigan cuadrando. Los comprobantes de pago se borran en cuanto el organizador los aprueba: queda el registro de que pagaste, no la foto. Si el tuyo fue rechazado y quieres que lo borremos, escríbenos.",
     version: (v: string) => `Versión de este aviso: ${v}`,
+  },
+
+  /**
+   * Las condiciones del servicio.
+   *
+   * Escritas en el mismo registro que el resto de la app — segunda persona,
+   * frases cortas, sin latinajos — porque unas condiciones que nadie entiende
+   * no informan a nadie, y el punto de tenerlas es que la persona sepa en qué
+   * se está metiendo antes de meterse.
+   *
+   * La sección que más importa es la del dinero, y va de primera después de
+   * qué es esto: Junti lleva la cuenta y NUNCA mueve un peso. Esa frase es la
+   * frontera del producto y ya está en el código, en el aviso de privacidad y
+   * en la landing; acá queda como promesa explícita.
+   */
+  terms: {
+    title: "Condiciones del servicio",
+    heading: "Las reglas del juego",
+    intro:
+      "En corto: Junti te ayuda a organizar planes y a llevar la cuenta de quién pagó. No movemos plata, no somos parte de lo que acuerdes con tu gente, y puedes irte cuando quieras.",
+
+    whatTitle: "Qué es Junti",
+    whatBody:
+      "Junti es una herramienta para organizar planes entre conocidos: creas un evento, compartes un link, la gente dice si viene, y si el plan cuesta algo, la app reparte la cuenta y lleva el registro de quién ya pagó. Es un producto de Vennet, operado por Iván Elías Ávila Almanza. Usarlo es gratis. Al crear una cuenta o apuntarte a un evento aceptas estas condiciones.",
+
+    moneyTitle: "Junti no mueve plata. Nunca.",
+    moneyBody:
+      "Esta es la regla más importante y no tiene excepciones. La app calcula cuánto le toca a cada quien y guarda si el organizador dio ese pago por recibido. Los pagos ocurren por fuera, directamente entre las personas: quien organiza recibe la plata en su cuenta, por el medio que ustedes acuerden. Junti no custodia fondos, no procesa pagos, no cobra comisión sobre nada y no hace reembolsos, porque nunca tuvo el dinero. Un pago marcado como recibido significa que el organizador dijo que lo recibió — no es un comprobante bancario ni una garantía nuestra.",
+
+    betweenTitle: "Lo que acuerdes es entre ustedes",
+    betweenBody:
+      "Junti no es parte de tu evento. Que la cancha esté reservada, que el plan se haga, que alguien devuelva lo que debe o que el organizador cumpla lo que prometió son asuntos entre las personas involucradas. Si hay un desacuerdo sobre plata, sobre un cupo o sobre lo que pasó, se resuelve entre ustedes. Podemos mostrar lo que quedó registrado en la app, y eso es todo lo que podemos hacer.",
+
+    accountTitle: "Tu cuenta",
+    accountBody:
+      "Necesitas ser mayor de edad para tener cuenta. Se entra con Google o con un link a tu correo, así que cuidar tu correo es cuidar tu cuenta. Responde por lo que se haga desde ella. Usa un nombre por el que tu gente te reconozca: es lo que van a ver en la lista, y ponerle a propósito el nombre de otra persona es justamente lo que no se puede.",
+
+    organizerTitle: "Si organizas",
+    organizerBody:
+      "Quien crea un evento responde por él: por la información que publica, por el cobro que define y por cumplir lo que ofreció. Solo puedes invitar a gente de un grupo tuyo — es decir, a personas que aceptaron un link tuyo — y eso es a propósito: nadie recibe correos de alguien a quien nunca le dijo que sí. El link de organizador delega el manejo del día, no la propiedad del evento: quien lo tenga puede marcar pagos e invitar, pero solo tú puedes editar los datos o cancelarlo.",
+
+    contentTitle: "Lo que escribes",
+    contentBody:
+      "Lo que publiques en un evento —el nombre, las notas, lo que dices que vas a llevar— lo ven los demás invitados. Sigue siendo tuyo; solo lo mostramos donde tiene que aparecer para que el plan funcione. No publiques datos de otras personas sin que ellas lo sepan, ni nada ilegal, ofensivo o que no te pertenezca.",
+
+    prohibitedTitle: "Lo que no se puede",
+    prohibitedBody:
+      "Usar Junti para mandar publicidad o mensajes masivos a gente que no aceptó tu grupo. Suplantar a alguien. Intentar entrar a eventos o cuentas que no son tuyas, o adivinar links ajenos. Automatizar el uso de la app de forma que la afecte para los demás. Usarla para actividades ilegales, o para cobrar por cosas que no puedes vender.",
+
+    availabilityTitle: "Disponibilidad y garantías",
+    availabilityBody:
+      "Junti es un producto joven y gratuito, y se ofrece tal como está. Hacemos lo razonable para que funcione y para no perder tus datos, pero no prometemos que esté disponible siempre ni que esté libre de errores. Podemos cambiar o retirar funciones. Si algo importante cambia, lo avisamos por acá o por correo.",
+
+    liabilityTitle: "Hasta dónde respondemos",
+    liabilityBody:
+      "Respondemos por lo que la ley colombiana nos obliga a responder, y no más. En particular, no respondemos por la plata que se muevan entre ustedes, por planes que no se hicieron, ni por lo que otra persona haga en un evento. Nada de esto limita los derechos que la ley te reconoce como consumidor ni los que tienes sobre tus datos personales, que están en el aviso de privacidad.",
+
+    endingTitle: "Cerrar la cuenta",
+    endingBody:
+      "Puedes pedir que borremos tu cuenta cuando quieras, escribiendo a hello@vennet.dev. En el aviso de privacidad está exactamente qué se borra y qué se conserva anonimizado, y por qué: tu participación en eventos donde hubo plata de por medio es también el registro de otras personas. Nosotros podemos suspender una cuenta que esté haciendo algo de la lista de arriba, y avisamos cuando se pueda.",
+
+    changesTitle: "Cambios a estas condiciones",
+    changesBody:
+      "Si cambian, la fecha de abajo cambia con ellas. Cuando el cambio sea de fondo lo avisamos antes de que aplique. Seguir usando la app después de eso es aceptar la versión nueva; si no estás de acuerdo, puedes cerrar tu cuenta.",
+
+    lawTitle: "Ley aplicable",
+    lawBody:
+      "Estas condiciones se rigen por las leyes de la República de Colombia, y cualquier disputa se resuelve ante los jueces colombianos. Para cualquier cosa —dudas, reclamos, o para ejercer tus derechos— escribe a hello@vennet.dev.",
+
+    privacyLink: "Lee también el aviso de privacidad",
+    version: (v: string) => `Vigentes desde: ${v}`,
   },
 
   onboarding: {

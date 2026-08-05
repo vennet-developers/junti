@@ -33,6 +33,12 @@ export const ROUTES = {
    * a notice nobody can reach without an account is not a notice.
    */
   privacy: "/privacy",
+  /**
+   * The terms of service. Public and indexable for the same reason the privacy
+   * notice is, plus one more: Google's OAuth consent screen requires a public
+   * URL for them, and a link behind a session is not one.
+   */
+  terms: "/terms",
   /** Where an unsubscribe link in an email lands. No account required. */
   unsubscribe: "/unsubscribe",
   /**

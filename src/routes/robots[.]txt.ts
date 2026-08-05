@@ -3,7 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 /**
  * What a crawler may look at, which is almost nothing.
  *
- * **Two pages in this app are public: the landing and the privacy notice.**
+ * **Three pages in this app are public: the landing, the privacy notice
+ * and the terms of service.**
  * Everything else is somebody's event behind an unguessable token, somebody's
  * group behind another one, or a screen that requires an account — and every
  * one of those already carries `noindex` in its own `head`. This file is the

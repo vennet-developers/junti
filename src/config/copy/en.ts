@@ -425,6 +425,8 @@ export const en: Copy = {
   },
 
   footer: {
+    privacyLink: "Privacy",
+    termsLink: "Terms",
     /*
       The footer attribution, identical in the app and in email: "© <year>
       Junti by Vennet". Shorter than the legal line Vennet's manual prescribes
@@ -556,6 +558,64 @@ export const en: Copy = {
     retentionBody:
       "While you have an account. If you delete it we remove your personal data and keep only what the event needs so everyone else's numbers still add up. Payment receipts are deleted the moment the organizer approves them: what remains is the record that you paid, not the photo. If yours was rejected and you want it removed, write to us.",
     version: (v: string) => `Version of this notice: ${v}`,
+  },
+
+  terms: {
+    title: "Terms of service",
+    heading: "The rules of the game",
+    intro:
+      "In short: Junti helps you organize plans and keep track of who paid. We never move money, we are not a party to whatever you agree with your people, and you can leave whenever you want.",
+
+    whatTitle: "What Junti is",
+    whatBody:
+      "Junti is a tool for organizing plans among people who know each other: you create an event, share a link, people say whether they are coming, and if the plan costs something, the app splits the bill and keeps track of who has paid. It is a Vennet product, operated by Iván Elías Ávila Almanza. Using it is free. Creating an account or joining an event means accepting these terms.",
+
+    moneyTitle: "Junti never moves money. Ever.",
+    moneyBody:
+      "This is the most important rule and it has no exceptions. The app works out what each person owes and records whether the organizer considers that payment received. Payments happen outside, directly between people: whoever organizes receives the money in their own account, by whatever means you agree on. Junti holds no funds, processes no payments, takes no cut of anything and issues no refunds, because it never had the money. A payment marked as received means the organizer said they received it — it is not a bank receipt and not a guarantee from us.",
+
+    betweenTitle: "Whatever you agree is between you",
+    betweenBody:
+      "Junti is not a party to your event. Whether the pitch is actually booked, whether the plan happens, whether somebody pays back what they owe, or whether the organizer delivers what they promised are matters between the people involved. If there is a disagreement about money, about a spot, or about what happened, you settle it between yourselves. We can show what was recorded in the app, and that is all we can do.",
+
+    accountTitle: "Your account",
+    accountBody:
+      "You need to be of legal age to have an account. You sign in with Google or a link to your email, so looking after your email is looking after your account. You are responsible for what happens from it. Use a name your people recognize: it is what they will see on the list, and deliberately using somebody else's name is exactly what is not allowed.",
+
+    organizerTitle: "If you organize",
+    organizerBody:
+      "Whoever creates an event is responsible for it: for the information they publish, for the cost they set, and for delivering what they offered. You can only invite people from one of your groups — that is, people who accepted a link from you — and that is deliberate: nobody receives email from somebody they never said yes to. The organizer link delegates running the day, not ownership: whoever holds it can mark payments and invite, but only you can edit the details or cancel it.",
+
+    contentTitle: "What you write",
+    contentBody:
+      "What you post on an event — your name, the notes, what you say you are bringing — is visible to the other guests. It stays yours; we only show it where it has to appear for the plan to work. Do not post other people's details without their knowledge, and nothing illegal, offensive, or that is not yours.",
+
+    prohibitedTitle: "What you cannot do",
+    prohibitedBody:
+      "Use Junti to send advertising or bulk messages to people who never accepted your group. Impersonate somebody. Try to reach events or accounts that are not yours, or guess other people's links. Automate the app in ways that degrade it for everybody else. Use it for illegal activity, or to charge for things you cannot sell.",
+
+    availabilityTitle: "Availability and warranties",
+    availabilityBody:
+      "Junti is a young, free product and is offered as it is. We do what is reasonable to keep it working and not to lose your data, but we do not promise it will always be available or free of bugs. We may change or withdraw features. If something important changes, we will say so here or by email.",
+
+    liabilityTitle: "How far our responsibility goes",
+    liabilityBody:
+      "We are responsible for what Colombian law requires us to be responsible for, and no further. In particular, we are not responsible for money you move between yourselves, for plans that did not happen, or for what another person does at an event. None of this limits the rights the law gives you as a consumer, or your rights over your personal data, which are in the privacy notice.",
+
+    endingTitle: "Closing your account",
+    endingBody:
+      "You can ask us to delete your account whenever you want, by writing to hello@vennet.dev. The privacy notice sets out exactly what is deleted and what is kept anonymized, and why: your participation in events where money was involved is also other people's record. We may suspend an account doing any of the things listed above, and we will say so where we can.",
+
+    changesTitle: "Changes to these terms",
+    changesBody:
+      "If they change, the date below changes with them. When a change is substantial we will say so before it applies. Continuing to use the app after that means accepting the new version; if you disagree, you can close your account.",
+
+    lawTitle: "Governing law",
+    lawBody:
+      "These terms are governed by the laws of the Republic of Colombia, and any dispute is settled before Colombian courts. For anything at all — questions, complaints, or exercising your rights — write to hello@vennet.dev.",
+
+    privacyLink: "Read the privacy notice too",
+    version: (v: string) => `In force since: ${v}`,
   },
 
   onboarding: {
