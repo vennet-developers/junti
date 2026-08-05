@@ -1003,6 +1003,26 @@ Beyond the section 7 list, which I did not touch:
   logic only. The rest was verified by driving the real app in a browser at
   390px through the full definition-of-done flow.
 
+- **Receiving payments — decided 2026-08-04, and this one is a product
+  boundary rather than a deferral.** Junti tracks money and does not move it.
+  The organizer sets the cost, the app splits it, people transfer to *him*
+  directly, and he marks who paid; the ledger, the split, the receipts and the
+  approvals queue all stay. What will not be built is money passing through the
+  platform.
+
+  The moment somebody else's pesos touch an account of ours, this stops being a
+  ledger and becomes regulated activity — *recaudo por cuenta de terceros* —
+  which brings a lawyer, possibly a different corporate form, gateway
+  contracts, and a class of risk where being wrong is a regulatory problem
+  rather than a bug. None of that helps a Thursday football game happen. The
+  friction this product actually removes is knowing who is coming and who has
+  paid, and that was solved without touching a peso.
+
+  Two Notion cards closed with it: the payments feature and the legal spike
+  that existed only to gate it. *Define monetization hypothesis* stays open —
+  how Junti earns is a different question from whether Junti moves other
+  people's money, and only one of them was answered here.
+
 ---
 
 ## The mistake worth recording
