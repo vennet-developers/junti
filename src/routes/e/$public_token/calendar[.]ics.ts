@@ -37,13 +37,19 @@ export const Route = createFileRoute("/e/$public_token/calendar.ics")({
           `scripts/check-client-bundle.mjs` is what catches a top-level import
           here.
         */
-        const [{ findEventByPublicToken }, { buildIcs, ICS_FILENAME }, { origin }, { track }] =
-          await Promise.all([
-            import("@/lib/roster"),
-            import("@/domain/ics"),
-            import("@/lib/urls"),
-            import("@/lib/analytics"),
-          ]);
+        const [
+          { findEventByPublicToken },
+          { buildIcs, ICS_FILENAME },
+          { origin },
+          { track },
+          { getOrganizer },
+        ] = await Promise.all([
+          import("@/lib/roster"),
+          import("@/domain/ics"),
+          import("@/lib/urls"),
+          import("@/lib/analytics"),
+          import("@/lib/organizer"),
+        ]);
 
         const event = await findEventByPublicToken(params.public_token);
         if (!event) return new Response("Not found", { status: 404 });
@@ -73,10 +79,28 @@ export const Route = createFileRoute("/e/$public_token/calendar.ics")({
         /*
           The number this route was built to produce. Server-side, so it counts
           what actually happened rather than what a browser was willing to
-          report — and with no actor id, because this works without a session
-          and inventing one would make the count wrong in the other direction.
+          report.
+
+          **The account is attached when there is one, and that is what makes
+          half the gate measurable at all.** The threshold written into
+          GOOGLE-CALENDAR.md is "30% of downloaders do it more than once", and
+          "more than once" needs somebody to count TO. The first version of this
+          route recorded no actor on the grounds that a session is not required
+          — which was tidy and left the repeat-rate impossible to compute.
+
+          Still null for a signed-out reader, and that is honest rather than a
+          gap: they are genuinely anonymous here, exactly like the top of the
+          participant funnel. The share-of-viewers half of the gate counts rows
+          and works for everybody; the repeat half reads accounts and is
+          reported separately, over the population it can actually see.
         */
-        track("calendar_added", { event_id: event.id, cancelled: method === "CANCEL" });
+        const reader = await getOrganizer();
+
+        track(
+          "calendar_added",
+          { event_id: event.id, cancelled: method === "CANCEL" },
+          reader?.id ?? null,
+        );
 
         return new Response(body, {
           headers: {

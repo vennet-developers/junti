@@ -6,6 +6,11 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { pageTitle } from "@/lib/page-title";
+import {
+  CALENDAR_REPEAT_THRESHOLD,
+  CALENDAR_SHARE_THRESHOLD,
+  meetsGate,
+} from "@/domain/calendar-gate";
 
 /**
  * The funnel, as a page somebody can open.
@@ -103,6 +108,59 @@ function Funnel({ title, help, steps }: { title: string; help: string; steps: { 
   );
 }
 
+/**
+ * One half of the calendar gate, with the verdict already reached.
+ *
+ * The badge says *met* or *not met* rather than showing a number beside a
+ * threshold somebody has to remember. That is the entire reason this is not
+ * just another {@link Step}: a funnel step is a measurement, and this is a
+ * decision waiting to be read six weeks after it was designed.
+ *
+ * "Sin datos" is its own state and deliberately not a failure. A null
+ * percentage means the denominator is empty — nobody has visited — which is a
+ * different statement from "people saw it and did not want it", and letting a
+ * quiet fortnight close the gate would be the wrong call made silently.
+ */
+function GateRow({
+  label,
+  detail,
+  percent,
+  threshold,
+}: {
+  label: string;
+  detail: string;
+  percent: number | null;
+  threshold: number;
+}) {
+  const met = meetsGate(percent, threshold);
+
+  return (
+    <Flex gap="3" align="start" justify="between" wrap="wrap">
+      <Stack gap="0" minWidth="0">
+        <Text variant="small" weight="medium">
+          {label}
+        </Text>
+        <Text variant="small" color="muted">
+          {detail}
+        </Text>
+      </Stack>
+
+      <Flex gap="3" align="center">
+        <Text weight="semibold">{percent === null ? "—" : `${percent}%`}</Text>
+        <Box minWidth="6.5rem">
+          <Badge
+            variant={met === null ? "outline" : met ? "success" : "warning"}
+            size="sm"
+            soft
+          >
+            {met === null ? "Sin datos" : met ? `≥ ${threshold}%` : `< ${threshold}%`}
+          </Badge>
+        </Box>
+      </Flex>
+    </Flex>
+  );
+}
+
 function FunnelPage() {
   const report = Route.useLoaderData();
 
@@ -140,6 +198,65 @@ function FunnelPage() {
           help="Si el link se vuelve membresía, y cuántos dicen que no."
           steps={report.groups}
         />
+
+        {/*
+          The Google Calendar gate, read rather than computed by whoever opens
+          this. The card refuses to start until these two numbers clear their
+          thresholds, and the thresholds were written down before any data
+          existed precisely so they could not be adjusted afterwards to justify
+          a decision already made.
+        */}
+        <Card surface="outlined">
+          <CardContent>
+            <Stack gap="4">
+              <Stack gap="1">
+                <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
+                  ¿Alguien quiere calendario?
+                </Text>
+                <Text variant="small" color="muted">
+                  La compuerta de la tarjeta de Google Calendar. Se lee sobre un
+                  ciclo completo de un evento recurrente — seis a ocho semanas.
+                  Una semana es una lectura de novedad, no de hábito.
+                </Text>
+              </Stack>
+
+              <Stack gap="3">
+                <GateRow
+                  label="Descargan el .ics"
+                  detail={`${report.calendar.downloads} de ${report.calendar.viewers} que abrieron un evento`}
+                  percent={report.calendar.sharePercent}
+                  threshold={CALENDAR_SHARE_THRESHOLD}
+                />
+                <GateRow
+                  label="Repiten"
+                  detail={
+                    report.calendar.knownDownloaders === 0
+                      ? "Nadie con sesión ha descargado todavía"
+                      : `${report.calendar.repeatDownloaders} de ${report.calendar.knownDownloaders} con sesión, más de una vez`
+                  }
+                  percent={report.calendar.repeatPercent}
+                  threshold={CALENDAR_REPEAT_THRESHOLD}
+                />
+              </Stack>
+
+              {report.calendar.cancellations > 0 ? (
+                <Text variant="small" color="muted">
+                  {report.calendar.cancellations} descarga
+                  {report.calendar.cancellations === 1 ? "" : "s"} fue
+                  {report.calendar.cancellations === 1 ? "" : "ron"} de un evento
+                  cancelado. No cuentan como demanda — sacar algo muerto del
+                  calendario es lo contrario de querer sincronizarlo.
+                </Text>
+              ) : null}
+
+              <Text variant="small" color="muted">
+                El porcentaje de repetición sólo ve a quien tenía sesión al
+                descargar. La ruta no exige cuenta, así que a un lector anónimo
+                no hay forma de contarlo dos veces.
+              </Text>
+            </Stack>
+          </CardContent>
+        </Card>
 
         {/* AC-7 of the send-limits card. Here rather than on a second admin
             page: there is one owner-gated screen in this product and a second
