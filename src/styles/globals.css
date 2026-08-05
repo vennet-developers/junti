@@ -438,3 +438,26 @@ body {
 .junti-wizard-dot--on {
   background-color: var(--sm-primary);
 }
+
+/*
+  Footer destinations, sized for a thumb.
+
+  Measured at a real 390px viewport: these were 16px tall. This app raised
+  `--sm-density-factor` to 1.4 precisely so no control would land under the 44px
+  guideline (DECISIONS.md #32), and that knob reaches Stackmyth's controls — a
+  bare anchor is not one, so it kept the height of its own text.
+
+  The rule has to sit on the ANCHOR. Padding on a wrapper moves the label and
+  leaves the hit area exactly where it was, which is the version of this fix
+  that looks right in a screenshot and changes nothing for the thumb.
+
+  The class name is deliberately not `sm-`-prefixed: the link-colour rule above
+  skips anything that is, on the grounds that a library class means a component
+  owns the colour. This one is the app's own, so it should still be brand
+  coloured.
+*/
+.junti-footer-link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}

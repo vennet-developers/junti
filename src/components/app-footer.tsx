@@ -66,18 +66,20 @@ export function AppFooter() {
       {/* The same frame width as the header, for the same reason: the shell
           belongs to the app, not to whichever page is under it. */}
       <Container size="4" px="4">
-        <Stack gap="6" py="7">
+        <Stack gap={{ base: "5", md: "6" }} py={{ base: "6", md: "7" }}>
           {/*
-            `1fr` against two `auto` columns: the brand block takes the slack
-            and the two link lists are exactly as wide as their longest label.
-            Two equal thirds would leave the lists floating in space they have
-            no content for.
+            `1fr` against `auto`: the brand block takes the slack and the two
+            link lists are exactly as wide as their longest label. Two equal
+            halves would leave the lists floating in space they have no content
+            for.
+
+            **The lists are their own grid, two columns at EVERY width.**
+            Measured at a real 390px viewport, stacking all three blocks made
+            this footer 539px tall — 64% of a phone screen, for furniture.
+            Side by side they fit in one band and the whole thing drops to
+            roughly a third of that.
           */}
-          <Grid
-            columns={{ base: "1", md: "1fr auto auto" }}
-            gap={{ base: "6", md: "7" }}
-            align="start"
-          >
+          <Grid columns={{ base: "1", md: "1fr auto" }} gap={{ base: "5", md: "7" }} align="start">
             <Stack gap="3" maxWidth="26rem">
               {/* The chapa, not the wordmark — same rule as the header, and the
                   brand allows one per screen. This is the footer's, and the
@@ -93,25 +95,25 @@ export function AppFooter() {
               </Text>
             </Stack>
 
-            <FooterColumn heading={copy.footer.productHeading}>
-              <FooterLink to={ROUTES.newEvent}>{copy.home.cta}</FooterLink>
-              <FooterLink to={ROUTES.welcome}>{copy.welcome.link}</FooterLink>
-              <FooterLink to={ROUTES.myEvents}>{copy.auth.myEventsLink}</FooterLink>
-            </FooterColumn>
+            <Grid columns="repeat(2, auto)" gap={{ base: "4", md: "7" }} align="start">
+              <FooterColumn heading={copy.footer.productHeading}>
+                <FooterLink to={ROUTES.newEvent}>{copy.home.cta}</FooterLink>
+                <FooterLink to={ROUTES.welcome}>{copy.welcome.link}</FooterLink>
+                <FooterLink to={ROUTES.myEvents}>{copy.auth.myEventsLink}</FooterLink>
+              </FooterColumn>
 
-            <FooterColumn heading={copy.footer.legalHeading}>
-              <FooterLink to={ROUTES.privacy}>{copy.footer.privacyLink}</FooterLink>
-              <FooterLink to={ROUTES.terms}>{copy.footer.termsLink}</FooterLink>
-              {/*
-                A real mailto rather than a contact form. The privacy notice and
-                the terms both name this address as the way to exercise a right
-                or file a complaint, and a form that could silently fail would
-                be the worst possible thing to put behind that promise.
-              */}
-              <Text as="span" variant="small">
-                <a href="mailto:hello@vennet.dev">{copy.footer.contactCta}</a>
-              </Text>
-            </FooterColumn>
+              <FooterColumn heading={copy.footer.legalHeading}>
+                <FooterLink to={ROUTES.privacy}>{copy.footer.privacyLink}</FooterLink>
+                <FooterLink to={ROUTES.terms}>{copy.footer.termsLink}</FooterLink>
+                {/*
+                  A real mailto rather than a contact form. The privacy notice
+                  and the terms both name this address as the way to exercise a
+                  right or file a complaint, and a form that could silently fail
+                  would be the worst possible thing to put behind that promise.
+                */}
+                <FooterLink href="mailto:hello@vennet.dev">{copy.footer.contactCta}</FooterLink>
+              </FooterColumn>
+            </Grid>
           </Grid>
 
           <Divider />
@@ -188,15 +190,50 @@ function FooterColumn({ heading, children }: { heading: string; children: React.
   );
 }
 
-/** A destination in a footer column. Small, muted until hovered. */
-function FooterLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Text as="span" variant="small">
-      {/* `to` is typed as a plain string here rather than the router's union:
-          every destination is a `ROUTES` constant, and threading the literal
-          types through two wrappers buys nothing a typo could not already be
-          caught by at the call site. */}
-      <Link to={to as never}>{children}</Link>
+/**
+ * A destination in a footer column.
+ *
+ * **The padding is on the ANCHOR, not around it**, and that is the whole reason
+ * this is a component rather than a `Text` wrapping a link. Measured at a real
+ * 390px viewport these were 16px tall — a sixteen-pixel tap target in an app
+ * that raised `--sm-density-factor` to 1.4 specifically so nothing would be
+ * under 44 (DECISIONS.md #32). Padding on a wrapper would have moved the text
+ * and left the hit area exactly as small.
+ *
+ * A class, and it has to be one. `Box as={Link}` would have put the padding on
+ * the anchor without any CSS, but `Box` does not forward the router's `to` — so
+ * the choice was a class or giving up client-side navigation in the footer.
+ * `.junti-footer-link` deliberately does NOT start with `sm-`, which is what
+ * keeps the app's link-colour rule applying to it; see globals.css.
+ *
+ * Takes either a router destination or an `href`, because one of the three is a
+ * `mailto:` and the router has no opinion about those.
+ */
+function FooterLink({
+  to,
+  href,
+  children,
+}: {
+  to?: string;
+  href?: string;
+  children: React.ReactNode;
+}) {
+  const content = (
+    <Text as="span" variant="small" color="inherit">
+      {children}
     </Text>
+  );
+
+  /* `to` is typed as a plain string rather than the router's union: every
+     destination is a `ROUTES` constant, and threading the literal types
+     through a wrapper buys nothing the call site would not already catch. */
+  return href ? (
+    <a href={href} className="junti-footer-link">
+      {content}
+    </a>
+  ) : (
+    <Link to={to as never} className="junti-footer-link">
+      {content}
+    </Link>
   );
 }
