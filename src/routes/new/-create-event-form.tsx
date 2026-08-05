@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 
 import { Input } from "@stackmyth/input";
 import {
@@ -52,6 +59,8 @@ import {
 import { trackClient } from "@/lib/track-client";
 
 import { StepPanel, StepTracking, WizardNav, WizardProgress } from "./-wizard";
+
+import { useNavigate, useSearch } from "@tanstack/react-router";
 
 import { createEventFn, type CreateEventState } from "./-fns";
 
@@ -153,49 +162,68 @@ function CreateEventFormBody({
   const resolver = useMemo(() => createZodResolver(makeEventClientSchema(copy)), [copy]);
 
   /*
-    The step is React state pushed into history by hand, rather than a router
-    search param — and the difference is not stylistic.
+    The step is a router search param, so the browser's back button and the
+    wizard's own back control are the same action — AC-3.
 
-    Driving it through the router remounts this component on every step, which
-    reconstructs `FormController` and silently empties everything typed on the
-    previous step. That is AC-3's "back navigation preserves entered data"
-    failing in the least visible way there is: the form looks fine, it is just
-    blank. Freezing `defaultValues` was not enough — a remount is a remount.
+    An earlier version pushed history entries by hand, on the theory that the
+    router was remounting this component and wiping the form. **That diagnosis
+    was wrong**: the culprit was `StepPanel` changing the shape of its subtree
+    between active and inactive, which unmounted every input. Going around the
+    router had a cost that took a while to surface — it left the router's idea
+    of the current location behind the browser's, so the `redirect` thrown by
+    a successful create could not be matched and escaped to the error boundary
+    as a bare `Response`. The event was created; the organizer saw a crash.
 
-    `pushState` keeps the component mounted, and `popstate` is what makes the
-    browser's back button and the wizard's own back control the same action,
-    which is the other half of AC-3.
+    Through the router, both work.
   */
-  const [step, setStep] = useState<WizardStep>(() =>
-    typeof window === "undefined"
-      ? 1
-      : normaliseStep(new URLSearchParams(window.location.search).get("step")),
+  const navigate = useNavigate();
+  const search = useSearch({ from: "/new/" }) as { from?: string; step?: number };
+  const step = normaliseStep(search.step);
+
+  const setStep = useCallback(
+    (next: WizardStep) => {
+      /*
+        Search-only, with no `to`. Passing `to: "/new"` from inside the `/new/`
+        route resolves it RELATIVELY — the router built `/new//new/`, could not
+        match it, and the `redirect` thrown by a successful create then escaped
+        to the error boundary as a bare `Response`. The event was created and
+        the organizer saw a crash, which is the worst shape a bug can take.
+      */
+      void navigate({
+        to: ".",
+        search: (prev: { from?: string; step?: number }) => ({ ...prev, step: next }),
+      });
+    },
+    [navigate],
   );
 
-  const goTo = useCallback((next: WizardStep) => {
-    setStep(next);
-
-    const url = new URL(window.location.href);
-    if (next === 1) url.searchParams.delete("step");
-    else url.searchParams.set("step", String(next));
-
-    window.history.pushState({ step: next }, "", url);
-  }, []);
-
-  useEffect(() => {
-    function onPop(event: PopStateEvent) {
-      // `state` is what this component pushed; the URL is the fallback for the
-      // entry the router created before the wizard took over.
-      const fromState = (event.state as { step?: number } | null)?.step;
-      setStep(normaliseStep(fromState ?? new URLSearchParams(window.location.search).get("step")));
-    }
-
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
+  const goTo = setStep;
 
   /** Set on a successful create, so the abandonment listener stays quiet. */
   const [finished, setFinished] = useState(false);
+
+  /**
+   * A restored draft, and the counter that makes it take effect.
+   *
+   * `store.reset(values)` updates the store but not the inputs — they read
+   * their value at construction, so a reset leaves the DOM showing the old
+   * (empty) form over the new values. Remounting `FormController` with the
+   * draft as its `defaultValues` is the path the library itself uses to put
+   * values into fields, so it is the one that cannot disagree with itself.
+   *
+   * The counter is the remount: a changing `key` is what tells React to build
+   * a new controller rather than update the existing one.
+   */
+  const [restored, setRestored] = useState<Record<string, unknown> | null>(null);
+  const [generation, setGeneration] = useState(0);
+
+  function restoreDraft(values: Record<string, unknown>) {
+    setRestored(values);
+    setGeneration((n) => n + 1);
+    // Back to the first step: the restored form is a form nobody has walked
+    // through yet, and dropping somebody on step 2 of it would be a puzzle.
+    setStep(1);
+  }
 
   /**
    * Memoised, and it has to be.
@@ -273,14 +301,16 @@ function CreateEventFormBody({
     startTransition(async () => {
       const result = await createEventFn({ data: formData });
 
-      // A successful create redirects, so anything returned is a failure.
-      if (!result) {
+      if (result?.redirectTo) {
         // Only here. Somebody who closed the tab is exactly who the draft is
         // for; the age check is what eventually cleans up after them.
         setFinished(true);
         clearDraft();
+        void navigate({ href: result.redirectTo });
         return;
       }
+
+      if (!result) return;
 
       setServerState(result);
 
@@ -337,14 +367,20 @@ function CreateEventFormBody({
    */
   return (
     <FormController
+      key={generation}
       resolver={resolver}
-      defaultValues={defaultValues}
+      defaultValues={generation === 0 ? defaultValues : { ...defaultValues, ...(restored ?? {}) }}
       mode="onSubmit"
       reValidateMode="onChange"
     >
       <Form onValid={submit} onInvalid={handleInvalid}>
         <Stack gap="5">
           <FormError message={serverState.errors._form} />
+
+          {/* First thing on the page, and it has to be: it asks a question
+              about the form underneath it, and a question that arrives after
+              the thing it is about is a question nobody answers. */}
+          <DraftOffer onRestore={restoreDraft} />
 
           <WizardProgress step={step} />
 
@@ -605,7 +641,6 @@ function CreateEventFormBody({
             pending={pending}
             freeEvent={isMoneyStepEmpty(costMode)}
             finished={finished}
-            copy={copy}
             onGoTo={goTo}
           />
         </Stack>
@@ -644,38 +679,16 @@ function WizardControls({
   pending,
   freeEvent,
   finished,
-  copy,
   onGoTo,
 }: {
   step: WizardStep;
   pending: boolean;
   freeEvent: boolean;
   finished: boolean;
-  copy: ReturnType<typeof useCopy>["copy"];
   onGoTo: (next: WizardStep) => void;
 }) {
   const form = useFormContext();
 
-  /**
-   * The draft, offered rather than applied.
-   *
-   * Read in an effect because `localStorage` does not exist on the server and
-   * `FormController` reads its defaults once at construction — so restoring
-   * cannot happen before mount without a hydration mismatch. Offering is also
-   * the better behaviour: silently repopulating a form somebody opened for a
-   * different event is worse than an empty one, because nobody re-reads a
-   * form that looks complete.
-   */
-  const stored = useSyncExternalStore(
-    subscribeDraft,
-    getDraftSnapshot,
-    getServerDraftSnapshot,
-  );
-
-  // Local, so dismissing re-renders this component. The module-level snapshot
-  // is what stops the offer coming back on the next render.
-  const [dismissed, setDismissed] = useState(false);
-  const offered = dismissed ? null : stored;
 
   /*
     Saved on a timer rather than on every keystroke: `localStorage` is
@@ -698,41 +711,6 @@ function WizardControls({
     <>
       <StepTracking step={step} finished={finished} />
 
-      {offered ? (
-        <Banner
-          variant="info"
-          live="off"
-          title={copy.createEvent.wizard.draftFound}
-          action={
-            <Flex gap="2" wrap="wrap">
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={() => {
-                  form?.store.reset(offered);
-                  dismissDraft();
-                  setDismissed(true);
-                }}
-              >
-                {copy.createEvent.wizard.draftRestore}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  clearDraft();
-                  dismissDraft();
-                  setDismissed(true);
-                }}
-              >
-                {copy.createEvent.wizard.draftDiscard}
-              </Button>
-            </Flex>
-          }
-        />
-      ) : null}
 
       <WizardNav
         step={step}
@@ -741,5 +719,71 @@ function WizardControls({
         onBack={() => onGoTo(previousStep(step))}
       />
     </>
+  );
+}
+
+/**
+ * "You left one half filled — carry on, or start over?"
+ *
+ * Its own component, and at the top of the form, because it asks a question
+ * about everything below it. It first shipped at the bottom, next to the
+ * navigation, where it read as an unexplained pair of buttons after a form
+ * that already looked empty.
+ *
+ * A child of `<Form>` so `useFormContext` reaches the store — restoring is
+ * `store.reset(values)`, which is the same call the library uses to
+ * initialise, so the restored form behaves exactly like a fresh one.
+ */
+function DraftOffer({ onRestore }: { onRestore: (values: Record<string, unknown>) => void }) {
+  const { copy } = useCopy();
+  /*
+    `useSyncExternalStore` rather than an effect: this is a value the server
+    cannot know and the client can, which is exactly what it exists for. An
+    effect would render once with the wrong answer and then set state, which
+    is a cascading render and, in this codebase, a lint error that is right.
+  */
+  const stored = useSyncExternalStore(subscribeDraft, getDraftSnapshot, getServerDraftSnapshot);
+
+  // Local, so dismissing re-renders. The module-level snapshot is what stops
+  // the offer coming back on the next render.
+  const [dismissed, setDismissed] = useState(false);
+  const offered = dismissed ? null : stored;
+
+  if (!offered) return null;
+
+  return (
+    <Banner
+      variant="info"
+      live="off"
+      title={copy.createEvent.wizard.draftFound}
+      action={
+        <Flex gap="2" wrap="wrap">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              dismissDraft();
+              setDismissed(true);
+              onRestore(offered);
+            }}
+          >
+            {copy.createEvent.wizard.draftRestore}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              clearDraft();
+              dismissDraft();
+              setDismissed(true);
+            }}
+          >
+            {copy.createEvent.wizard.draftDiscard}
+          </Button>
+        </Flex>
+      }
+    />
   );
 }

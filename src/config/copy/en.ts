@@ -82,7 +82,7 @@ export const en: Copy = {
       } as Record<number, string>,
       next: "Next",
       back: "Back",
-      draftFound: "You had an event half filled in.",
+      draftFound: "You had an event creation form in progress. What would you like to do?",
       draftRestore: "Carry on with it",
       draftDiscard: "Start over",
     },

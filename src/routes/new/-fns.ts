@@ -1,10 +1,24 @@
-import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { ROUTES } from "@/config/routes";
 
 export type CreateEventState = {
   errors: Record<string, string>;
+  /**
+   * Where to go after a successful create.
+   *
+   * Returned rather than thrown as a `redirect`. The thrown version worked for
+   * as long as `/new` had no search params — once the wizard put `?step=` in
+   * the URL, the router could no longer resolve the redirect against the
+   * current location and it escaped to the error boundary as a bare
+   * `Response`. The event was created and the organizer saw a crash, which is
+   * the worst shape a bug can take: destructive-looking and completely
+   * invisible in the logs.
+   *
+   * A returned string cannot do that. The caller navigates, and a navigation
+   * that fails fails visibly.
+   */
+  redirectTo?: string;
 };
 
 /** Six new events per hour per IP is far past what a real organizer needs. */
@@ -191,9 +205,7 @@ export const createEventFn = createServerFn({ method: "POST" })
 
     /*
       Straight to the history, where the new event is the first card.
-      `?created=1` because the confirmation has to survive the redirect.
-      Thrown from a server function, the redirect serialises to the client
-      and the router navigates — same shape Next's redirect() had.
+      `?created=1` because the confirmation has to survive the navigation.
     */
-    throw redirect({ to: `${ROUTES.myEvents}?created=1` as never });
+    return { errors: {}, redirectTo: `${ROUTES.myEvents}?created=1` };
   });

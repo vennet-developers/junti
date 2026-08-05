@@ -87,7 +87,7 @@ export const es = {
       } as Record<number, string>,
       next: "Siguiente",
       back: "Atrás",
-      draftFound: "Tenías un evento a medio llenar.",
+      draftFound: "Tenías un formulario de creación de evento en curso, ¿qué quieres hacer?",
       draftRestore: "Seguir con ese",
       draftDiscard: "Empezar de cero",
     },
