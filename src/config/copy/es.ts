@@ -107,6 +107,35 @@ export const es = {
     ],
     disclaimer:
       "Esta app no mueve plata. Solo lleva la cuenta de quién pagó — los pagos los recibes tú, por fuera.",
+
+    /* La promesa de arriba, en una línea que se lee antes de decidir nada. */
+    heroKicker: "Gratis · Sin contraseñas · Sin instalar nada",
+    heroSecondary: "Ya tengo cuenta",
+
+    /*
+      Las tres razones, cada una en una tarjeta. No son funcionalidades: son
+      las tres preguntas que se hace quien organiza algo un jueves. El orden
+      importa — quién viene primero, porque es la que duele antes.
+    */
+    featuresTitle: "Para qué sirve",
+    features: [
+      {
+        title: "Sabes quién viene",
+        body: "La lista se actualiza sola. Nadie tiene que contestar un mensaje que se perdió entre otros cincuenta del grupo.",
+      },
+      {
+        title: "Sabes quién ya pagó",
+        body: "Junti reparte la cuenta y lleva el registro. Se acabó el «yo ya te consigné» sin que nadie sepa si es cierto.",
+      },
+      {
+        title: "Nadie tiene que instalar nada",
+        body: "Tus invitados abren un link y responden. Sin cuenta previa, sin descargar una app para ir a jugar fútbol.",
+      },
+    ],
+
+    /* El cierre. Repite la acción una vez, abajo, para quien leyó todo. */
+    closingTitle: "Tu próximo plan, sin perseguir a nadie",
+    closingBody: "Toma un minuto crear el primero. Si no te sirve, no perdiste nada.",
   },
 
   createEvent: {
@@ -438,6 +467,19 @@ export const es = {
   footer: {
     privacyLink: "Privacidad",
     termsLink: "Condiciones",
+
+    /* Los encabezados de columna. Dos palabras cada uno: un pie con títulos
+       largos deja de leerse como índice y empieza a leerse como contenido. */
+    productHeading: "Producto",
+    legalHeading: "Legal",
+    contactHeading: "Contacto",
+
+    /* La línea bajo la marca. Dice qué es esto para quien cae en el pie de una
+       página legal sin haber visto la portada. */
+    blurb: "Organiza planes con tu gente y lleva la cuenta de quién ya pagó. Sin contraseñas, sin apps que instalar.",
+
+    contactCta: "hello@vennet.dev",
+    contactHelp: "Dudas, reclamos o para ejercer tus derechos.",
     /*
       La atribución del pie, en app y en correo, idéntica en ambos: «© <año>
       Junti by Vennet». Más corta que la línea legal que el manual de Vennet

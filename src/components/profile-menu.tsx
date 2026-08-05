@@ -246,7 +246,7 @@ export function ProfileMenu({
               {/* Reachable forever, not only while the agenda is empty: read
                   once is not the same as never wanted again. */}
               <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
-                <Link to="/welcome" onClick={closeUnlessOpeningElsewhere}>
+                <Link to={ROUTES.welcome} onClick={closeUnlessOpeningElsewhere}>
                   <Flex gap="3" align="center">
                     <InfoIcon size={18} aria-hidden="true" />
                     {copy.welcome.link}

@@ -50,6 +50,11 @@ export const ROUTES = {
   /** Every receipt waiting on this organizer, across all of their events. */
   approvals: "/approvals",
   /**
+   * What Junti is, for somebody who has only ever been a guest. Reachable from
+   * the account menu and the footer, and offered once on an empty agenda.
+   */
+  welcome: "/welcome",
+  /**
    * The organizer's groups: who they invite, over and over.
    *
    * Top-level rather than under an event, because a group outlives any one

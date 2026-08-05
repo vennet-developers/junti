@@ -181,9 +181,17 @@ body {
   inner span rather than on the element itself — nothing was there to out-rank.
   Every call-to-action in the app turned orange, including white-on-ink buttons.
 
-  So the rule claims only anchors that carry no class at all, which is exactly
-  the set nothing else styles. A Button, a breadcrumb item, `.brand-link` on the
-  chapa — all carry one, all keep what they had.
+  The first correction was `:not([class])` — claim only anchors with no class
+  at all. That broke a second way, more quietly: the router adds `active` to the
+  link for the page you are on, so "Condiciones" in the footer went back to blue
+  on `/terms` and nowhere else, which is the kind of bug that gets seen once and
+  dismissed as a rendering glitch.
+
+  So the exclusion names what it actually means to exclude. `sm-` prefixes every
+  class the library emits and nothing this app writes — the same test
+  `:focus-visible` above already relies on — plus the two anchor classes this
+  app owns. A router state class is not in that set, so an active link keeps the
+  brand colour like any other.
 
   `:visited` is set to the same colour on purpose. The usual argument for a
   distinct visited state is navigation through a large body of documents; this
@@ -191,15 +199,15 @@ body {
   faded "you already went there" on «Mis eventos» would be describing the wrong
   thing.
 */
-:where(a:not([class])) {
+:where(a:not([class*="sm-"], .brand-link, .vennet-mark)) {
   color: var(--sm-text-color-link);
 }
 
-:where(a:not([class])):visited {
+:where(a:not([class*="sm-"], .brand-link, .vennet-mark)):visited {
   color: var(--sm-text-color-link);
 }
 
-:where(a:not([class])):hover {
+:where(a:not([class*="sm-"], .brand-link, .vennet-mark)):hover {
   color: var(--sm-text-color-link-hover);
 }
 

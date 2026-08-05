@@ -960,3 +960,50 @@ integration, and the underline behaviour as a prop. The router's `Link` and
 Adjacent to #17, which is the same shape one level up: `DropdownMenuItem`
 cannot become a link either. The pattern across both is that the library has
 buttons and menu items and text, and no concept of "a place to go".
+
+---
+
+## 25. `Text` cannot reach the brand colour, though the token exists
+
+**What I was building.** A landing hero with a kicker line — "Gratis · Sin
+contraseñas · Sin instalar nada" — in the brand's own accent above the heading,
+and the step numbers in a numbered list in the same colour.
+
+**What happened.** `Text color` accepts `default | error | muted | primary |
+inherit`. There is no `brand`, and `--sm-text-brand` exists and is exactly the
+token I wanted — this app maps it to its own `#D9541F`. So the value is
+published, named, and unreachable from the component whose entire job is
+rendering text in a colour.
+
+`primary` is not it: that is the text primary, i.e. the body colour. The gap is
+specifically the accent.
+
+**What I did instead.** Wrapped the `Text` in a `Box` carrying
+`color="var(--sm-text-brand)"` and let it inherit. It works, and it costs an
+element per instance plus a comment explaining why the element is there — which
+is the tell that the composition is a workaround rather than a design.
+
+**What I would have wanted.** `color="brand"` on `Text`, mapping to
+`--sm-text-brand`. The token is already in `core.vars.css` and already
+overridable per theme; this is a missing entry in one union.
+
+Same shape as the `Card` height problem below it in this file's history: the
+library exposes the value and not the way to apply it.
+
+## 26. `Card` has no height, so equal-height cards need the grid to do it
+
+**What I was building.** Three feature cards side by side, with unequal copy.
+
+**What happened.** `<Card height="100%">` is a type error — `CardProps` has no
+height. The usual fix in any other kit.
+
+**What I did instead.** Nothing, in the end, and this one turned out fine:
+`align="stretch"` on the `Grid` makes every cell the height of the tallest, and
+the card IS the cell, so it fills without being told to. Recording it because I
+reached for the prop first and the absence reads as a limitation until you
+notice the layout component already solved it.
+
+**What I would have wanted.** Either the prop, or a line in the `Card` manifest
+saying "height comes from the layout parent" — the manifests are the source of
+truth this app is meant to consult, and this is precisely the kind of thing
+that belongs in one.

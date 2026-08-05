@@ -101,6 +101,28 @@ export const en: Copy = {
     ],
     disclaimer:
       "This app never moves money. It only keeps track of who paid — you collect the payments yourself, outside of it.",
+
+    heroKicker: "Free · No passwords · Nothing to install",
+    heroSecondary: "I already have an account",
+
+    featuresTitle: "What it is for",
+    features: [
+      {
+        title: "You know who is coming",
+        body: "The list updates itself. Nobody has to answer a message that got lost among fifty others in the group chat.",
+      },
+      {
+        title: "You know who has paid",
+        body: "Junti splits the bill and keeps the record. No more \u201cI already transferred it\u201d with nobody able to check.",
+      },
+      {
+        title: "Nobody installs anything",
+        body: "Your guests open a link and answer. No account up front, no app to download just to play football.",
+      },
+    ],
+
+    closingTitle: "Your next plan, without chasing anyone",
+    closingBody: "It takes a minute to create the first one. If it does not suit you, you have lost nothing.",
   },
 
   createEvent: {
@@ -427,6 +449,15 @@ export const en: Copy = {
   footer: {
     privacyLink: "Privacy",
     termsLink: "Terms",
+
+    productHeading: "Product",
+    legalHeading: "Legal",
+    contactHeading: "Contact",
+
+    blurb: "Organize plans with your people and keep track of who has paid. No passwords, nothing to install.",
+
+    contactCta: "hello@vennet.dev",
+    contactHelp: "Questions, complaints, or exercising your rights.",
     /*
       The footer attribution, identical in the app and in email: "© <year>
       Junti by Vennet". Shorter than the legal line Vennet's manual prescribes

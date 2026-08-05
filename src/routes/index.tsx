@@ -1,7 +1,6 @@
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
-import { List, ListItem, ListItemContent, ListItemTitle } from "@stackmyth/list-item";
 import { Text } from "@stackmyth/text";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -111,91 +110,169 @@ function HomePage() {
   return (
     /*
       Always signed out: the loader redirects account holders to their events,
-      so this only ever renders for a visitor. The one screen where empty
-      space is pure cost — it is the first thing anybody sees on a laptop.
+      so this only ever renders for a visitor.
+
+      `size="3"` rather than the `size="2"` this shipped with. The width policy
+      in globals.css grants width to screens that are SCANNED and withholds it
+      from screens that are READ — and a landing page is neither. It is
+      scanned first and read second, and at 688px it was rendering as a form
+      with a headline on top: one narrow column down the middle of a monitor,
+      which is what made it read as unfinished rather than as a front page.
+      The prose inside it stays capped by measure, so nothing gets a longer
+      line than it should.
     */
-    <Container size="2" px="4" py="7">
-      <Stack gap="6">
+    <Container size="3" px="4" py={{ base: "7", md: "8" }}>
+      <Stack gap={{ base: "7", md: "8" }}>
         {/* AC-8: the top of the organizer funnel. Without it, `create_started`
             has no denominator and "how many people who landed here made an
             event" is unanswerable. */}
         <TrackView name="landing_viewed" />
 
-        {/* The tagline is the heading, not the brand name: the header says
-            "Junti" one line above, and repeating it as <h1> reads as a
-            stutter. */}
-        <Stack gap="2">
-          <Text variant="h1" fontFamily="var(--junti-display)">
+        {/* ── The hero ─────────────────────────────────────────────────────
+            One column, centred at nothing — left-aligned, because a centred
+            hero needs artwork to balance it and this product has a wordmark
+            and a sentence. The kicker goes above the heading rather than
+            below: "free, no passwords" is the objection somebody is already
+            forming, and answering it before the pitch costs one line. */}
+        <Stack gap="4" maxWidth="46rem">
+          {/* `Text` has no `color="brand"` — the token exists as
+              `--sm-text-brand` and the prop cannot reach it (STACKMYTH-GAPS
+              #25). A `Box` carrying the colour is the composition that works
+              without a style attribute. */}
+          <Box color="var(--sm-text-brand)">
+            {/* `color="inherit"` is the load-bearing half: without it `Text`
+                paints its own default and the Box's colour never reaches it. */}
+            <Text as="span" variant="small" weight="semibold" color="inherit">
+              {copy.home.heroKicker}
+            </Text>
+          </Box>
+
+          {/* The tagline is the heading, not the brand name: the header says
+              "Junti" one line above, and repeating it as <h1> reads as a
+              stutter. */}
+          <Text as="h1" variant="h1" fontFamily="var(--junti-display)">
             {copy.home.subheading}
           </Text>
-        </Stack>
 
-        <Text>{copy.home.pitch}</Text>
+          {/* Capped tighter than the heading. A 46rem line of body text is
+              past the comfortable measure; a heading at that width is fine,
+              because it is three or four words. */}
+          <Box maxWidth="36rem">
+            <Text>{copy.home.pitch}</Text>
+          </Box>
 
-        {/*
-          Two columns from `md`: what this is on the left, how it works on the
-          right — both above the fold on a laptop, which is the only place
-          this page has to earn a click. DOM order is the phone's order.
-        */}
-        <Grid columns={{ base: "1", md: "1fr 1fr" }} gap={{ base: "6", md: "7" }} align="start">
-          <Stack gap="3">
-            {/* Full-bleed on a phone, capped once there is a column to sit
-                in: a primary button the width of half a monitor stops looking
-                like something you press. */}
-            <Box width="100%" maxWidth={{ base: "100%", md: "20rem" }}>
-              <Button asChild fullWidth size="lg">
+          <Flex gap="3" wrap="wrap" pt="2">
+            <Box width={{ base: "100%", sm: "auto" }}>
+              <Button asChild size="lg" fullWidth>
                 <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
               </Button>
             </Box>
             {/* Secondary on purpose: both destinations ask for the same
                 account, so the primary is the one that says what this is for. */}
-            <Box width="100%" maxWidth={{ base: "100%", md: "20rem" }}>
-              <Button asChild fullWidth size="md" variant="ghost">
-                <Link to={ROUTES.myEvents}>{copy.auth.myEventsLink}</Link>
+            <Box width={{ base: "100%", sm: "auto" }}>
+              <Button asChild size="lg" variant="secondary" fullWidth>
+                <Link to={ROUTES.myEvents}>{copy.home.heroSecondary}</Link>
               </Button>
             </Box>
+          </Flex>
+        </Stack>
 
-            {/* The rule between the blocks, kept for one column and dropped
-                once they sit side by side — there the column gap already
-                separates them. */}
-            <Box display={{ base: "block", md: "none" }} pt="3">
-              <Divider />
+        <Divider />
+
+        {/* ── Three reasons ────────────────────────────────────────────────
+            Not a feature list. Three questions somebody organizing something
+            on a Thursday already has, in the order they hurt: who is coming,
+            who has paid, and what it costs the people you are inviting. */}
+        <Stack gap="4">
+          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+            {copy.home.featuresTitle}
+          </Text>
+
+          <Grid columns={{ base: "1", md: "repeat(3, 1fr)" }} gap="4" align="stretch">
+            {copy.home.features.map((feature) => (
+              /* No height prop needed: `align="stretch"` on the grid makes
+                 every cell the height of the tallest, and the card IS the
+                 cell — so three blocks of unequal copy still line up at the
+                 bottom edge. `Card` exposes no height of its own anyway. */
+              <Card key={feature.title} surface="outlined">
+                <CardContent>
+                  <Stack gap="2">
+                    <Text as="h3" variant="h5" fontFamily="var(--junti-display)">
+                      {feature.title}
+                    </Text>
+                    <Text variant="small" color="muted">
+                      {feature.body}
+                    </Text>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Grid>
+        </Stack>
+
+        {/* ── How it works ─────────────────────────────────────────────────
+            Full width, with the steps in two columns once there is room. The
+            first version put the steps beside the money caveat and left the
+            caveat's column mostly empty — a two-line card holding open a
+            half-page of nothing, which draws the eye to the gap rather than to
+            the words. Stacking them gives the caveat the full measure and the
+            steps a shape that fits four items. */}
+        <Stack gap="4">
+          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+            {copy.home.howItWorksTitle}
+          </Text>
+
+          {/* No dividers: four numbered steps already read as a sequence, and
+              rules here would stack against the card's own border below. */}
+          <Grid columns={{ base: "1", md: "repeat(2, 1fr)" }} gap={{ base: "2", md: "4" }}>
+            {copy.home.steps.map((step: string, index: number) => (
+              <Flex key={step} gap="3" align="baseline">
+                <Box color="var(--sm-text-brand)" flexShrink={0}>
+                  <Text as="span" variant="small" weight="semibold" color="inherit">
+                    {index + 1}
+                  </Text>
+                </Box>
+                <Text>{step}</Text>
+              </Flex>
+            ))}
+          </Grid>
+
+          {/*
+            The money caveat, its own card and never softened. It is the single
+            most important thing on this page for anybody deciding whether to
+            trust it with a group's money, and burying it in small print would
+            be the exact opposite of what it says. Full width now, so it reads
+            as a statement rather than as a note in a margin.
+          */}
+          <Card surface="outlined">
+            <CardContent>
+              <Text color="muted">{copy.home.disclaimer}</Text>
+            </CardContent>
+          </Card>
+        </Stack>
+
+        {/* ── The close ────────────────────────────────────────────────────
+            The same action once more, for somebody who read to the bottom.
+            One button, not two: whoever is still here has stopped comparing
+            options. */}
+        <Stack gap="3" maxWidth="36rem">
+          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+            {copy.home.closingTitle}
+          </Text>
+          <Text color="muted">{copy.home.closingBody}</Text>
+          {/* A Flex, not a Box: a block-level wrapper set to `auto` is still
+              100% of its parent, so `fullWidth` stretched this to the full
+              36rem measure and the button stopped reading as a button. As a
+              flex item it shrinks to its label, and still fills the width on a
+              phone where the thumb wants the whole row. */}
+          <Flex pt="1">
+            <Box width={{ base: "100%", sm: "auto" }}>
+              <Button asChild size="lg" fullWidth>
+                <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
+              </Button>
             </Box>
-          </Stack>
-
-          <Stack gap="3">
-            <Text variant="h3" fontFamily="var(--junti-display)">
-              {copy.home.howItWorksTitle}
-            </Text>
-            {/* No dividers: four numbered steps already read as a sequence,
-                and rules here would stack directly above the disclaimer
-                card's own border. */}
-            <List as="ol">
-              {copy.home.steps.map((step: string, index: number) => (
-                <ListItem key={step}>
-                  <ListItemContent>
-                    <Flex gap="3" align="baseline">
-                      <Text as="span" variant="small" color="muted" weight="semibold">
-                        {index + 1}
-                      </Text>
-                      <ListItemTitle>{step}</ListItemTitle>
-                    </Flex>
-                  </ListItemContent>
-                </ListItem>
-              ))}
-            </List>
-
-            {/* Travels with the steps: it qualifies what the product does,
-                which is what this column explains. */}
-            <Card surface="outlined">
-              <CardContent>
-                <Text variant="small" color="muted">
-                  {copy.home.disclaimer}
-                </Text>
-              </CardContent>
-            </Card>
-          </Stack>
-        </Grid>
+          </Flex>
+        </Stack>
       </Stack>
     </Container>
   );
