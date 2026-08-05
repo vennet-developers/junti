@@ -36,6 +36,13 @@ export const ANALYTICS_EVENTS = [
   "policy_reviewed",
   "payment_recorded",
 
+  /*
+    Calendar. One event, and it is a gate rather than a funnel step: the Google
+    Calendar card refuses to start until "ICS adoption data shows real demand",
+    and this is the only thing that can ever produce that number.
+  */
+  "calendar_added",
+
   // Groups
   "group_created",
   "group_link_viewed",
@@ -76,6 +83,7 @@ export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
   rsvp_completed: "server",
   policy_submitted: "server",
   policy_reviewed: "server",
+  calendar_added: "server",
   payment_recorded: "server",
 
   group_created: "server",

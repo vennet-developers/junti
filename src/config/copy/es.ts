@@ -195,6 +195,11 @@ export const es = {
     capacityValue: (taken: number, total: number) => `${taken} de ${total}`,
     spotsLeft: (n: number) => (n === 1 ? "Queda 1 cupo" : `Quedan ${n} cupos`),
     full: "Cupo lleno",
+    /* The download, named for what somebody gets rather than for the format.
+       "Descargar .ics" is a filename; nobody wants a file, they want the plan
+       to show up on their phone on Thursday. */
+    addToCalendar: "Agregar a mi calendario",
+    addToCalendarHelp: "Se descarga un archivo que abre tu calendario — Google, Apple o el que uses.",
   },
 
   roster: {

@@ -92,6 +92,29 @@ nothing else on this list ever ships.
 400 invitations and 60 people came" decomposable into "how many opened" and
 "how many of those answered".
 
+## Calendar
+
+| Event | Fired | `props` |
+| --- | --- | --- |
+| `calendar_added` | **Server**, in `/e/:public_token/calendar.ics` | `{ event_id, cancelled: boolean }` |
+
+**This one is a gate, not a funnel step.** *Google Calendar sync for events*
+opens with "gated on ICS adoption data showing real demand", and until this
+existed there was no such data and no way for there to be any — the calendar
+file was an email attachment only, so the only measurable number was how many
+emails went out, which says nothing about whether anybody ever put a Junti
+event in a calendar.
+
+Server-side because a download either happened or it did not, and a click
+handler can be blocked by an extension. `actor_id` is usually null: the route
+works without a session, matching the page it hangs off, and inventing an actor
+would make the count wrong in the other direction.
+
+`cancelled` separates the two files this route can serve. A CANCEL fetched by
+somebody clearing an old event out of their calendar is not evidence of demand
+for calendar sync, and counting the two together would flatter the number this
+exists to keep honest.
+
 ## Groups
 
 | Event | Fired | `props` |

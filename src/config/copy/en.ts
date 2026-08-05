@@ -187,6 +187,8 @@ export const en: Copy = {
     capacityValue: (taken: number, total: number) => `${taken} of ${total}`,
     spotsLeft: (n: number) => (n === 1 ? "1 spot left" : `${n} spots left`),
     full: "Full",
+    addToCalendar: "Add to my calendar",
+    addToCalendarHelp: "Downloads a file your calendar opens — Google, Apple, whichever you use.",
   },
 
   roster: {

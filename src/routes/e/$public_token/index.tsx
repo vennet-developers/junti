@@ -1,8 +1,9 @@
 import { Badge } from "@stackmyth/badge";
-import { Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { Button } from "@stackmyth/button";
+import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Banner } from "@stackmyth/banner";
-import { TriangleAlertIcon } from "@stackmyth/icons";
+import { CalendarIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -17,6 +18,7 @@ import { getCopy } from "@/config/copy";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES } from "@/config/routes";
 import { canDeleteCommitment } from "@/domain/commitments";
+import { participantPath } from "@/lib/paths";
 import type { ParticipantRosterMember } from "@/lib/roster";
 
 import { CommitmentNote } from "./-commitment-note";
@@ -400,6 +402,42 @@ function ParticipantPage() {
           readerTimeZone={readerTimeZone}
           openSlots={roster.openSlots}
         />
+
+        {/*
+          The calendar file, on the page rather than only in an email.
+
+          Most people arrive from a WhatsApp link and never get any email, so
+          until this existed the calendar feature did not exist for the majority
+          of participants. It is also the only thing that can produce the
+          adoption number the Google Calendar card gates itself on — see the
+          route's own note.
+
+          A plain anchor, not a router link: the response is a download with a
+          `Content-Disposition`, and asking the client router to navigate to it
+          would be asking it to render a file.
+
+          Hidden once the event is off. The route still serves a CANCEL for a
+          bookmarked URL, which is right for a calendar that already holds the
+          entry — but a button reading "add to my calendar" on an event that is
+          not happening is an offer to do the wrong thing.
+        */}
+        {event.isCancelled ? null : (
+          <Stack gap="1">
+            <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>
+              <Button asChild variant="secondary" size="md" fullWidth>
+                <a href={`${participantPath(event.publicToken)}/calendar.ics`} download>
+                  <Flex gap="2" align="center" justify="center">
+                    <CalendarIcon size={16} aria-hidden="true" />
+                    {copy.event.addToCalendar}
+                  </Flex>
+                </a>
+              </Button>
+            </Box>
+            <Text variant="small" color="muted">
+              {copy.event.addToCalendarHelp}
+            </Text>
+          </Stack>
+        )}
 
         {/* The RSVP box comes BEFORE the roster: answering is the point,
             who else is coming is merely interesting. */}
