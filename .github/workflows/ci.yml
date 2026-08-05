@@ -28,9 +28,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Only reads the repository. Nothing here needs to write.
+# Only reads. `packages: read` is what lets the built-in token fetch from
+# GitHub Packages — see the install step for why that alone is not enough here.
 permissions:
   contents: read
+  packages: read
 
 jobs:
   check:
@@ -45,16 +47,54 @@ jobs:
       # naming a version is two places to forget.
       - uses: pnpm/action-setup@v4
 
+      # `registry-url` + `scope` is what makes this job able to install at all.
+      # It writes an npmrc the installer trusts, carrying
+      # `//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}` — an env
+      # reference, which pnpm expands in a USER-level npmrc and deliberately
+      # refuses to expand in the committed project one. The project `.npmrc`
+      # maps the scope and says exactly this.
       - uses: actions/setup-node@v4
         with:
           node-version-file: package.json
           cache: pnpm
+          registry-url: https://npm.pkg.github.com/
+          scope: '@stackmyth'
+
+      # ── Why a PAT and not the built-in token ──────────────────────────────
+      #
+      # `secrets.GITHUB_TOKEN` can only read packages owned by THIS repository's
+      # owner. Junti lives in `vennet-developers`; the `@stackmyth/*` packages
+      # are published from `stackmyth/stackmyth`, a different org. So the built-in
+      # token authenticates fine and is then told it has no access — which
+      # surfaces as the 401 that broke this workflow:
+      #
+      #   [ERR_PNPM_FETCH_401] GET .../@stackmyth%2Fbadge: Unauthorized
+      #
+      # `STACKMYTH_NPM_TOKEN` is a classic PAT with `read:packages`, set as a
+      # repository secret. Verified against the live registry before writing
+      # this: a PAT of that shape returns 200 for `@stackmyth/badge` across the
+      # org boundary.
+      #
+      # No fallback to GITHUB_TOKEN, deliberately. One would read as a second
+      # way for this to work and there is no second way today — it would only
+      # turn a clear failure back into the 401. If the two orgs ever end up
+      # under one owner, delete this step and swap the secret below.
+      - name: Check the registry credential exists
+        env:
+          TOKEN: ${{ secrets.STACKMYTH_NPM_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::STACKMYTH_NPM_TOKEN is not set. The @stackmyth packages live in another org, so the built-in GITHUB_TOKEN cannot read them and pnpm install will fail with a 401. Create a classic PAT with read:packages and add it as a repository secret."
+            exit 1
+          fi
 
       # `--frozen-lockfile` is the default in CI, stated anyway: an install
       # that quietly updates the lockfile is testing something other than what
       # the commit says.
       - name: Install
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.STACKMYTH_NPM_TOKEN }}
 
       # ── Build FIRST, and do not reorder this ──────────────────────────────
       #
