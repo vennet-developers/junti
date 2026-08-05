@@ -134,6 +134,13 @@
       "when": 1785901000221,
       "tag": "0018_green_amazoness",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785902061021,
+      "tag": "0019_high_lilandra",
+      "breakpoints": true
     }
   ]
 }

@@ -37,6 +37,7 @@ import {
 } from "@/lib/roster";
 import { participantPath } from "@/lib/urls";
 import { track } from "@/lib/analytics";
+import { calendarAttachment } from "@/lib/calendar";
 import {
   field,
   fieldErrors,
@@ -332,10 +333,15 @@ async function sendRsvpReceipt(
       ? ""
       : formatMoney(event.costAmountMinor, event.currency, copy.intlLocale);
 
+  // Only for somebody who is actually coming. A waitlisted entry in a calendar
+  // would block a slot for something that may never happen.
+  const calendar = attendance === "in" ? await calendarAttachment(event) : undefined;
+
   await notify({
     to: organizer.email,
     template: "rsvp-confirmed",
     locale: event.locale,
+    attachments: calendar ? [calendar] : undefined,
     values: {
       eventTitle: event.title,
       eventWhen: formatEventDateTime(event.startsAt, event.timeZone, copy.intlLocale),

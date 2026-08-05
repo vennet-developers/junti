@@ -21,7 +21,8 @@ import { claimSends } from "@/lib/send-limit";
 import { getSetting } from "@/lib/settings";
 import { deleteEvidence } from "@/lib/evidence-store";
 import { sendMessage } from "@/lib/email/provider";
-import type { OutboundMessage } from "@/lib/email/port";
+import type { OutboundAttachment, OutboundMessage } from "@/lib/email/port";
+import { calendarAttachment } from "@/lib/calendar";
 import { formatEventDateTime } from "@/lib/format";
 import { resolveEventLocale } from "@/lib/locale";
 import { syncPayments } from "@/lib/payments";
@@ -205,9 +206,11 @@ function invitationMessage(
   email: string,
   unsubscribeToken: string,
   copy: Copy,
+  calendar?: OutboundAttachment,
 ): OutboundMessage {
   return {
     to: email,
+    attachments: calendar ? [calendar] : undefined,
     template: "event-invitation",
     locale: event.locale,
     values: {
@@ -361,12 +364,16 @@ export async function inviteToEvent(
     organizer?.id ?? null,
   );
 
+  // Built once for the batch: it is the same file for everybody, and the only
+  // thing that varies per recipient is who it is addressed to.
+  const calendar = await calendarAttachment(event);
+
   const results = await Promise.all(
     rows.map((row) => {
       const email = addresses.get(row.userId);
       if (!email) return Promise.resolve({ status: "skipped" as const });
 
-      return sendMessage(invitationMessage(event, organizerName, email, row.id, copy));
+      return sendMessage(invitationMessage(event, organizerName, email, row.id, copy, calendar));
     }),
   );
 
@@ -426,7 +433,10 @@ export async function resendInvitation(
   const organizer = await getOrganizer();
   const organizerName = organizer?.displayName ?? copy.invites.fromOrganizer;
 
-  const result = await sendMessage(invitationMessage(event, organizerName, email, row.id, copy));
+  const calendar = await calendarAttachment(event);
+  const result = await sendMessage(
+    invitationMessage(event, organizerName, email, row.id, copy, calendar),
+  );
 
   await db.update(invitations).set({ sentAt: new Date() }).where(eq(invitations.id, id.data));
 
@@ -635,6 +645,9 @@ export async function editEvent(
       costAmountMinor: input.costAmountMinor,
       currency: input.currency,
       groupId,
+      // Calendars ignore an update that does not claim to be newer. See the
+      // column's note in the schema.
+      calendarSequence: event.calendarSequence + 1,
     })
     .where(eq(events.id, event.id));
 

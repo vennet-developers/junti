@@ -279,6 +279,21 @@ export const events = pgTable(
     closedAt: timestamp("closed_at", { withTimezone: true }),
 
     /**
+     * How many times this event has changed, for calendar clients.
+     *
+     * A counter rather than a timestamp because that is what RFC 5545 wants:
+     * `SEQUENCE` is how a calendar decides an arriving copy is newer than the
+     * one it holds. Without it an updated invitation is ignored and somebody's
+     * calendar keeps the old time — silently, which is the worst way for a
+     * time to be wrong.
+     *
+     * Bumped only by an edit that a calendar would care about. Renaming the
+     * event or moving it counts; toggling a policy does not, but the bump is
+     * cheap and telling them apart is not, so every edit bumps it.
+     */
+    calendarSequence: integer("calendar_sequence").notNull().default(0),
+
+    /**
      * The signed-in account that owns this event.
      *
      * Was nullable, for the original flow where an event could be created with

@@ -64,6 +64,23 @@ export interface OutboundMessage {
    * signing in is on their laptop.
    */
   sandbox?: boolean;
+  /**
+   * Files that ride along, if the channel has such a thing.
+   *
+   * Optional, and the port stays honest about being channel-agnostic: an
+   * adapter that cannot carry attachments — WhatsApp, one day — drops them
+   * rather than failing, because the message is still worth sending. A
+   * calendar file is an addition to an invitation, not the invitation.
+   */
+  attachments?: OutboundAttachment[];
+}
+
+export interface OutboundAttachment {
+  filename: string;
+  /** UTF-8 text. Every attachment this app sends is a text format. */
+  content: string;
+  /** e.g. `text/calendar; method=REQUEST; charset=utf-8`. */
+  contentType: string;
 }
 
 /**

@@ -181,6 +181,20 @@ export function createResendAdapter(config: ResendConfig): EmailPort {
             subject,
             html,
             text,
+            /*
+              Base64, because Resend's API takes attachment content that way.
+              Omitted entirely when there is nothing to attach — an empty array
+              is a key the API has to think about for no reason.
+            */
+            ...(message.attachments?.length
+              ? {
+                  attachments: message.attachments.map((file) => ({
+                    filename: file.filename,
+                    content: Buffer.from(file.content, "utf-8").toString("base64"),
+                    content_type: file.contentType,
+                  })),
+                }
+              : {}),
           }),
         });
 
