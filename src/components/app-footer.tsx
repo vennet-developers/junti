@@ -1,4 +1,3 @@
-import { Button } from "@stackmyth/button";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
@@ -115,21 +114,6 @@ export function AppFooter() {
                 {copy.footer.blurb}
               </Text>
 
-              {/* The one action worth repeating down here. Somebody who read
-                  to the bottom of a legal page and decided they are in should
-                  not have to scroll back up to act on it. */}
-              <Box width="fit-content" pt="1">
-                {/* `primary`, not `secondary`. The secondary surface and
-                    `--junti-chip` are within a shade of each other, so on this
-                    background the button rendered as bare text with a hit area
-                    nobody could see. */}
-                {/* `md`, not `sm`. At `sm` this measured 38px on a phone —
-                    under the 44px floor the whole app is tuned to, and this is
-                    a real call to action rather than a label. */}
-                <Button asChild size="md">
-                  <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
-                </Button>
-              </Box>
             </Stack>
 
             <Grid columns="repeat(2, auto)" gap={{ base: "4", md: "7" }} align="start">
