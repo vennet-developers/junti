@@ -364,25 +364,33 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
                 Al ritmo actual, en 30 días
               </Text>
               <Text variant="small" color="muted">
-                Últimas 4 semanas completas, extrapoladas. «—» hasta tener dos
-                semanas con movimiento.
+                Con «≈»: extrapolado de las últimas 4 semanas completas. Sin él:
+                el ritmo real del periodo, mientras se acumula historial.
               </Text>
             </Stack>
 
             <Grid columns={{ base: "1", sm: "3" }} gap="3">
+              {/*
+                When the pace is not yet measurable the fallback is the datum
+                that IS known — what the trailing window actually produced —
+                because a dash answers nothing and the reader came for a
+                number. The ≈ only appears on real extrapolations.
+              */}
               {(
                 [
-                  ["Usuarios nuevos", projection.accountsNext30],
-                  ["Eventos", projection.eventsNext30],
-                  ["Respuestas", projection.rsvpsNext30],
+                  ["Usuarios nuevos", projection.accountsNext30, overview.accounts.window],
+                  ["Eventos", projection.eventsNext30, overview.events.window],
+                  ["Respuestas", projection.rsvpsNext30, overview.rsvps.window],
                 ] as const
-              ).map(([label, value]) => (
+              ).map(([label, value, windowActual]) => (
                 <Stack key={label} gap="1">
                   <Text as="span" variant="h4" weight="semibold" fontFamily="var(--junti-display)">
-                    {value === null ? "—" : `≈ ${value.toLocaleString("es-CO")}`}
+                    {value === null
+                      ? windowActual.toLocaleString("es-CO")
+                      : `≈ ${value.toLocaleString("es-CO")}`}
                   </Text>
                   <Text variant="small" color="muted">
-                    {label}
+                    {value === null ? `${label} · lo que dieron los últimos 30 días` : label}
                   </Text>
                 </Stack>
               ))}

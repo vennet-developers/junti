@@ -186,9 +186,11 @@ function FunnelPage() {
           <Text as="h1" variant="h3" fontFamily="var(--junti-display)">
             Panel
           </Text>
+          {/* Access mechanics (owner id, the 404) live in the code comments
+              above, where an operator looks — not on a screen whose reader
+              already got in. */}
           <Text color="muted">
-            Cuánto hay, hacia dónde va, y dónde se cae la gente. Sólo lo ve la cuenta
-            en <code>ANALYTICS_OWNER_ID</code>; para todos los demás esta ruta no existe.
+            Cuánto hay, hacia dónde va, y dónde se cae la gente.
           </Text>
         </Stack>
 
@@ -354,8 +356,7 @@ function FunnelPage() {
                   Límites vigentes
                 </Text>
                 <Text variant="small" color="muted">
-                  Se cambian con una fila en <code>app_settings</code>, sin desplegar. Borrar la
-                  fila vuelve al valor por defecto.
+                  Los topes de envío que protegen la reputación del correo.
                 </Text>
               </Stack>
 
