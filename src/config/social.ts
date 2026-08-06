@@ -25,13 +25,8 @@ export interface SocialAccount {
 
 export const SOCIAL_ACCOUNTS: SocialAccount[] = [
   { icon: "instagram", label: "Instagram", url: null },
-  /*
-    X and Threads are listed and iconless until `@stackmyth/icons` ships the
-    marks — they did not exist in the package and were added in stackmyth
-    `6dfc753a`, which is unreleased at the time of writing. The footer skips
-    any entry whose icon it cannot resolve, so this list is safe to keep
-    complete ahead of the release.
-  */
+  /* X and Threads did not exist in `@stackmyth/icons` until 0.2.0; the marks
+     were added for this footer. */
   { icon: "x", label: "X", url: null },
   { icon: "threads", label: "Threads", url: null },
   { icon: "linkedin", label: "LinkedIn", url: null },

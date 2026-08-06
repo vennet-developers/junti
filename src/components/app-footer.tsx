@@ -1,4 +1,4 @@
-import { InstagramIcon, LinkedInIcon } from "@stackmyth/icons";
+import { InstagramIcon, LinkedInIcon, ThreadsIcon, XTwitterIcon } from "@stackmyth/icons";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
@@ -229,10 +229,9 @@ export function AppFooter() {
  * learning nothing.
  *
  * It also skips any entry whose icon the installed `@stackmyth/icons` does not
- * export. X and Threads were added to that package in stackmyth `6dfc753a` and
- * are not in the released 0.1.1, so listing them here ahead of the release is
- * safe rather than a build error waiting to happen. Once the package ships,
- * add the two imports and they light up on their own.
+ * export. That guard earned its keep once already: X and Threads were listed
+ * here before the package had the marks, and the row simply rendered without
+ * them instead of failing the build. They arrived in icons 0.2.0.
  *
  * Icons rather than the reference layout's text labels, which is what Ivan
  * asked for and is also the right call at this size: four words stacked read
@@ -243,9 +242,9 @@ function SocialRow() {
 
   const icons: Partial<Record<SocialAccount["icon"], typeof InstagramIcon>> = {
     instagram: InstagramIcon,
+    x: XTwitterIcon,
+    threads: ThreadsIcon,
     linkedin: LinkedInIcon,
-    // x: XTwitterIcon,      ← unlocked by the next @stackmyth/icons release
-    // threads: ThreadsIcon,
   };
 
   const live = SOCIAL_ACCOUNTS.filter((account) => account.url && icons[account.icon]);
