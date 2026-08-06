@@ -3,8 +3,9 @@
 import { useId, type ReactNode } from "react";
 
 import { Button } from "@stackmyth/button";
-import { Form, FormController, FormField } from "@stackmyth/form";
+import { Form, FormController, FormField as LibraryFormField, useFormContext } from "@stackmyth/form";
 import { createZodResolver } from "@stackmyth/form";
+import type { ComponentProps } from "react";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@stackmyth/field";
 import { Box } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
@@ -24,7 +25,44 @@ import { Text } from "@stackmyth/text";
  * operated without JavaScript at all.
  */
 
-export { Form, FormController, FormField, createZodResolver };
+export { Form, FormController, createZodResolver };
+
+/**
+ * `FormField`, with the half the library forgot.
+ *
+ * `@stackmyth/form`'s FormField omits `defaultValue` from its fieldProps, so
+ * every input wired through it renders EMPTY over a store that holds the
+ * value — an edit form that opens blank, a duplicate-and-edit that duplicates
+ * nothing visible. Fixed at the source (stackmyth 01e9c10b, tests pinned);
+ * this wrapper injects the same value from the same store until that release
+ * ships, and then it deletes down to a re-export. Never a node_modules patch.
+ *
+ * Injection is via the CHILDREN, not the fieldProps object, so an explicit
+ * `defaultValue` a caller passes after `{...fieldProps}` still wins — the
+ * exact contract the library fix has.
+ */
+export function FormField(props: ComponentProps<typeof LibraryFormField>) {
+  const ctx = useFormContext();
+  const { children, ...rest } = props;
+
+  return (
+    <LibraryFormField {...rest}>
+      {(render) =>
+        children({
+          ...render,
+          fieldProps: {
+            ...render.fieldProps,
+            defaultValue: ctx?.store.getValue(props.name) as
+              | string
+              | number
+              | readonly string[]
+              | undefined,
+          } as typeof render.fieldProps,
+        })
+      }
+    </LibraryFormField>
+  );
+}
 
 /**
  * Renders a Stackmyth `Field` around a control.
