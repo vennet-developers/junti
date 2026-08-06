@@ -169,6 +169,10 @@ export const en: Copy = {
         a: "Yes, to answer. It is what keeps their spot in their name rather than their phone\u2019s, lets them change their answer from another device, and stops anybody answering on their behalf. Sign-in is Google or a link to their email, no password.",
       },
       {
+        q: `What does ${BRAND_NAME} do with my Google account?`,
+        a: "Only let you in. When you sign in with Google, the app receives your name, your email and your profile photo, and uses them to show you on the lists and tell you about your events. It never touches your calendar, your contacts, or anything else in your account. The full detail is in the privacy notice.",
+      },
+      {
         q: "Who can see my phone number?",
         a: "Only the organizer of an event you joined, and only if you gave it by ticking the box. The other guests see your name and your answer, never your email or your phone.",
       },
@@ -669,10 +673,13 @@ export const en: Copy = {
       "Junti is a Vennet product, operated by Iván Elías Ávila Almanza, an individual based in Colombia, who acts as the data controller. For questions, complaints, or to exercise any of your rights, write to hello@vennet.dev. We answer questions within ten business days and complaints within fifteen, as Colombia's Ley 1581 de 2012 requires.",
     dataTitle: "What we keep",
     dataBody:
-      "Your email, your name, and your WhatsApp number only if you gave it by ticking the box. For events we keep which ones you joined, what you answered, and whether the organizer recorded your payment. If you accepted a group link, we keep that you are in that group — or that you said no — so whoever runs it can invite you to their events.",
+      "Your email, your name, your profile photo if you signed in with Google, and your WhatsApp number only if you gave it by ticking the box. For events we keep which ones you joined, what you answered, and whether the organizer recorded your payment. If you accepted a group link, we keep that you are in that group — or that you said no — so whoever runs it can invite you to their events.",
     purposesTitle: "What for",
     purposesBody:
       "Email is how you get in: there is no password, we send you a link. Your name is what everyone else sees on the event's list. The phone number exists for exactly one thing — so the organizer of an event you joined can reach you on WhatsApp. Groups exist so that we never write to anybody who has not agreed first: you only get invitations from someone whose group you accepted, and you can leave whenever you want.",
+    googleTitle: "If you sign in with Google",
+    googleBody:
+      "When you sign in with Google we receive your name, your email and your profile photo — nothing else. We use them to create your account, show you on your events' lists and tell you about what happens in them. We do not ask for access to your calendar, your contacts or anything else in your Google account, we do not use that information for advertising, and we do not show it to anyone beyond what this notice describes. You can use Junti without Google, by signing in with a link to your email.",
     sharingTitle: "Who else sees it",
     sharingBody:
       "The organizer of each event you join sees your name, your answer and — if you allowed it — your WhatsApp. Whoever runs a group you accepted sees your name, never your email: when they invite you, the address is read at that moment and never shown to them. Other guests see your name and your answer, never your email or your phone. We do not share your data with anyone else, we do not sell it, and we will not: protecting it is part of what this product promises.",

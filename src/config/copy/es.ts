@@ -223,6 +223,17 @@ export const es = {
         a: "Sí, para responder. Es lo que hace que su lugar quede a su nombre y no al del teléfono, que puedan cambiar la respuesta desde otro celular, y que nadie pueda contestar por ellos. Se entra con Google o con un link al correo, sin contraseña.",
       },
       {
+        /*
+          Escrita para dos lectores: el usuario que duda antes de entrar con
+          Google, y el revisor de verificación OAuth — cuyo checklist exige que
+          la página principal explique con transparencia para qué pide la app
+          los datos del usuario. Es la misma pregunta, y la respuesta honesta
+          les sirve a los dos.
+        */
+        q: `¿Qué hace ${BRAND_NAME} con mi cuenta de Google?`,
+        a: "Solo dejarte entrar. Al iniciar sesión con Google, la app recibe tu nombre, tu correo y tu foto de perfil, y los usa para mostrarte en las listas y avisarte de tus eventos. No toca tu calendario, ni tus contactos, ni nada más de tu cuenta. El detalle completo está en el aviso de privacidad.",
+      },
+      {
         q: "¿Quién puede ver mi teléfono?",
         a: "Solo el organizador de un evento al que te apuntaste, y solo si tú lo diste marcando la casilla. Los demás invitados ven tu nombre y tu respuesta, nunca tu correo ni tu teléfono.",
       },
@@ -751,10 +762,19 @@ export const es = {
       "Junti es un producto de Vennet, operado por Iván Elías Ávila Almanza, persona natural domiciliada en Colombia, quien actúa como responsable del tratamiento. Para consultas, reclamos o para ejercer cualquiera de tus derechos, escribe a hello@vennet.dev. Respondemos consultas dentro de los diez días hábiles y reclamos dentro de los quince que fija la Ley 1581 de 2012.",
     dataTitle: "Qué guardamos",
     dataBody:
-      "Tu correo, tu nombre, y tu número de WhatsApp solo si lo diste marcando la casilla. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
+      "Tu correo, tu nombre, tu foto de perfil si entraste con Google, y tu número de WhatsApp solo si lo diste marcando la casilla. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
     purposesTitle: "Para qué",
     purposesBody:
       "El correo es cómo entras: no hay contraseña, te mandamos un link. El nombre es lo que ven los demás en la lista del evento. El teléfono existe para una sola cosa, y es que el organizador de un evento al que te apuntaste pueda escribirte por WhatsApp. Los grupos existen para que no tengamos que escribirle a nadie que no haya aceptado antes: solo recibes invitaciones de alguien cuyo grupo aceptaste, y puedes salirte cuando quieras.",
+    /*
+      Con nombre propio, no "proveedores de identidad": la verificación OAuth
+      de Google exige que el aviso nombre los datos de Google que la app usa, y
+      un usuario que entró con Google también merece la respuesta literal. La
+      última frase importa a los dos lectores — usar Junti no obliga a Google.
+    */
+    googleTitle: "Si entras con Google",
+    googleBody:
+      "Al iniciar sesión con Google recibimos tu nombre, tu correo y tu foto de perfil — nada más. Los usamos para crear tu cuenta, mostrarte en las listas de tus eventos y avisarte de lo que pase en ellos. No pedimos acceso a tu calendario, a tus contactos ni a ningún otro dato de tu cuenta de Google, no usamos esa información para publicidad, y no se la mostramos a nadie por fuera de lo que describe este aviso. Puedes usar Junti sin Google, entrando con un link a tu correo.",
     sharingTitle: "Quién más lo ve",
     sharingBody:
       "El organizador de cada evento al que te apuntas ve tu nombre, tu respuesta y —si lo autorizaste— tu WhatsApp. Quien organiza un grupo que aceptaste ve tu nombre, nunca tu correo: cuando te invita, la dirección la leemos en ese momento y no se la mostramos. Los demás invitados ven tu nombre y tu respuesta, nunca tu correo ni tu teléfono. No compartimos tus datos con nadie más, no los vendemos, y no vamos a hacerlo: protegerlos es parte de lo que este producto promete.",

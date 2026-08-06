@@ -47,6 +47,7 @@ function PrivacyPage() {
     { heading: copy.privacy.responsibleTitle, body: copy.privacy.responsibleBody },
     { heading: copy.privacy.dataTitle, body: copy.privacy.dataBody },
     { heading: copy.privacy.purposesTitle, body: copy.privacy.purposesBody },
+    { heading: copy.privacy.googleTitle, body: copy.privacy.googleBody },
     { heading: copy.privacy.sharingTitle, body: copy.privacy.sharingBody },
     { heading: copy.privacy.processorsTitle, body: copy.privacy.processorsBody },
     { heading: copy.privacy.transferTitle, body: copy.privacy.transferBody },

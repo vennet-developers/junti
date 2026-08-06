@@ -28,8 +28,15 @@ import { consentEvents, emailSuppressions, invitations } from "@/db/schema";
  * memberships, including the declines). A class leaving is as much a change of
  * substance as one arriving — the notice described something we were doing and
  * had stopped doing, which is worse than describing nothing.
+ *
+ * 2026-08-06: Google, by name. The notice now says what arrives when somebody
+ * signs in with Google — name, email, profile photo — and what is never asked
+ * for. Nothing about the processing changed; what changed is that the notice
+ * did not mention the photo at all and named the sign-in only as "el correo es
+ * cómo entras". Describing less than we hold is a change of substance in the
+ * only direction that matters.
  */
-export const POLICY_VERSION = "2026-08-04";
+export const POLICY_VERSION = "2026-08-06";
 
 /**
  * What can be consented to, separately.
