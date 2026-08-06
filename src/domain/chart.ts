@@ -170,3 +170,85 @@ export function donutArc(
 function roundTo2(value: number): number {
   return Math.round(value * 100) / 100;
 }
+
+/**
+ * A smooth path — Catmull-Rom splined into cubic Béziers, through every data
+ * point. Mirror of `@stackmyth/charts`; dies when the package releases. The
+ * smoothing is the aesthetics Ivan asked for: a polyline through weekly
+ * buckets is sawteeth, and the eye tracks the teeth instead of the direction.
+ */
+export function smoothAreaPath(
+  values: readonly number[],
+  box: { width: number; height: number },
+): { line: string; area: string } {
+  if (values.length === 0) return { line: "", area: "" };
+  if (values.length === 1) {
+    const y = roundTo2(box.height / 2);
+    return {
+      line: `M0,${y} L${box.width},${y}`,
+      area: `M0,${y} L${box.width},${y} L${box.width},${box.height} L0,${box.height} Z`,
+    };
+  }
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min;
+  const stepX = box.width / (values.length - 1);
+
+  const pts = values.map((value, index) => ({
+    x: index * stepX,
+    y: span === 0 ? box.height / 2 : box.height - ((value - min) / span) * box.height,
+  }));
+
+  let line = `M${roundTo2(pts[0].x)},${roundTo2(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] ?? p2;
+    line += ` C${roundTo2(p1.x + (p2.x - p0.x) / 6)},${roundTo2(p1.y + (p2.y - p0.y) / 6)} ${roundTo2(p2.x - (p3.x - p1.x) / 6)},${roundTo2(p2.y - (p3.y - p1.y) / 6)} ${roundTo2(p2.x)},${roundTo2(p2.y)}`;
+  }
+
+  return { line, area: `${line} L${roundTo2(box.width)},${box.height} L0,${box.height} Z` };
+}
+
+/** Mini bars with empty buckets as dots. Mirror — see `smoothAreaPath`. */
+export function miniBarGeometry(
+  values: readonly number[],
+  box: { width: number; height: number; gap: number },
+): { x: number; y: number; width: number; height: number; empty: boolean }[] {
+  if (values.length === 0) return [];
+  const max = values.reduce((top, value) => Math.max(top, value), 0);
+  const width = (box.width - box.gap * (values.length - 1)) / values.length;
+  const minHeight = Math.min(3, box.height);
+
+  return values.map((value, index) => {
+    const height =
+      max === 0 || value === 0 ? 0 : Math.max(minHeight, (value / max) * box.height);
+    return { x: index * (width + box.gap), y: box.height - height, width, height, empty: value === 0 };
+  });
+}
+
+/** Proportional segments with gaps. Mirror — see `smoothAreaPath`. */
+export function segmentGeometry(
+  values: readonly number[],
+  box: { width: number; gap: number; minWidth?: number },
+): { x: number; width: number; index: number }[] {
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (total === 0) return [];
+
+  const visible = values.map((value, index) => ({ value, index })).filter((e) => e.value > 0);
+  const usable = box.width - box.gap * (visible.length - 1);
+  const minWidth = box.minWidth ?? 4;
+
+  let widths = visible.map((e) => Math.max(minWidth, (e.value / total) * usable));
+  const sum = widths.reduce((a, b) => a + b, 0);
+  if (sum > usable) widths = widths.map((w) => (w / sum) * usable);
+
+  let x = 0;
+  return visible.map((e, i) => {
+    const seg = { x: roundTo2(x), width: roundTo2(widths[i]), index: e.index };
+    x += widths[i] + box.gap;
+    return seg;
+  });
+}

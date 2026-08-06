@@ -12,8 +12,10 @@ import {
 import { Box, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { AreaChart } from "@/components/area-chart";
 import { Donut } from "@/components/donut";
-import { GrowthChart } from "@/components/growth-chart";
+import { MiniBars } from "@/components/mini-bars";
+import { SegmentBar } from "@/components/segment-bar";
 import { Sparkline } from "@/components/sparkline";
 import { formatMoney } from "@/lib/format";
 import type { Metric, OverviewReport } from "@/lib/overview";
@@ -110,6 +112,7 @@ function TrendCard({
   caption,
   values,
   ariaLabel,
+  variant = "sparkline",
 }: {
   icon: ReactNode;
   label: string;
@@ -117,6 +120,9 @@ function TrendCard({
   caption: string;
   values: readonly number[];
   ariaLabel: string;
+  /* MiniBars when the buckets themselves matter (empty days as dots);
+     sparkline when only the direction does. */
+  variant?: "sparkline" | "minibars";
 }) {
   const flat = values.every((v) => v === 0);
 
@@ -141,7 +147,11 @@ function TrendCard({
                 data. Nothing is the honest picture of nothing. */}
             {flat ? null : (
               <Box width="7.5rem" height="2.25rem" flexShrink={0}>
-                <Sparkline values={values} ariaLabel={ariaLabel} />
+                {variant === "minibars" ? (
+                  <MiniBars values={values} ariaLabel={ariaLabel} />
+                ) : (
+                  <Sparkline values={values} ariaLabel={ariaLabel} />
+                )}
               </Box>
             )}
           </Flex>
@@ -254,6 +264,7 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
           caption={`respuestas en ${overview.days} días`}
           values={overview.weeklyRsvps.map((week) => week.value)}
           ariaLabel="Tendencia semanal de respuestas"
+          variant="minibars"
         />
 
         {/*
@@ -283,42 +294,66 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
         </Card>
       </Grid>
 
-      {/* ── Cómo se mueve ──────────────────────────────────────────────── */}
-      <Card surface="outlined">
-        <CardContent>
-          <Stack gap="5">
-            <Stack gap="1">
-              <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                Cómo se mueve
-              </Text>
-              <Text variant="small" color="muted">
-                Por semana. Una semana vacía es una barra en cero, no un hueco.
-              </Text>
-            </Stack>
+      {/* ── Cómo se mueve: cuatro tendencias, curvas suaves ────────────── */}
+      <Grid columns={{ base: "1", md: "2" }} gap="3">
+        {(
+          [
+            ["Cuentas nuevas", overview.weeklyAccounts, overview.accounts.window],
+            ["Eventos creados", overview.weeklyEvents, overview.events.window],
+            ["Respuestas", overview.weeklyRsvps, overview.rsvps.window],
+            ["Correos enviados", emails.weekly, emails.sent.window],
+          ] as const
+        ).map(([title, points, windowTotal]) => (
+          <Card key={title} surface="outlined">
+            <CardContent>
+              <Stack gap="2">
+                <Flex gap="3" align="baseline" justify="between">
+                  <Text variant="small" color="muted">
+                    {title}
+                  </Text>
+                  <Text as="span" weight="semibold">
+                    {windowTotal.toLocaleString("es-CO")}
+                  </Text>
+                </Flex>
+                {points.every((p) => p.value === 0) ? (
+                  <Text variant="small" color="muted">
+                    Sin datos todavía.
+                  </Text>
+                ) : (
+                  <AreaChart points={points} ariaLabel={`${title} por semana`} />
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+      </Grid>
 
-            <GrowthChart
-              title="Cuentas nuevas"
-              points={overview.weeklyAccounts}
-              ariaLabel="Cuentas nuevas por semana"
-            />
-            <GrowthChart
-              title="Eventos creados"
-              points={overview.weeklyEvents}
-              ariaLabel="Eventos creados por semana"
-            />
-            <GrowthChart
-              title="Respuestas"
-              points={overview.weeklyRsvps}
-              ariaLabel="Respuestas de participantes por semana"
-            />
-            <GrowthChart
-              title="Correos enviados"
-              points={emails.weekly}
-              ariaLabel="Correos enviados por semana"
-            />
-          </Stack>
-        </CardContent>
-      </Card>
+      {/* ── Respuestas por tipo: el pastel honesto, en los colores que el
+             roster ya usa — «van» TIENE un color en este producto. ────────── */}
+      {overview.attendance.going +
+        overview.attendance.maybe +
+        overview.attendance.notGoing +
+        overview.attendance.waitlisted >
+      0 ? (
+        <Card surface="outlined">
+          <CardContent>
+            <Stack gap="3">
+              <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
+                Respuestas por tipo
+              </Text>
+              <SegmentBar
+                ariaLabel="Respuestas por tipo"
+                parts={[
+                  { label: "Van", value: overview.attendance.going, token: "var(--junti-viene-fill, var(--junti-viene-fg))" },
+                  { label: "Tal vez", value: overview.attendance.maybe, token: "var(--junti-talvez-fill, var(--junti-talvez-fg))" },
+                  { label: "No van", value: overview.attendance.notGoing, token: "var(--junti-noviene-fill, var(--junti-noviene-fg))" },
+                  { label: "En espera", value: overview.attendance.waitlisted, token: "var(--junti-espera-fill, var(--junti-espera-fg))" },
+                ]}
+              />
+            </Stack>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* ── Proyección ─────────────────────────────────────────────────── */}
       <Card surface="outlined">

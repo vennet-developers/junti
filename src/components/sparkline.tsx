@@ -1,4 +1,4 @@
-import { sparklinePath } from "@/domain/chart";
+import { smoothAreaPath } from "@/domain/chart";
 
 /**
  * A trend compressed into the corner of a card.
@@ -20,7 +20,7 @@ export function Sparkline({
   values: readonly number[];
   ariaLabel: string;
 }) {
-  const { line, area } = sparklinePath(values, { width: 120, height: 36 });
+  const { line, area } = smoothAreaPath(values, { width: 120, height: 36 });
   if (line === "") return null;
 
   return (

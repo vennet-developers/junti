@@ -96,6 +96,14 @@ export interface Projection {
   rsvpsNext30: number | null;
 }
 
+/** Answers by kind, for the segment bar. The roster's own vocabulary. */
+export interface AttendanceSplit {
+  going: number;
+  maybe: number;
+  notGoing: number;
+  waitlisted: number;
+}
+
 export interface OverviewReport {
   days: number;
   accounts: Metric;
@@ -109,6 +117,7 @@ export interface OverviewReport {
   money: MoneyFlow;
   emails: Emails;
   projection: Projection;
+  attendance: AttendanceSplit;
 }
 
 /** Postgres interval literals, built from a number this module controls. */
@@ -342,6 +351,24 @@ async function moneyAndEmails(window: number): Promise<{ money: MoneyFlow; email
   };
 }
 
+/** Answers by kind, one query. */
+async function attendanceSplit(): Promise<AttendanceSplit> {
+  const [row] = await db.execute<Record<string, string>>(sql`
+    select
+      count(*) filter (where attendance = 'in')::text as going,
+      count(*) filter (where attendance = 'maybe')::text as maybe,
+      count(*) filter (where attendance = 'out')::text as not_going,
+      count(*) filter (where attendance = 'waitlisted')::text as waitlisted
+    from participants
+  `);
+  return {
+    going: Number(row?.going ?? 0),
+    maybe: Number(row?.maybe ?? 0),
+    notGoing: Number(row?.not_going ?? 0),
+    waitlisted: Number(row?.waitlisted ?? 0),
+  };
+}
+
 /** Sent emails per week, on the same generated calendar as `series`. */
 async function emailSeries(window: number): Promise<SeriesPoint[]> {
   const rows = await db.execute<{ week: Date; total: string }>(sql`
@@ -378,6 +405,7 @@ export async function loadOverview(window = 30): Promise<OverviewReport> {
   const depthRows = await depth();
   const flows = await moneyAndEmails(window);
   const weeklyEmails = await emailSeries(window);
+  const attendance = await attendanceSplit();
 
   return {
     days: window,
@@ -391,5 +419,6 @@ export async function loadOverview(window = 30): Promise<OverviewReport> {
       eventsNext30: projectNext30(weeks.weeklyEvents),
       rsvpsNext30: projectNext30(weeks.weeklyRsvps),
     },
+    attendance,
   };
 }
