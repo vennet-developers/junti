@@ -1168,3 +1168,34 @@ package is enough and this class of failure is gone at the source. The root
 layout dropped thirty `*.vars.css` imports. Recording it anyway — the mistake
 was real, and the reason it was cheap (a smoke page at build-order step 2
 rather than step 8) is the transferable part.
+
+### 78. Two `@stackmyth/*` version tracks, and why the split is right
+
+`package.json` lists 38 packages at `^0.26.0` and two at `^0.2.0` / `^0.1.1`,
+which looks like something got missed. It did not.
+
+Stackmyth publishes on **two tracks**, declared per package under
+`stackmyth.release` and documented in its `RELEASING.md`:
+
+- **Grouped UI** — the ~70 components, bumped in lockstep. `core`, `button`,
+  `card` and the rest share tokens and compose with each other, so a change in
+  `core` really can break `card`. Shipping them together is what makes one
+  number mean something.
+- **Independent platform** — `icons`, `classnames`, `cli`, `event-bus`,
+  `flags`, `primitives`, `renderer`. Each on its own cadence.
+
+**`icons` belongs in the second group and should stay there.** It has no
+dependency on the token layer — it is standalone SVG components and a props
+type — so there is no version of the UI set it can be incompatible with. Any
+icons version works with any component version, which is why there is no
+pairing to look up. Folding it into the lockstep would mean bumping seventy
+packages to publish one new glyph, and putting an empty changelog entry on
+sixty-nine of them.
+
+**The cost is real and it is paid here, not there.** Taking 0.26.0 I assumed
+the number covered every package, wrote `^0.26.0` for icons, and it would not
+have resolved — icons was at `0.2.0`. Nothing in this file's `package.json`
+explains the split, and JSON takes no comments. So it is written here instead:
+**before bumping Stackmyth, check each package's published version rather than
+assuming one number.** `pnpm view @stackmyth/<pkg> version` per package takes a
+few seconds and is the whole of the discipline.
