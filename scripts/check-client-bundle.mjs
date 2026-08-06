@@ -9,7 +9,8 @@
  * modules contain, not file paths — paths minify away, string literals do not.
  */
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { gzipSync } from "node:zlib";
+import { basename, join } from "node:path";
 
 /*
   Local builds emit .output/ (Nitro's node preset); Vercel builds emit
@@ -23,6 +24,28 @@ const CLIENT_DIRS = [
   ".vercel/output/static/assets",
   "dist/client/assets",
 ];
+
+/*
+  The size budget, in gzipped kilobytes.
+
+  Vite already warns at 500 kB per chunk, and a warning at the end of a build
+  log is a thing nobody reads twice — the 850 kB chunk that prompted this had
+  been warning on every deploy for weeks. A budget that FAILS is the only kind
+  that holds, because the alternative is discovering the regression the day
+  somebody complains the app is slow on their phone.
+
+  Gzipped, not raw, because that is what crosses the wire. Both numbers are
+  measured rather than guessed: they sit about 15% above what the build
+  produces today, which is room for ordinary work and not room for another
+  SDK.
+
+  **Raising these is a decision, not a reflex.** If a change needs more room,
+  the question to answer first is whether the new weight belongs on the first
+  paint at all — the fix that got us here was not making anything smaller, it
+  was moving an auth SDK behind the click that needs it.
+*/
+const MAX_TOTAL_GZIP_KB = 410;
+const MAX_CHUNK_GZIP_KB = 135;
 
 const FORBIDDEN = [
   {
@@ -75,5 +98,44 @@ for (const dir of dirs) {
   }
 }
 
+/*
+  One directory's worth of weight. Every layout that exists gets scanned above,
+  but they are copies of the same build — measuring the largest is the honest
+  reading, not the sum of duplicates.
+*/
+let totalGzip = 0;
+let biggest = { name: "", bytes: 0 };
+for (const dir of dirs) {
+  let dirTotal = 0;
+  for (const file of files(dir)) {
+    const gz = gzipSync(readFileSync(file), { level: 9 }).length;
+    dirTotal += gz;
+    if (gz > biggest.bytes) biggest = { name: basename(file), bytes: gz };
+  }
+  totalGzip = Math.max(totalGzip, dirTotal);
+}
+
+const totalKb = totalGzip / 1024;
+const biggestKb = biggest.bytes / 1024;
+
+if (totalKb > MAX_TOTAL_GZIP_KB) {
+  console.error(
+    `✖ el bundle de cliente pesa ${totalKb.toFixed(1)} KB gzip, sobre el presupuesto de ${MAX_TOTAL_GZIP_KB} KB.\n` +
+      `  Antes de subir el número: ¿lo que creció tiene que estar en el primer paint?\n` +
+      `  Un import dinámico dentro del manejador que lo necesita suele ser la respuesta.`,
+  );
+  failed = true;
+}
+
+if (biggestKb > MAX_CHUNK_GZIP_KB) {
+  console.error(
+    `✖ el chunk ${biggest.name} pesa ${biggestKb.toFixed(1)} KB gzip, sobre el presupuesto de ${MAX_CHUNK_GZIP_KB} KB.`,
+  );
+  failed = true;
+}
+
 if (failed) process.exit(1);
-console.log(`check-client-bundle: limpio (${scanned} assets en ${dirs.join(", ")})`);
+console.log(
+  `check-client-bundle: limpio (${scanned} assets, ${totalKb.toFixed(1)} KB gzip, ` +
+    `mayor ${biggestKb.toFixed(1)} KB en ${dirs.join(", ")})`,
+);

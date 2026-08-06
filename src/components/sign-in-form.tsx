@@ -13,7 +13,6 @@ import { Banner } from "@stackmyth/banner";
 
 import { useCopy } from "@/components/copy-provider";
 import { ROUTES } from "@/config/routes";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 /**
  * Sign-in for organizers. Two passwordless routes:
@@ -68,6 +67,14 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
       body: "{}",
       keepalive: true,
     }).catch(() => {});
+
+    /*
+      And the auth SDK, which is a dynamic import so it stays off the critical
+      path of everybody who never signs in — see `supabase/browser.ts`. Pulling
+      it here means it is already in memory by the time a button is pressed,
+      which is what makes the split cost nothing rather than a spinner.
+    */
+    void import("@/lib/supabase/browser");
   }, []);
 
   function callbackUrl() {
@@ -79,6 +86,7 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
   function signInWithGoogle() {
     setError(null);
     startTransition(async () => {
+      const { createSupabaseBrowserClient } = await import("@/lib/supabase/browser");
       const supabase = createSupabaseBrowserClient();
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -100,6 +108,7 @@ export function SignInForm({ redirectTo }: { redirectTo: string }) {
     }
 
     startTransition(async () => {
+      const { createSupabaseBrowserClient } = await import("@/lib/supabase/browser");
       const supabase = createSupabaseBrowserClient();
       const { error: authError } = await supabase.auth.signInWithOtp({
         email: value,

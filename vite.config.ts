@@ -63,6 +63,42 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       strictPort: true,
     },
+
+    /*
+      ── React in its own chunk ────────────────────────────────────────────
+
+      Not a byte saved: the browser downloads the same code either way. What
+      changes is WHEN, and how often.
+
+      React and react-dom are the largest single thing in the client bundle
+      and the least likely to change — they move when the dependency is
+      bumped, which is a few times a year, while the app chunk changes on
+      every deploy. Sharing one chunk meant every deploy invalidated both, so
+      a returning visitor re-downloaded a framework that had not moved.
+
+      It also puts the app chunk back under Vite's 500 kB advisory, which
+      matters less than the caching but is why the warning appeared: the
+      warning measures chunks, and one chunk held everything.
+
+      `scheduler` travels with them — it is React's own dependency and pinned
+      to it, so splitting them apart would produce two chunks that always
+      invalidate together.
+    */
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (
+              id.includes("node_modules/react-dom/") ||
+              id.includes("node_modules/react/") ||
+              id.includes("node_modules/scheduler/")
+            ) {
+              return "react";
+            }
+          },
+        },
+      },
+    },
     define: {
       "process.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL ?? ""),
       "process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(

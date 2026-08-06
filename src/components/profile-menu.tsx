@@ -35,7 +35,6 @@ import { useCopy } from "@/components/copy-provider";
 import { DrawerContent } from "@/components/drawer-content";
 import { LanguageChoice } from "@/components/language-choice";
 import { ROUTES } from "@/config/routes";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { setThemeFn } from "@/lib/preference-fns";
 
 /**
@@ -115,6 +114,9 @@ export function ProfileMenu({
 
   function signOut() {
     startTransition(async () => {
+      // Dynamic, like the sign-in form: the SDK is a quarter megabyte and
+      // belongs nowhere near the first paint. See `supabase/browser.ts`.
+      const { createSupabaseBrowserClient } = await import("@/lib/supabase/browser");
       await createSupabaseBrowserClient().auth.signOut();
       // invalidate() re-runs every loader so the session disappears
       // everywhere at once, not just on this page.
