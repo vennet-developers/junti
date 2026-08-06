@@ -1142,6 +1142,27 @@ gate real means sending a placeholder instead of the data, which changes what
 the teaser is and what the funnel shows. **That is a product call, not a
 refactor**, so it is written down here rather than decided in passing.
 
+**Decided 2026-08-06, and split in two.** The stranger preview (#80) put an
+organizer in front of the thing this note describes, and what he saw was
+"Recaudado $ 0 · Falta $ 80.000" legible through the sign-in card. The answer
+is not the same for both halves:
+
+- **The money goes.** Nulled in `toParticipantView` for a reader with no
+  session — the four totals and every per-person share — so it is absent from
+  the payload rather than faded in the page. How much is still owed on a plan
+  you are not part of is not yours, and a public token is a link, so "everybody
+  who can open the page" was never the same set as "everybody who is in on it".
+- **The roster stays, faded, and in the HTML.** The names are the hook: seeing
+  that four friends are already in is the reason to sign in, and `SignInToJoin`
+  showing five real faces is the same bet made deliberately. Replacing them
+  with a placeholder would gate the one thing that makes the gate worth
+  passing.
+
+What is left in the payload for a stranger is `costAmountMinor` — what the
+event costs — and that stays on purpose. The price of coming is part of what
+the event IS, and somebody deciding whether to turn up needs it. It is the
+collection status that was never theirs.
+
 ---
 
 ## The mistake worth recording
@@ -1248,3 +1269,44 @@ and a working RSVP form below it. The server refused the write, so nothing was
 ever wrong in the data; the page was just offering something it would not
 honour. Folding cancellation into the same ranked state removed the branch that
 made it possible.
+
+### 80. A preview narrows, and never grants
+
+An organizer can read their own event page as an invitee sees it (`?as=guest`)
+or as somebody with no account sees it (`?as=stranger`). Neither view is
+otherwise reachable: their own session renders the page for them, and the
+sign-in gate every invitee meets first is the one screen they can only get to
+by logging out.
+
+**Every mode is the real payload with fields removed, never with anything
+added.** `previewReader` ANDs against what the reader actually has, so a reader
+with nothing comes out of every mode with nothing. That is what makes it safe
+to hang off a query string: the worst a bug in here can do is show an organizer
+less of their own event. The day a mode has to *add* something it stops being a
+preview and becomes an impersonation, and the design should be revisited rather
+than extended.
+
+**Narrowed in the loader, not in the component.** The whole point is answering
+"what does a stranger actually receive", and a component that declines to
+render something has not stopped sending it. The HTML returned under
+`?as=stranger` is the HTML a stranger would receive.
+
+**Only the owner, and for everybody else the parameter is ignored rather than
+refused.** A refusal would answer "is this event yours?" for whoever asked, and
+a URL carrying `?as=` is exactly the kind of thing that gets pasted into a
+group chat by accident.
+
+**The app shell reads the loader's verdict, not the URL.** The header sits
+above the route and cannot see the search param; having it match on `?as=`
+directly would have been shorter and would have let any URL blank out any
+reader's own header on any route. It reads `preview` off the matched loader
+data instead — the value ownership was already checked against.
+
+**One trade-off, stated in the preview bar itself: the controls stay live.**
+Confirming from the guest preview really joins. Making them inert would mean
+threading a flag through four components and the server actions, and would
+produce a preview that lies about the click.
+
+It earned its keep immediately: the first real run surfaced that a signed-out
+visitor could read the event's collection totals through the gate. See #77,
+which that finding closed.

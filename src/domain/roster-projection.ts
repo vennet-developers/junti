@@ -11,18 +11,25 @@
  * nothing here pulls the ORM in behind it. `lib/roster.ts` re-exports all three
  * names, so callers keep importing from where the rest of the roster lives.
  */
+import type { Share } from "@/domain/split";
 import type { RosterMember, RosterView } from "@/lib/roster";
 
 /**
  * One person on the roster, as the PARTICIPANT surface is allowed to see them.
  *
- * `userId` is the difference, and it is the whole reason this type exists. It
- * is an account identifier, it is not rendered anywhere on the participant
- * page, and it was crossing the wire to every reader — including a signed-out
- * one holding the link. Nobody needs to know which account is behind a name on
- * a roster in order to read the roster.
+ * `userId` is dropped outright: it is an account identifier, it is not
+ * rendered anywhere on the participant page, and it was crossing the wire to
+ * every reader — including a signed-out one holding the link. Nobody needs to
+ * know which account is behind a name on a roster in order to read the roster.
+ *
+ * `share` is nullable rather than dropped, because whether it belongs depends
+ * on who is reading — see {@link toParticipantView}. Null means "not this
+ * reader's to see", which is a value a component can branch on; the type is
+ * what makes it impossible to render the number without deciding first.
  */
-export type ParticipantRosterMember = Omit<RosterMember, "userId">;
+export type ParticipantRosterMember = Omit<RosterMember, "userId" | "share"> & {
+  share: Share | null;
+};
 
 /**
  * The event as the participant surface sees it.
@@ -36,8 +43,17 @@ export type ParticipantRosterMember = Omit<RosterMember, "userId">;
  *
  * What the participant surface keeps is what a participant can act on: who is
  * coming, what they themselves owe, and the pot everybody is contributing to.
- * The money summary is shared on purpose — an event where four people split a
- * cancha is one where everybody can see the total.
+ *
+ * **The money is shared among participants and with nobody else.** An event
+ * where four people split a cancha is one where all four can see the total —
+ * that has always been the rule and it has not changed. What changed is the
+ * reader it was measured against: a public token is a link, and a link travels,
+ * so "everybody who can open the page" and "everybody who is in on it" are not
+ * the same set. Somebody with no session is the second kind of reader, and how
+ * much is still owed on a plan they are not part of is not theirs.
+ *
+ * Nullable rather than absent so the components have something to branch on,
+ * and so this stays one type instead of two that drift.
  */
 export type ParticipantRosterView = Omit<
   RosterView,
@@ -52,7 +68,16 @@ export type ParticipantRosterView = Omit<
   | "notAttending"
   | "maybe"
   | "waitlisted"
+  | "collectedMinor"
+  | "outstandingMinor"
+  | "waivedMinor"
+  | "totalComputedMinor"
 > & {
+  /** Null for a reader with no session. See the note above. */
+  collectedMinor: number | null;
+  outstandingMinor: number | null;
+  waivedMinor: number | null;
+  totalComputedMinor: number | null;
   members: ParticipantRosterMember[];
   attending: ParticipantRosterMember[];
   confirmed: ParticipantRosterMember[];
@@ -80,8 +105,22 @@ export type ParticipantRosterView = Omit<
  *   to. That is exactly the failure mode a projection removes.
  *
  * Plus `userId` on every member. See {@link ParticipantRosterMember}.
+ *
+ * **And the money, for a reader with no session.** Ivan's call, after the
+ * stranger preview showed him what it looks like: somebody who opens a
+ * forwarded link reads "Recaudado $ 0 · Falta $ 80.000" through the sign-in
+ * card before they have said who they are. The roster survives, because names
+ * are the hook — seeing that four friends are already in is the reason to
+ * join. How much is still owed on a plan you are not part of is not.
+ *
+ * Zeroed out here rather than hidden in the component, for the reason the file
+ * exists: what a component does not render is still in the HTML, and the
+ * person this protects against is exactly the one who would look.
  */
-export function toParticipantView(roster: RosterView): ParticipantRosterView {
+export function toParticipantView(
+  roster: RosterView,
+  reader: { signedIn: boolean },
+): ParticipantRosterView {
   /*
     Each person is stripped ONCE and every list points at that same object.
 
@@ -97,7 +136,10 @@ export function toParticipantView(roster: RosterView): ParticipantRosterView {
     roster went from 37.8 KB to 39.4 KB while REMOVING four fields.
   */
   const stripped = new Map<string, ParticipantRosterMember>(
-    roster.members.map(({ userId: _userId, ...rest }) => [rest.id, rest]),
+    roster.members.map(({ userId: _userId, share, ...rest }) => [
+      rest.id,
+      { ...rest, share: reader.signedIn ? share : null },
+    ]),
   );
 
   const strip = (members: RosterMember[]): ParticipantRosterMember[] =>
@@ -116,10 +158,10 @@ export function toParticipantView(roster: RosterView): ParticipantRosterView {
     notAttending: strip(roster.notAttending),
     maybe: strip(roster.maybe),
     waitlisted: strip(roster.waitlisted),
-    collectedMinor: roster.collectedMinor,
-    outstandingMinor: roster.outstandingMinor,
-    waivedMinor: roster.waivedMinor,
-    totalComputedMinor: roster.totalComputedMinor,
+    collectedMinor: reader.signedIn ? roster.collectedMinor : null,
+    outstandingMinor: reader.signedIn ? roster.outstandingMinor : null,
+    waivedMinor: reader.signedIn ? roster.waivedMinor : null,
+    totalComputedMinor: reader.signedIn ? roster.totalComputedMinor : null,
     openSlots: roster.openSlots,
   };
 }

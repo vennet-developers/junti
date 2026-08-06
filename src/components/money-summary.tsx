@@ -29,6 +29,21 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
 
   if (!event.hasCost) return null;
 
+  /*
+    Null on all four means the reader has no session, so the money was never
+    sent — see `toParticipantView`. Nothing to summarise, and nothing to say
+    about the absence either: a signed-out reader is not missing a feature,
+    they are reading a roster.
+  */
+  if (
+    collectedMinor === null ||
+    outstandingMinor === null ||
+    waivedMinor === null ||
+    totalComputedMinor === null
+  ) {
+    return null;
+  }
+
   const attendingCount = roster.attending.length;
 
   if (attendingCount === 0) {

@@ -85,9 +85,12 @@ function fullView(): RosterView {
   } as unknown as RosterView;
 }
 
+/** The reader every test below assumes unless it says otherwise. */
+const SIGNED_IN = { signedIn: true };
+
 describe("what a participant is allowed to receive", () => {
   it("hands over exactly the agreed keys and no others", () => {
-    expect(Object.keys(toParticipantView(fullView())).sort()).toEqual(ALLOWED_KEYS);
+    expect(Object.keys(toParticipantView(fullView(), SIGNED_IN)).sort()).toEqual(ALLOWED_KEYS);
   });
 
   /**
@@ -96,7 +99,7 @@ describe("what a participant is allowed to receive", () => {
    * than a new mistake.
    */
   it("drops the four fields only the organizer console renders", () => {
-    const view = toParticipantView(fullView()) as Record<string, unknown>;
+    const view = toParticipantView(fullView(), SIGNED_IN) as Record<string, unknown>;
 
     for (const key of ["pendingReview", "promotable", "discrepancies", "compliance"]) {
       expect(view[key], `${key} is still crossing the wire`).toBeUndefined();
@@ -104,7 +107,7 @@ describe("what a participant is allowed to receive", () => {
   });
 
   it("strips the account id from every list a member can appear in", () => {
-    const view = toParticipantView(fullView());
+    const view = toParticipantView(fullView(), SIGNED_IN);
 
     const lists = [
       view.members,
@@ -131,7 +134,7 @@ describe("what a participant is allowed to receive", () => {
    * an eight-person payload by 1.6 KB while removing four fields.
    */
   it("gives every list the same objects, so the payload does not multiply", () => {
-    const view = toParticipantView(fullView());
+    const view = toParticipantView(fullView(), SIGNED_IN);
     const ana = view.members.find((person) => person.id === "p1");
 
     expect(view.attending.find((person) => person.id === "p1")).toBe(ana);
@@ -143,7 +146,7 @@ describe("what a participant is allowed to receive", () => {
    * "the roster went blank" is a worse bug than the one this fixes.
    */
   it("keeps what the participant page actually renders", () => {
-    const view = toParticipantView(fullView());
+    const view = toParticipantView(fullView(), SIGNED_IN);
 
     expect(view.members).toHaveLength(2);
     expect(view.confirmed[0]?.displayName).toBe("Ana Torres");
@@ -156,6 +159,61 @@ describe("what a participant is allowed to receive", () => {
     expect(view.totalComputedMinor).toBe(40_000);
     expect(view.openSlots).toBe(8);
     // Their own share survives; it is what the row shows next to their name.
-    expect(view.members[0]?.share.effectiveAmountMinor).toBe(20_000);
+    expect(view.members[0]?.share?.effectiveAmountMinor).toBe(20_000);
+  });
+});
+
+/**
+ * The second axis, added after the stranger preview showed an organizer what a
+ * forwarded link actually reveals: "Recaudado $ 0 · Falta $ 80.000", legible
+ * through the sign-in card, to somebody who has not said who they are.
+ */
+describe("what somebody with no session receives", () => {
+  const SIGNED_OUT = { signedIn: false };
+
+  it("sends no totals at all", () => {
+    const view = toParticipantView(fullView(), SIGNED_OUT);
+
+    expect(view.collectedMinor).toBeNull();
+    expect(view.outstandingMinor).toBeNull();
+    expect(view.waivedMinor).toBeNull();
+    expect(view.totalComputedMinor).toBeNull();
+  });
+
+  /**
+   * The finer-grained half of the same leak. Hiding the summary while every
+   * row still carries "$ 20.000 · Debe" would move the number rather than
+   * remove it.
+   */
+  it("sends no per-person amount either, in any list", () => {
+    const view = toParticipantView(fullView(), SIGNED_OUT);
+
+    for (const list of [view.members, view.attending, view.confirmed, view.waitlisted]) {
+      for (const person of list) {
+        expect(person.share, `${person.displayName} still carries a share`).toBeNull();
+      }
+    }
+  });
+
+  /**
+   * The counterweight, and the reason this stops at the money: the names are
+   * the hook. Seeing that four friends are already in is what makes somebody
+   * sign in, so a projection that took the roster too would be worse than the
+   * leak it fixed.
+   */
+  it("keeps the roster, which is the whole reason to open the link", () => {
+    const view = toParticipantView(fullView(), SIGNED_OUT);
+
+    expect(view.members).toHaveLength(2);
+    expect(view.confirmed[0]?.displayName).toBe("Ana Torres");
+    expect(view.openSlots).toBe(8);
+  });
+
+  it("still shares one object per person across the lists", () => {
+    const view = toParticipantView(fullView(), SIGNED_OUT);
+    const ana = view.members.find((person) => person.id === "p1");
+
+    expect(view.attending.find((person) => person.id === "p1")).toBe(ana);
+    expect(view.confirmed.find((person) => person.id === "p1")).toBe(ana);
   });
 });

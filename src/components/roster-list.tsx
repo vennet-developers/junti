@@ -171,8 +171,11 @@ export function RosterGroup({
                       </Flex>
                     </Box>
 
+                    {/* `share` is null for a reader with no session — the
+                        amounts are never sent, so there is nothing to hide
+                        here. See `toParticipantView`. */}
                     <Flex gap="2" align="center" flexShrink={0}>
-                      {showMoney && member.share.owes ? (
+                      {showMoney && member.share?.owes ? (
                         <Text variant="small" color="muted" whiteSpace="nowrap">
                           {formatMoney(
                             member.share.effectiveAmountMinor,
@@ -181,7 +184,7 @@ export function RosterGroup({
                           )}
                         </Text>
                       ) : null}
-                      {showMoney && member.share.owes ? (
+                      {showMoney && member.share?.owes ? (
                         <PaymentBadge status={member.share.status} copy={copy} compact />
                       ) : null}
                     </Flex>

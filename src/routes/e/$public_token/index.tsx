@@ -226,7 +226,13 @@ const getEventPage = createServerFn({ method: "GET" })
         organizer-only field to `RosterView` from now on does not silently
         arrive here.
       */
-      roster: roster_.toParticipantView(roster),
+      /*
+        The reader, not the request: `reader.signedIn` is the value after any
+        preview narrowing, so a stranger preview drops the money exactly as a
+        real stranger's page does. That is the point of narrowing in the loader
+        rather than in the component.
+      */
+      roster: roster_.toParticipantView(roster, { signedIn: reader.signedIn }),
     };
   });
 
@@ -277,7 +283,12 @@ function ParticipantPage() {
   const copy = getCopy(locale);
 
   const { event } = roster;
-  const showMoney = event.hasCost;
+  /*
+    Costs are for the people in on it. A signed-out reader was never sent the
+    amounts — `toParticipantView` nulls them — and this keeps the component in
+    step with the payload rather than trusting one of the two.
+  */
+  const showMoney = event.hasCost && signedIn;
 
   /*
     Whether this event is taking answers, on the reader's own clock rather than
@@ -333,7 +344,7 @@ function ParticipantPage() {
     <Stack gap="6">
       <Divider />
 
-      <MoneySummary roster={roster} copy={copy} />
+      {showMoney ? <MoneySummary roster={roster} copy={copy} /> : null}
 
       {showMoney ? <Divider /> : null}
 

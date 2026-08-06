@@ -317,7 +317,10 @@ function ManagePage() {
 
   const participantActions = (member: ParticipantRosterMember) => (
     <>
-      {showMoney ? (
+      {/* The organizer console never gets a null share — it reads the full
+          roster, not the participant projection — but the type it borrows
+          allows one, and there is nothing to control without an amount. */}
+      {showMoney && member.share ? (
         <PaymentControls
           publicToken={publicToken}
           organizerToken={organizerToken}
