@@ -19,6 +19,14 @@ export interface SplitParticipant {
   attendance: Attendance;
   /** Null when no payment row exists yet (cost mode `none`, or not yet created). */
   payment: { status: PaymentStatus; amountMinor: number } | null;
+  /**
+   * Shares this row answers for: 1 + spots held for guests. The sponsor of
+   * three held spots owes four shares — the guests are not on the roster, so
+   * the seats they occupy have to be paid for by the person who reserved
+   * them. Defaults to 1; a claimed spot moves its share to the claimant by
+   * ceasing to count here and appearing as their own row.
+   */
+  weight?: number;
 }
 
 export interface SplitInput {
@@ -137,15 +145,25 @@ export function computeSplit(input: SplitInput): SplitResult {
 
   if (costMode === "per_person" && costAmountMinor !== null) {
     for (const participant of attending) {
-      amounts.set(participant.id, costAmountMinor);
+      amounts.set(participant.id, costAmountMinor * (participant.weight ?? 1));
     }
   } else if (costMode === "total" && costAmountMinor !== null) {
-    const shares = evenShares(costAmountMinor, attending.length);
-    attending.forEach((participant, index) => {
-      // `evenShares` returns exactly `attending.length` entries, so this is
-      // always defined; `?? 0` keeps the code free of a non-null assertion.
-      amounts.set(participant.id, shares[index] ?? 0);
-    });
+    /*
+      The units being split are SEATS, not rows. Splitting by row would hand
+      the sponsor of three guests the same share as everyone else and quietly
+      spread their guests' cost across the whole roster. Units are dealt in
+      join order, so the rounding remainder still lands on the earliest
+      joiners — one unit at a time, exactly as before weights existed.
+    */
+    const totalUnits = attending.reduce((sum, p) => sum + (p.weight ?? 1), 0);
+    const units = evenShares(costAmountMinor, totalUnits);
+    let cursor = 0;
+    for (const participant of attending) {
+      const weight = participant.weight ?? 1;
+      let amount = 0;
+      for (let i = 0; i < weight; i++) amount += units[cursor++] ?? 0;
+      amounts.set(participant.id, amount);
+    }
   }
 
   const shares: Share[] = [];

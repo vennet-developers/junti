@@ -14,8 +14,9 @@ import {
   policyEvidence,
   policySubmissions,
   userProfiles,
+  heldSpots,
 } from "@/db/schema";
-import type { CostMode, EventRow, ParticipantRow, PaymentRow } from "@/db/schema";
+import type { CostMode, EventRow, HeldSpotRow, ParticipantRow, PaymentRow } from "@/db/schema";
 
 import { attendingCountSql, firstAttendeesSql } from "./roster-select";
 import {
@@ -28,6 +29,7 @@ import {
 } from "@/domain/policies";
 import { computeSplit, type Share, type SplitParticipant } from "@/domain/split";
 import type { Attendance } from "@/domain/types";
+import { defaultGuestName } from "@/domain/held-spots";
 import { openSlots, promotableCount, waitlistOrder } from "@/domain/waitlist";
 
 import type { Locale } from "@/config/copy";
@@ -55,6 +57,14 @@ export interface RosterMember {
   /** Set when this RSVP came from a signed-in account. */
   userId: string | null;
   avatarUrl: string | null;
+  /**
+   * Unclaimed spots this person holds, with the claim links.
+   *
+   * The claim token is roster-visible by design: it is access to a SEAT this
+   * sponsor already answers for, exactly as the public token is access to
+   * the event. Whoever can read the roster can already join the event.
+   */
+  guests: { id: string; name: string; claimToken: string }[];
 }
 
 export interface EventView {
@@ -314,17 +324,37 @@ export async function loadPolicySubmissions(eventId: string): Promise<PolicySubm
  * every call site — spreads the same concern over more places.
  */
 export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<RosterView> {
-  const [rows, policies, submissions, type] = await Promise.all([
+  const [rows, policies, submissions, type, spots] = await Promise.all([
     loadJoinedRows(eventRow.id),
     loadEventPolicies(eventRow.id, locale),
     loadPolicySubmissions(eventRow.id),
     loadEventType(eventRow.eventTypeId, locale),
+    loadHeldSpots(eventRow.id),
   ]);
+
+  /*
+    Unclaimed spots per sponsor. Claimed ones stopped counting the moment
+    their owner joined the roster as themselves — the seat did not vanish, it
+    changed rows. Weight = 1 + held, and the same number feeds capacity and
+    money so the two can never disagree about how many seats a sponsor
+    answers for.
+  */
+  const heldBySponsor = new Map<string, HeldSpotRow[]>();
+  for (const spot of spots) {
+    if (spot.claimedBy !== null) continue;
+    const list = heldBySponsor.get(spot.sponsorParticipantId) ?? [];
+    list.push(spot);
+    heldBySponsor.set(spot.sponsorParticipantId, list);
+  }
+  const weightOf = (participantId: string) => 1 + (heldBySponsor.get(participantId)?.length ?? 0);
 
   const split = computeSplit({
     costMode: eventRow.costMode,
     costAmountMinor: eventRow.costAmountMinor,
-    participants: rows.map(toSplitParticipant),
+    participants: rows.map((row) => ({
+      ...toSplitParticipant(row),
+      weight: weightOf(row.participant.id),
+    })),
   });
 
   const sharesById = new Map(split.shares.map((share) => [share.participantId, share]));
@@ -336,6 +366,11 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
     joinedAt: row.participant.createdAt,
     userId: row.participant.userId,
     avatarUrl: row.participant.avatarUrl,
+    guests: (heldBySponsor.get(row.participant.id) ?? []).map((spot, index) => ({
+      id: spot.id,
+      name: spot.guestName ?? defaultGuestName(row.participant.displayName, index + 1),
+      claimToken: spot.claimToken,
+    })),
     // Every participant gets a share entry from computeSplit, so this is always
     // present; the fallback keeps the code free of a non-null assertion.
     share: sharesById.get(row.participant.id) ?? {
@@ -352,6 +387,7 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
     id: m.id,
     joinedAt: m.joinedAt,
     attendance: m.attendance,
+    weight: 1 + m.guests.length,
   }));
 
   const waitlistIds = new Set(waitlistOrder(capacityInput).map((p) => p.id));
@@ -996,3 +1032,12 @@ export type {
   ParticipantRosterView,
 } from "@/domain/roster-projection";
 export { toParticipantView } from "@/domain/roster-projection";
+
+/** Every spot of an event, claimed or not — the caller decides what counts. */
+export async function loadHeldSpots(eventId: string): Promise<HeldSpotRow[]> {
+  return db
+    .select()
+    .from(heldSpots)
+    .where(eq(heldSpots.eventId, eventId))
+    .orderBy(asc(heldSpots.createdAt));
+}

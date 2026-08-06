@@ -368,6 +368,64 @@ export const events = pgTable(
   ],
 );
 
+/**
+ * Spots a participant holds for people they are bringing.
+ *
+ * **Not participant rows, deliberately.** `participants.user_id` is NOT NULL
+ * because a spot belongs to a person with an account — that invariant killed
+ * the anonymous flow and every "what if there is no owner" branch with it.
+ * A held spot is a different thing: capacity and cost reserved by somebody
+ * who IS on the roster, on behalf of somebody who is not yet. It lives in its
+ * own table so the invariant stands.
+ *
+ * `guest_name` is the only personal datum here and it may be about a
+ * non-user, typed by the sponsor. Nullable on purpose: blank renders as
+ * "Invitado de {sponsor}", and the retention job nulls it out after the
+ * event passes — the name was for telling spots apart before the match, and
+ * keeps no purpose afterwards. There is NO email column, and that is the
+ * design, not an omission: the claim link travels by the sponsor's own
+ * WhatsApp, so Junti never contacts a person who has not said yes.
+ *
+ * `claimed_by` survives the claim (instead of deleting the row) so the money
+ * history stays whole: the sponsor's share was computed with this spot in it,
+ * and a vanished row would rewrite what they owed retroactively.
+ */
+export const heldSpots = pgTable(
+  "held_spots",
+  {
+    id: uuid("id").primaryKey(),
+
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+
+    /** The roster row that answers for this spot — capacity and money. */
+    sponsorParticipantId: uuid("sponsor_participant_id")
+      .notNull()
+      .references(() => participants.id, { onDelete: "cascade" }),
+
+    guestName: text("guest_name"),
+
+    /**
+     * The whole access control for claiming, like the event's public token:
+     * whoever holds the link may claim the spot.
+     */
+    claimToken: text("claim_token").notNull().unique(),
+
+    /** The account that claimed it, or null while the seat is still held. */
+    claimedBy: uuid("claimed_by"),
+    claimedAt: timestamp("claimed_at", { withTimezone: true }),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("held_spots_event_idx").on(table.eventId),
+    index("held_spots_sponsor_idx").on(table.sponsorParticipantId),
+  ],
+);
+
+export type HeldSpotRow = typeof heldSpots.$inferSelect;
+
 export const participants = pgTable(
   "participants",
   {

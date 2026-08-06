@@ -359,7 +359,10 @@ function ManagePage() {
           <Stack gap="6">
             <EventHeader
               event={event}
-              attendingCount={roster.attending.length}
+              attendingCount={roster.attending.reduce(
+            (seats, member) => seats + 1 + member.guests.length,
+            0,
+          )}
               copy={copy}
               readerTimeZone={readerTimeZone}
               openSlots={roster.openSlots}

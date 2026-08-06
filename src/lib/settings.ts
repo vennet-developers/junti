@@ -33,6 +33,8 @@ export const SETTINGS = {
    * nothing.
    */
   invitesPerHour: { key: "invites_per_hour", default: 100 },
+  /** Spots one participant may hold for guests on a single event. */
+  maxHeldSpots: { key: "max_held_spots", default: 5 },
 
   /**
    * How many people one click may reach.

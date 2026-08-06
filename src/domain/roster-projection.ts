@@ -27,8 +27,16 @@ import type { RosterMember, RosterView } from "@/lib/roster";
  * reader's to see", which is a value a component can branch on; the type is
  * what makes it impossible to render the number without deciding first.
  */
-export type ParticipantRosterMember = Omit<RosterMember, "userId" | "share"> & {
+export type ParticipantRosterMember = Omit<RosterMember, "userId" | "share" | "guests"> & {
   share: Share | null;
+  /**
+   * Guest names only — the claim token is STRIPPED here, deliberately. The
+   * roster crosses the wire to everybody holding the public link, and a claim
+   * token in that payload would let any reader take a seat that was held for
+   * somebody specific. The sponsor gets their own links through their own
+   * loader field, the way `ownCommitment` travels.
+   */
+  guests: { id: string; name: string }[];
 };
 
 /**
@@ -136,9 +144,13 @@ export function toParticipantView(
     roster went from 37.8 KB to 39.4 KB while REMOVING four fields.
   */
   const stripped = new Map<string, ParticipantRosterMember>(
-    roster.members.map(({ userId: _userId, share, ...rest }) => [
+    roster.members.map(({ userId: _userId, share, guests, ...rest }) => [
       rest.id,
-      { ...rest, share: reader.signedIn ? share : null },
+      {
+        ...rest,
+        share: reader.signedIn ? share : null,
+        guests: guests.map(({ id, name }) => ({ id, name })),
+      },
     ]),
   );
 

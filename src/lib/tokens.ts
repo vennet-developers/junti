@@ -49,6 +49,17 @@ export function createGroupToken(): string {
 }
 
 /**
+ * A held spot's claim link.
+ *
+ * Travels by the sponsor's own WhatsApp to the person the seat is for — never
+ * by any channel Junti initiates. Public-token length: it grants one seat the
+ * sponsor already answers for, not control over anything.
+ */
+export function createClaimToken(): string {
+  return token(PUBLIC_TOKEN_BYTES);
+}
+
+/**
  * Organizer access. Full control of the event.
  *
  * Must never be sent to the client on a participant route — not in HTML, not in

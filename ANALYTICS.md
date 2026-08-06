@@ -113,6 +113,18 @@ somebody clearing an old event out of their calendar is not evidence of demand
 for calendar sync, and counting the two together would flatter the number this
 exists to keep honest.
 
+## Held spots
+
+| Event | Fired | `props` |
+| --- | --- | --- |
+| `spot_held` | **Server**, in `holdSpots` | `{ event_id, count }` |
+| `spot_claimed` | **Server**, in the claim route | `{ event_id }` |
+
+The growth loop's own funnel: spots held over spots claimed is the conversion
+of "my friend reserved for me" into "I have an account". Guest names never
+appear in `props` — they are the one datum this feature touches that can
+belong to a non-user, and this table is the last place it may ever land.
+
 ## Groups
 
 | Event | Fired | `props` |

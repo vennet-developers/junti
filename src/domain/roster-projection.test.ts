@@ -53,6 +53,7 @@ function member(id: string, name: string) {
       effectiveAmountMinor: 20_000,
       computedAmountMinor: 20_000,
     },
+    guests: [{ id: "g1", name: "Invitado de Ana", claimToken: "tok-secret" }],
     // The field this projection exists for.
     userId: "019fcb66-af8d-781e-94b9-0c24104dae10",
     avatarUrl: null,
@@ -103,6 +104,15 @@ describe("what a participant is allowed to receive", () => {
 
     for (const key of ["pendingReview", "promotable", "discrepancies", "compliance"]) {
       expect(view[key], `${key} is still crossing the wire`).toBeUndefined();
+    }
+  });
+
+  it("strips claim tokens from guests — a token in the roster is a seat anyone could take", () => {
+    const view = toParticipantView(fullView(), SIGNED_IN);
+    for (const person of view.members) {
+      for (const guest of person.guests) {
+        expect(guest).not.toHaveProperty("claimToken");
+      }
     }
   });
 

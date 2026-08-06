@@ -34,6 +34,7 @@ function DetailRow({ icon, label, children }: DetailRowProps) {
 
 export interface EventHeaderProps {
   event: EventView;
+  /** SEATS taken, not rows: a sponsor bringing three guests counts as four. */
   attendingCount: number;
   copy: Copy;
   /** The reader's zone. Falls back to the event's, which shows one line. */

@@ -165,6 +165,17 @@ export function RosterGroup({
                         <Box minWidth="0">
                           <Stack gap="1">
                             <Text weight="medium">{member.displayName}</Text>
+                            {/* The seats this person answers for, by name.
+                                Names only — the claim links live in the
+                                sponsor's own panel, never on the shared
+                                roster. */}
+                            {member.guests.length > 0 ? (
+                              <Text variant="small" color="muted">
+                                {copy.heldSpots.broughtBy(
+                                  member.guests.map((guest) => guest.name).join(", "),
+                                )}
+                              </Text>
+                            ) : null}
                             {note}
                           </Stack>
                         </Box>

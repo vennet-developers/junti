@@ -398,6 +398,43 @@ export const es = {
     },
   },
 
+  claim: {
+    kicker: (sponsor: string) => `${sponsor} te apartó un cupo`,
+    holdIsYours: (sponsor: string) => `Este cupo es tuyo. ${sponsor} ya respondió por él — solo ponle tu nombre.`,
+    signInToClaim: "Entra con Google o con un link a tu correo, sin contraseña, y el cupo queda a tu nombre.",
+    claimCta: "Reclamar mi cupo",
+    claiming: "Reclamando…",
+    yours: "El cupo es tuyo",
+    yoursBody: "Ya apareces en la lista con tu nombre. Nos vemos allá.",
+    takenTitle: "Este cupo ya fue reclamado",
+    taken: "Alguien más ya tomó este cupo. Pídele otro link a quien te invitó.",
+    ownSpot: "Este cupo lo apartaste tú — es para otra persona.",
+    alreadyIn: "Ya estás en la lista de este evento con tu propia respuesta.",
+    goToEvent: "Ver el evento",
+    groupsHeading: (sponsor: string) => `Los parches de ${sponsor}`,
+    groupsHelp: "Si te unes, te pueden invitar directo a los próximos planes. Tú decides grupo por grupo.",
+    viewGroup: "Ver grupo",
+  },
+
+  heldSpots: {
+    heading: "Trae gente",
+    help: "Aparta cupos para quienes vienen contigo. Tú respondes por ellos hasta que reclamen su cupo con el link.",
+    countLabel: "¿Cuántos cupos más?",
+    nameLabel: (n: number) => `Nombre del invitado ${n}`,
+    namePlaceholder: "Opcional — para saber quién es",
+    submit: "Apartar cupos",
+    submitting: "Apartando…",
+    held: "Cupos apartados",
+    copyLink: "Copiar link de invitación",
+    copied: "¡Copiado!",
+    release: "Liberar",
+    shareHint: "Pásale el link por WhatsApp a cada persona: al abrirlo crea su cuenta y el cupo queda a su nombre.",
+    mustJoinFirst: "Primero confirma que vienes; después apartas cupos para tu gente.",
+    overAllowance: (max: number) => `Máximo ${max} cupos por persona en cada evento.`,
+    overCapacity: "No quedan cupos suficientes para apartar esos.",
+    broughtBy: (name: string) => `Trae: ${name}`,
+  },
+
   roster: {
     heading: "Quién viene",
     inTitle: "Vienen",
@@ -762,7 +799,7 @@ export const es = {
       "Junti es un producto de Vennet, operado por Iván Elías Ávila Almanza, persona natural domiciliada en Colombia, quien actúa como responsable del tratamiento. Para consultas, reclamos o para ejercer cualquiera de tus derechos, escribe a hello@vennet.dev. Respondemos consultas dentro de los diez días hábiles y reclamos dentro de los quince que fija la Ley 1581 de 2012.",
     dataTitle: "Qué guardamos",
     dataBody:
-      "Tu correo, tu nombre, tu foto de perfil si entraste con Google, y tu número de WhatsApp solo si lo diste marcando la casilla. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
+      "Tu correo, tu nombre, tu foto de perfil si entraste con Google, y tu número de WhatsApp solo si lo diste marcando la casilla. Si apartas cupos para tu gente, guardamos el nombre que escribas para cada cupo — solo el nombre, nunca un correo ni un teléfono: el link de invitación lo compartes tú directamente. Ese nombre se borra solo cuando el cupo se reclama o unos días después del evento, y la persona puede pedir su retiro en cualquier momento. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
     purposesTitle: "Para qué",
     purposesBody:
       "El correo es cómo entras: no hay contraseña, te mandamos un link. El nombre es lo que ven los demás en la lista del evento. El teléfono existe para una sola cosa, y es que el organizador de un evento al que te apuntaste pueda escribirte por WhatsApp. Los grupos existen para que no tengamos que escribirle a nadie que no haya aceptado antes: solo recibes invitaciones de alguien cuyo grupo aceptaste, y puedes salirte cuando quieras.",
@@ -826,7 +863,7 @@ export const es = {
 
     accountTitle: "Tu cuenta",
     accountBody:
-      "Necesitas ser mayor de edad para tener cuenta. Se entra con Google o con un link a tu correo, así que cuidar tu correo es cuidar tu cuenta. Responde por lo que se haga desde ella. Usa un nombre por el que tu gente te reconozca: es lo que van a ver en la lista, y ponerle a propósito el nombre de otra persona es justamente lo que no se puede.",
+      "Necesitas ser mayor de edad para tener cuenta. Si apartas cupos para otras personas, respondes por esos cupos — el lugar y la plata — hasta que cada quien los reclame con su link, y el nombre que pongas debe ser de alguien que sabe que lo estás invitando. Se entra con Google o con un link a tu correo, así que cuidar tu correo es cuidar tu cuenta. Responde por lo que se haga desde ella. Usa un nombre por el que tu gente te reconozca: es lo que van a ver en la lista, y ponerle a propósito el nombre de otra persona es justamente lo que no se puede.",
 
     organizerTitle: "Si organizas",
     organizerBody:

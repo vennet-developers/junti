@@ -1,5 +1,6 @@
 import "@/server/assert-server";
 
+import { GUEST_NAME_RETENTION_DAYS } from "@/domain/held-spots";
 import { and, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 
 import { db } from "@/db/client";
@@ -11,6 +12,8 @@ import {
   policyEvidence,
   policySubmissions,
   sendCounters,
+  events,
+  heldSpots,
 } from "@/db/schema";
 
 /**
@@ -99,6 +102,7 @@ const SEND_COUNTER_DAYS = 2;
 const READ_NOTIFICATION_DAYS = 90;
 
 export interface RetentionReport {
+  guestNames: number;
   invitations: number;
   analyticsEvents: number;
   outboxMessages: number;
@@ -194,7 +198,33 @@ export async function runRetention(): Promise<RetentionReport> {
     )
     .returning({ id: notifications.id });
 
+  /*
+    Unclaimed guest names on events past their grace window. The NAME goes,
+    the ROW stays: deleting the spot would retroactively rewrite what the
+    sponsor owed, and the seat they answered for is part of the money history.
+    A nulled name renders as "Invitado de {sponsor}", which is all it needs to
+    say after the match. See GUEST_NAME_RETENTION_DAYS for the window.
+  */
+  const purgedGuestNames = await db
+    .update(heldSpots)
+    .set({ guestName: null })
+    .where(
+      and(
+        isNull(heldSpots.claimedBy),
+        isNotNull(heldSpots.guestName),
+        inArray(
+          heldSpots.eventId,
+          db
+            .select({ id: events.id })
+            .from(events)
+            .where(lt(events.startsAt, daysAgo(GUEST_NAME_RETENTION_DAYS))),
+        ),
+      ),
+    )
+    .returning({ id: heldSpots.id });
+
   return {
+    guestNames: purgedGuestNames.length,
     invitations: staleInvitations.length,
     analyticsEvents: staleAnalytics.length,
     outboxMessages: staleOutbox.length,

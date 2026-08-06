@@ -35,6 +35,12 @@ import { consentEvents, emailSuppressions, invitations } from "@/db/schema";
  * did not mention the photo at all and named the sign-in only as "el correo es
  * cómo entras". Describing less than we hold is a change of substance in the
  * only direction that matters.
+ *
+ * 2026-08-06 (same day, second change): held spots. A new class of data —
+ * guest names typed by the sponsor, possibly about non-users — with its
+ * lifecycle stated: name only, self-deleting, removable on request. Two
+ * substance changes sharing one version string is fine; the string names the
+ * text that was on screen, and both changes shipped together.
  */
 export const POLICY_VERSION = "2026-08-06";
 

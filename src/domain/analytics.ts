@@ -40,6 +40,8 @@ export const ANALYTICS_EVENTS = [
     and this is the only thing that can ever produce that number.
   */
   "calendar_added",
+  "spot_held",
+  "spot_claimed",
 
   // Groups
   "group_created",
@@ -80,6 +82,8 @@ export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
   policy_submitted: "server",
   policy_reviewed: "server",
   calendar_added: "server",
+  spot_held: "server",
+  spot_claimed: "server",
   payment_recorded: "server",
 
   group_created: "server",

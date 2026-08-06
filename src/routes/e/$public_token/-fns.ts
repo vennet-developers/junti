@@ -56,3 +56,17 @@ export const deleteCommitmentFn = createServerFn({ method: "POST" })
     const { deleteCommitment } = await import("./-actions.server");
     return deleteCommitment(data.publicToken, data.noteId);
   });
+
+export const holdSpotsFn = createServerFn({ method: "POST" })
+  .validator((data: FormData) => data)
+  .handler(async ({ data }): Promise<RsvpState> => {
+    const { holdSpots } = await import("./-actions.server");
+    return holdSpots(token(data), data);
+  });
+
+export const releaseSpotFn = createServerFn({ method: "POST" })
+  .validator((data: FormData) => data)
+  .handler(async ({ data }): Promise<RsvpState> => {
+    const { releaseSpot } = await import("./-actions.server");
+    return releaseSpot(token(data), data);
+  });

@@ -27,6 +27,7 @@ import { CommitmentNote } from "./-commitment-note";
 import { CommitmentPanel } from "./-commitment-panel";
 import { GatedPreview } from "./-gated-preview";
 import { JoinPanel } from "./-join-panel";
+import { HeldSpotsPanel } from "./-held-spots-panel";
 import { PolicyPanel, type PolicyPanelItem } from "./-policy-panel";
 import { PreviewBar } from "./-preview-bar";
 import { SignInToJoin } from "./-sign-in-to-join";
@@ -130,6 +131,26 @@ const getEventPage = createServerFn({ method: "GET" })
     const commitments = await loadCommitments(eventRow.id);
     const ownCommitment = mineRow ? await loadOwnCommitment(mineRow.id) : null;
 
+    /*
+      The sponsor's own held spots, WITH claim tokens. This is the only place
+      tokens travel: the roster's copies are stripped in the projection, so a
+      seat held for Pedro cannot be claimed by whoever else opens the page.
+    */
+    const { defaultGuestName } = await import("@/domain/held-spots");
+    const myGuests =
+      mineRow && reader.ownStake
+        ? (await roster_.loadHeldSpots(eventRow.id))
+            .filter((spot) => spot.sponsorParticipantId === mineRow.id)
+            .map((spot, index) => ({
+              id: spot.id,
+              name: spot.guestName ?? defaultGuestName(mineRow.displayName, index + 1),
+              claimToken: spot.claimToken,
+              claimed: spot.claimedBy !== null,
+            }))
+        : [];
+    const { getSetting } = await import("@/lib/settings");
+    const maxHeldSpots = await getSetting("maxHeldSpots");
+
     // What this person still owes the event. Only their own — never anyone
     // else's standing, which is the organizer's business.
     let myPolicies: PolicyPanelItem[] = [];
@@ -203,6 +224,8 @@ const getEventPage = createServerFn({ method: "GET" })
         ? { id: ownCommitment.id, note: ownCommitment.note, reaction: ownCommitment.reaction }
         : null,
       myPolicies,
+      myGuests,
+      maxHeldSpots,
       pendingNotes,
       commitments: commitments.map((item) => ({
         id: item.id,
@@ -273,6 +296,8 @@ function ParticipantPage() {
     mineId,
     ownCommitment,
     myPolicies,
+    myGuests,
+    maxHeldSpots,
     pendingNotes,
     commitments,
     roster,
@@ -493,7 +518,10 @@ function ParticipantPage() {
 
         <EventHeader
           event={event}
-          attendingCount={roster.attending.length}
+          attendingCount={roster.attending.reduce(
+            (seats, member) => seats + 1 + member.guests.length,
+            0,
+          )}
           copy={copy}
           readerTimeZone={readerTimeZone}
           openSlots={roster.openSlots}
@@ -582,6 +610,17 @@ function ParticipantPage() {
             open past the deadline for the same reason as the policies. */}
         {!event.isClosed && !event.isCancelled && mineId ? (
           <CommitmentPanel publicToken={publicToken} own={ownCommitment} />
+        ) : null}
+
+        {/* Bring people. Only for somebody attending, and gated like the
+            "¿vienes?": holding seats is answering for more people, so the
+            convocatoria applies. Claiming does not — see the claim route. */}
+        {answersOpen && mine?.attendance === "in" && mineId ? (
+          <HeldSpotsPanel
+            publicToken={publicToken}
+            spots={myGuests}
+            maxHeldSpots={maxHeldSpots}
+          />
         ) : null}
 
         {/* For a signed-out reader the rest is the teaser with the card on

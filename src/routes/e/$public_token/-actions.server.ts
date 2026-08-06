@@ -1,6 +1,6 @@
 import "@/server/assert-server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getRequest } from "@tanstack/react-start/server";
 import { uuidv7 } from "uuidv7";
 
@@ -8,6 +8,7 @@ import { getCopy } from "@/config/copy";
 import type { Copy } from "@/config/copy";
 import { db } from "@/db/client";
 import {
+  heldSpots,
   eventNotes,
   eventPolicies,
   participants,
@@ -21,6 +22,7 @@ import {
   checkCommitment,
 } from "@/domain/commitments";
 import { canAnswer } from "@/domain/convocation";
+import { holdProblem } from "@/domain/held-spots";
 import { findHandler, initialStatusFor } from "@/domain/policy-handlers";
 import { resolveAttendance } from "@/domain/waitlist";
 import { checkEvidence, EVIDENCE_MAX_BYTES, putEvidence } from "@/lib/evidence-store";
@@ -621,7 +623,7 @@ const COMMITMENT_WINDOW_MS = 60 * 60_000;
  */
 async function ownParticipant(eventId: string, userId: string) {
   const [row] = await db
-    .select({ id: participants.id })
+    .select({ id: participants.id, attendance: participants.attendance })
     .from(participants)
     .where(and(eq(participants.eventId, eventId), eq(participants.userId, userId)))
     .limit(1);
@@ -732,6 +734,152 @@ export async function deleteCommitment(
   if (!allowed) return { errors: { _form: copy.errors.notAllowed } };
 
   await db.delete(eventNotes).where(eq(eventNotes.id, note.id));
+
+  return { errors: {}, ok: true };
+}
+
+/**
+ * Hold up to N seats for people the caller is bringing.
+ *
+ * **Holding is answering**, so `answersClosed` gates it exactly like the
+ * "¿vienes?" — the convocatoria deadline included: reserving three seats
+ * after the call closed would be answering for three people after the answer
+ * shut. The claim, by contrast, stays open (see the claim route): the seat is
+ * already counted, and a claim only changes whose name is on it.
+ *
+ * Names are optional and are the ONLY personal datum taken. No email field
+ * exists on purpose — the claim link goes out by the sponsor's own WhatsApp,
+ * which keeps the product's standing promise: nadie recibe correos de alguien
+ * a quien nunca le dijo que sí.
+ */
+export async function holdSpots(publicToken: string, formData: FormData): Promise<RsvpState> {
+  const ip = clientIp(getRequest().headers);
+  const limit = rateLimit(`hold:${ip}`, RSVP_LIMIT, RSVP_WINDOW_MS);
+
+  const event = await findEventByPublicToken(publicToken);
+  if (!event) {
+    return { errors: { _form: getCopy(await resolveEventLocale("es")).errors.notFound } };
+  }
+  const copy = await eventCopy(event.locale);
+  if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
+
+  const shut = answersClosed(event, copy);
+  if (shut) return { errors: { _form: shut } };
+
+  const organizer = await getOrganizer();
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+  const mine = await ownParticipant(event.id, organizer.id);
+  if (!mine) return { errors: { _form: copy.heldSpots.mustJoinFirst } };
+
+  const requested = Number(field(formData, "count"));
+  if (!Number.isInteger(requested) || requested < 1) {
+    return { errors: { _form: copy.errors.notAllowed } };
+  }
+
+  const [{ getSetting }, { createClaimToken }] = await Promise.all([
+    import("@/lib/settings"),
+    import("@/lib/tokens"),
+  ]);
+
+  const rows = await loadParticipantRows(event.id);
+  const spots = await db
+    .select()
+    .from(heldSpots)
+    .where(and(eq(heldSpots.sponsorParticipantId, mine.id), isNull(heldSpots.claimedBy)));
+
+  /*
+    Weighted capacity, the same arithmetic the roster renders: every sponsor's
+    unclaimed spots count as seats, so holding into the last slots is checked
+    against what is genuinely left and not against a headcount.
+  */
+  const allSpots = await db
+    .select({ sponsor: heldSpots.sponsorParticipantId })
+    .from(heldSpots)
+    .where(and(eq(heldSpots.eventId, event.id), isNull(heldSpots.claimedBy)));
+  const heldBy = new Map<string, number>();
+  for (const spot of allSpots) heldBy.set(spot.sponsor, (heldBy.get(spot.sponsor) ?? 0) + 1);
+
+  const { openSlots } = await import("@/domain/waitlist");
+  const slots = openSlots(
+    event.capacity,
+    rows.map((row) => ({
+      id: row.participant.id,
+      joinedAt: row.participant.createdAt,
+      attendance: row.participant.attendance,
+      weight: 1 + (heldBy.get(row.participant.id) ?? 0),
+    })),
+  );
+
+  const maxHeldSpots = await getSetting("maxHeldSpots");
+  const problem = holdProblem(requested, {
+    attendance: mine.attendance,
+    alreadyHeld: spots.length,
+    openSlots: slots,
+    maxHeldSpots,
+  });
+
+  if (problem !== null) {
+    const message =
+      problem === "not_attending"
+        ? copy.heldSpots.mustJoinFirst
+        : problem === "over_allowance"
+          ? copy.heldSpots.overAllowance(maxHeldSpots)
+          : copy.heldSpots.overCapacity;
+    return { errors: { _form: message } };
+  }
+
+  /*
+    Names arrive as `name-0` … `name-{n-1}`. Blank is fine — the roster
+    renders "Invitado de {sponsor}" — and anything typed is trimmed and
+    capped like a display name.
+  */
+  const values = Array.from({ length: requested }, (_, index) => {
+    const raw = field(formData, `name-${index}`).trim().slice(0, 40);
+    return {
+      id: uuidv7(),
+      eventId: event.id,
+      sponsorParticipantId: mine.id,
+      guestName: raw.length > 0 ? raw : null,
+      claimToken: createClaimToken(),
+    };
+  });
+
+  await db.insert(heldSpots).values(values);
+
+  track("spot_held", { event_id: event.id, count: requested }, organizer.id);
+  return { errors: {}, ok: true };
+}
+
+/** Release one of the caller's own unclaimed spots. */
+export async function releaseSpot(publicToken: string, formData: FormData): Promise<RsvpState> {
+  const event = await findEventByPublicToken(publicToken);
+  if (!event) {
+    return { errors: { _form: getCopy(await resolveEventLocale("es")).errors.notFound } };
+  }
+  const copy = await eventCopy(event.locale);
+
+  const organizer = await getOrganizer();
+  if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+  const mine = await ownParticipant(event.id, organizer.id);
+  if (!mine) return { errors: { _form: copy.errors.notAllowed } };
+
+  const spotId = field(formData, "spotId");
+
+  /*
+    Scoped to the caller's own UNCLAIMED spots in the predicate itself, so a
+    guessed id deletes nothing and a claimed seat cannot be pulled out from
+    under the person who claimed it.
+  */
+  await db
+    .delete(heldSpots)
+    .where(
+      and(
+        eq(heldSpots.id, spotId),
+        eq(heldSpots.sponsorParticipantId, mine.id),
+        isNull(heldSpots.claimedBy),
+      ),
+    );
 
   return { errors: {}, ok: true };
 }

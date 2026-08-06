@@ -10,6 +10,8 @@ import { ATTENDING, type Attendance } from "./types";
  */
 
 export interface WaitlistParticipant {
+  /** Seats this row occupies: 1 + spots held for guests. @default 1 */
+  weight?: number;
   id: string;
   /** `created_at`. Decides waitlist position. */
   joinedAt: Date;
@@ -24,7 +26,15 @@ function byJoinOrder(a: WaitlistParticipant, b: WaitlistParticipant): number {
 
 /** How many people currently occupy a slot. Only `in` counts. */
 export function countAttending(participants: readonly WaitlistParticipant[]): number {
-  return participants.filter((p) => p.attendance === ATTENDING).length;
+  /*
+    Weights, not headcount. A participant bringing three guests occupies four
+    seats, and counting rows instead of seats is how an event for ten ends up
+    with thirteen people at the pitch. Weight defaults to 1, so every caller
+    that predates held spots is unchanged.
+  */
+  return participants
+    .filter((p) => p.attendance === ATTENDING)
+    .reduce((sum, p) => sum + (p.weight ?? 1), 0);
 }
 
 /**
