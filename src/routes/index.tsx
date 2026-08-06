@@ -12,6 +12,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
+import { LandingVisual, PlanStrip } from "@/components/landing-visual";
 import { TrackView } from "@/components/track-view";
 import { Link } from "@tanstack/react-router";
 import { BRAND_DESCRIPTION, BRAND_NAME } from "@/config/brand";
@@ -178,16 +179,20 @@ function HomePage() {
       Always signed out: the loader redirects account holders to their events,
       so this only ever renders for a visitor.
 
-      `size="3"` rather than the `size="2"` this shipped with. The width policy
+      `size="4"` — the widest tier, and the only page in the app that takes it.
+      The width policy
       in globals.css grants width to screens that are SCANNED and withholds it
       from screens that are READ — and a landing page is neither. It is
       scanned first and read second, and at 688px it was rendering as a form
       with a headline on top: one narrow column down the middle of a monitor,
       which is what made it read as unfinished rather than as a front page.
-      The prose inside it stays capped by measure, so nothing gets a longer
-      line than it should.
+
+      848px was the first correction and it was still not enough once the hero
+      became two columns — the text column landed around 460px and the headline
+      wrapped onto a third line, orphaning "son.". The prose inside stays capped
+      by measure, so nothing here gets a longer line than it should read.
     */
-    <Container size="3" px="4" py={{ base: "7", md: "8" }}>
+    <Container size="4" px="4" py={{ base: "7", md: "8" }}>
       <Stack gap={{ base: "7", md: "8" }}>
         {/* AC-8: the top of the organizer funnel. Without it, `create_started`
             has no denominator and "how many people who landed here made an
@@ -200,7 +205,23 @@ function HomePage() {
             and a sentence. The kicker goes above the heading rather than
             below: "free, no passwords" is the objection somebody is already
             forming, and answering it before the pitch costs one line. */}
-        <Stack gap="4" maxWidth="46rem">
+        {/*
+          Two columns from `md`: the words on the left, the product on the
+          right. This is the change that answers "does somebody landing here
+          know what this is?" — before it, the page was type on paper and you
+          had to READ to find out. DOM order is the phone's order, so the
+          headline still comes first on a phone and the visual follows it.
+        */}
+        {/*
+          Two columns only from `lg`, not from `md`. At the middle width the
+          text column came out around 590px, which is narrower than the
+          headline needs — "Y ya sabes cuántos son." wrapped and left "son."
+          alone on its own line, which undoes the two-beat break the headline
+          was written for. Between 768 and 1024 the two stack instead, and the
+          headline keeps its shape at every width.
+        */}
+        <Grid columns={{ base: "1", lg: "1.15fr 0.85fr" }} gap={{ base: "6", lg: "8" }} align="center">
+        <Stack gap="4">
           {/* `Text` has no `color="brand"` — the token exists as
               `--sm-text-brand` and the prop cannot reach it (STACKMYTH-GAPS
               #25). A `Box` carrying the colour is the composition that works
@@ -253,6 +274,17 @@ function HomePage() {
             </Box>
           </Flex>
         </Stack>
+
+          <LandingVisual copy={copy} />
+        </Grid>
+
+        {/*
+          What a "plan" is, six times. Directly under the hero because it is
+          the fastest answer on the page: "fútbol, comidas, bolos, pádel" is a
+          list somebody skims, and six photographs of exactly those is
+          understood before it is read.
+        */}
+        <PlanStrip copy={copy} />
 
         <Divider />
 

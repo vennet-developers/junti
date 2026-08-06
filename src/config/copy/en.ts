@@ -88,6 +88,22 @@ export const en: Copy = {
   home: {
     title: `${BRAND_NAME} — organize without chasing anyone`,
     heading: BRAND_NAME,
+    heroImageAlt: "A women\u2019s football team celebrating and taking a selfie on the pitch.",
+    heroCardKicker: "Friday, 8:00 p.m.",
+    heroCardTitle: "Friday football",
+    heroCardPeople: ["Ana Torres", "Camilo R\u00edos", "Sara Villegas", "Nico"],
+    heroCardCount: "8 of 10",
+    heroCardPaid: "6 have paid",
+
+    planStrip: [
+      { src: "futsal", alt: "A five-a-side match on a neighbourhood pitch." },
+      { src: "pizza-casa", alt: "A group of friends eating pizza in a living room." },
+      { src: "bolos", alt: "Four friends holding bowling balls on a lane." },
+      { src: "padel", alt: "Three padel players leaning on the net." },
+      { src: "cocina", alt: "Several people cooking and serving in a kitchen." },
+      { src: "brindis", alt: "Two people clinking bottles." },
+    ],
+
     heroTitle: "One link.",
     heroTitleSecond: "And you know how many.",
     subheading: BRAND_TAGLINE,

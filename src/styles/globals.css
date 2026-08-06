@@ -461,3 +461,64 @@ body {
   align-items: center;
   min-height: 2.75rem;
 }
+
+/*
+  Photographs on the landing page.
+
+  Two declarations, and neither is decoration. `object-fit: cover` is what lets
+  a frame with a fixed aspect ratio hold a portrait and a landscape photo
+  without distorting either — the alternative is squashed faces. `display:
+  block` removes the inline baseline gap that otherwise leaves a few pixels of
+  paper under every image inside a rounded frame, which reads as a misaligned
+  corner.
+
+  A class rather than a component prop: `img` is a native element, Stackmyth
+  ships no image primitive, and this is the same category as the anchor rule
+  above — see STACKMYTH-GAPS.md #24.
+*/
+.landing-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/*
+  The hero photograph's frame, and the product card that overlaps it.
+
+  Both live here because `position`, `aspectRatio` and the inset properties are
+  the handful of layout values Stackmyth does not accept as `Responsive<T>` —
+  every other prop on `Box` takes `{ base, md }` and these take a plain string.
+  The behaviour needed is "stacked on a phone, overlapping from md", which is a
+  breakpoint change by definition. `.gated-preview__card` exists for the same
+  reason one section up.
+
+  The ratio flips on purpose rather than staying fixed. A portrait crop on a
+  phone would push the section below it off a second screen; a landscape crop
+  beside a column of text on a laptop leaves the column short and the photo
+  wide, and the two stop looking like one composition.
+*/
+.landing-hero-frame {
+  aspect-ratio: 4 / 3;
+}
+
+@media (min-width: 48rem) {
+  .landing-hero-frame {
+    aspect-ratio: 3 / 4;
+  }
+}
+
+@media (min-width: 48rem) {
+  /*
+    Pulled out past the photograph's corner, which is what makes it read as
+    sitting ON the image rather than inside it. The card keeps its own surface
+    and shadow from `Card surface="raised"`; only the placement is here.
+  */
+  .landing-hero-card {
+    position: absolute;
+    bottom: -1.5rem;
+    left: -1.5rem;
+    z-index: 1;
+    max-width: 19rem;
+  }
+}

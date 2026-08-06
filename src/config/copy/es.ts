@@ -107,6 +107,25 @@ export const es = {
       Dos tiempos, no una frase. El punto en la mitad es el que hace el trabajo:
       obliga a leer «un link» como una cosa terminada antes de dar el resultado.
     */
+    /* El alt de la foto del hero. Describe la escena, no la marca: quien la
+       escucha con un lector de pantalla necesita saber qué se ve. */
+    heroImageAlt: "Un equipo de fútbol femenino celebrando y tomándose una selfie en la cancha.",
+    heroCardKicker: "Viernes, 8:00 p. m.",
+    heroCardTitle: "Fútbol de los viernes",
+    heroCardPeople: ["Ana Torres", "Camilo Ríos", "Sara Villegas", "Nico"],
+    heroCardCount: "8 de 10",
+    heroCardPaid: "6 ya pagaron",
+
+    /* La tira de planes: lo que más rápido responde «¿esto para qué es?». */
+    planStrip: [
+      { src: "futsal", alt: "Un partido de microfútbol en una cancha de barrio." },
+      { src: "pizza-casa", alt: "Un grupo de amigos comiendo pizza en la sala." },
+      { src: "bolos", alt: "Cuatro amigos con bolas de boliche en una pista." },
+      { src: "padel", alt: "Tres jugadoras de pádel apoyadas en la red." },
+      { src: "cocina", alt: "Varias personas cocinando y sirviendo en una cocina." },
+      { src: "brindis", alt: "Dos personas brindando con botellas." },
+    ],
+
     heroTitle: "Un link.",
     heroTitleSecond: "Y ya sabes cuántos son.",
     subheading: BRAND_TAGLINE,
