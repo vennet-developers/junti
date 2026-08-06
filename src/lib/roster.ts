@@ -81,7 +81,17 @@ export interface EventView {
   closedAt: Date | null;
   isClosed: boolean;
   /** Called off. A different fact from closed — see the schema. */
+  cancelledAt: Date | null;
   isCancelled: boolean;
+  /**
+   * When the call to confirm closes, or null for no deadline.
+   *
+   * The instant, not the state: whether it has passed depends on the clock at
+   * the moment somebody asks, and a boolean computed once in a loader would be
+   * stale on a page that stays open. `rsvpState` is what answers that, and it
+   * is given this alongside the two above.
+   */
+  rsvpDeadline: Date | null;
   hasCost: boolean;
 }
 
@@ -139,7 +149,9 @@ function toEventView(row: EventRow, type: { slug: string; label: string }): Even
     groupId: row.groupId,
     closedAt: row.closedAt,
     isClosed: row.closedAt !== null,
+    cancelledAt: row.cancelledAt,
     isCancelled: row.cancelledAt !== null,
+    rsvpDeadline: row.rsvpDeadline,
     hasCost: row.costMode !== "none",
   };
 }

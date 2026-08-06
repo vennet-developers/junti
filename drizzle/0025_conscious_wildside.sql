@@ -1,0 +1,1 @@
+ALTER TABLE "events" ADD COLUMN "rsvp_deadline" timestamp with time zone;

@@ -218,6 +218,18 @@ export const en: Copy = {
       capacity: "Maximum spots",
       capacityPlaceholder: "10",
       capacityHelp: "Leave it empty for no limit. Once it fills up, the rest join the waitlist.",
+      rsvpLead: "Deadline to answer",
+      rsvpLeadHelp:
+        "How long people have to confirm. Counted back from the event, so moving the event moves the deadline with it.",
+      rsvpLeadNone: "No deadline",
+      rsvpLeadOptions: {
+        2: "2 hours before",
+        6: "6 hours before",
+        24: "1 day before",
+        48: "2 days before",
+        72: "3 days before",
+        168: "1 week before",
+      },
       notes: "Notes",
       notesPlaceholder: "Bring a white shirt and boots.",
       costMode: "Does it cost anything?",
@@ -268,6 +280,20 @@ export const en: Copy = {
     full: "Full",
     addToCalendar: "Add to my calendar",
     addToCalendarHelp: "Downloads a file your calendar opens — Google, Apple, whichever you use.",
+
+    convocationTitle: "Answers close in",
+    convocationUrgentTitle: "Last hour to answer",
+    convocationClosesAt: (when: string) => `Until ${when}`,
+    convocationUnits: {
+      day: (n: number) => (n === 1 ? "1 day" : `${n} days`),
+      hour: (n: number) => `${n} h`,
+      minute: (n: number) => `${n} min`,
+      second: (n: number) => `${n} s`,
+    },
+    convocationClosedNotice: "The deadline to answer has passed.",
+    convocationClosedBody:
+      "Nobody can confirm or change their answer now. If you need to get in, talk to whoever is organizing.",
+
   },
 
   roster: {
@@ -511,6 +537,7 @@ export const en: Copy = {
     legalHeading: "Legal",
     contactHeading: "Contact",
     howItWorksLink: "How it works",
+    myApprovals: "My Approvals",
     socialHeading: "Follow us",
 
     blurb: "Organize plans with your people and keep track of who has paid. No passwords, nothing to install.",
@@ -919,6 +946,7 @@ export const en: Copy = {
       startsAt: "the date",
       location: "the place",
       capacity: "the capacity",
+      rsvpDeadline: "the deadline to answer",
       cost: "the price",
     },
   },
@@ -1082,6 +1110,9 @@ export const en: Copy = {
     forbidden: "This link is not allowed to do that.",
     rateLimited: "Too fast. Wait a moment and try again.",
     eventClosed: "The event is closed.",
+    rsvpDeadlinePassed: "The deadline to answer has passed.",
+    deadlineInPast: "That moment has already passed.",
+    deadlineAfterStart: "The deadline has to close before the event starts.",
     timeZoneInvalid: "That time zone does not exist.",
     policyLabelTooLong: "60 characters max.",
     policyTooMany: (max: number) => `${max} requirements per event, maximum.`,

@@ -1199,3 +1199,52 @@ explains the split, and JSON takes no comments. So it is written here instead:
 **before bumping Stackmyth, check each package's published version rather than
 assuming one number.** `pnpm view @stackmyth/<pkg> version` per package takes a
 few seconds and is the whole of the discipline.
+
+### 79. The convocatoria is scheduled `closed_at`, not a second way to close
+
+Organizers can set a deadline for answering — "cierra un día antes" — and the
+event page counts down to it. The obvious build was a new mechanism: a
+`rsvp_closes_at` column with its own guard, its own banner, its own idea of
+"shut". That would have given the app **two things that both mean nobody else
+may answer, and that can disagree with each other**: an event closed by hand
+with a deadline still in the future, an event past its deadline that the
+organizer thinks they reopened by pressing a button.
+
+So there is one question — `rsvpState` in `src/domain/convocation.ts` — and it
+ranks the reasons: cancelled, then closed by hand, then expired. The column is
+the same fact scheduled instead of pressed.
+
+**Computed at read time, never swept.** Nothing writes `closed_at` when a
+deadline passes. The only scheduled job in this app runs every six hours, and a
+countdown promising minutes cannot be backed by something that is wrong for up
+to six of them — the page would show 00:00 above a form that still took
+answers. Reading the clock when somebody asks is exact by construction, and it
+makes the number on the page and the guard on the server the same number rather
+than two that agree most of the time. It is also what makes extending a
+deadline work: push it forward and the event is open again, with nothing to
+undo.
+
+**The organizer picks a lead, not a date.** "Un día antes" is one tap and is
+what people mean; the same thing as a date and a time is two pickers and a
+chance to typo a year. The lead is applied to whatever start time is being
+saved, so moving a match from Friday to Saturday carries its deadline along
+instead of stranding it in the past. The stored column is still an absolute
+instant, because the countdown and the guards need a moment rather than an
+arithmetic problem — the lead is the input, not the storage.
+
+**It closes the "¿vienes?" and nothing else.** Evidence for a policy and the
+thing you promised to bring are still accepted afterwards, and this is the
+decision the feature turns on: the deadline settles the headcount, not the
+receipt. Somebody who said they were coming on Tuesday has not stopped coming
+because Thursday arrived, and refusing their photo of the transfer would be
+punishing them for the organizer's scheduling. Two guards in the actions say
+which is which — `stopped` for everything, `answersClosed` for the paths that
+say whether you are coming.
+
+**One adjacent bug fixed on the way.** The participant page keyed its RSVP box
+on `isClosed`, and cancelling an event sets `cancelled_at` without touching
+`closed_at` — so a cancelled event showed the "not happening" banner at the top
+and a working RSVP form below it. The server refused the write, so nothing was
+ever wrong in the data; the page was just offering something it would not
+honour. Folding cancellation into the same ranked state removed the branch that
+made it possible.

@@ -20,7 +20,12 @@ export type WizardStep = (typeof WIZARD_STEPS)[number];
  * calendar. Somebody who fills only this has a complete event.
  *
  * Step 2 — **who, and whether it costs.** The group it invites from, the cap,
- * what a person has to do to count as confirmed, and the yes/no on money.
+ * by when they have to answer, what a person has to do to count as confirmed,
+ * and the yes/no on money.
+ *
+ * `rsvpLead` is here and not on step 1 even though it is made of the start
+ * time: the organizer is answering "who is coming and by when do I need to
+ * know", not "when is it". Step 1 stays the screen somebody can fill and stop.
  *
  * `costMode` belongs here rather than on step 3, and the first version got it
  * wrong: the question "does this cost anything?" decides whether step 3 is
@@ -36,7 +41,7 @@ export type WizardStep = (typeof WIZARD_STEPS)[number];
  */
 export const STEP_FIELDS = {
   1: ["title", "eventTypeId", "startsAtDate", "startsAtTime", "timeZone", "location", "notes"],
-  2: ["groupId", "capacity", "policies", "costMode"],
+  2: ["groupId", "capacity", "rsvpLead", "policies", "costMode"],
   3: ["currency", "costAmount"],
 } as const satisfies Record<WizardStep, readonly string[]>;
 

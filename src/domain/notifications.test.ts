@@ -88,6 +88,7 @@ describe("what changed on an event", () => {
     startsAt: new Date("2026-08-13T01:00:00.000Z"),
     location: "Cancha 3",
     capacity: 12,
+    rsvpDeadline: new Date("2026-08-12T01:00:00.000Z"),
     costMode: "per_person",
     costAmountMinor: 20_000,
   };
@@ -112,6 +113,20 @@ describe("what changed on an event", () => {
       location: "Cancha 1",
     };
     expect(changedFields(base, moved)).toEqual(["startsAt", "location"]);
+  });
+
+  /**
+   * The one field on the list that takes something away rather than moves it:
+   * somebody planning to answer tomorrow has to hear that tomorrow is too late.
+   */
+  it("reports a deadline that moved, and one that appeared", () => {
+    const earlier = { ...base, rsvpDeadline: new Date("2026-08-11T01:00:00.000Z") };
+    expect(changedFields(base, earlier)).toEqual(["rsvpDeadline"]);
+
+    const none = { ...base, rsvpDeadline: null };
+    expect(changedFields(none, base)).toEqual(["rsvpDeadline"]);
+    expect(changedFields(base, none)).toEqual(["rsvpDeadline"]);
+    expect(changedFields(none, { ...none })).toEqual([]);
   });
 
   it("reads a price change as one fact, whichever column carries it", () => {

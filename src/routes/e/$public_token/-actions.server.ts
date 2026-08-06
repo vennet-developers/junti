@@ -20,6 +20,7 @@ import {
   canDeleteCommitment,
   checkCommitment,
 } from "@/domain/commitments";
+import { canAnswer } from "@/domain/convocation";
 import { findHandler, initialStatusFor } from "@/domain/policy-handlers";
 import { resolveAttendance } from "@/domain/waitlist";
 import { checkEvidence, EVIDENCE_MAX_BYTES, putEvidence } from "@/lib/evidence-store";
@@ -53,6 +54,30 @@ export type RsvpState = {
   /** Set when the submission was accepted onto the waitlist rather than the roster. */
   waitlisted?: boolean;
 };
+
+/**
+ * Why this write cannot happen, in the reader's language, or null to go ahead.
+ *
+ * Two guards, and which one a path uses is a product decision rather than a
+ * detail. `stopped` is "the event itself is off or frozen" and applies to
+ * everything. `answersClosed` adds the convocation deadline, and applies ONLY
+ * to the paths that say whether you are coming — somebody who already said yes
+ * has not stopped coming because the headcount is settled, so their receipt and
+ * the thing they promised to bring are still accepted afterwards.
+ *
+ * Cancelled counts as stopped for every write: an event that is not happening
+ * must not take new answers, and the banner above the form has already said why.
+ */
+function stopped(event: EventRow, copy: Copy): string | null {
+  if (event.cancelledAt !== null || event.closedAt !== null) return copy.errors.eventClosed;
+  return null;
+}
+
+function answersClosed(event: EventRow, copy: Copy): string | null {
+  const stop = stopped(event, copy);
+  if (stop) return stop;
+  return canAnswer(event, new Date()) ? null : copy.errors.rsvpDeadlinePassed;
+}
 
 /** Twenty RSVP submissions an hour per IP covers a whole group sharing one wifi. */
 const RSVP_LIMIT = 20;
@@ -100,9 +125,8 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
     return { errors: { _form: copy.errors.rateLimited } };
   }
 
-  if (event.closedAt !== null || event.cancelledAt !== null) {
-    return { errors: { _form: copy.errors.eventClosed } };
-  }
+  const shut = answersClosed(event, copy);
+  if (shut) return { errors: { _form: shut } };
 
   const parsed = makeRsvpSchema(copy).safeParse({
     displayName: field(formData, "displayName"),
@@ -265,12 +289,9 @@ export async function joinOneTap(publicToken: string): Promise<RsvpState> {
   const copy = await eventCopy(event.locale);
 
   if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
-  // Cancelled counts as closed for every write: an event that is not
-  // happening must not take new answers, and the banner above the form has
-  // already said why.
-  if (event.closedAt !== null || event.cancelledAt !== null) {
-    return { errors: { _form: copy.errors.eventClosed } };
-  }
+
+  const shut = answersClosed(event, copy);
+  if (shut) return { errors: { _form: shut } };
 
   const organizer = await getOrganizer();
   if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
@@ -438,12 +459,11 @@ export async function submitPolicyResponse(
   const copy = await eventCopy(event.locale);
 
   if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
-  // Cancelled counts as closed for every write: an event that is not
-  // happening must not take new answers, and the banner above the form has
-  // already said why.
-  if (event.closedAt !== null || event.cancelledAt !== null) {
-    return { errors: { _form: copy.errors.eventClosed } };
-  }
+  // `stopped`, not `answersClosed`: the convocation deadline settles the
+  // headcount, and somebody who is already on it can still send the photo of
+  // their transfer afterwards.
+  const shut = stopped(event, copy);
+  if (shut) return { errors: { _form: shut } };
 
   const policyId = policyIdSchema.safeParse(field(formData, "policyId"));
   if (!policyId.success) return { errors: { _form: copy.errors.notFound } };
@@ -628,12 +648,11 @@ export async function saveCommitment(publicToken: string, formData: FormData): P
   const copy = await eventCopy(event.locale);
 
   if (!limit.ok) return { errors: { _form: copy.errors.rateLimited } };
-  // Cancelled counts as closed for every write: an event that is not
-  // happening must not take new answers, and the banner above the form has
-  // already said why.
-  if (event.closedAt !== null || event.cancelledAt !== null) {
-    return { errors: { _form: copy.errors.eventClosed } };
-  }
+  // `stopped`, like the policy path above: what you are bringing is a note from
+  // somebody already on the roster, and it is normal to settle it after the
+  // headcount is closed.
+  const shut = stopped(event, copy);
+  if (shut) return { errors: { _form: shut } };
 
   const organizer = await getOrganizer();
   if (!organizer) return { errors: { _form: copy.errors.signInRequired } };

@@ -279,6 +279,31 @@ export const events = pgTable(
     closedAt: timestamp("closed_at", { withTimezone: true }),
 
     /**
+     * When the call to confirm closes, or NULL for "no deadline".
+     *
+     * **The same fact as `closed_at`, scheduled instead of pressed.** Both mean
+     * "nobody else may answer"; one is a button the organizer presses now and
+     * the other is a moment they picked in advance. They are two columns and
+     * not one because reopening has to be possible — an organizer who extends
+     * the deadline must not have to remember that pressing "close" earlier also
+     * happened. Which of the two is in force is never decided here: every read
+     * goes through `rsvpState` in `src/domain/convocation.ts`.
+     *
+     * **Nothing ever writes `closed_at` when this passes.** The only scheduled
+     * job in this app runs every six hours, and a countdown that promises
+     * minutes cannot be backed by something that is wrong for up to six of
+     * them. The state is computed from the clock at the moment somebody asks,
+     * which makes the number on the page and the guard on the server the same
+     * number rather than two that agree most of the time.
+     *
+     * Only closes the "¿vienes?" answer. Evidence for a policy — the photo of
+     * the transfer — is still accepted afterwards, because somebody who already
+     * said they were coming has not stopped coming just because the headcount
+     * is settled.
+     */
+    rsvpDeadline: timestamp("rsvp_deadline", { withTimezone: true }),
+
+    /**
      * The event is not happening.
      *
      * **A different fact from `closed_at`, and the difference matters.**

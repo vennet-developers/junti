@@ -118,13 +118,19 @@ export function unreadBadge(count: number): string | null {
  *
  * Not every column: bumping `calendarSequence` is bookkeeping, and the group an
  * event is attached to changes who can be invited rather than anything a person
- * already coming would recognise. What is left is the four things somebody
- * would want to know had moved.
+ * already coming would recognise. What is left is the things somebody would
+ * want to know had moved.
+ *
+ * `rsvpDeadline` is on the list because it is the one field here that takes
+ * something away: the person who was going to answer tomorrow needs to hear
+ * that tomorrow is now too late. It moves on its own whenever the start time
+ * does — the lead is applied to the new date — so a reschedule reports both,
+ * which is correct rather than noisy: the date to answer by really did change.
  *
  * `costMode` and `costAmountMinor` collapse into one `cost`, because "the price
  * changed" is one fact to a reader even when it is two columns to the schema.
  */
-const WATCHED_FIELDS = ["title", "startsAt", "location", "capacity"] as const;
+const WATCHED_FIELDS = ["title", "startsAt", "location", "capacity", "rsvpDeadline"] as const;
 
 export type ChangedField = (typeof WATCHED_FIELDS)[number] | "cost";
 
@@ -133,6 +139,7 @@ export interface EventSnapshot {
   startsAt: Date;
   location: string | null;
   capacity: number | null;
+  rsvpDeadline: Date | null;
   costMode: string;
   costAmountMinor: number | null;
 }

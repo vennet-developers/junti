@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import type { Locale } from "@/config/copy";
 import { db } from "@/db/client";
 import { events } from "@/db/schema";
+import { leadFromDeadline } from "@/domain/convocation";
 
 import { nextWeekStart } from "./recurrence";
 import { toDatePartValue, toMajorUnits, toTimePartValue } from "./format";
@@ -45,6 +46,13 @@ export async function loadEventAsFormValues(
     locale: source.locale,
     location: source.location ?? "",
     capacity: source.capacity === null ? "" : String(source.capacity),
+    // The lead, not the instant. A duplicate starts a week later, and last
+    // week's closing date has already passed — carrying "un día antes" forward
+    // is the thing that survives the move.
+    rsvpLead:
+      source.rsvpDeadline === null
+        ? ""
+        : String(leadFromDeadline(source.startsAt, source.rsvpDeadline) ?? ""),
     notes: source.notes ?? "",
     costMode: source.costMode,
     costAmount:

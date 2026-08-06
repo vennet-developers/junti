@@ -257,6 +257,25 @@ export const es = {
       capacityPlaceholder: "10",
       capacityHelp:
         "Déjalo vacío si no hay límite. Al llenarse, los demás entran en lista de espera.",
+      rsvpLead: "Cierre de la convocatoria",
+      rsvpLeadHelp:
+        "Hasta cuándo pueden confirmar. Se calcula desde la hora del evento, así que si lo mueves, el cierre se mueve con él.",
+      rsvpLeadNone: "Sin fecha límite",
+      /**
+       * One label per option in `LEAD_HOURS`, keyed by the hours themselves.
+       *
+       * Written out rather than generated from the number, because "24 horas
+       * antes" is not how anybody says "un día antes", and a formatter that
+       * got it right in Spanish would still have to be taught English.
+       */
+      rsvpLeadOptions: {
+        2: "2 horas antes",
+        6: "6 horas antes",
+        24: "1 día antes",
+        48: "2 días antes",
+        72: "3 días antes",
+        168: "1 semana antes",
+      } as Record<number, string>,
       notes: "Notas",
       notesPlaceholder: "Llevar camiseta blanca y guayos.",
       costMode: "¿Tiene costo?",
@@ -311,6 +330,24 @@ export const es = {
        to show up on their phone on Thursday. */
     addToCalendar: "Agregar a mi calendario",
     addToCalendarHelp: "Se descarga un archivo que abre tu calendario — Google, Apple o el que uses.",
+
+    convocationTitle: "La convocatoria cierra en",
+    convocationUrgentTitle: "Última hora para confirmar",
+    /* The absolute moment, under the ticking one. This is the line that
+       carries the meaning: the numbers above it move, and somebody who reads
+       the page with a screen reader — or screenshots it into the group chat —
+       needs a date, not a duration. */
+    convocationClosesAt: (when: string) => `Hasta el ${when}`,
+    convocationUnits: {
+      day: (n: number) => (n === 1 ? "1 día" : `${n} días`),
+      hour: (n: number) => `${n} h`,
+      minute: (n: number) => `${n} min`,
+      second: (n: number) => `${n} s`,
+    },
+    convocationClosedNotice: "La convocatoria ya cerró.",
+    convocationClosedBody:
+      "Ya no se puede confirmar ni cambiar la respuesta. Si necesitas entrar, habla con quien organiza.",
+
   },
 
   roster: {
@@ -556,6 +593,7 @@ export const es = {
     legalHeading: "Legal",
     contactHeading: "Contacto",
     howItWorksLink: "Cómo funciona",
+    myApprovals: "Mis aprobaciones",
     socialHeading: "Síguenos",
 
     /* La línea bajo la marca. Dice qué es esto para quien cae en el pie de una
@@ -998,6 +1036,7 @@ export const es = {
       startsAt: "la fecha",
       location: "el lugar",
       capacity: "el cupo",
+      rsvpDeadline: "el cierre de la convocatoria",
       cost: "el precio",
     },
   },
@@ -1162,6 +1201,9 @@ export const es = {
     forbidden: "Este link no tiene permiso para hacer eso.",
     rateLimited: "Vas muy rápido. Espera un momento y vuelve a intentar.",
     eventClosed: "El evento está cerrado.",
+    rsvpDeadlinePassed: "La convocatoria ya cerró.",
+    deadlineInPast: "Esa fecha ya pasó.",
+    deadlineAfterStart: "La convocatoria tiene que cerrar antes de que empiece el evento.",
     timeZoneInvalid: "Esa zona horaria no existe.",
     policyLabelTooLong: "Máximo 60 caracteres.",
     policyTooMany: (max: number) => `Máximo ${max} requisitos por evento.`,

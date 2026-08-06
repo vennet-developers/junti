@@ -11,6 +11,7 @@ import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
 import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { RsvpCountdown, useConvocation } from "@/components/rsvp-countdown";
 import { RosterGroup } from "@/components/roster-list";
 import { TimeZoneSync } from "@/components/time-zone-sync";
 import { TrackView } from "@/components/track-view";
@@ -146,6 +147,12 @@ const getEventPage = createServerFn({ method: "GET" })
       locale,
       readerTimeZone,
       hasTimeZonePreference: preferredTimeZone !== null,
+      /*
+        The clock this page was rendered on, so the countdown's first paint is
+        the same on the server and on hydration. The browser's own clock takes
+        over immediately after mount — see `useConvocation`.
+      */
+      serverNow: new Date(),
       signedIn: organizer !== null,
       account: organizer
         ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
@@ -199,6 +206,7 @@ function ParticipantPage() {
     locale,
     readerTimeZone,
     hasTimeZonePreference,
+    serverNow,
     signedIn,
     account,
     readerIsOrganizer,
@@ -217,6 +225,16 @@ function ParticipantPage() {
 
   const { event } = roster;
   const showMoney = event.hasCost;
+
+  /*
+    Whether this event is taking answers, on the reader's own clock rather than
+    on the one the loader ran against. Everything below that shows or hides a
+    way to answer reads this, so the page cannot end up offering a form the
+    server would refuse — see the hook for how it closes in front of somebody
+    who has had the page open since yesterday.
+  */
+  const convocation = useConvocation(event, serverNow);
+  const answersOpen = convocation.state === "open";
 
   const commitmentByParticipant = new Map(commitments.map((item) => [item.participantId, item]));
 
@@ -439,10 +457,29 @@ function ParticipantPage() {
           </Stack>
         )}
 
+        {/* Above the box it applies to, and shown to a signed-out reader too:
+            for them it is the reason to sign in now rather than tonight. */}
+        {convocation.countdown ? (
+          <RsvpCountdown
+            countdown={convocation.countdown}
+            readerTimeZone={readerTimeZone}
+            copy={copy}
+          />
+        ) : null}
+
         {/* The RSVP box comes BEFORE the roster: answering is the point,
             who else is coming is merely interesting. */}
-        {event.isClosed && !event.isCancelled ? (
+        {convocation.state === "cancelled" ? null : convocation.state === "closed" ? (
           <Banner variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />} title={copy.event.closedNotice} />
+        ) : convocation.state === "expired" ? (
+          <Banner
+            variant="warning"
+            live="off"
+            icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
+            title={copy.event.convocationClosedNotice}
+          >
+            {copy.event.convocationClosedBody}
+          </Banner>
         ) : signedIn && account ? (
           <JoinPanel
             publicToken={publicToken}
@@ -452,19 +489,26 @@ function ParticipantPage() {
           />
         ) : null}
 
-        {/* Immediately under the answer — the rest of the same act. */}
+        {/* Immediately under the answer — the rest of the same act.
+
+            Still shown once the convocation closes, and that is the decision
+            behind the whole feature: the deadline settles the headcount, not
+            the receipt. Somebody who said they were coming on Tuesday can send
+            the photo of their transfer on Friday. The server agrees — see
+            `stopped` against `answersClosed` in the actions. */}
         {!event.isClosed && !event.isCancelled && myPolicies.length > 0 ? (
           <PolicyPanel publicToken={publicToken} items={myPolicies} />
         ) : null}
 
-        {/* The sentence after "I'm in". Only for somebody on the roster. */}
+        {/* The sentence after "I'm in". Only for somebody on the roster, and
+            open past the deadline for the same reason as the policies. */}
         {!event.isClosed && !event.isCancelled && mineId ? (
           <CommitmentPanel publicToken={publicToken} own={ownCommitment} />
         ) : null}
 
         {/* For a signed-out reader the rest is the teaser with the card on
             top. Somebody who can act on these numbers reads them plainly. */}
-        {signedIn || event.isClosed || event.isCancelled ? (
+        {signedIn || !answersOpen ? (
           eventTail
         ) : (
           <GatedPreview

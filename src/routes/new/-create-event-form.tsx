@@ -35,6 +35,7 @@ import { useCopy } from "@/components/copy-provider";
 import { useFormContext } from "@stackmyth/form";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
+import { LEAD_HOURS } from "@/domain/convocation";
 import { currencyOptions } from "@/lib/format";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
@@ -151,6 +152,17 @@ function CreateEventFormBody({
     { value: "per_person", label: copy.createEvent.costModes.per_person },
   ];
 
+  // "Sin fecha límite" first and selected by default: most events do not need a
+  // deadline, and one that appears because somebody skipped past a dropdown is
+  // the kind of rule nobody remembers setting and everybody has to obey.
+  const rsvpLeadOptions = [
+    { value: "", label: copy.createEvent.fields.rsvpLeadNone },
+    ...LEAD_HOURS.map((hours) => ({
+      value: String(hours),
+      label: copy.createEvent.fields.rsvpLeadOptions[hours],
+    })),
+  ];
+
   // `new Date()` only to label zones with their CURRENT offset, so a zone on
   // daylight saving reads the way the person checking the list expects.
   // Keyed on the CURRENT zone, so a detected one outside the curated list is
@@ -247,6 +259,7 @@ function CreateEventFormBody({
       locale: defaultLocale,
       location: "",
       capacity: "",
+      rsvpLead: "",
       notes: "",
       costMode: "none",
       costAmount: "",
@@ -534,6 +547,25 @@ function CreateEventFormBody({
               </ControlledField>
             )}
           </FormField>
+
+          <ControlledField
+            label={
+              <>
+                {copy.createEvent.fields.rsvpLead}{" "}
+                <Text as="span" variant="small" color="muted">
+                  ({copy.common.optional})
+                </Text>
+              </>
+            }
+            description={copy.createEvent.fields.rsvpLeadHelp}
+            error={serverState.errors.rsvpLead}
+          >
+            <SelectField
+              name="rsvpLead"
+              options={rsvpLeadOptions}
+              defaultValue={str(draft?.rsvpLead) ?? ""}
+            />
+          </ControlledField>
 
           {/* The yes/no on money closes step 2, because the answer decides
               whether there is a step 3 at all. Asking it on step 3 was

@@ -22,6 +22,7 @@ import {
 import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
+import { LEAD_HOURS, leadFromDeadline } from "@/domain/convocation";
 import {
   currencyOptions,
   formatMoney,
@@ -110,6 +111,14 @@ export function EditEventForm({
     { value: "per_person", label: copy.createEvent.costModes.per_person },
   ];
 
+  const rsvpLeadOptions = [
+    { value: "", label: copy.createEvent.fields.rsvpLeadNone },
+    ...LEAD_HOURS.map((hours) => ({
+      value: String(hours),
+      label: copy.createEvent.fields.rsvpLeadOptions[hours],
+    })),
+  ];
+
   const zoneOptions = useMemo(
     () => timeZoneOptions(event.timeZone, copy.intlLocale, new Date()),
     [event.timeZone, copy.intlLocale],
@@ -130,6 +139,14 @@ export function EditEventForm({
       locale: event.locale,
       location: event.location ?? "",
       capacity: event.capacity === null ? "" : String(event.capacity),
+      /* The lead this deadline was chosen from, so the picker shows back what
+         the organizer picked. Null when it matches none of the options — a row
+         whose start time moved under an older build — and the field then reads
+         as "sin fecha límite" rather than silently rounding to a nearby one. */
+      rsvpLead:
+        event.rsvpDeadline === null
+          ? ""
+          : String(leadFromDeadline(event.startsAt, event.rsvpDeadline) ?? ""),
       notes: event.notes ?? "",
       costMode: event.costMode,
       costAmount:
@@ -278,6 +295,18 @@ export function EditEventForm({
               </ControlledField>
             )}
           </FormField>
+
+          <ControlledField
+            label={copy.createEvent.fields.rsvpLead}
+            description={copy.createEvent.fields.rsvpLeadHelp}
+            error={serverState.errors.rsvpLead}
+          >
+            <SelectField
+              name="rsvpLead"
+              options={rsvpLeadOptions}
+              defaultValue={defaults.rsvpLead}
+            />
+          </ControlledField>
 
           <ControlledField label={copy.createEvent.fields.costMode}>
             <SelectField

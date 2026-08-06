@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { Copy } from "@/config/copy";
 import { LOCALES } from "@/config/copy";
+import { deadlineFromLead, deadlineProblem, isLeadHours } from "@/domain/convocation";
 
 import {
   DEFAULT_TIME_ZONE,
@@ -136,6 +137,27 @@ const capacitySchema = (copy: Copy) =>
   });
 
 /**
+ * How long before kick-off the call to confirm closes, or empty for no deadline.
+ *
+ * Silently falls back to "no deadline" rather than raising when the value is
+ * not one of the offered leads. There is no way for a person filling the form
+ * to produce that — it is a `<select>` over a closed list — so the only sender
+ * is something that built the request by hand, and the safe reading of a
+ * malformed deadline is the one that keeps answering open. An error here would
+ * only ever be shown to somebody who was not going to read it.
+ *
+ * Accepts a number as well as a string for the same reason `capacity` does:
+ * FormData yields strings, the client store may not.
+ */
+const rsvpLeadSchema = z
+  .union([z.string(), z.number()])
+  .optional()
+  .transform((raw) => {
+    const value = Number(String(raw ?? "").trim());
+    return isLeadHours(value) ? value : null;
+  });
+
+/**
  * The money amount, entered in major units (pesos) and stored in minor units.
  *
  * Accepts the separators a Colombian would actually type — `50.000`, `50 000`,
@@ -244,6 +266,7 @@ const eventFieldsSchema = (copy: Copy) =>
     locale: localeSchema,
     location: optionalText(LOCATION_MAX),
     capacity: capacitySchema(copy),
+    rsvpLead: rsvpLeadSchema,
     notes: optionalText(NOTES_MAX),
     costMode: costModeSchema,
     costAmount: costAmountSchema,
@@ -287,8 +310,31 @@ export const makeEventSchema = (copy: Copy) =>
       return z.NEVER;
     }
 
+    // Resolved here rather than stored as a lead, because the guards and the
+    // countdown need an instant. Doing it inside the transform means it is
+    // recomputed against whatever start time is being saved, which is what
+    // carries the deadline along when an organizer moves the event.
+    const rsvpDeadline =
+      parsed.rsvpLead === null ? null : deadlineFromLead(startsAt, parsed.rsvpLead);
+
+    if (rsvpDeadline !== null) {
+      const problem = deadlineProblem(rsvpDeadline, startsAt, new Date());
+      if (problem !== null) {
+        ctx.addIssue({
+          code: "custom",
+          // `after_start` is unreachable from the form — every lead is positive
+          // hours before kick-off — but the rule belongs to the deadline, not
+          // to the widget that happens to be producing it today.
+          message:
+            problem === "past" ? copy.errors.deadlineInPast : copy.errors.deadlineAfterStart,
+          path: ["rsvpLead"],
+        });
+        return z.NEVER;
+      }
+    }
+
     if (parsed.costMode === "none") {
-      return { ...parsed, startsAt, costAmountMinor: null as number | null };
+      return { ...parsed, startsAt, rsvpDeadline, costAmountMinor: null as number | null };
     }
 
     const costAmountMinor = parseCostAmount(
@@ -301,7 +347,7 @@ export const makeEventSchema = (copy: Copy) =>
 
     if (costAmountMinor === null) return z.NEVER;
 
-    return { ...parsed, startsAt, costAmountMinor };
+    return { ...parsed, startsAt, rsvpDeadline, costAmountMinor };
   });
 
 export type EventInput = z.infer<ReturnType<typeof makeEventSchema>>;

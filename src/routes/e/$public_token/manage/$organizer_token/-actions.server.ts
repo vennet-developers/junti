@@ -767,6 +767,7 @@ export async function editEvent(
     locale: field(formData, "locale") || event.locale,
     location: field(formData, "location"),
     capacity: field(formData, "capacity"),
+    rsvpLead: field(formData, "rsvpLead"),
     notes: field(formData, "notes"),
     costMode: field(formData, "costMode"),
     costAmount: field(formData, "costAmount"),
@@ -838,6 +839,7 @@ export async function editEvent(
     startsAt: input.startsAt,
     location: input.location,
     capacity: input.capacity,
+    rsvpDeadline: input.rsvpDeadline,
     costMode: input.costMode,
     costAmountMinor: input.costAmountMinor,
   });
@@ -852,6 +854,7 @@ export async function editEvent(
       locale: input.locale,
       location: input.location,
       capacity: input.capacity,
+      rsvpDeadline: input.rsvpDeadline,
       notes: input.notes,
       costMode: input.costMode,
       costAmountMinor: input.costAmountMinor,
