@@ -33,6 +33,36 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [tsConfigPaths(), tanstackStart(), nitro(), react()],
+
+    /*
+      ── Bind where the browser actually looks ─────────────────────────────
+
+      Without this, `pnpm dev` printed `Local: http://localhost:3000/` while
+      serving nothing a browser could reach, and the failure looked like the
+      app was broken.
+
+      What happens: another process on this machine holds `*:3000` — the IPv6
+      wildcard, which on macOS also answers IPv4. Vite's default host is
+      `localhost`, which Node resolves to `::1`, and `::1` specifically was
+      still free — so Vite bound it, reported success, and every request from
+      Chrome went to the OTHER server, which replied `404 page not found`.
+      `curl localhost:3000` reached Vite and the browser did not, because the
+      two resolve `localhost` differently.
+
+      `host: "127.0.0.1"` makes the dev server ask for the same address the
+      browser will use. If something already holds it, the bind FAILS and the
+      terminal says so, which is the whole point: a port conflict should be an
+      error, not a server that half exists.
+
+      `strictPort` is the second half. Vite's default is to silently move to
+      the next free port, which is friendly right up until a bookmark, an
+      OAuth redirect URI or a `next=` parameter points at the old one.
+    */
+    server: {
+      host: "127.0.0.1",
+      port: 3000,
+      strictPort: true,
+    },
     define: {
       "process.env.NEXT_PUBLIC_SUPABASE_URL": JSON.stringify(env.NEXT_PUBLIC_SUPABASE_URL ?? ""),
       "process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(
