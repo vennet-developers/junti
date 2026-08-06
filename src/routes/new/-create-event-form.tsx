@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  useTransition,
-} from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 
 import { Input } from "@stackmyth/input";
 import {
@@ -16,9 +9,7 @@ import {
   InputGroupInput,
   InputGroupText,
 } from "@stackmyth/input-group";
-import { Banner } from "@stackmyth/banner";
-import { Button } from "@stackmyth/button";
-import { Flex, Stack } from "@stackmyth/layout";
+import { Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Textarea } from "@stackmyth/textarea";
 
@@ -32,7 +23,6 @@ import {
   createZodResolver,
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
-import { useFormContext } from "@stackmyth/form";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
 import { LEAD_HOURS } from "@/domain/convocation";
@@ -49,15 +39,6 @@ import {
   totalSteps,
   type WizardStep,
 } from "@/domain/wizard";
-import {
-  clearDraft,
-  dismissDraft,
-  getDraftSnapshot,
-  getServerDraftSnapshot,
-  isWorthRestoring,
-  saveDraft,
-  subscribeDraft,
-} from "@/lib/event-draft";
 import { trackClient } from "@/lib/track-client";
 
 import { StepPanel, StepTracking, WizardNav, WizardProgress } from "./-wizard";
@@ -216,29 +197,6 @@ function CreateEventFormBody({
   const [finished, setFinished] = useState(false);
 
   /**
-   * A restored draft, and the counter that makes it take effect.
-   *
-   * `store.reset(values)` updates the store but not the inputs — they read
-   * their value at construction, so a reset leaves the DOM showing the old
-   * (empty) form over the new values. Remounting `FormController` with the
-   * draft as its `defaultValues` is the path the library itself uses to put
-   * values into fields, so it is the one that cannot disagree with itself.
-   *
-   * The counter is the remount: a changing `key` is what tells React to build
-   * a new controller rather than update the existing one.
-   */
-  const [restored, setRestored] = useState<Record<string, unknown> | null>(null);
-  const [generation, setGeneration] = useState(0);
-
-  function restoreDraft(values: Record<string, unknown>) {
-    setRestored(values);
-    setGeneration((n) => n + 1);
-    // Back to the first step: the restored form is a form nobody has walked
-    // through yet, and dropping somebody on step 2 of it would be a puzzle.
-    setStep(1);
-  }
-
-  /**
    * Memoised, and it has to be.
    *
    * `FormController` treats a new `defaultValues` identity as a reset, and this
@@ -265,7 +223,7 @@ function CreateEventFormBody({
       costAmount: "",
       currency: str(draft?.currency) ?? defaultCurrency,
       policies: JSON.stringify(defaultPolicies(policyOptionsByType[eventTypes[0]?.id ?? ""])),
-      // A restored draft wins over every default above it.
+      // A duplicated event's prefill wins over every default above it.
       ...(draft ?? {}),
     }),
     /*
@@ -316,10 +274,7 @@ function CreateEventFormBody({
       const result = await createEventFn({ data: formData });
 
       if (result?.redirectTo) {
-        // Only here. Somebody who closed the tab is exactly who the draft is
-        // for; the age check is what eventually cleans up after them.
         setFinished(true);
-        clearDraft();
         void navigate({ href: result.redirectTo });
         return;
       }
@@ -381,20 +336,14 @@ function CreateEventFormBody({
    */
   return (
     <FormController
-      key={generation}
       resolver={resolver}
-      defaultValues={generation === 0 ? defaultValues : { ...defaultValues, ...(restored ?? {}) }}
+      defaultValues={defaultValues}
       mode="onSubmit"
       reValidateMode="onChange"
     >
       <Form onValid={submit} onInvalid={handleInvalid}>
         <Stack gap="5">
           <FormError message={serverState.errors._form} />
-
-          {/* First thing on the page, and it has to be: it asks a question
-              about the form underneath it, and a question that arrives after
-              the thing it is about is a question nobody answers. */}
-          <DraftOffer onRestore={restoreDraft} />
 
           <WizardProgress
             step={step}
@@ -709,11 +658,11 @@ function str(value: unknown): string | undefined {
 }
 
 /**
- * The step gate, the draft and the per-step analytics.
- *
- * A child of `<Form>` rather than part of the body above, because all three
- * need the form store and `useFormContext` only reaches it from inside. It
- * renders the navigation and nothing else.
+ * The step tracking and the wizard's navigation, together because both hang
+ * off the current step. This used to also run the draft's autosave timer,
+ * which needed the form store and forced the `useFormContext` child position;
+ * the draft is gone (removed as noise before any bounce data justified it)
+ * and the position simply remains harmless.
  */
 function WizardControls({
   step,
@@ -726,102 +675,11 @@ function WizardControls({
   freeEvent: boolean;
   finished: boolean;
 }) {
-  const form = useFormContext();
-
-
-  /*
-    Saved on a timer rather than on every keystroke: `localStorage` is
-    synchronous and writing on each character of a title is work on the main
-    thread during typing, which is the one moment a form must not stutter.
-    Two seconds is well inside "I closed the tab by accident".
-  */
-  useEffect(() => {
-    if (finished) return;
-
-    const timer = window.setInterval(() => {
-      const values = form?.store.getValues();
-      if (values && isWorthRestoring(values)) saveDraft(values);
-    }, 2000);
-
-    return () => window.clearInterval(timer);
-  }, [form, finished]);
-
   return (
     <>
       <StepTracking step={step} finished={finished} />
-
-
-      <WizardNav
-        step={step}
-        pending={pending}
-        freeEvent={freeEvent}
-      />
+      <WizardNav step={step} pending={pending} freeEvent={freeEvent} />
     </>
   );
 }
 
-/**
- * "You left one half filled — carry on, or start over?"
- *
- * Its own component, and at the top of the form, because it asks a question
- * about everything below it. It first shipped at the bottom, next to the
- * navigation, where it read as an unexplained pair of buttons after a form
- * that already looked empty.
- *
- * A child of `<Form>` so `useFormContext` reaches the store — restoring is
- * `store.reset(values)`, which is the same call the library uses to
- * initialise, so the restored form behaves exactly like a fresh one.
- */
-function DraftOffer({ onRestore }: { onRestore: (values: Record<string, unknown>) => void }) {
-  const { copy } = useCopy();
-  /*
-    `useSyncExternalStore` rather than an effect: this is a value the server
-    cannot know and the client can, which is exactly what it exists for. An
-    effect would render once with the wrong answer and then set state, which
-    is a cascading render and, in this codebase, a lint error that is right.
-  */
-  const stored = useSyncExternalStore(subscribeDraft, getDraftSnapshot, getServerDraftSnapshot);
-
-  // Local, so dismissing re-renders. The module-level snapshot is what stops
-  // the offer coming back on the next render.
-  const [dismissed, setDismissed] = useState(false);
-  const offered = dismissed ? null : stored;
-
-  if (!offered) return null;
-
-  return (
-    <Banner
-      variant="info"
-      live="off"
-      title={copy.createEvent.wizard.draftFound}
-      action={
-        <Flex gap="2" wrap="wrap">
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() => {
-              dismissDraft();
-              setDismissed(true);
-              onRestore(offered);
-            }}
-          >
-            {copy.createEvent.wizard.draftRestore}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              clearDraft();
-              dismissDraft();
-              setDismissed(true);
-            }}
-          >
-            {copy.createEvent.wizard.draftDiscard}
-          </Button>
-        </Flex>
-      }
-    />
-  );
-}
