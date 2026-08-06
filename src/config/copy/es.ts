@@ -348,6 +348,26 @@ export const es = {
     convocationClosedBody:
       "Ya no se puede confirmar ni cambiar la respuesta. Si necesitas entrar, habla con quien organiza.",
 
+    preview: {
+      /* Deliberately blunt. Un organizador que se olvide de que está en vista
+         previa va a creer que la app se le dañó. */
+      title: "Vista previa",
+      guestBody: "Así ve esta página alguien que ya entró a su cuenta y todavía no ha respondido.",
+      strangerBody: "Así ve esta página alguien que abre el link sin tener cuenta.",
+      /* La advertencia va aparte del cuerpo porque solo aplica a un modo: sin
+         sesión no hay nada que oprimir. */
+      guestWarning: "Los botones funcionan de verdad: si confirmas desde aquí, quedas apuntado.",
+      asGuest: "Como invitado",
+      asStranger: "Sin cuenta",
+      /* En el menú de la card hacen falta el verbo y el contexto: ahí no hay
+         una barra encima que ya haya dicho de qué se trata. */
+      viewAsGuest: "Ver como invitado",
+      viewAsStranger: "Ver sin cuenta",
+      exit: "Salir de la vista previa",
+      /* En el panel del organizador, justo debajo del link que va a compartir. */
+      sectionLabel: "Míralo como lo van a ver",
+      sectionHelp: "Antes de mandar el link, revisa con qué se encuentra quien lo abra.",
+    },
   },
 
   roster: {

@@ -8,11 +8,18 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@stackmyth/dropdown-menu";
 // No pencil in the set — the 132 icons have no edit glyph at all — so the
 // second duplicate is marked by what it produces: a copy you then fill in.
-import { ClipboardIcon, CopyIcon, MoreHorizontalIcon } from "@stackmyth/icons";
+import {
+  ClipboardIcon,
+  CopyIcon,
+  EyeIcon,
+  EyeOffIcon,
+  MoreHorizontalIcon,
+} from "@stackmyth/icons";
 import { Box, Flex } from "@stackmyth/layout";
 import { toast } from "@stackmyth/toast";
 
@@ -25,10 +32,11 @@ import { duplicateEventFn } from "./-fns";
 /**
  * What you can do with one of your events without opening it.
  *
- * **Two of the four are visible; the other two are behind the menu.** Sharing
- * is what account holders come here for — creation now lands them on this list
- * — and managing is where the roster and the money live. Those two run every
- * week. Duplicating runs when a season starts.
+ * **Two are visible; the rest are behind the menu.** Sharing is what account
+ * holders come here for — creation now lands them on this list — and managing
+ * is where the roster and the money live. Those two run every week. Looking at
+ * the event through somebody else's eyes runs once, before you send the link;
+ * duplicating runs when a season starts.
  *
  * That split replaced a disclosure holding all four: every card carried a row
  * reading "Options" that had to be opened before anything could be done, so
@@ -40,6 +48,10 @@ import { duplicateEventFn } from "./-fns";
  * floor. At `md` the three of them needed 344px of a card that has 318 on a
  * 390px phone — measured, not guessed — and a footer that wraps is a footer
  * that has stopped being a row.
+ *
+ * Inside the menu the two previews sit above the line and the two duplicates
+ * below it, because the halves answer different questions: one is about this
+ * event, the other makes a new one.
  *
  * The two duplicates are deliberate and do different jobs:
  *
@@ -135,6 +147,37 @@ export function EventCardActions({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
+          {/*
+            The two previews first, and above the separator, because they are
+            about THIS event: what the person you are about to send the link to
+            actually lands on. Everything below the line makes a different
+            event. See `src/domain/preview.ts` for why only the owner is
+            offered them — which is also why they sit inside the branch that
+            already required `managePath`.
+
+            Router pushes rather than links, for the same reason as
+            "duplicate and edit" below: `DropdownMenuItem` renders a div and
+            takes no `asChild`, so there is no anchor to hang an href on.
+            STACKMYTH-GAP #17.
+          */}
+          <DropdownMenuItem onSelect={() => router.navigate({ to: `${eventPath}?as=guest` as never })}>
+            <Flex gap="2" align="center">
+              <EyeIcon size={16} aria-hidden="true" />
+              {copy.event.preview.viewAsGuest}
+            </Flex>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onSelect={() => router.navigate({ to: `${eventPath}?as=stranger` as never })}
+          >
+            <Flex gap="2" align="center">
+              <EyeOffIcon size={16} aria-hidden="true" />
+              {copy.event.preview.viewAsStranger}
+            </Flex>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem disabled={pending} onSelect={duplicate}>
             <Flex gap="2" align="center">
               <CopyIcon size={16} aria-hidden="true" />

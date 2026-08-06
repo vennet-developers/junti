@@ -10,6 +10,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { CreatedToast } from "@/components/created-toast";
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
+import { Link } from "@/components/link";
 import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
@@ -388,6 +389,36 @@ function ManagePage() {
                     {copy.eventCreated.shareWhatsApp}
                   </Box>
                 </Button>
+
+                {/*
+                  Under the link, before the WhatsApp button has been pressed.
+
+                  This is the one moment the question is live: an organizer
+                  about to send a link cannot otherwise see what the person
+                  opening it runs into — their own session renders the page for
+                  them, and the sign-in gate every invitee meets first is the
+                  one screen they can never reach without a private window.
+                */}
+                <Stack gap="2">
+                  <Stack gap="1">
+                    <Text weight="semibold">{copy.event.preview.sectionLabel}</Text>
+                    <Text variant="small" color="muted">
+                      {copy.event.preview.sectionHelp}
+                    </Text>
+                  </Stack>
+                  <Flex gap="2" wrap="wrap">
+                    <Button asChild variant="secondary" size="md">
+                      <Link href={participantPath(publicToken)} search={{ as: "guest" }}>
+                        {copy.event.preview.asGuest}
+                      </Link>
+                    </Button>
+                    <Button asChild variant="secondary" size="md">
+                      <Link href={participantPath(publicToken)} search={{ as: "stranger" }}>
+                        {copy.event.preview.asStranger}
+                      </Link>
+                    </Button>
+                  </Flex>
+                </Stack>
 
                 <LinkPanel
                   label={copy.eventCreated.organizerLinkLabel}

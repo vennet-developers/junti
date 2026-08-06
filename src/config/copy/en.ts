@@ -294,6 +294,19 @@ export const en: Copy = {
     convocationClosedBody:
       "Nobody can confirm or change their answer now. If you need to get in, talk to whoever is organizing.",
 
+    preview: {
+      title: "Preview",
+      guestBody: "This is the page as somebody who has signed in and not answered yet sees it.",
+      strangerBody: "This is the page as somebody opening the link with no account sees it.",
+      guestWarning: "The buttons are live: if you confirm from here, you are on the list.",
+      asGuest: "As a guest",
+      asStranger: "With no account",
+      viewAsGuest: "View as a guest",
+      viewAsStranger: "View with no account",
+      exit: "Leave the preview",
+      sectionLabel: "See it the way they will",
+      sectionHelp: "Before you send the link, check what the person opening it runs into.",
+    },
   },
 
   roster: {

@@ -19,6 +19,7 @@ import { getCopy } from "@/config/copy";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES } from "@/config/routes";
 import { canDeleteCommitment } from "@/domain/commitments";
+import { effectivePreviewMode, parsePreviewMode, previewReader } from "@/domain/preview";
 import { participantPath } from "@/lib/paths";
 import type { ParticipantRosterMember } from "@/lib/roster";
 
@@ -27,6 +28,7 @@ import { CommitmentPanel } from "./-commitment-panel";
 import { GatedPreview } from "./-gated-preview";
 import { JoinPanel } from "./-join-panel";
 import { PolicyPanel, type PolicyPanelItem } from "./-policy-panel";
+import { PreviewBar } from "./-preview-bar";
 import { SignInToJoin } from "./-sign-in-to-join";
 
 /**
@@ -39,7 +41,7 @@ import { SignInToJoin } from "./-sign-in-to-join";
  * cannot leak into the payload by accident.
  */
 const getEventPage = createServerFn({ method: "GET" })
-  .validator((data: { publicToken: string }) => data)
+  .validator((data: { publicToken: string; as?: string }) => data)
   .handler(async ({ data }) => {
     const [
       { getCopy: getCopyOnServer },
@@ -78,10 +80,34 @@ const getEventPage = createServerFn({ method: "GET" })
     const organizer = await getOrganizer();
 
     /*
+      Whose eyes this page is being read through.
+
+      Narrowed here rather than in the component on purpose: an organizer
+      checking "does a stranger see the phone numbers" deserves an answer about
+      what actually crosses the wire, not about what the browser chose to
+      paint. So a preview removes the fields from the payload, and the HTML a
+      stranger would receive is the HTML this returns.
+    */
+    const preview = effectivePreviewMode({
+      requested: parsePreviewMode(data.as),
+      isOwner: organizer !== null && eventRow.organizerId === organizer.id,
+    });
+
+    const reader = previewReader(
+      { signedIn: organizer !== null, ownStake: true },
+      preview,
+    );
+
+    /*
       This reader's own row, matched on the account and only on the account —
       the edit-token cookie path died with the anonymous flow.
+
+      Skipped entirely while previewing, which is what makes the rest fall away
+      with it: `ownCommitment` and `myPolicies` both hang off this row, so one
+      condition removes the reader's whole stake instead of three that could
+      drift apart.
     */
-    const mineRow = organizer
+    const mineRow = organizer && reader.ownStake
       ? ((
           await db
             .select({
@@ -153,11 +179,24 @@ const getEventPage = createServerFn({ method: "GET" })
         over immediately after mount — see `useConvocation`.
       */
       serverNow: new Date(),
-      signedIn: organizer !== null,
-      account: organizer
-        ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
-        : null,
-      readerIsOrganizer: organizer !== null && eventRow.organizerId === organizer.id,
+      /*
+        The mode in force, for the bar that says so. Null for everybody who is
+        not the owner previewing, which is everybody almost all of the time.
+      */
+      preview,
+      signedIn: reader.signedIn,
+      account:
+        organizer && reader.signedIn
+          ? { displayName: organizer.displayName, avatarUrl: organizer.avatarUrl }
+          : null,
+      /*
+        False while previewing, and that is not cosmetic: it is what decides
+        whether the reader may delete somebody else's commitment note. An
+        organizer looking through an invitee's eyes should not be offered a
+        power the invitee does not have.
+      */
+      readerIsOrganizer:
+        preview === null && organizer !== null && eventRow.organizerId === organizer.id,
       mine: mineRow ? { displayName: mineRow.displayName, attendance: mineRow.attendance } : null,
       mineId: mineRow?.id ?? null,
       ownCommitment: ownCommitment
@@ -192,7 +231,20 @@ const getEventPage = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/e/$public_token/")({
-  loader: ({ params }) => getEventPage({ data: { publicToken: params.public_token } }),
+  /*
+    `?as=` is how an organizer borrows somebody else's eyes — see
+    `src/domain/preview.ts`. Kept as a search param rather than a separate
+    route because it is the same page: a preview that rendered from different
+    code would stop being evidence of anything.
+  */
+  validateSearch: (search: Record<string, unknown>): { as?: string } => ({
+    as: typeof search.as === "string" ? search.as : undefined,
+  }),
+  // In the deps, so switching modes re-runs the loader instead of showing the
+  // previous mode's payload under the new mode's banner.
+  loaderDeps: ({ search }) => ({ as: search.as }),
+  loader: ({ params, deps }) =>
+    getEventPage({ data: { publicToken: params.public_token, as: deps.as } }),
   head: ({ loaderData }) => ({
     // These URLs are the access control. They must never be indexed.
     meta: [{ title: pageTitle(loaderData?.title) }, { name: "robots", content: "noindex, nofollow" }],
@@ -207,6 +259,7 @@ function ParticipantPage() {
     readerTimeZone,
     hasTimeZonePreference,
     serverNow,
+    preview,
     signedIn,
     account,
     readerIsOrganizer,
@@ -387,8 +440,22 @@ function ParticipantPage() {
 
         {/* The top of the participant funnel. `signedIn` is the closest thing
             to "did they arrive from an invitation" that does not require a
-            tracking parameter on the link. */}
-        <TrackView name="event_viewed" props={{ event_id: event.id, signed_in: signedIn }} />
+            tracking parameter on the link.
+
+            Not fired while previewing. An organizer checking their own page
+            twice is not two people considering the event, and a funnel whose
+            denominator counts rehearsals is worse than one that misses a
+            visit — it flatters exactly the number it exists to keep honest. */}
+        {preview === null ? (
+          <TrackView name="event_viewed" props={{ event_id: event.id, signed_in: signedIn }} />
+        ) : null}
+
+        {/* Above everything, including the cancellation notice: an organizer
+            has to know whose eyes they are using before they read anything
+            through them. */}
+        {preview === null ? null : (
+          <PreviewBar mode={preview} publicToken={publicToken} copy={copy} />
+        )}
 
         {/* Above everything, including the title. Somebody opening this link
             after the announcement needs the answer before the details. */}
