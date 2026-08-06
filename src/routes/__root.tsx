@@ -1,4 +1,10 @@
-import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+  useMatches,
+} from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import type { ReactNode } from "react";
 
@@ -11,6 +17,7 @@ import juntiCss from "@/styles/junti.css?url";
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
 import { CopyProvider } from "@/components/copy-provider";
+import { previewModeOf } from "@/domain/preview";
 import { BRAND_NAME, BRAND_TAGLINE } from "@/config/brand";
 import { getCopy, type Locale } from "@/config/copy";
 import type { Organizer } from "@/lib/organizer";
@@ -100,12 +107,42 @@ export const Route = createRootRoute({
 function RootComponent() {
   const { locale, theme, organizer, unread } = Route.useLoaderData();
 
+  /*
+    The shell, when the page below it is being read through a stranger's eyes.
+
+    Without this the preview stopped at the page: the body rendered as a
+    signed-out visitor would see it and the bar above it still carried the
+    organizer's avatar and their notification bell — the one place the preview
+    was not faithful, and a conspicuous one, because "what does somebody with
+    no account see" is most of the reason to look.
+
+    Read off the loader payload rather than off `?as=stranger` in the URL. The
+    loader is where ownership was checked, so a stranger parameter from
+    somebody who does not own the event never becomes a `preview` value and
+    cannot reach the chrome — see `previewModeOf`. The alternative, matching on
+    the search param up here, would have let any URL blank out any reader's
+    own header on any route.
+
+    Only `stranger`. A guest IS signed in, and a header showing an account is
+    exactly what they see; blanking it there would make the preview wrong in
+    the other direction.
+  */
+  const matches = useMatches();
+  const asStranger = matches.some((match) => previewModeOf(match.loaderData) === "stranger");
+
   return (
     <RootDocument locale={locale} theme={theme}>
       <CopyProvider locale={locale}>
         {/* The frame's top edge, mirror of the footer at the bottom. In the
             root so it survives pending states and cannot be forgotten. */}
-        <AppHeader organizer={organizer} theme={theme} unread={unread} />
+        <AppHeader
+          organizer={asStranger ? null : organizer}
+          theme={theme}
+          /* Belt and braces: `unread` is already 0 without a session, and the
+             bell only renders with an organizer. Passing 0 means the two
+             cannot disagree if either of those ever changes. */
+          unread={asStranger ? 0 : unread}
+        />
 
         <Outlet />
 

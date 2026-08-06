@@ -63,6 +63,24 @@ export function effectivePreviewMode({ requested, isOwner }: PreviewInput): Prev
 }
 
 /**
+ * The mode a route's loader payload reports, or null.
+ *
+ * The app shell renders above the event page and has no access to its search
+ * params — but it does have the loader data, and the loader is where ownership
+ * was actually checked. Reading the verdict rather than re-reading the URL is
+ * what keeps `?as=stranger` from changing the chrome for somebody who does not
+ * own the event: {@link effectivePreviewMode} already returned null for them,
+ * so there is nothing here to find.
+ *
+ * Defensive about the shape because it is handed one payload per matched
+ * route, most of which have no `preview` key at all.
+ */
+export function previewModeOf(loaderData: unknown): PreviewMode | null {
+  if (typeof loaderData !== "object" || loaderData === null) return null;
+  return parsePreviewMode((loaderData as { preview?: unknown }).preview);
+}
+
+/**
  * The two facts the whole page hangs off.
  *
  * `signedIn` decides whether the roster is readable or sits behind the gate.

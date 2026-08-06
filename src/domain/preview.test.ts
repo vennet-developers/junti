@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { effectivePreviewMode, parsePreviewMode, previewReader } from "./preview";
+import {
+  effectivePreviewMode,
+  parsePreviewMode,
+  previewModeOf,
+  previewReader,
+} from "./preview";
 
 /**
  * The rules that decide whose eyes an organizer is borrowing.
@@ -79,5 +84,32 @@ describe("what a mode leaves the reader with", () => {
     for (const mode of [null, "guest", "stranger"] as const) {
       expect(previewReader(looker, mode).ownStake, `${mode}`).toBe(false);
     }
+  });
+});
+
+describe("what the app shell can read off a loader payload", () => {
+  it("finds the mode the event page recorded", () => {
+    expect(previewModeOf({ preview: "stranger", title: "Tenis" })).toBe("stranger");
+    expect(previewModeOf({ preview: "guest" })).toBe("guest");
+  });
+
+  /**
+   * The shell is handed one payload per matched route, and most of them have
+   * no `preview` key — or no payload at all while a route is still pending.
+   */
+  it("shrugs at every other shape", () => {
+    for (const data of [null, undefined, {}, { preview: null }, "stranger", 1, []]) {
+      expect(previewModeOf(data), `${JSON.stringify(data)}`).toBeNull();
+    }
+  });
+
+  /**
+   * The reason this reads the payload instead of the URL: a non-owner's
+   * `?as=stranger` never becomes a `preview` value, so there is nothing here
+   * for the shell to act on.
+   */
+  it("cannot be reached by a URL the server already refused", () => {
+    const refused = { preview: effectivePreviewMode({ requested: "stranger", isOwner: false }) };
+    expect(previewModeOf(refused)).toBeNull();
   });
 });
