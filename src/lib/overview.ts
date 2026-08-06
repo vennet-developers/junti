@@ -3,7 +3,7 @@ import "@/server/assert-server";
 import { sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
-import { delta, share } from "@/domain/chart";
+import { delta, projectNext30, share } from "@/domain/chart";
 
 /**
  * The state of the system, and whether it is moving.
@@ -56,6 +56,46 @@ export interface Depth {
   medianHoursToFirstRsvp: number | null;
 }
 
+/**
+ * The money the platform coordinates without ever touching.
+ *
+ * The closest thing Junti has to GMV, and the number that decides whether
+ * monetization is ever worth building: a platform coordinating serious money
+ * has something to charge a fee against, and one coordinating pizza budgets
+ * does not. `confirmedMinor` is money an organizer said arrived; `trackedMinor`
+ * adds what is still owed. Waived amounts are excluded from both — money
+ * nobody will pay is not volume.
+ */
+export interface MoneyFlow {
+  confirmedMinor: number;
+  trackedMinor: number;
+  /** Confirmed inside the window, for the trend. */
+  windowConfirmedMinor: number;
+}
+
+/** Delivery, which is also the app's one real marginal cost. */
+export interface Emails {
+  sent: Metric;
+  failed: number;
+  suppressed: number;
+  /** Sent per week, for the sparkline. */
+  weekly: SeriesPoint[];
+}
+
+/**
+ * Next 30 days, extrapolated from the trailing four weeks.
+ *
+ * A straight average of the recent weekly rate — deliberately NOT a fitted
+ * curve. With weeks of data a regression is confidence theater; the honest
+ * statement is "at the current pace". Null until there are at least two
+ * non-empty weeks, because a pace needs more than one step to exist.
+ */
+export interface Projection {
+  accountsNext30: number | null;
+  eventsNext30: number | null;
+  rsvpsNext30: number | null;
+}
+
 export interface OverviewReport {
   days: number;
   accounts: Metric;
@@ -66,6 +106,9 @@ export interface OverviewReport {
   weeklyEvents: SeriesPoint[];
   weeklyRsvps: SeriesPoint[];
   depth: Depth;
+  money: MoneyFlow;
+  emails: Emails;
+  projection: Projection;
 }
 
 /** Postgres interval literals, built from a number this module controls. */
@@ -258,6 +301,72 @@ async function depth(): Promise<Depth> {
   };
 }
 
+/** Money and email totals in one round trip — see the wave note below. */
+async function moneyAndEmails(window: number): Promise<{ money: MoneyFlow; emails: Omit<Emails, "weekly"> }> {
+  const [row] = await db.execute<Record<string, string>>(sql`
+    select
+      coalesce(sum(p.amount_minor) filter (where p.status = 'confirmed'), 0)::text as confirmed,
+      coalesce(sum(p.amount_minor) filter (where p.status in ('confirmed','pending')), 0)::text as tracked,
+      coalesce(sum(p.amount_minor) filter (
+        where p.status = 'confirmed' and p.confirmed_at > now() - ${days(window)}
+      ), 0)::text as window_confirmed,
+      (select count(*) from outbox_messages where status = 'sent')::text as sent_total,
+      (select count(*) from outbox_messages where status = 'sent'
+         and sent_at > now() - ${days(window)})::text as sent_win,
+      (select count(*) from outbox_messages where status = 'sent'
+         and sent_at > now() - ${days(window * 2)} and sent_at <= now() - ${days(window)})::text as sent_prev,
+      (select count(*) from outbox_messages where status = 'failed')::text as failed,
+      (select count(*) from outbox_messages where status = 'suppressed')::text as suppressed
+    from payments p
+  `);
+
+  const sentWin = Number(row?.sent_win ?? 0);
+  const sentPrev = Number(row?.sent_prev ?? 0);
+
+  return {
+    money: {
+      confirmedMinor: Number(row?.confirmed ?? 0),
+      trackedMinor: Number(row?.tracked ?? 0),
+      windowConfirmedMinor: Number(row?.window_confirmed ?? 0),
+    },
+    emails: {
+      sent: {
+        total: Number(row?.sent_total ?? 0),
+        window: sentWin,
+        previous: sentPrev,
+        change: delta(sentWin, sentPrev),
+      },
+      failed: Number(row?.failed ?? 0),
+      suppressed: Number(row?.suppressed ?? 0),
+    },
+  };
+}
+
+/** Sent emails per week, on the same generated calendar as `series`. */
+async function emailSeries(window: number): Promise<SeriesPoint[]> {
+  const rows = await db.execute<{ week: Date; total: string }>(sql`
+    with calendar as (
+      select generate_series(
+        date_trunc('week', now() - ${days(window)}),
+        date_trunc('week', now()),
+        interval '1 week'
+      ) as week
+    )
+    select c.week,
+      (select count(*) from outbox_messages o
+         where o.status = 'sent' and date_trunc('week', o.sent_at) = c.week)::text as total
+    from calendar c order by c.week
+  `);
+
+  return [...rows].map((row) => ({
+    label: new Date(row.week)
+      .toLocaleDateString("es-CO", { day: "numeric", month: "short" })
+      .replace(" de ", " "),
+    value: Number(row.total),
+  }));
+}
+
+
 export async function loadOverview(window = 30): Promise<OverviewReport> {
   /*
     Sequential, deliberately. Three awaits against a pool of five leaves room
@@ -267,6 +376,20 @@ export async function loadOverview(window = 30): Promise<OverviewReport> {
   const totals = await headlines(window);
   const weeks = await series(window);
   const depthRows = await depth();
+  const flows = await moneyAndEmails(window);
+  const weeklyEmails = await emailSeries(window);
 
-  return { days: window, ...totals, ...weeks, depth: depthRows };
+  return {
+    days: window,
+    ...totals,
+    ...weeks,
+    depth: depthRows,
+    money: flows.money,
+    emails: { ...flows.emails, weekly: weeklyEmails },
+    projection: {
+      accountsNext30: projectNext30(weeks.weeklyAccounts),
+      eventsNext30: projectNext30(weeks.weeklyEvents),
+      rsvpsNext30: projectNext30(weeks.weeklyRsvps),
+    },
+  };
 }

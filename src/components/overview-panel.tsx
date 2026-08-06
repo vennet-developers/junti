@@ -1,56 +1,156 @@
+import type { ReactNode } from "react";
+
 import { Card, CardContent } from "@stackmyth/card";
-import { Divider, Flex, Grid, Stack } from "@stackmyth/layout";
-import { Stat } from "@stackmyth/stat";
+import {
+  CalendarIcon,
+  MailIcon,
+  ShoppingCartIcon,
+  UserIcon,
+  UserPlusIcon,
+  ZapIcon,
+} from "@stackmyth/icons";
+import { Box, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
+import { Donut } from "@/components/donut";
 import { GrowthChart } from "@/components/growth-chart";
+import { Sparkline } from "@/components/sparkline";
+import { formatMoney } from "@/lib/format";
 import type { Metric, OverviewReport } from "@/lib/overview";
 
+/**
+ * The Resumen tab: the state of the system, drawn to be read at a glance.
+ *
+ * The layout follows one rule — **the number first, the picture beside it**.
+ * Every card leads with an icon chip in the brand's soft orange and a large
+ * figure; sparklines and rings sit next to their number, never instead of it,
+ * because a chart without its figure makes the reader estimate what the
+ * database knows exactly.
+ */
+
+/** The brand-orange chip every card leads with. */
+function IconChip({ children }: { children: ReactNode }) {
+  return (
+    <Flex
+      align="center"
+      justify="center"
+      width="2.25rem"
+      height="2.25rem"
+      borderRadius="0.625rem"
+      backgroundColor="var(--junti-naranja-suave)"
+      color="var(--junti-naranja-suave-texto)"
+      flexShrink={0}
+    >
+      {children}
+    </Flex>
+  );
+}
 
 /**
- * One headline number, with how it moved.
+ * One headline: chip, total, and how the period moved.
  *
- * The total is the headline and the window is the delta's subject, which is
- * the pairing that answers "how big" and "is it growing" in one glance. A
- * dashboard that shows only the window makes a healthy product look like it
- * started yesterday; one that shows only the total never changes.
+ * The delta renders only when there was a previous period to compare — "0%"
+ * against silence is a verdict nobody measured, and `Metric.change` is null
+ * precisely there.
  */
-function Headline({ label, metric }: { label: string; metric: Metric }) {
+function HeadlineCard({
+  icon,
+  label,
+  metric,
+}: {
+  icon: ReactNode;
+  label: string;
+  metric: Metric;
+}) {
   return (
     <Card surface="outlined">
       <CardContent>
-        <Stat
-          label={label}
-          value={metric.total.toLocaleString("es-CO")}
-          /*
-            Absent rather than zero when there is nothing to compare against —
-            a first period, or a previous one that was empty. `delta` returns
-            null for exactly that case, and rendering "0%" there would claim a
-            flatness nobody measured.
-          */
-          delta={
-            metric.change === null
-              ? undefined
-              : { value: metric.change, format: "raw", label: "vs. periodo anterior" }
-          }
-        />
-        <Text variant="small" color="muted">
-          {metric.window.toLocaleString("es-CO")} en el periodo
-        </Text>
+        <Stack gap="3">
+          <IconChip>{icon}</IconChip>
+          <Stack gap="1">
+            <Text as="span" variant="h3" weight="semibold" fontFamily="var(--junti-display)">
+              {metric.total.toLocaleString("es-CO")}
+            </Text>
+            <Text variant="small" color="muted">
+              {label}
+            </Text>
+          </Stack>
+          <Flex gap="2" align="baseline" wrap="wrap">
+            <Text variant="small" weight="medium">
+              +{metric.window.toLocaleString("es-CO")} en el periodo
+            </Text>
+            {/* `Text` has no "success" color (STACKMYTH-GAPS #25 territory);
+                a Box carries the token and Text inherits. */}
+            {metric.change !== null ? (
+              <Box
+                as="span"
+                color={
+                  metric.change >= 0
+                    ? "var(--junti-viene-fg, #15803d)"
+                    : "var(--junti-error-fg, #b91c1c)"
+                }
+              >
+                <Text as="span" variant="small" color="inherit">
+                  {metric.change >= 0 ? "▲" : "▼"} {Math.abs(metric.change)}%
+                </Text>
+              </Box>
+            ) : null}
+          </Flex>
+        </Stack>
       </CardContent>
     </Card>
   );
 }
 
-/**
- * One number from the depth block, with the fraction it came from.
- *
- * The denominator is always visible. "50% de organizadores repiten" is a very
- * different statement when it is one out of two than when it is four hundred
- * out of eight hundred, and a percentage on its own cannot tell them apart —
- * which is the failure mode of every dashboard read six weeks after it was
- * built.
- */
+/** Chip + label + big number + trend beside it — the Attio-style trend card. */
+function TrendCard({
+  icon,
+  label,
+  value,
+  caption,
+  values,
+  ariaLabel,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  caption: string;
+  values: readonly number[];
+  ariaLabel: string;
+}) {
+  const flat = values.every((v) => v === 0);
+
+  return (
+    <Card surface="outlined">
+      <CardContent>
+        <Stack gap="3">
+          <IconChip>{icon}</IconChip>
+          <Flex gap="4" align="end" justify="between" wrap="wrap">
+            <Stack gap="1" minWidth="0">
+              <Text variant="small" color="muted">
+                {label}
+              </Text>
+              <Text as="span" variant="h4" weight="semibold" fontFamily="var(--junti-display)">
+                {value}
+              </Text>
+              <Text variant="small" color="muted">
+                {caption}
+              </Text>
+            </Stack>
+            {/* A flat sparkline of zeros draws a floor-line that reads as
+                data. Nothing is the honest picture of nothing. */}
+            {flat ? null : (
+              <Box width="7.5rem" height="2.25rem" flexShrink={0}>
+                <Sparkline values={values} ariaLabel={ariaLabel} />
+              </Box>
+            )}
+          </Flex>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
 function DepthRow({
   label,
   help,
@@ -84,31 +184,106 @@ function DepthRow({
   );
 }
 
-/** "Sin datos" rather than a number nobody measured. */
 const pct = (value: number | null) => (value === null ? "Sin datos" : `${value}%`);
+const cop = (minor: number) => formatMoney(minor, "COP", "es-CO");
 
 export function OverviewPanel({ overview }: { overview: OverviewReport }) {
-  const { depth } = overview;
+  const { depth, money, emails, projection } = overview;
+  const paidShare = depth.paidEventPercent;
 
   return (
     <Stack gap="5" pt="4">
-      {/*
-        No hay selector de ventana, y no es un olvido.
-
-        Se construyó — 30 / 90 / un año, como enlaces con `?days=` — y el
-        servidor renderiza las tres perfectamente. Lo que no sobrevive es la
-        navegación del cliente: pulsar el enlace congela el render, y una
-        pantalla que a veces deja de responder es peor que una sin la opción.
-        La ventana queda fija en treinta días, igual que los embudos de abajo,
-        que es la comparación honesta de todos modos.
-      */}
+      {/* ── Los cuatro conteos ─────────────────────────────────────────── */}
       <Grid columns={{ base: "1", sm: "2", lg: "4" }} gap="3">
-        <Headline label="Cuentas" metric={overview.accounts} />
-        <Headline label="Eventos" metric={overview.events} />
-        <Headline label="Respuestas" metric={overview.rsvps} />
-        <Headline label="Grupos" metric={overview.groups} />
+        <HeadlineCard
+          icon={<UserIcon size={18} aria-hidden="true" />}
+          label="Usuarios registrados"
+          metric={overview.accounts}
+        />
+        <HeadlineCard
+          icon={<CalendarIcon size={18} aria-hidden="true" />}
+          label="Eventos creados"
+          metric={overview.events}
+        />
+        <HeadlineCard
+          icon={<UserPlusIcon size={18} aria-hidden="true" />}
+          label="Grupos"
+          metric={overview.groups}
+        />
+        <HeadlineCard
+          icon={<MailIcon size={18} aria-hidden="true" />}
+          label="Correos enviados"
+          metric={emails.sent}
+        />
       </Grid>
 
+      {/* ── La plata y el pulso ────────────────────────────────────────── */}
+      <Grid columns={{ base: "1", lg: "3" }} gap="3">
+        {/*
+          The number monetization waits on: how much money the product
+          coordinates without touching. A platform coordinating serious money
+          has something to charge a fee against; one coordinating pizza
+          budgets does not, and this card is where that becomes visible.
+        */}
+        <Card surface="outlined">
+          <CardContent>
+            <Stack gap="3">
+              <IconChip>
+                <ShoppingCartIcon size={18} aria-hidden="true" />
+              </IconChip>
+              <Stack gap="1">
+                <Text variant="small" color="muted">
+                  Plata coordinada
+                </Text>
+                <Text as="span" variant="h4" weight="semibold" fontFamily="var(--junti-display)">
+                  {cop(money.trackedMinor)}
+                </Text>
+                <Text variant="small" color="muted">
+                  {cop(money.confirmedMinor)} confirmada · {cop(money.windowConfirmedMinor)} en el
+                  periodo
+                </Text>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <TrendCard
+          icon={<ZapIcon size={18} aria-hidden="true" />}
+          label="Actividad"
+          value={overview.rsvps.window.toLocaleString("es-CO")}
+          caption={`respuestas en ${overview.days} días`}
+          values={overview.weeklyRsvps.map((week) => week.value)}
+          ariaLabel="Tendencia semanal de respuestas"
+        />
+
+        {/*
+          The paid-events ring: the share of events that charge money, which
+          is what says whether the payment features earn their upkeep — and
+          what a take-rate would ever apply to.
+        */}
+        <Card surface="outlined">
+          <CardContent>
+            <Flex gap="4" align="center">
+              <Donut
+                share={(paidShare ?? 0) / 100}
+                ariaLabel={`${paidShare ?? 0}% de los eventos tienen costo`}
+              >
+                {pct(paidShare)}
+              </Donut>
+              <Stack gap="1" minWidth="0">
+                <Text variant="small" weight="semibold">
+                  Eventos con costo
+                </Text>
+                <Text variant="small" color="muted">
+                  Base de cualquier comisión futura.
+                </Text>
+              </Stack>
+            </Flex>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* ── Cómo se mueve ──────────────────────────────────────────────── */}
       <Card surface="outlined">
         <CardContent>
           <Stack gap="5">
@@ -117,8 +292,7 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
                 Cómo se mueve
               </Text>
               <Text variant="small" color="muted">
-                Por semana. Una semana sin nada es una barra en cero, no un hueco — si
-                desapareciera, el eje del tiempo mentiría.
+                Por semana. Una semana vacía es una barra en cero, no un hueco.
               </Text>
             </Stack>
 
@@ -137,14 +311,52 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
               points={overview.weeklyRsvps}
               ariaLabel="Respuestas de participantes por semana"
             />
+            <GrowthChart
+              title="Correos enviados"
+              points={emails.weekly}
+              ariaLabel="Correos enviados por semana"
+            />
           </Stack>
         </CardContent>
       </Card>
 
-      {/*
-        The block worth opening this page for. Everything above only ever goes
-        up; these are the numbers that can say the product is not working.
-      */}
+      {/* ── Proyección ─────────────────────────────────────────────────── */}
+      <Card surface="outlined">
+        <CardContent>
+          <Stack gap="4">
+            <Stack gap="1">
+              <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
+                Al ritmo actual, en 30 días
+              </Text>
+              <Text variant="small" color="muted">
+                Últimas 4 semanas completas, extrapoladas. «—» hasta tener dos
+                semanas con movimiento.
+              </Text>
+            </Stack>
+
+            <Grid columns={{ base: "1", sm: "3" }} gap="3">
+              {(
+                [
+                  ["Usuarios nuevos", projection.accountsNext30],
+                  ["Eventos", projection.eventsNext30],
+                  ["Respuestas", projection.rsvpsNext30],
+                ] as const
+              ).map(([label, value]) => (
+                <Stack key={label} gap="1">
+                  <Text as="span" variant="h4" weight="semibold" fontFamily="var(--junti-display)">
+                    {value === null ? "—" : `≈ ${value.toLocaleString("es-CO")}`}
+                  </Text>
+                  <Text variant="small" color="muted">
+                    {label}
+                  </Text>
+                </Stack>
+              ))}
+            </Grid>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* ── Si esto sirve o no ─────────────────────────────────────────── */}
       <Card surface="outlined">
         <CardContent>
           <Stack gap="4">
@@ -153,9 +365,7 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
                 Si esto sirve o no
               </Text>
               <Text variant="small" color="muted">
-                De toda la vida, no del periodo: «¿volvió?» es una pregunta sobre una
-                trayectoria, y recortarla a treinta días contaría un segundo evento como
-                si fuera el primero.
+                Toda la vida, no el periodo.
               </Text>
             </Stack>
 
@@ -164,19 +374,19 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
             <Stack gap="4">
               <DepthRow
                 label="Organizadores que repiten"
-                help="Crearon más de un evento. Es el número más importante de la página: si la gente organiza una vez y no vuelve, no importa cuántos registros haya."
+                help="Crearon un segundo evento — el número que decide todo."
                 value={pct(depth.repeatOrganizerPercent)}
                 detail={`${depth.repeatOrganizers} de ${depth.organizers}`}
               />
               <DepthRow
                 label="Participantes que vuelven"
-                help="Se apuntaron a más de un evento distinto. Cambiar de respuesta tres veces en el mismo evento no cuenta."
+                help="Se apuntaron a un segundo evento distinto."
                 value={pct(depth.repeatParticipantPercent)}
                 detail={`${depth.repeatParticipants} de ${depth.participants}`}
               />
               <DepthRow
                 label="Tamaño típico"
-                help="Cuánta gente confirma por evento, en promedio."
+                help="Confirmados por evento, promedio."
                 value={
                   depth.averageAttendance === null
                     ? "Sin datos"
@@ -184,19 +394,24 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
                 }
               />
               <DepthRow
-                label="Eventos con costo"
-                help="Qué tanto importan las funciones de plata."
-                value={pct(depth.paidEventPercent)}
-              />
-              <DepthRow
                 label="Del evento a la primera respuesta"
-                help="La mediana, no el promedio: un evento creado en enero para diciembre arrastra la media a la inutilidad."
+                help="Mediana de creación → primer «voy»."
                 value={
                   depth.medianHoursToFirstRsvp === null
                     ? "Sin datos"
                     : depth.medianHoursToFirstRsvp < 1
                       ? "Menos de una hora"
                       : `${depth.medianHoursToFirstRsvp} h`
+                }
+              />
+              <DepthRow
+                label="Correos que no llegaron"
+                help="Fallidos + suprimidos. El costo marginal real."
+                value={String(emails.failed + emails.suppressed)}
+                detail={
+                  emails.failed + emails.suppressed > 0
+                    ? `${emails.failed} fallidos · ${emails.suppressed} suprimidos`
+                    : undefined
                 }
               />
             </Stack>

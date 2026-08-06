@@ -106,3 +106,67 @@ export function share(part: number, whole: number): number | null {
   if (whole === 0) return null;
   return Math.round((part / whole) * 100);
 }
+
+/**
+ * Next 30 days at the current pace: the trailing four COMPLETED weeks
+ * averaged, times 30. Deliberately not a fitted curve — with weeks of data a
+ * regression is confidence theater, and "at the current pace" is the only
+ * honest sentence.
+ *
+ * The current, partial week is excluded: it always undercounts, and would
+ * drag every projection down on a Monday. Null until two completed weeks have
+ * data, because one busy week is an event, not a pace.
+ */
+export function projectNext30(weekly: readonly { value: number }[]): number | null {
+  const completed = weekly.slice(0, -1).slice(-4);
+  const active = completed.filter((week) => week.value > 0);
+  if (active.length < 2) return null;
+
+  const perWeek = completed.reduce((sum, week) => sum + week.value, 0) / completed.length;
+  return Math.round((perWeek / 7) * 30);
+}
+
+/**
+ * The polyline and area for a sparkline. Mirrors `@stackmyth/charts` — see
+ * the note on `components/sparkline.tsx` for why the copy exists and when it
+ * dies. Unlike `barGeometry` this MAY scale min-to-max: a sparkline shows
+ * shape, never magnitude, and the number beside it carries the magnitude.
+ */
+export function sparklinePath(
+  values: readonly number[],
+  box: { width: number; height: number },
+): { line: string; area: string } {
+  if (values.length === 0) return { line: "", area: "" };
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min;
+
+  const stepX = values.length > 1 ? box.width / (values.length - 1) : 0;
+  const points = values.map((value, index) => {
+    const x = values.length > 1 ? index * stepX : box.width / 2;
+    const y = span === 0 ? box.height / 2 : box.height - ((value - min) / span) * box.height;
+    return `${roundTo2(x)},${roundTo2(y)}`;
+  });
+
+  const line = `M${points.join(" L")}`;
+  const area = `${line} L${roundTo2(values.length > 1 ? box.width : box.width / 2)},${box.height} L0,${box.height} Z`;
+  return { line, area };
+}
+
+/** The stroke recipe for a donut. Shares clamp — see the component. */
+export function donutArc(
+  share: number,
+  radius: number,
+): { circumference: number; dash: string } {
+  const clamped = Math.min(1, Math.max(0, share));
+  const circumference = 2 * Math.PI * radius;
+  return {
+    circumference,
+    dash: `${roundTo2(clamped * circumference)} ${roundTo2(circumference)}`,
+  };
+}
+
+function roundTo2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
