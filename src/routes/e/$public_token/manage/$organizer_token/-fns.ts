@@ -102,3 +102,10 @@ export const reviewSubmissionFn = createServerFn({ method: "POST" })
       data.reason,
     );
   });
+
+export const settleTopUpFn = createServerFn({ method: "POST" })
+  .validator((data: Tokens & { participantId: string }) => data)
+  .handler(async ({ data }): Promise<ManageState> => {
+    const { settleTopUp } = await import("./-actions.server");
+    return settleTopUp(data.publicToken, data.organizerToken, data.participantId);
+  });

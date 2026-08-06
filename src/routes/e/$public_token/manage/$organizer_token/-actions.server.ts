@@ -1076,3 +1076,54 @@ async function reconcilePolicies(
     }
   });
 }
+
+/**
+ * Records that a confirmed payer handed over the difference their risen share
+ * asked for — the settlement's one write.
+ *
+ * The payment STAYS confirmed and only the amount moves up to the current
+ * computed share. This is not rewriting history: the amount on a confirmed
+ * row has always meant "what the organizer says they received in total", and
+ * receiving the top-up raises that total. Going through pending instead
+ * (mark-owing then re-confirm) would erase the original amount on the way —
+ * `planLedger` rewrites pending rows to the computed share — which destroys
+ * the one record of the first payment.
+ *
+ * Guarded to only ever move UP to the computed share: a top-up cannot shrink
+ * a payment, and cannot outrun the split.
+ */
+export async function settleTopUp(
+  publicToken: string,
+  organizerToken: string,
+  rawParticipantId: string,
+): Promise<ManageState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const participantId = participantIdSchema.safeParse(rawParticipantId);
+  if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
+
+  const { loadRoster } = await import("@/lib/roster");
+  const { resolveEventLocale: resolveLocale } = await import("@/lib/locale");
+  const roster = await loadRoster(event, await resolveLocale(event.locale));
+
+  const member = roster.members.find((m) => m.id === participantId.data);
+  if (!member || member.share.status !== "confirmed") {
+    return { errors: { _form: copy.errors.notFound } };
+  }
+
+  const target = member.share.computedAmountMinor;
+  if (target <= member.share.effectiveAmountMinor) {
+    // Nothing missing — a stale button after someone else already settled it.
+    return { errors: {}, ok: true };
+  }
+
+  await db
+    .update(payments)
+    .set({ amountMinor: target })
+    .where(and(eq(payments.participantId, participantId.data), eq(payments.status, "confirmed")));
+
+  return { errors: {}, ok: true };
+}

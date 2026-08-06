@@ -329,6 +329,21 @@ export const en: Copy = {
     viewGroup: "View group",
   },
 
+  settlement: {
+    heading: "Final tally",
+    help: "The cost splits among those coming. If somebody dropped out after others paid, the share went up — here is what each person still lacks.",
+    shortfall: (amount: string) => `${amount} still uncovered — if nobody tops up, it comes out of your pocket.`,
+    row: (paid: string, share: string) => `Paid ${paid} · final share ${share}`,
+    missing: (amount: string) => `Lacks ${amount}`,
+    received: "Got the difference",
+    receiving: "Saving…",
+    covered: "Everyone who paid is square with the final share.",
+    refundables: (n: number, total: string) =>
+      n === 1
+        ? `You hold ${total} from 1 person no longer coming — refunding or keeping it is between you.`
+        : `You hold ${total} from ${n} people no longer coming — refunding or keeping it is between you.`,
+  },
+
   heldSpots: {
     heading: "Bring people",
     help: "Hold spots for the people coming with you. You answer for them until they claim their spot with the link.",

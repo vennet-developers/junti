@@ -413,6 +413,21 @@ export const es = {
     viewGroup: "Ver grupo",
   },
 
+  settlement: {
+    heading: "Cuentas finales",
+    help: "El costo se reparte entre quienes vienen. Si alguien se bajó después de que otros pagaron, la cuota subió y acá está lo que falta por persona.",
+    shortfall: (amount: string) => `Faltan ${amount} para cubrir el costo — si nadie completa, salen de tu bolsillo.`,
+    row: (paid: string, share: string) => `Pagó ${paid} · cuota final ${share}`,
+    missing: (amount: string) => `Le falta ${amount}`,
+    received: "Recibí la diferencia",
+    receiving: "Guardando…",
+    covered: "Todos los que pagaron están al día con la cuota final.",
+    refundables: (n: number, total: string) =>
+      n === 1
+        ? `Tienes ${total} de 1 persona que ya no viene — devolverlo o contarlo es entre ustedes.`
+        : `Tienes ${total} de ${n} personas que ya no vienen — devolverlo o contarlo es entre ustedes.`,
+  },
+
   heldSpots: {
     heading: "Trae gente",
     help: "Aparta cupos para quienes vienen contigo. Tú respondes por ellos hasta que reclamen su cupo con el link.",

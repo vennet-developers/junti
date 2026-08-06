@@ -26,6 +26,7 @@ import { CommitmentNote } from "../../-commitment-note";
 import { CancelEventControl, CloseEventControl } from "./-close-event-control";
 import { InviteForm, InvitedList } from "./-invite-panel";
 import { EditEventForm } from "./-manage-forms";
+import { SettlementCard } from "./-settlement-card";
 import { PaymentControls, PromoteControl, RemoveControl } from "./-participant-controls";
 import { ReviewQueue, type ReviewItem } from "./-review-queue";
 
@@ -480,6 +481,14 @@ function ManagePage() {
             <Divider />
 
             <MoneySummary roster={roster as never} copy={copy} />
+
+            {/* The dropout gap, right under the money it explains. Renders
+                nothing until there is something to settle. */}
+            <SettlementCard
+              publicToken={publicToken}
+              organizerToken={organizerToken}
+              roster={roster}
+            />
 
             {showMoney ? <Divider /> : null}
 
