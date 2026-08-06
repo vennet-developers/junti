@@ -305,8 +305,11 @@ function EventCard({ event }: { event: EventListItem }) {
         line starts at 20px from the left; everything that ends one ends 20px
         from the right, the badge and the `…` included.
       */}
-      <CardContent>
-        <Stack gap="3" px="5" py="4">
+      <CardContent className="junti-event-card__content">
+        {/* Where a stretched card's extra height goes. Without this it
+            collected under the stub instead, leaving the torn line and the
+            buttons floating mid-card — see `.junti-event-card__content`. */}
+        <Stack gap="3" px="5" py="4" flexGrow={1}>
           <Flex justify="between" align="start" gap="3">
             <Box minWidth="0">
               <Text weight="semibold">{event.title}</Text>

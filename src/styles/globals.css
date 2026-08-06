@@ -544,3 +544,30 @@ body {
   min-height: 2.75rem;
   color: inherit;
 }
+
+/*
+  The body of an event card, absorbing the height the grid gives it.
+
+  A grid row is as tall as its tallest cell, and `.sm-card` already stretches to
+  fill that — it is a flex column at `height: 100%`. What did not stretch was
+  what is inside it: the content ended where its content ended, so a card whose
+  body is one line shorter than its neighbour's — the one reading "Nadie
+  todavía" where the other has a row of avatars — put its torn line and its
+  buttons above theirs, over a band of empty card. Two cards side by side
+  finishing at different heights reads as one of them having failed to load.
+
+  So the content becomes a column too, and takes the slack; the Stack inside it
+  carries `flexGrow` so the slack lands in the body rather than under the
+  footer. The footer then sits on the bottom edge of whatever height the row
+  settled on.
+
+  A class rather than props because `CardContent` is not a layout component —
+  it takes no `display` or `flexGrow` — and Stackmyth components never take a
+  `style=`. It is unlayered, so it beats `.sm-card__content` inside
+  `@layer components` without needing to out-specify it.
+*/
+.junti-event-card__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
