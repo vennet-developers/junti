@@ -190,7 +190,18 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
     import("@/lib/outbox"),
   ]);
 
-  const [counts, recent, sends, limits, outbox, calendarAdoption] = await Promise.all([
+  /*
+    Two waves of three, not one wave of six.
+
+    The transaction pooler stalls under concurrent bursts — measured and
+    documented in `db/client.ts` — and when it stalls at the checkout stage the
+    statement never starts, no timeout applies, and the request hangs forever.
+    This page fires more queries than any other in the app, its hang was
+    intermittent in exactly the way a race is, and it went away when the burst
+    was halved. Three at a time stays comfortably under the pool of five while
+    leaving room for the root loader running beside it.
+  */
+  const [counts, recent, sends] = await Promise.all([
     countOf([...PARTICIPANT, ...ORGANIZER, ...GROUPS], days),
     db.execute<{ name: string; at: Date; source: string }>(sql`
       select name, at, source from analytics_events
@@ -213,6 +224,9 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
       limit 20
     `),
 
+  ]);
+
+  const [limits, outbox, calendarAdoption] = await Promise.all([
     getAllSettings(),
     outboxHealth(),
     calendar(days),
