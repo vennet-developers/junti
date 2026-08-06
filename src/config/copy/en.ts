@@ -123,6 +123,73 @@ export const en: Copy = {
 
     closingTitle: "Your next plan, without chasing anyone",
     closingBody: "It takes a minute to create the first one. If it does not suit you, you have lost nothing.",
+
+    painTitle: "Any of these sound familiar?",
+    painBody: "If you organize anything with more than three people, you have lived at least one.",
+    pains: [
+      {
+        title: "\u201cI\u2019m in\u201d \u00d7 14, and you still do not know how many",
+        body: "The group fills with loose replies between memes. At eleven at night you scroll up and count by hand.",
+      },
+      {
+        title: "\u201cI already transferred it\u201d and nobody knows who is missing",
+        body: "You keep the tally in your phone notes, or in your head. You end up covering the gap yourself.",
+      },
+      {
+        title: "You end up chasing people in private",
+        body: "Messaging one by one the people who never answered, to confirm something they already said in the group.",
+      },
+    ],
+
+    differenceTitle: "Why you can trust your group to this",
+    differenceBody: "Three decisions made on purpose, and all three are checkable.",
+    differences: [
+      {
+        title: "Your money never passes through here",
+        body: "Junti works out the split and keeps the record. The money is transferred to you directly, by whatever means you agree on. We hold nothing, take no cut, and could not withhold it if we wanted to.",
+      },
+      {
+        title: "Nobody gets an email without saying yes first",
+        body: "You can only invite people who accepted a link from you. There is no contact list to paste and no third-party address stored. Leaving takes one click.",
+      },
+      {
+        title: "No passwords, nothing to install",
+        body: "Sign in with Google or a link to your email. Your guests open the link and answer from wherever they are.",
+      },
+    ],
+
+    statsTitle: "What has happened here so far",
+    statsEvents: "events created",
+    statsAnswers: "answers recorded",
+    statsPayments: "payments marked",
+
+    faqTitle: "What people ask",
+    faqs: [
+      {
+        q: "What does it cost?",
+        a: "Nothing. Junti is free and has no paid plans today. If that ever changes, you will hear about it before, not after.",
+      },
+      {
+        q: "Does Junti receive my event\u2019s money?",
+        a: "No, and it is not a temporary limitation \u2014 it is a product decision. The app splits the bill and records whether you considered a payment received. The money goes straight to you, outside the app.",
+      },
+      {
+        q: "Do my guests have to create an account?",
+        a: "Yes, to answer. It is what keeps their spot in their name rather than their phone\u2019s, lets them change their answer from another device, and stops anybody answering on their behalf. Sign-in is Google or a link to their email, no password.",
+      },
+      {
+        q: "Who can see my phone number?",
+        a: "Only the organizer of an event you joined, and only if you gave it by ticking the box. The other guests see your name and your answer, never your email or your phone.",
+      },
+      {
+        q: "Can I delete my account?",
+        a: "Whenever you want, by writing to hello@vennet.dev. The privacy notice sets out exactly what is deleted and what is kept anonymized, and why.",
+      },
+      {
+        q: "What if the event is cancelled?",
+        a: "You call it off from your panel: everybody who said they were coming gets an email and it is removed from their calendar. Recorded payments are not deleted \u2014 they are the only evidence the two of you have of who put in what.",
+      },
+    ],
   },
 
   createEvent: {

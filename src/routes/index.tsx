@@ -1,4 +1,10 @@
 import { Button } from "@stackmyth/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@stackmyth/accordion";
 import { Card, CardContent } from "@stackmyth/card";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
@@ -33,7 +39,14 @@ const gate = createServerFn({ method: "GET" }).handler(async () => {
   // image URL in a card is an image no scraper can fetch.
   const { origin } = await import("@/lib/urls");
 
-  return { title: copy.home.title, origin: await origin() };
+  /*
+    The proof numbers, or null. `loadLandingStats` returns null below its own
+    floor rather than zeroes, so this page cannot accidentally render an empty
+    "look how popular we are" block — see its note for why the floor is there.
+  */
+  const { loadLandingStats } = await import("@/lib/landing-stats");
+
+  return { title: copy.home.title, origin: await origin(), stats: await loadLandingStats() };
 });
 
 export const Route = createFileRoute("/")({
@@ -104,8 +117,61 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+/**
+ * A titled block, so every section on this page opens the same way.
+ *
+ * The reference layout this page's structure comes from repeats one pattern —
+ * small label, then the sentence, then the content — and that repetition is
+ * most of what makes a long page feel composed rather than accumulated. It is a
+ * component so the rhythm cannot drift section by section.
+ */
+function Section({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Stack gap="5">
+      <Stack gap="2" maxWidth="42rem">
+        <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+          {eyebrow}
+        </Text>
+        <Text color="muted">{title}</Text>
+      </Stack>
+      {children}
+    </Stack>
+  );
+}
+
+/**
+ * One real number and what it counts.
+ *
+ * Formatted with `Intl` rather than by hand: at four digits a thousands
+ * separator is the difference between a number and a string of digits, and
+ * which separator is correct depends on the reader's language.
+ */
+function Metric({ value, label }: { value: number; label: string }) {
+  const { copy } = useCopy();
+
+  return (
+    <Stack gap="0">
+      <Text as="span" variant="h2" weight="bold" fontFamily="var(--junti-display)">
+        {new Intl.NumberFormat(copy.intlLocale).format(value)}
+      </Text>
+      <Text variant="small" color="muted">
+        {label}
+      </Text>
+    </Stack>
+  );
+}
+
 function HomePage() {
   const { copy } = useCopy();
+  const { stats } = Route.useLoaderData();
 
   return (
     /*
@@ -179,6 +245,31 @@ function HomePage() {
 
         <Divider />
 
+        {/* ── The pain ─────────────────────────────────────────────────────
+            Before what it does, what it is for. The reference layout opens its
+            second block with the problem rather than the product, and it is
+            right: somebody who has not felt this does not need the rest of the
+            page. Three scenes, not three problems — you recognise yours in two
+            seconds or you never do. */}
+        <Section eyebrow={copy.home.painTitle} title={copy.home.painBody}>
+          <Grid columns={{ base: "1", md: "repeat(3, 1fr)" }} gap="4" align="stretch">
+            {copy.home.pains.map((pain) => (
+              <Card key={pain.title} surface="outlined">
+                <CardContent>
+                  <Stack gap="2">
+                    <Text as="h3" variant="h5" fontFamily="var(--junti-display)">
+                      {pain.title}
+                    </Text>
+                    <Text variant="small" color="muted">
+                      {pain.body}
+                    </Text>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Grid>
+        </Section>
+
         {/* ── Three reasons ────────────────────────────────────────────────
             Not a feature list. Three questions somebody organizing something
             on a Thursday already has, in the order they hurt: who is coming,
@@ -250,6 +341,100 @@ function HomePage() {
             </CardContent>
           </Card>
         </Stack>
+
+        {/* ── Why you can trust it ─────────────────────────────────────────
+            Where the reference layout puts a personal-brand "about me", this
+            puts the three decisions that make the product trustworthy. Junti
+            has no founder to introduce and a group's money to be trusted with,
+            so the honest occupant of that slot is what we decided, not who we
+            are.
+
+            Alternating split rather than three more cards: the page has had two
+            card grids by now, and a third would read as a list of lists. Each
+            row is one claim and its proof. */}
+        <Stack gap="5">
+          <Stack gap="2" maxWidth="42rem">
+            <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+              {copy.home.differenceTitle}
+            </Text>
+            <Text color="muted">{copy.home.differenceBody}</Text>
+          </Stack>
+
+          <Stack gap="4">
+            {copy.home.differences.map((item, index) => (
+              <Grid
+                key={item.title}
+                columns={{ base: "1", md: "auto 1fr" }}
+                gap={{ base: "2", md: "5" }}
+                align="start"
+              >
+                {/* The number is the only ornament on this page, and it earns
+                    its place by making three long rows scannable. */}
+                <Box color="var(--sm-text-brand)" minWidth="2rem">
+                  <Text as="span" variant="h4" weight="bold" color="inherit">
+                    {String(index + 1).padStart(2, "0")}
+                  </Text>
+                </Box>
+                <Stack gap="1">
+                  <Text as="h3" variant="h5" fontFamily="var(--junti-display)">
+                    {item.title}
+                  </Text>
+                  <Text color="muted">{item.body}</Text>
+                </Stack>
+              </Grid>
+            ))}
+          </Stack>
+        </Stack>
+
+        {/*
+          ── The numbers ──────────────────────────────────────────────────────
+          The slot where the reference layout puts testimonials, and Junti has
+          nobody to quote yet. Rather than inventing quotes on the front page of
+          a product that handles money between friends, this states what is
+          verifiably true — and renders NOTHING until there is enough of it to
+          be worth saying. See `loadLandingStats`.
+        */}
+        {stats ? (
+          <>
+            <Divider />
+            <Stack gap="4">
+              <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+                {copy.home.statsTitle}
+              </Text>
+              <Grid columns={{ base: "1", sm: "repeat(3, 1fr)" }} gap="4">
+                <Metric value={stats.events} label={copy.home.statsEvents} />
+                <Metric value={stats.answers} label={copy.home.statsAnswers} />
+                <Metric value={stats.payments} label={copy.home.statsPayments} />
+              </Grid>
+            </Stack>
+          </>
+        ) : null}
+
+        <Divider />
+
+        {/* ── FAQ ──────────────────────────────────────────────────────────
+            An accordion rather than six open blocks: every question here is
+            one somebody either has or does not, and a page that answers all
+            six at full length buries the two that matter to any one reader.
+            First one open, so it is obvious the rest expand. */}
+        <Stack gap="4">
+          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+            {copy.home.faqTitle}
+          </Text>
+
+          <Accordion type="single" collapsible defaultValue="faq-0">
+            {copy.home.faqs.map((item, index) => (
+              <AccordionItem key={item.q} value={`faq-${index}`}>
+                <AccordionTrigger>{item.q}</AccordionTrigger>
+                <AccordionContent>
+                  <Text color="muted">{item.a}</Text>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </Stack>
+
+        <Divider />
 
         {/* ── The close ────────────────────────────────────────────────────
             The same action once more, for somebody who read to the bottom.

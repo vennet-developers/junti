@@ -136,6 +136,83 @@ export const es = {
     /* El cierre. Repite la acción una vez, abajo, para quien leyó todo. */
     closingTitle: "Tu próximo plan, sin perseguir a nadie",
     closingBody: "Toma un minuto crear el primero. Si no te sirve, no perdiste nada.",
+
+    /*
+      Las señales de que algo tiene que cambiar.
+      Escritas como escenas, no como problemas abstractos: quien organiza algo
+      reconoce la suya en dos segundos o no la reconoce nunca.
+    */
+    painTitle: "Te suena alguna de estas",
+    painBody: "Si organizas algo con más de tres personas, ya viviste al menos una.",
+    pains: [
+      {
+        title: "«Yo voy» × 14, y no sabes cuántos son",
+        body: "El grupo se llena de respuestas sueltas entre memes. A las once de la noche te toca subir y contar a mano.",
+      },
+      {
+        title: "«Ya te consigné» y nadie sabe quién falta",
+        body: "Llevas la cuenta en notas del celular, o en la cabeza. Al final pones de tu bolsillo lo que no cuadró.",
+      },
+      {
+        title: "Terminas persiguiendo gente por privado",
+        body: "Escribiéndole uno por uno a los que no respondieron, para confirmar algo que ya dijeron en el grupo.",
+      },
+    ],
+
+    /*
+      Por qué esto funciona. No son funcionalidades: son las tres decisiones de
+      diseño que hacen que se pueda confiar, y cada una es verificable en la app.
+    */
+    differenceTitle: "Por qué puedes confiarle esto a tu grupo",
+    differenceBody: "Tres decisiones que tomamos a propósito, y que puedes comprobar.",
+    differences: [
+      {
+        title: "Tu plata nunca pasa por acá",
+        body: "Junti calcula y lleva el registro. El dinero te lo transfieren a ti directo, por el medio que ustedes acuerden. No custodiamos, no cobramos comisión y no podríamos retenerlo aunque quisiéramos.",
+      },
+      {
+        title: "Nadie recibe un correo sin haber dicho que sí",
+        body: "Solo puedes invitar a gente que aceptó un link tuyo. No hay lista de contactos que pegar ni direcciones de terceros guardadas. Salirse es un clic.",
+      },
+      {
+        title: "Sin contraseñas y sin instalar nada",
+        body: "Se entra con Google o con un link al correo. Tus invitados abren el link y responden desde donde estén.",
+      },
+    ],
+
+    /* Los números reales del producto. Se ocultan si todavía son bajos. */
+    statsTitle: "Lo que ya pasó por acá",
+    statsEvents: "eventos creados",
+    statsAnswers: "respuestas registradas",
+    statsPayments: "pagos marcados",
+
+    faqTitle: "Lo que la gente pregunta",
+    faqs: [
+      {
+        q: "¿Cuánto cuesta?",
+        a: "Nada. Junti es gratis y hoy no tiene planes de pago. Si algún día cambia, lo vas a saber antes, no después.",
+      },
+      {
+        q: "¿Junti recibe el dinero de mi evento?",
+        a: "No, y no es una limitación temporal: es una decisión de producto. La app reparte la cuenta y guarda si tú diste un pago por recibido. La plata va directo a ti, por fuera de la app.",
+      },
+      {
+        q: "¿Mis invitados tienen que crear una cuenta?",
+        a: "Sí, para responder. Es lo que hace que su lugar quede a su nombre y no al del teléfono, que puedan cambiar la respuesta desde otro celular, y que nadie pueda contestar por ellos. Se entra con Google o con un link al correo, sin contraseña.",
+      },
+      {
+        q: "¿Quién puede ver mi teléfono?",
+        a: "Solo el organizador de un evento al que te apuntaste, y solo si tú lo diste marcando la casilla. Los demás invitados ven tu nombre y tu respuesta, nunca tu correo ni tu teléfono.",
+      },
+      {
+        q: "¿Puedo borrar mi cuenta?",
+        a: "Cuando quieras, escribiendo a hello@vennet.dev. En el aviso de privacidad está exactamente qué se borra y qué se conserva anonimizado, y por qué.",
+      },
+      {
+        q: "¿Y si el evento se cancela?",
+        a: "Avisas desde tu panel: le llega un correo a quien dijo que venía y se les quita del calendario. Los pagos registrados no se borran — es la única evidencia que tienen ustedes dos de quién puso qué.",
+      },
+    ],
   },
 
   createEvent: {
