@@ -1,3 +1,4 @@
+import { InstagramIcon, LinkedInIcon } from "@stackmyth/icons";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
@@ -5,7 +6,9 @@ import { Link } from "@tanstack/react-router";
 
 import { Chapa } from "@/components/chapa";
 import { useCopy } from "@/components/copy-provider";
+import { LanguageChoice } from "@/components/language-choice";
 import { ROUTES } from "@/config/routes";
+import { SOCIAL_ACCOUNTS, type SocialAccount } from "@/config/social";
 
 /**
  * The footer: what this is, where else to go, and who made it.
@@ -65,45 +68,41 @@ export function AppFooter() {
     /*
       A tinted surface, not paper. The footer sat on exactly the same
       background as the page and was separated from it by one hairline, which
-      is why it read as "more page" rather than as the end of one — and on the
-      landing, where the section above it is a full orange band, that hairline
-      disappeared entirely.
+      disappeared entirely under the landing's closing orange band — it read as
+      "more page" rather than as the end of one.
 
-      `--junti-chip` rather than ink. A dark footer is the obvious "make it
-      look professional" move and it would be wrong here: this component
-      renders on every screen in the app, not just the landing, and a black
-      slab under a roster is a heavier ending than the roster deserves.
-    */
-    /*
-      No top margin any more. It existed to separate a paper footer from a
-      paper page, and the tint does that job now — on the landing the margin
-      showed up as a stripe of page between the closing orange band and the
-      footer, which read as a gap rather than as an edge. Short pages still
-      push this to the bottom: that comes from the spacer in the root layout,
-      not from here.
+      `--junti-chip` rather than ink. A dark footer is the obvious "make it look
+      professional" move and it would be wrong here: this renders on every
+      screen in the app, and a black slab under a roster is a heavier ending
+      than a roster deserves.
+
+      No top margin. It existed to separate a paper footer from a paper page;
+      the tint does that job now. Short pages still push this to the bottom —
+      that comes from the spacer in the root layout, not from here.
     */
     <Box as="footer" backgroundColor="var(--junti-chip)">
       {/* The same frame width as the header, for the same reason: the shell
           belongs to the app, not to whichever page is under it. */}
       <Container size="4" px="4">
-        <Stack gap={{ base: "5", md: "6" }} py={{ base: "6", md: "7" }}>
+        <Stack gap={{ base: "6", md: "7" }} py={{ base: "6", md: "8" }}>
           {/*
-            `1fr` against `auto`: the brand block takes the slack and the two
-            link lists are exactly as wide as their longest label. Two equal
-            halves would leave the lists floating in space they have no content
-            for.
+            Four columns from `lg`, two from `md`, one on a phone.
 
-            **The lists are their own grid, two columns at EVERY width.**
-            Measured at a real 390px viewport, stacking all three blocks made
-            this footer 539px tall — 64% of a phone screen, for furniture.
-            Side by side they fit in one band and the whole thing drops to
-            roughly a third of that.
+            `1.4fr` on the brand block against `auto` for the rest: the blurb
+            needs a measure and the three lists are exactly as wide as their
+            longest label. Equal quarters would stretch three short lists
+            across space they have no content for and squeeze the one thing
+            that is actually prose.
           */}
-          <Grid columns={{ base: "1", md: "1fr auto" }} gap={{ base: "5", md: "7" }} align="start">
-            <Stack gap="3" maxWidth="26rem">
-              {/* The chapa, not the wordmark — same rule as the header, and the
-                  brand allows one per screen. This is the footer's, and the
-                  header's is a screen away by the time anybody reads it. */}
+          <Grid
+            columns={{ base: "1", md: "repeat(2, 1fr)", lg: "1.4fr auto auto auto" }}
+            gap={{ base: "6", md: "6", lg: "7" }}
+            align="start"
+          >
+            <Stack gap="3" maxWidth="24rem">
+              {/* The chapa, not the wordmark — same rule as the header, and
+                  the brand allows one per screen. The header's is a screen
+                  away by the time anybody reads this. */}
               <Box>
                 <Link to={ROUTES.home} className="brand-link">
                   <Chapa width={72} />
@@ -113,36 +112,44 @@ export function AppFooter() {
               <Text variant="small" color="muted">
                 {copy.footer.blurb}
               </Text>
-
             </Stack>
 
-            <Grid columns="repeat(2, auto)" gap={{ base: "4", md: "7" }} align="start">
-              <FooterColumn heading={copy.footer.productHeading}>
-                <FooterLink to={ROUTES.newEvent}>{copy.home.cta}</FooterLink>
-                <FooterLink to={ROUTES.welcome}>{copy.welcome.link}</FooterLink>
-                <FooterLink to={ROUTES.myEvents}>{copy.auth.myEventsLink}</FooterLink>
-              </FooterColumn>
+            <FooterColumn heading={copy.footer.productHeading}>
+              <FooterLink to={ROUTES.newEvent}>{copy.home.cta}</FooterLink>
+              <FooterLink to={ROUTES.welcome}>{copy.welcome.link}</FooterLink>
+              <FooterLink to={ROUTES.myEvents}>{copy.auth.myEventsLink}</FooterLink>
+            </FooterColumn>
 
-              <FooterColumn heading={copy.footer.legalHeading}>
-                <FooterLink to={ROUTES.privacy}>{copy.footer.privacyLink}</FooterLink>
-                <FooterLink to={ROUTES.terms}>{copy.footer.termsLink}</FooterLink>
-                {/*
-                  A real mailto rather than a contact form. The privacy notice
-                  and the terms both name this address as the way to exercise a
-                  right or file a complaint, and a form that could silently fail
-                  would be the worst possible thing to put behind that promise.
-                */}
-                <FooterLink href="mailto:hello@vennet.dev">{copy.footer.contactCta}</FooterLink>
-              </FooterColumn>
-            </Grid>
+            <FooterColumn heading={copy.footer.contactHeading}>
+              {/*
+                A real mailto rather than a contact form. The privacy notice
+                and the terms both name this address as the way to exercise a
+                right or file a complaint, and a form that could silently fail
+                would be the worst possible thing to put behind that promise.
+              */}
+              <FooterLink href="mailto:hello@vennet.dev">{copy.footer.contactCta}</FooterLink>
+              <SocialRow />
+            </FooterColumn>
+
+            {/*
+              Language, which the reference layout puts in its own column and
+              which matters more here than it does there: this app is genuinely
+              bilingual, and until now the only way to switch was the account
+              menu — a drawer somebody has to know exists.
+            */}
+            <Box minWidth={{ lg: "12rem" }}>
+              <LanguageChoice />
+            </Box>
           </Grid>
 
           <Divider />
 
           {/*
-            The bottom bar. Stacked on a phone and split on a laptop — the
-            copyright reads first in both, because the mark beside it is a
-            credit rather than a heading.
+            The bottom bar: who owns it on the left, the legal pages on the
+            right. They used to be a column of their own, which gave "Legal"
+            the same visual weight as the product links. Down here they are
+            where every product on the internet has trained people to look for
+            them, and the column they vacated became Social.
           */}
           <Flex
             direction={{ base: "column", md: "row" }}
@@ -150,16 +157,20 @@ export function AppFooter() {
             align="center"
             gap="4"
           >
-            <Text variant="small" color="muted" align="center">
-              {copy.footer.legal(year)}
-            </Text>
-
+            {/* The copyright and the Vennet mark travel together: both are
+                attribution, and the mark sitting after the legal links read as
+                a third link rather than as a credit. */}
+            <Flex gap="3" align="center">
+              <Text variant="small" color="muted">
+                {copy.footer.legal(year)}
+              </Text>
             {/*
               A plain <a>: it leaves the app entirely, and a client-side
-              transition to another origin is not a thing. Plain <img> for the
-              same reason the chapa is one — the optimizer is for photographs it
-              can resize, and this is one vector that renders at every size. The
-              120x27 viewBox sets the box so nothing shifts while it loads.
+              transition to another origin is not a thing. Plain <img> for
+              the same reason the chapa is one — the optimizer is for
+              photographs it can resize, and this is one vector that renders
+              at every size. The 120x27 viewBox sets the box so nothing
+              shifts while it loads.
 
               Empty alt: the link already carries the name through
               `aria-label`, and announcing "Vennet" twice is how a logo link
@@ -174,22 +185,109 @@ export function AppFooter() {
               <img
                 src="/brand/vennet-mark-ink.svg"
                 alt=""
-                width={80}
-                height={18}
+                width={72}
+                height={16}
                 className="vennet-mark__art vennet-mark__art--light"
               />
               <img
                 src="/brand/vennet-mark-white.svg"
                 alt=""
-                width={80}
-                height={18}
+                width={72}
+                height={16}
                 className="vennet-mark__art vennet-mark__art--dark"
               />
             </a>
+            </Flex>
+
+            <Flex gap="4" align="center" wrap="wrap" justify="center">
+              <Text as="span" variant="small">
+                <Link to={ROUTES.privacy} className="junti-footer-link">
+                  {copy.footer.privacyLink}
+                </Link>
+              </Text>
+              <Text as="span" variant="small">
+                <Link to={ROUTES.terms} className="junti-footer-link">
+                  {copy.footer.termsLink}
+                </Link>
+              </Text>
+
+            </Flex>
           </Flex>
         </Stack>
       </Container>
     </Box>
+  );
+}
+
+/**
+ * The social accounts that exist, as icons.
+ *
+ * **Renders nothing until there is something to link to.** Every entry in
+ * `SOCIAL_ACCOUNTS` starts with `url: null`, and this skips those — a footer
+ * icon is a promise that an account exists, and somebody who taps it and lands
+ * on "this page isn't available" learns something about the product worse than
+ * learning nothing.
+ *
+ * It also skips any entry whose icon the installed `@stackmyth/icons` does not
+ * export. X and Threads were added to that package in stackmyth `6dfc753a` and
+ * are not in the released 0.1.1, so listing them here ahead of the release is
+ * safe rather than a build error waiting to happen. Once the package ships,
+ * add the two imports and they light up on their own.
+ *
+ * Icons rather than the reference layout's text labels, which is what Ivan
+ * asked for and is also the right call at this size: four words stacked read
+ * as a fourth list of links, four marks in a row read as one control.
+ */
+function SocialRow() {
+  const { copy } = useCopy();
+
+  const icons: Partial<Record<SocialAccount["icon"], typeof InstagramIcon>> = {
+    instagram: InstagramIcon,
+    linkedin: LinkedInIcon,
+    // x: XTwitterIcon,      ← unlocked by the next @stackmyth/icons release
+    // threads: ThreadsIcon,
+  };
+
+  const live = SOCIAL_ACCOUNTS.filter((account) => account.url && icons[account.icon]);
+  if (live.length === 0) return null;
+
+  return (
+    <Stack gap="2" pt="2">
+      <Text as="span" variant="small" weight="semibold">
+        {copy.footer.socialHeading}
+      </Text>
+
+      <Flex gap="1" wrap="wrap">
+        {live.map((account) => {
+          const Icon = icons[account.icon];
+          if (!Icon) return null;
+
+          return (
+            /*
+              `colored={false}` so the row takes the footer's ink rather than
+              five brand palettes at once — several of these marks are black in
+              their official form, and a row that mixes #E4405F, #0A66C2 and
+              two blacks reads as a sticker sheet.
+
+              The 44px box is the tap target: the mark itself is 20px, which is
+              the right size to look at and a miss waiting to happen on a
+              phone.
+            */
+            <a
+              key={account.icon}
+              href={account.url ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={account.label}
+              title={account.label}
+              className="junti-social-link"
+            >
+              <Icon size={20} colored={false} aria-hidden="true" />
+            </a>
+          );
+        })}
+      </Flex>
+    </Stack>
   );
 }
 

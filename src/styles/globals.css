@@ -522,3 +522,25 @@ body {
     max-width: 19rem;
   }
 }
+
+/*
+  Social marks in the footer.
+
+  The 44px box is the tap target and the 20px mark is what you look at — the
+  two are different numbers on purpose. An icon sized for the eye is a miss
+  waiting to happen for a thumb, and this app raised `--sm-density-factor` to
+  1.4 precisely so nothing lands under 44 (DECISIONS.md #32). That knob reaches
+  Stackmyth's controls; a bare anchor around an SVG is not one.
+
+  `color: inherit` because the marks render with `colored={false}`, which
+  resolves them to `currentColor` — so the row picks up the footer's ink
+  instead of five brand palettes at once.
+*/
+.junti-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  color: inherit;
+}

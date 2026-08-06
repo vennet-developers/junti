@@ -541,6 +541,7 @@ export const en: Copy = {
     productHeading: "Product",
     legalHeading: "Legal",
     contactHeading: "Contact",
+    socialHeading: "Follow us",
 
     blurb: "Organize plans with your people and keep track of who has paid. No passwords, nothing to install.",
 

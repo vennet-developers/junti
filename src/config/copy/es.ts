@@ -587,6 +587,7 @@ export const es = {
     productHeading: "Producto",
     legalHeading: "Legal",
     contactHeading: "Contacto",
+    socialHeading: "Síguenos",
 
     /* La línea bajo la marca. Dice qué es esto para quien cae en el pie de una
        página legal sin haber visto la portada. */
