@@ -1,6 +1,7 @@
 import { Badge } from "@stackmyth/badge";
 import { Card, CardContent } from "@stackmyth/card";
 import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -192,17 +193,29 @@ function FunnelPage() {
         </Stack>
 
         {/*
-          Apilado y no en pestañas. Se probaron, y lo que las descartó no fue
-          el diseño: perseguir un cuelgue del SSR me llevó por Tabs, por
-          `React.lazy` y por un import dinámico antes de encontrar la causa
-          real — un componente que importa `@tanstack/charts` desde dentro de
-          `src/routes/` cuelga el render del servidor, sin error, para
-          siempre. Vive en `components/` por eso. Las pestañas ya no eran
-          necesarias sin ese ruido, y una página que se desplaza es más simple
-          que una que hay que recordar dónde guarda cada cosa.
-        */}
-        <OverviewPanel overview={report.overview} />
+          Tres pestañas, una pregunta cada una: cuánto hay y si se mueve
+          (Resumen), dónde se cae la gente (Embudos), y qué está pasando
+          ahora mismo (Operación). Una versión anterior las descartó mientras
+          se perseguía un cuelgue del SSR que resultó ser de la librería de
+          gráficas, no de Tabs; con las barras en SVG propio no queda nada que
+          pueda colgarse, y tres preguntas apiladas eran una página de scroll
+          sin jerarquía.
 
+          «Resumen» por defecto: es lo que se abre cuando no se viene buscando
+          nada en particular.
+        */}
+        <Tabs defaultValue="resumen" size="xl">
+          <TabsList fullWidth>
+            <TabsTrigger value="resumen">Resumen</TabsTrigger>
+            <TabsTrigger value="embudos">Embudos</TabsTrigger>
+            <TabsTrigger value="operacion">Operación</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumen">
+            <OverviewPanel overview={report.overview} />
+          </TabsContent>
+
+          <TabsContent value="embudos">
         <Stack gap="5" pt="4">
           <Text variant="small" color="muted">
             Los últimos {report.days} días. Cada porcentaje es contra el primer paso, no contra el
@@ -287,8 +300,10 @@ function FunnelPage() {
         </Card>
 
         </Stack>
+          </TabsContent>
 
-        <Stack gap="5">
+          <TabsContent value="operacion">
+        <Stack gap="5" pt="4">
         {/* AC-7 of the send-limits card. */}
         <Card surface="outlined">
           <CardContent>
@@ -453,6 +468,8 @@ function FunnelPage() {
           </CardContent>
         </Card>
         </Stack>
+          </TabsContent>
+        </Tabs>
       </Stack>
     </Container>
   );
