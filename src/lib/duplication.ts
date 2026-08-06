@@ -60,6 +60,7 @@ export async function loadEventAsFormValues(
         ? ""
         : String(toMajorUnits(source.costAmountMinor, source.currency)),
     currency: source.currency,
+    refundNotice: source.refundNoticeHours === null ? "" : String(source.refundNoticeHours),
     policies: JSON.stringify(
       policies.map((policy) => ({
         definitionId: policy.definitionId,

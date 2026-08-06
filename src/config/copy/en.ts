@@ -239,6 +239,13 @@ export const en: Copy = {
       costAmountHelpTotal: "Split evenly between everyone who says they are coming.",
       costAmountHelpPerPerson: "Everyone who confirms pays this much.",
       currency: "Currency",
+      refundNotice: "Refund policy",
+      refundNoticeHelp:
+        "If somebody pays and then drops out, how much notice must they give to get their money back? Shown before people confirm, so nobody is surprised.",
+      refundNoticeOptions: {
+        none: "No policy",
+        hours: (n: number) => (n < 48 ? `${n} hours' notice` : `${n / 24} days' notice`),
+      },
     },
     costModes: {
       none: "Free",
@@ -342,6 +349,15 @@ export const en: Copy = {
       n === 1
         ? `You hold ${total} from 1 person no longer coming — refunding or keeping it is between you.`
         : `You hold ${total} from ${n} people no longer coming — refunding or keeping it is between you.`,
+    dropouts: "From people no longer coming",
+    dropoutPaid: (amount: string) => `Paid ${amount}`,
+    verdictRefund: (hours: number) =>
+      `Gave more than ${hours} hours' notice — under your policy, they get it back.`,
+    verdictForfeit: (hours: number) =>
+      `Gave less than ${hours} hours' notice — under your policy, no refund.`,
+    verdictUnknown: "When they dropped out was not recorded — your call.",
+    forfeitCoversGap: (amount: string) =>
+      `What your policy keeps covers ${amount} of the gap.`,
   },
 
   heldSpots: {
@@ -393,6 +409,10 @@ export const en: Copy = {
     namePlaceholder: "What your friends call you",
     nameHelp: "1 to 40 characters. Use the same one every time so you do not show up twice.",
     attendanceLabel: "Are you coming?",
+    refundPolicy: (hours: number) =>
+      `Refund policy: if you pay and then drop out, give at least ${hours} hours' notice to get your money back. Past that, there is no refund.`,
+    refundLate: (hours: number) =>
+      `The event is less than ${hours === 24 ? "a day" : `${hours} hours`} away. Under the organizer's policy, dropping out now means no refund.`,
     submit: "Confirm",
     submitEditing: "Update my answer",
     submitting: "Sending…",

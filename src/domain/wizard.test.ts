@@ -45,6 +45,7 @@ describe("every field has exactly one home", () => {
       "costMode",
       "costAmount",
       "currency",
+      "refundNotice",
       "policies",
     ];
 
@@ -66,7 +67,7 @@ describe("every field has exactly one home", () => {
   it("asks whether there is a cost before the step that depends on the answer", () => {
     expect(STEP_FIELDS[2]).toContain("costMode");
     expect(STEP_FIELDS[3]).not.toContain("costMode");
-    expect(STEP_FIELDS[3]).toEqual(["currency", "costAmount"]);
+    expect(STEP_FIELDS[3]).toEqual(["currency", "costAmount", "refundNotice"]);
   });
 
   it("knows which step a field is on", () => {

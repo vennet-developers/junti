@@ -21,6 +21,12 @@ export interface OneTapJoinProps {
   avatarUrl: string | null;
   /** Event is at capacity, so this lands on the waitlist. Say so first. */
   isFull: boolean;
+  /**
+   * The organizer's refund rule, when there is one. Stated here too: the
+   * one-tap button is a confirmation like any other, and the rule must be on
+   * screen before the tap that accepts it.
+   */
+  refund: { hours: number; startsAt: Date } | null;
   /** Falls back to the full form — used when the name is taken. */
   onUseForm: () => void;
 }
@@ -46,6 +52,7 @@ export function OneTapJoin({
   displayName,
   avatarUrl,
   isFull,
+  refund,
   onUseForm,
 }: OneTapJoinProps) {
   const { copy } = useCopy();
@@ -115,6 +122,12 @@ export function OneTapJoin({
           <Text variant="small" color="muted">
             {copy.rsvp.oneTapHelp}
           </Text>
+
+          {refund ? (
+            <Text variant="small" color="muted">
+              {copy.rsvp.refundPolicy(refund.hours)}
+            </Text>
+          ) : null}
 
           <Button type="button" size="sm" variant="ghost" onClick={onUseForm}>
             {copy.rsvp.useAnotherName}

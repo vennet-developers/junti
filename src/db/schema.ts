@@ -275,6 +275,23 @@ export const events = pgTable(
 
     currency: char("currency", { length: 3 }).notNull().default("COP"),
 
+    /**
+     * Hours of notice a dropout must give for their money back, or NULL for
+     * "the organizer stated no rule".
+     *
+     * A rule about money the app never holds: Junti cannot refund anybody, so
+     * what this column buys is the rule being SAID — on the form before
+     * someone confirms, and on the settlement card when the organizer decides
+     * whose money goes back. The two moments where "avisaste tarde" is
+     * otherwise an argument instead of a policy.
+     *
+     * NULL is not zero. Zero would be a policy ("back out any time, even
+     * mid-event, and your money returns"); NULL means the organizer never
+     * stated one, and nothing downstream may pass judgement on a dropout
+     * against a rule that was never on screen.
+     */
+    refundNoticeHours: integer("refund_notice_hours"),
+
     /** When set, RSVPs are frozen. */
     closedAt: timestamp("closed_at", { withTimezone: true }),
 
@@ -439,6 +456,21 @@ export const participants = pgTable(
     displayName: text("display_name").notNull(),
 
     attendance: attendance("attendance").notNull().default("in"),
+
+    /**
+     * When this answer last became "out", or NULL while it is anything else.
+     *
+     * Evidence for the refund policy, nothing more: "did they give enough
+     * notice" is a question about an instant, and `updated_at` cannot answer
+     * it — that column moves when somebody fixes a typo in their own name.
+     * Written on the transition into "out", cleared on the way back, left
+     * alone when an "out" row is amended without changing its answer (the
+     * notice was given when it was given).
+     *
+     * NULL on an "out" row is possible — rows older than the column — and is
+     * read as "unknown", never as either verdict.
+     */
+    outAt: timestamp("out_at", { withTimezone: true }),
 
     /**
      * The account this RSVP belongs to.

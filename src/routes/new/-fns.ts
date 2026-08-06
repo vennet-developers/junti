@@ -89,6 +89,7 @@ export const createEventFn = createServerFn({ method: "POST" })
       costMode: field(formData, "costMode"),
       costAmount: field(formData, "costAmount"),
       currency: field(formData, "currency") || "COP",
+      refundNotice: field(formData, "refundNotice"),
       groupId: field(formData, "groupId"),
     });
 
@@ -154,6 +155,7 @@ export const createEventFn = createServerFn({ method: "POST" })
         costMode: input.costMode,
         costAmountMinor: input.costAmountMinor,
         currency: input.currency,
+        refundNoticeHours: input.refundNotice,
         groupId,
       });
 

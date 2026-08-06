@@ -22,6 +22,7 @@ import {
 } from "@/components/form-shell";
 import { useCopy } from "@/components/copy-provider";
 import { RadioField } from "@/components/radio-field";
+import { pastRefundCutoff } from "@/domain/refund-policy";
 import { makeRsvpSchema } from "@/lib/validation";
 
 import { useRouter } from "@tanstack/react-router";
@@ -34,9 +35,15 @@ export interface RsvpFormProps {
   mine: { displayName: string; attendance: string } | null;
   /** Event is at capacity, so "Voy" will land on the waitlist. */
   isFull: boolean;
+  /**
+   * The organizer's refund rule, when the event costs money and one was
+   * stated. Shown BEFORE confirming — a rule that only surfaces once somebody
+   * wants their money back is a trap, not a policy.
+   */
+  refund: { hours: number; startsAt: Date } | null;
 }
 
-export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
+export function RsvpForm({ publicToken, mine, isFull, refund }: RsvpFormProps) {
   const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -57,6 +64,20 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
 
   const defaultAttendance =
     mine?.attendance === "out" || mine?.attendance === "maybe" ? mine.attendance : "in";
+
+  /*
+    Which answer the radio currently shows. Only diverges from the default
+    after a click, so everything conditioned on it is client-only by
+    construction — which is what lets the late-drop warning read the real
+    clock below without an SSR/hydration mismatch.
+  */
+  const [selected, setSelected] = useState(defaultAttendance);
+
+  const backingOutLate =
+    refund !== null &&
+    mine?.attendance === "in" &&
+    selected === "out" &&
+    pastRefundCutoff(new Date(), refund.startsAt, refund.hours);
 
   function submit(data: Record<string, unknown>) {
     const formData = new FormData();
@@ -153,8 +174,28 @@ export function RsvpForm({ publicToken, mine, isFull }: RsvpFormProps) {
                   name="attendance"
                   options={attendanceOptions}
                   defaultValue={defaultAttendance}
+                  onValueChange={setSelected}
                 />
               </ControlledField>
+
+              {/* The rule, before the button that accepts it. */}
+              {refund ? (
+                <Text variant="small" color="muted">
+                  {copy.rsvp.refundPolicy(refund.hours)}
+                </Text>
+              ) : null}
+
+              {/* The consequence, at the exact moment it is about to bite:
+                  someone who held a spot is choosing "No voy" inside the
+                  window. Warned before submitting, not argued after. */}
+              {refund && backingOutLate ? (
+                <Banner
+                  variant="warning"
+                  live="off"
+                  icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
+                  title={copy.rsvp.refundLate(refund.hours)}
+                />
+              ) : null}
 
               <SubmitButton
                 pending={pending}

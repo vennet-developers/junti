@@ -592,6 +592,11 @@ function ParticipantPage() {
             mine={mine}
             isFull={roster.openSlots !== null && roster.openSlots === 0}
             account={account}
+            refund={
+              event.hasCost && event.refundNoticeHours !== null
+                ? { hours: event.refundNoticeHours, startsAt: event.startsAt }
+                : null
+            }
           />
         ) : null}
 

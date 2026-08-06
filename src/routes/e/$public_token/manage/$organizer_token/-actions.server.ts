@@ -772,6 +772,7 @@ export async function editEvent(
     costMode: field(formData, "costMode"),
     costAmount: field(formData, "costAmount"),
     currency: field(formData, "currency") || event.currency,
+    refundNotice: field(formData, "refundNotice"),
     groupId: field(formData, "groupId"),
   });
 
@@ -859,6 +860,7 @@ export async function editEvent(
       costMode: input.costMode,
       costAmountMinor: input.costAmountMinor,
       currency: input.currency,
+      refundNoticeHours: input.refundNotice,
       groupId,
       // Calendars ignore an update that does not claim to be newer. See the
       // column's note in the schema.

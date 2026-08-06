@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Copy } from "@/config/copy";
 import { LOCALES } from "@/config/copy";
 import { deadlineFromLead, deadlineProblem, isLeadHours } from "@/domain/convocation";
+import { isRefundNoticeHours } from "@/domain/refund-policy";
 
 import {
   DEFAULT_TIME_ZONE,
@@ -158,6 +159,22 @@ const rsvpLeadSchema = z
   });
 
 /**
+ * The refund-notice window, or empty for "no stated rule".
+ *
+ * Same closed-list-with-silent-fallback shape as `rsvpLead`, and for the same
+ * reason: the form offers a fixed set of radio options, so a value outside it
+ * was built by hand, and the safe reading of a malformed policy is "no policy
+ * was stated" — a rule nobody saw must not be enforced against anybody.
+ */
+const refundNoticeSchema = z
+  .union([z.string(), z.number()])
+  .optional()
+  .transform((raw) => {
+    const value = Number(String(raw ?? "").trim());
+    return isRefundNoticeHours(value) ? value : null;
+  });
+
+/**
  * The money amount, entered in major units (pesos) and stored in minor units.
  *
  * Accepts the separators a Colombian would actually type — `50.000`, `50 000`,
@@ -271,6 +288,7 @@ const eventFieldsSchema = (copy: Copy) =>
     costMode: costModeSchema,
     costAmount: costAmountSchema,
     currency: currencySchema,
+    refundNotice: refundNoticeSchema,
 
     /**
      * The policy list, as the JSON string `PolicyEditor` writes into the store.
@@ -334,7 +352,16 @@ export const makeEventSchema = (copy: Copy) =>
     }
 
     if (parsed.costMode === "none") {
-      return { ...parsed, startsAt, rsvpDeadline, costAmountMinor: null as number | null };
+      // A refund rule on a free event would be a rule about money nobody
+      // owes. Dropped here so a mode flipped back to "none" cannot leave a
+      // stale policy behind on the row.
+      return {
+        ...parsed,
+        startsAt,
+        rsvpDeadline,
+        costAmountMinor: null as number | null,
+        refundNotice: null,
+      };
     }
 
     const costAmountMinor = parseCostAmount(

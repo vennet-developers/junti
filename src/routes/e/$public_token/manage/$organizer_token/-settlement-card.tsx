@@ -9,7 +9,8 @@ import { Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
-import { computeSettlement } from "@/domain/settlement";
+import { refundVerdict } from "@/domain/refund-policy";
+import { computeSettlement, type Refundable } from "@/domain/settlement";
 import { formatMoney } from "@/lib/format";
 import type { RosterView } from "@/lib/roster";
 
@@ -46,6 +47,7 @@ export function SettlementCard({
 
   const attendanceOf = new Map(roster.members.map((m) => [m.id, m.attendance]));
   const names = new Map(roster.members.map((m) => [m.id, m.displayName]));
+  const outAtOf = new Map(roster.members.map((m) => [m.id, m.outAt]));
 
   const settlement = computeSettlement(
     roster.members.map((m) => m.share),
@@ -124,16 +126,113 @@ export function SettlementCard({
           {settlement.refundables.length > 0 ? (
             <>
               <Divider />
-              <Text variant="small" color="muted">
-                {strings.refundables(
-                  settlement.refundables.length,
-                  money(settlement.refundables.reduce((sum, r) => sum + r.paidMinor, 0)),
-                )}
-              </Text>
+              {event.refundNoticeHours === null ? (
+                /* No stated rule, so no verdicts: the app reports the fact
+                   and stays out of the decision, as it always has. */
+                <Text variant="small" color="muted">
+                  {strings.refundables(
+                    settlement.refundables.length,
+                    money(settlement.refundables.reduce((sum, r) => sum + r.paidMinor, 0)),
+                  )}
+                </Text>
+              ) : (
+                <DropoutVerdicts
+                  refundables={settlement.refundables}
+                  shortfallMinor={settlement.shortfallMinor}
+                  noticeHours={event.refundNoticeHours}
+                  startsAt={event.startsAt}
+                  names={names}
+                  outAtOf={outAtOf}
+                  money={money}
+                />
+              )}
             </>
           ) : null}
         </Stack>
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * The dropouts' money, judged against the stated rule.
+ *
+ * Once the organizer wrote a policy on the event, "devolver o contar" stops
+ * being an open question and becomes a verdict per person: enough notice and
+ * the money goes back, a late bail and the policy keeps it. Drops that
+ * predate `out_at` tracking are said to be unknown rather than guessed —
+ * accusing somebody of bailing late on missing evidence is the one wrong
+ * answer here.
+ *
+ * Still sentences, never writes: the money lives in the organizer's pocket
+ * either way, and the app's job ends at saying what the rule they published
+ * concludes.
+ */
+function DropoutVerdicts({
+  refundables,
+  shortfallMinor,
+  noticeHours,
+  startsAt,
+  names,
+  outAtOf,
+  money,
+}: {
+  refundables: Refundable[];
+  shortfallMinor: number;
+  noticeHours: number;
+  startsAt: Date;
+  names: Map<string, string>;
+  outAtOf: Map<string, Date | null>;
+  money: (minor: number) => string;
+}) {
+  const { copy } = useCopy();
+  const strings = copy.settlement;
+
+  const judged = refundables.map((refundable) => ({
+    ...refundable,
+    verdict: refundVerdict({
+      noticeHours,
+      startsAt,
+      outAt: outAtOf.get(refundable.participantId) ?? null,
+    }),
+  }));
+
+  const forfeitedMinor = judged
+    .filter((r) => r.verdict === "forfeit")
+    .reduce((sum, r) => sum + r.paidMinor, 0);
+
+  return (
+    <Stack gap="3">
+      <Text variant="small" weight="semibold">
+        {strings.dropouts}
+      </Text>
+
+      {judged.map((refundable) => (
+        <Flex key={refundable.participantId} gap="3" align="center" justify="between" wrap="wrap">
+          <Text variant="small" weight="semibold">
+            {names.get(refundable.participantId) ?? "—"}
+          </Text>
+          <Text variant="small" color="muted">
+            {strings.dropoutPaid(money(refundable.paidMinor))}
+            {" · "}
+            {refundable.verdict === "refund"
+              ? strings.verdictRefund(noticeHours)
+              : refundable.verdict === "forfeit"
+                ? strings.verdictForfeit(noticeHours)
+                : strings.verdictUnknown}
+          </Text>
+        </Flex>
+      ))}
+
+      {/* What the kept money does to the banner above: an organizer holding
+          $16.000 a late dropout forfeited is NOT out of pocket by the full
+          shortfall, and saying so is the difference between chasing eight
+          people and chasing four. */}
+      {forfeitedMinor > 0 && shortfallMinor > 0 ? (
+        <Text variant="small" color="muted">
+          {strings.forfeitCoversGap(money(Math.min(forfeitedMinor, shortfallMinor)))}
+        </Text>
+      ) : null}
+    </Stack>
   );
 }

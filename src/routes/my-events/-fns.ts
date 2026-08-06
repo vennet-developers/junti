@@ -103,6 +103,9 @@ export const duplicateEventFn = createServerFn({ method: "POST" })
         costMode: source.costMode,
         costAmountMinor: source.costAmountMinor,
         currency: source.currency,
+        // The rule travels with the event: next week's game keeps this
+        // week's policy, exactly like its cost.
+        refundNoticeHours: source.refundNoticeHours,
       });
 
       // The requirements come along; the submissions against them do not. A new

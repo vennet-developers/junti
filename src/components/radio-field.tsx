@@ -25,6 +25,8 @@ export interface RadioFieldProps {
   options: readonly RadioOption[];
   defaultValue: string;
   orientation?: "vertical" | "horizontal";
+  /** Fires alongside the store write, for callers that react to the choice. */
+  onValueChange?: (value: string) => void;
 }
 
 export function RadioField({
@@ -32,6 +34,7 @@ export function RadioField({
   options,
   defaultValue,
   orientation = "vertical",
+  onValueChange,
 }: RadioFieldProps) {
   const [value, setValue] = useState(defaultValue);
   const form = useFormContext();
@@ -41,6 +44,7 @@ export function RadioField({
   function handleChange(next: string) {
     setValue(next);
     form?.store.setValue(name, next);
+    onValueChange?.(next);
   }
 
   const items = options.map((option) => (

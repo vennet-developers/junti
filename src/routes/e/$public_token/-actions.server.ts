@@ -182,6 +182,17 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
       .set({
         displayName,
         attendance,
+        /*
+          Evidence for the refund policy: stamped on the way INTO "out",
+          cleared on the way back in, untouched when an "out" row is amended
+          without changing its answer — the notice was given when it was
+          given, and fixing a typo in your name must not move it.
+        */
+        ...(attendance === "out"
+          ? wasAttending === "out"
+            ? {}
+            : { outAt: new Date() }
+          : { outAt: null }),
         // Kept fresh on every amend: a photo changed on the Google account
         // should not leave last year's picture on the roster.
         avatarUrl: organizer.avatarUrl,
@@ -197,6 +208,8 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
         eventId: event.id,
         displayName,
         attendance,
+        // A first answer of "no voy" is still an answer given at an instant.
+        outAt: attendance === "out" ? new Date() : null,
         userId: organizer.id,
         avatarUrl: organizer.avatarUrl,
       });

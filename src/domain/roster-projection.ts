@@ -27,7 +27,7 @@ import type { RosterMember, RosterView } from "@/lib/roster";
  * reader's to see", which is a value a component can branch on; the type is
  * what makes it impossible to render the number without deciding first.
  */
-export type ParticipantRosterMember = Omit<RosterMember, "userId" | "share" | "guests"> & {
+export type ParticipantRosterMember = Omit<RosterMember, "userId" | "share" | "guests" | "outAt"> & {
   share: Share | null;
   /**
    * Guest names only — the claim token is STRIPPED here, deliberately. The
@@ -144,7 +144,10 @@ export function toParticipantView(
     roster went from 37.8 KB to 39.4 KB while REMOVING four fields.
   */
   const stripped = new Map<string, ParticipantRosterMember>(
-    roster.members.map(({ userId: _userId, share, guests, ...rest }) => [
+    // `outAt` goes with `userId`: it is the organizer's refund-policy
+    // evidence, and when a neighbour backed out is not a fact the rest of the
+    // roster gets to browse.
+    roster.members.map(({ userId: _userId, outAt: _outAt, share, guests, ...rest }) => [
       rest.id,
       {
         ...rest,

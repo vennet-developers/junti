@@ -52,6 +52,12 @@ export interface RosterMember {
   id: string;
   displayName: string;
   attendance: Attendance;
+  /**
+   * When the answer last became "out", or null. Evidence for the refund
+   * policy — see the column's note in the schema. Null on an "out" row means
+   * the drop predates tracking and no verdict may rest on it.
+   */
+  outAt: Date | null;
   joinedAt: Date;
   share: Share;
   /** Set when this RSVP came from a signed-in account. */
@@ -103,6 +109,12 @@ export interface EventView {
    */
   rsvpDeadline: Date | null;
   hasCost: boolean;
+  /**
+   * Hours of notice a dropout must give for their money back, or null for
+   * "no stated rule". Public on purpose: the rule only works if the people
+   * it binds can read it before they confirm.
+   */
+  refundNoticeHours: number | null;
 }
 
 export interface RosterView {
@@ -163,6 +175,7 @@ function toEventView(row: EventRow, type: { slug: string; label: string }): Even
     isCancelled: row.cancelledAt !== null,
     rsvpDeadline: row.rsvpDeadline,
     hasCost: row.costMode !== "none",
+    refundNoticeHours: row.refundNoticeHours,
   };
 }
 
@@ -363,6 +376,7 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
     id: row.participant.id,
     displayName: row.participant.displayName,
     attendance: row.participant.attendance,
+    outAt: row.participant.outAt,
     joinedAt: row.participant.createdAt,
     userId: row.participant.userId,
     avatarUrl: row.participant.avatarUrl,

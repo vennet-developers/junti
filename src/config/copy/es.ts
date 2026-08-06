@@ -308,6 +308,13 @@ export const es = {
       costAmountHelpTotal: "Se reparte en partes iguales entre quienes confirmen que vienen.",
       costAmountHelpPerPerson: "Cada persona que confirme paga este monto.",
       currency: "Moneda",
+      refundNotice: "Política de devolución",
+      refundNoticeHelp:
+        "Si alguien pagó y se baja, ¿con cuánta anticipación debe avisar para que le devuelvas el dinero? Se muestra antes de confirmar, para que nadie se sorprenda.",
+      refundNoticeOptions: {
+        none: "Sin política",
+        hours: (n: number) => (n < 48 ? `Avisar ${n} horas antes` : `Avisar ${n / 24} días antes`),
+      },
     },
     costModes: {
       none: "Sin costo",
@@ -426,6 +433,15 @@ export const es = {
       n === 1
         ? `Tienes ${total} de 1 persona que ya no viene — devolverlo o contarlo es entre ustedes.`
         : `Tienes ${total} de ${n} personas que ya no vienen — devolverlo o contarlo es entre ustedes.`,
+    dropouts: "De quienes ya no vienen",
+    dropoutPaid: (amount: string) => `Pagó ${amount}`,
+    verdictRefund: (hours: number) =>
+      `Avisó con más de ${hours} horas — según tu política, le devuelves.`,
+    verdictForfeit: (hours: number) =>
+      `Avisó con menos de ${hours} horas — según tu política, no hay devolución.`,
+    verdictUnknown: "No quedó registrado cuándo se bajó — decídelo tú.",
+    forfeitCoversGap: (amount: string) =>
+      `Lo retenido según tu política cubre ${amount} de lo que falta.`,
   },
 
   heldSpots: {
@@ -477,6 +493,10 @@ export const es = {
     namePlaceholder: "Cómo te dicen tus amigos",
     nameHelp: "Entre 1 y 40 caracteres. Úsalo igual cada vez para no aparecer dos veces.",
     attendanceLabel: "¿Vienes?",
+    refundPolicy: (hours: number) =>
+      `Política de devolución: si pagas y te bajas, avisa con al menos ${hours} horas de anticipación para que te devuelvan el dinero. Después de ese plazo no hay devolución.`,
+    refundLate: (hours: number) =>
+      `Falta menos de ${hours === 24 ? "un día" : `${hours} horas`} para el evento. Según la política del organizador, si te bajas ahora no te devuelven lo que pagaste.`,
     submit: "Confirmar",
     submitEditing: "Actualizar mi respuesta",
     submitting: "Enviando…",

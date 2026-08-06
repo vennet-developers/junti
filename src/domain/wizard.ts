@@ -42,7 +42,7 @@ export type WizardStep = (typeof WIZARD_STEPS)[number];
 export const STEP_FIELDS = {
   1: ["title", "eventTypeId", "startsAtDate", "startsAtTime", "timeZone", "location", "notes"],
   2: ["groupId", "capacity", "rsvpLead", "policies", "costMode"],
-  3: ["currency", "costAmount"],
+  3: ["currency", "costAmount", "refundNotice"],
 } as const satisfies Record<WizardStep, readonly string[]>;
 
 /** Every field the wizard knows about, flattened. Used to prove the mapping. */

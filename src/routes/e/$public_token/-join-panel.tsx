@@ -15,6 +15,8 @@ export interface JoinPanelProps {
    * there is always an account to join as.
    */
   account: { displayName: string; avatarUrl: string | null };
+  /** The organizer's refund rule, when there is one. See `RsvpFormProps`. */
+  refund: { hours: number; startsAt: Date } | null;
 }
 
 /**
@@ -29,7 +31,7 @@ export interface JoinPanelProps {
  * roster goes straight to it, one-tap having nothing to offer someone who is
  * already in.
  */
-export function JoinPanel({ publicToken, mine, isFull, account }: JoinPanelProps) {
+export function JoinPanel({ publicToken, mine, isFull, account, refund }: JoinPanelProps) {
   const [useForm, setUseForm] = useState(false);
 
   if (mine === null && !useForm) {
@@ -39,10 +41,11 @@ export function JoinPanel({ publicToken, mine, isFull, account }: JoinPanelProps
         displayName={account.displayName}
         avatarUrl={account.avatarUrl}
         isFull={isFull}
+        refund={refund}
         onUseForm={() => setUseForm(true)}
       />
     );
   }
 
-  return <RsvpForm publicToken={publicToken} mine={mine} isFull={isFull} />;
+  return <RsvpForm publicToken={publicToken} mine={mine} isFull={isFull} refund={refund} />;
 }

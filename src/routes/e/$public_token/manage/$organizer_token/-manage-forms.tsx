@@ -23,6 +23,7 @@ import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
 import { LEAD_HOURS, leadFromDeadline } from "@/domain/convocation";
+import { REFUND_NOTICE_CHOICES } from "@/domain/refund-policy";
 import {
   currencyOptions,
   formatMoney,
@@ -119,6 +120,14 @@ export function EditEventForm({
     })),
   ];
 
+  const refundNoticeOptions = [
+    { value: "", label: copy.createEvent.fields.refundNoticeOptions.none },
+    ...REFUND_NOTICE_CHOICES.map((hours) => ({
+      value: String(hours),
+      label: copy.createEvent.fields.refundNoticeOptions.hours(hours),
+    })),
+  ];
+
   const zoneOptions = useMemo(
     () => timeZoneOptions(event.timeZone, copy.intlLocale, new Date()),
     [event.timeZone, copy.intlLocale],
@@ -154,6 +163,7 @@ export function EditEventForm({
           ? ""
           : String(toMajorUnits(event.costAmountMinor, event.currency)),
       currency: event.currency,
+      refundNotice: event.refundNoticeHours === null ? "" : String(event.refundNoticeHours),
       groupId: event.groupId ?? "",
       policies: JSON.stringify(policies),
     }),
@@ -388,6 +398,20 @@ export function EditEventForm({
                 </ControlledField>
               )}
             </FormField>
+          ) : null}
+
+          {costMode !== "none" ? (
+            <ControlledField
+              label={copy.createEvent.fields.refundNotice}
+              description={copy.createEvent.fields.refundNoticeHelp}
+              error={serverState.errors.refundNotice}
+            >
+              <SelectField
+                name="refundNotice"
+                options={refundNoticeOptions}
+                defaultValue={event.refundNoticeHours === null ? "" : String(event.refundNoticeHours)}
+              />
+            </ControlledField>
           ) : null}
 
           <FormField name="notes">

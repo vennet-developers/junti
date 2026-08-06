@@ -26,6 +26,7 @@ import { useCopy } from "@/components/copy-provider";
 import { PolicyEditor, type PolicyDraft, type PolicyOptionView } from "@/components/policy-editor";
 import { SelectField } from "@/components/select-field";
 import { LEAD_HOURS } from "@/domain/convocation";
+import { REFUND_NOTICE_CHOICES } from "@/domain/refund-policy";
 import { currencyOptions } from "@/lib/format";
 import { detectTimeZone, timeZoneLabel, timeZoneOptions } from "@/lib/time-zones";
 import { makeEventClientSchema } from "@/lib/validation";
@@ -144,6 +145,17 @@ function CreateEventFormBody({
     })),
   ];
 
+  // Same shape and same default reasoning as the deadline above: "sin
+  // política" first, because a refund rule nobody chose is one nobody should
+  // be held to.
+  const refundNoticeOptions = [
+    { value: "", label: copy.createEvent.fields.refundNoticeOptions.none },
+    ...REFUND_NOTICE_CHOICES.map((hours) => ({
+      value: String(hours),
+      label: copy.createEvent.fields.refundNoticeOptions.hours(hours),
+    })),
+  ];
+
   // `new Date()` only to label zones with their CURRENT offset, so a zone on
   // daylight saving reads the way the person checking the list expects.
   // Keyed on the CURRENT zone, so a detected one outside the curated list is
@@ -222,6 +234,7 @@ function CreateEventFormBody({
       costMode: "none",
       costAmount: "",
       currency: str(draft?.currency) ?? defaultCurrency,
+      refundNotice: "",
       policies: JSON.stringify(defaultPolicies(policyOptionsByType[eventTypes[0]?.id ?? ""])),
       // A duplicated event's prefill wins over every default above it.
       ...(draft ?? {}),
@@ -583,6 +596,20 @@ function CreateEventFormBody({
                 </ControlledField>
               )}
             </FormField>
+          ) : null}
+
+          {costMode !== "none" ? (
+            <ControlledField
+              label={copy.createEvent.fields.refundNotice}
+              description={copy.createEvent.fields.refundNoticeHelp}
+              error={serverState.errors.refundNotice}
+            >
+              <SelectField
+                name="refundNotice"
+                options={refundNoticeOptions}
+                defaultValue={str(draft?.refundNotice) ?? ""}
+              />
+            </ControlledField>
           ) : null}
 
           </StepPanel>
