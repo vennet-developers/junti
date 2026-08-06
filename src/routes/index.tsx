@@ -6,7 +6,7 @@ import {
   AccordionTrigger,
 } from "@stackmyth/accordion";
 import { Card, CardContent } from "@stackmyth/card";
-import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
+import { Box, Container, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -119,29 +119,89 @@ export const Route = createFileRoute("/")({
 });
 
 /**
+ * A full-width band of colour, with the page's own frame inside it.
+ *
+ * **This is what the page was missing.** Everything sat inside one `Container`
+ * on one paper background, so eight sections read as one very long section —
+ * nothing told the eye where a thought ended. A band breaks the page into
+ * chapters without a single divider.
+ *
+ * The colour goes on an outer `Box` and the container lives inside it, because
+ * a band that stops at the content's width is not a band, it is a card. This
+ * is the only pattern on the page that needs to escape the frame.
+ */
+function Band({
+  tone = "paper",
+  children,
+}: {
+  tone?: "paper" | "tint" | "ink" | "brand";
+  children: React.ReactNode;
+}) {
+  /*
+    `--junti-tinta-fija` and `--junti-papel-fijo` rather than the inverting
+    pair. `--junti-tinta` flips to near-white in dark mode, which is correct
+    for body text and catastrophic for a band that is dark ON PURPOSE — the
+    section would simply disappear into the page. The "fija" tokens exist for
+    exactly this and brand-theme.css says so.
+  */
+  const surface = {
+    paper: undefined,
+    tint: "var(--junti-chip)",
+    ink: "var(--junti-tinta-fija)",
+    brand: "var(--junti-naranja)",
+  }[tone];
+
+  const ink = {
+    paper: undefined,
+    tint: undefined,
+    ink: "var(--junti-papel-fijo)",
+    // Ink on orange, never paper: the brand rule is that the chapa's orange
+    // carries dark type, and #ff7a3d against white is 2.1:1.
+    brand: "var(--junti-tinta-fija)",
+  }[tone];
+
+  return (
+    <Box backgroundColor={surface} color={ink} py={{ base: "7", md: "8" }}>
+      <Container size="4" px="4">
+        {children}
+      </Container>
+    </Box>
+  );
+}
+
+/**
  * A titled block, so every section on this page opens the same way.
  *
  * The reference layout this page's structure comes from repeats one pattern —
  * small label, then the sentence, then the content — and that repetition is
  * most of what makes a long page feel composed rather than accumulated. It is a
  * component so the rhythm cannot drift section by section.
+ *
+ * `color="inherit"` on the subtitle rather than `muted`: inside an ink band the
+ * muted token resolves against the PAGE, not against the band, and the line
+ * came out nearly invisible. Opacity on the band's own foreground keeps the
+ * hierarchy without needing a second palette.
  */
 function Section({
   eyebrow,
   title,
+  onInk = false,
   children,
 }: {
   eyebrow: string;
   title: string;
+  onInk?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <Stack gap="5">
       <Stack gap="2" maxWidth="42rem">
-        <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+        <Text as="h2" variant="h3" fontFamily="var(--junti-display)" color="inherit">
           {eyebrow}
         </Text>
-        <Text color="muted">{title}</Text>
+        <Box opacity={onInk ? 0.75 : undefined}>
+          <Text color={onInk ? "inherit" : "muted"}>{title}</Text>
+        </Box>
       </Stack>
       {children}
     </Stack>
@@ -160,12 +220,14 @@ function Metric({ value, label }: { value: number; label: string }) {
 
   return (
     <Stack gap="0">
-      <Text as="span" variant="h2" weight="bold" fontFamily="var(--junti-display)">
+      <Text as="span" variant="h2" weight="bold" fontFamily="var(--junti-display)" color="inherit">
         {new Intl.NumberFormat(copy.intlLocale).format(value)}
       </Text>
-      <Text variant="small" color="muted">
-        {label}
-      </Text>
+      <Box opacity={0.7}>
+        <Text variant="small" color="inherit">
+          {label}
+        </Text>
+      </Box>
     </Stack>
   );
 }
@@ -174,126 +236,79 @@ function HomePage() {
   const { copy } = useCopy();
   const { stats } = Route.useLoaderData();
 
+  const cta = (
+    <Box width={{ base: "100%", sm: "auto" }}>
+      <Button asChild size="lg" fullWidth>
+        <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
+      </Button>
+    </Box>
+  );
+
   return (
     /*
-      Always signed out: the loader redirects account holders to their events,
-      so this only ever renders for a visitor.
-
-      `size="4"` — the widest tier, and the only page in the app that takes it.
-      The width policy
-      in globals.css grants width to screens that are SCANNED and withholds it
-      from screens that are READ — and a landing page is neither. It is
-      scanned first and read second, and at 688px it was rendering as a form
-      with a headline on top: one narrow column down the middle of a monitor,
-      which is what made it read as unfinished rather than as a front page.
-
-      848px was the first correction and it was still not enough once the hero
-      became two columns — the text column landed around 460px and the headline
-      wrapped onto a third line, orphaning "son.". The prose inside stays capped
-      by measure, so nothing here gets a longer line than it should read.
+      No page-level Container any more, and that is the structural change.
+      Every section is a {@link Band} that spans the viewport and brings the
+      frame inside it, so colour can run edge to edge while the words stay on
+      the same 1136px grid as the header and the footer.
     */
-    <Container size="4" px="4" py={{ base: "7", md: "8" }}>
-      <Stack gap={{ base: "7", md: "8" }}>
-        {/* AC-8: the top of the organizer funnel. Without it, `create_started`
-            has no denominator and "how many people who landed here made an
-            event" is unanswerable. */}
-        <TrackView name="landing_viewed" />
+    <Box>
+      {/* AC-8: the top of the organizer funnel. Without it, `create_started`
+          has no denominator and "how many people who landed here made an
+          event" is unanswerable. */}
+      <TrackView name="landing_viewed" />
 
-        {/* ── The hero ─────────────────────────────────────────────────────
-            One column, centred at nothing — left-aligned, because a centred
-            hero needs artwork to balance it and this product has a wordmark
-            and a sentence. The kicker goes above the heading rather than
-            below: "free, no passwords" is the objection somebody is already
-            forming, and answering it before the pitch costs one line. */}
-        {/*
-          Two columns from `md`: the words on the left, the product on the
-          right. This is the change that answers "does somebody landing here
-          know what this is?" — before it, the page was type on paper and you
-          had to READ to find out. DOM order is the phone's order, so the
-          headline still comes first on a phone and the visual follows it.
-        */}
-        {/*
-          Two columns only from `lg`, not from `md`. At the middle width the
-          text column came out around 590px, which is narrower than the
-          headline needs — "Y ya sabes cuántos son." wrapped and left "son."
-          alone on its own line, which undoes the two-beat break the headline
-          was written for. Between 768 and 1024 the two stack instead, and the
-          headline keeps its shape at every width.
-        */}
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <Band>
         <Grid columns={{ base: "1", lg: "1.15fr 0.85fr" }} gap={{ base: "6", lg: "8" }} align="center">
-        <Stack gap="4">
-          {/* `Text` has no `color="brand"` — the token exists as
-              `--sm-text-brand` and the prop cannot reach it (STACKMYTH-GAPS
-              #25). A `Box` carrying the colour is the composition that works
-              without a style attribute. */}
-          <Box color="var(--sm-text-brand)">
-            {/* `color="inherit"` is the load-bearing half: without it `Text`
-                paints its own default and the Box's colour never reaches it. */}
-            <Text as="span" variant="small" weight="semibold" color="inherit">
-              {copy.home.heroKicker}
+          <Stack gap="4">
+            {/* `Text` has no `color="brand"` — the token exists as
+                `--sm-text-brand` and the prop cannot reach it (STACKMYTH-GAPS
+                #25). A `Box` carrying the colour is the composition that works
+                without a style attribute. */}
+            <Box color="var(--sm-text-brand)">
+              <Text as="span" variant="small" weight="semibold" color="inherit">
+                {copy.home.heroKicker}
+              </Text>
+            </Box>
+
+            {/*
+              Not the brand name: the header says "Junti" one line above.
+              Two beats inside one <h1>, so the outline stays a single heading
+              — "Un link." has to land as a finished thing before the payoff.
+            */}
+            <Text as="h1" variant="h1" fontFamily="var(--junti-display)">
+              {copy.home.heroTitle}
+              <Box display="block">{copy.home.heroTitleSecond}</Box>
             </Text>
-          </Box>
 
-          {/*
-            Not the brand name: the header says "Junti" one line above, and
-            repeating it as <h1> reads as a stutter. And no longer the brand
-            tagline either — that string lives in the browser tab, the brand
-            block and the emails, where it has to hold still, while a landing
-            headline is the thing you rewrite. They were one constant, which
-            also meant an English reader got the Spanish line.
-
-            Two beats inside one <h1>, so the outline stays a single heading.
-            The break is not decoration: "Un link." has to land as a finished
-            thing before the payoff arrives, and a line that wraps wherever the
-            viewport happens to end would break it in the wrong place.
-          */}
-          <Text as="h1" variant="h1" fontFamily="var(--junti-display)">
-            {copy.home.heroTitle}
-            <Box display="block">{copy.home.heroTitleSecond}</Box>
-          </Text>
-
-          {/* Capped tighter than the heading. A 46rem line of body text is
-              past the comfortable measure; a heading at that width is fine,
-              because it is three or four words. */}
-          <Box maxWidth="36rem">
-            <Text>{copy.home.pitch}</Text>
-          </Box>
-
-          <Flex gap="3" wrap="wrap" pt="2">
-            <Box width={{ base: "100%", sm: "auto" }}>
-              <Button asChild size="lg" fullWidth>
-                <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
-              </Button>
+            <Box maxWidth="36rem">
+              <Text>{copy.home.pitch}</Text>
             </Box>
-            {/* Secondary on purpose: both destinations ask for the same
-                account, so the primary is the one that says what this is for. */}
-            <Box width={{ base: "100%", sm: "auto" }}>
-              <Button asChild size="lg" variant="secondary" fullWidth>
-                <Link to={ROUTES.myEvents}>{copy.home.heroSecondary}</Link>
-              </Button>
-            </Box>
-          </Flex>
-        </Stack>
+
+            <Flex gap="3" wrap="wrap" pt="2">
+              {cta}
+              <Box width={{ base: "100%", sm: "auto" }}>
+                <Button asChild size="lg" variant="secondary" fullWidth>
+                  <Link to={ROUTES.myEvents}>{copy.home.heroSecondary}</Link>
+                </Button>
+              </Box>
+            </Flex>
+          </Stack>
 
           <LandingVisual copy={copy} />
         </Grid>
+      </Band>
 
-        {/*
-          What a "plan" is, six times. Directly under the hero because it is
-          the fastest answer on the page: "fútbol, comidas, bolos, pádel" is a
-          list somebody skims, and six photographs of exactly those is
-          understood before it is read.
-        */}
-        <PlanStrip copy={copy} />
+      {/*
+        The plan strip, full bleed and with no padding of its own — the one
+        element on the page that touches both edges. Six photographs running
+        the width of the screen say "this is for football, dinners, bowling,
+        padel" faster than the sentence that would replace them.
+      */}
+      <PlanStrip copy={copy} />
 
-        <Divider />
-
-        {/* ── The pain ─────────────────────────────────────────────────────
-            Before what it does, what it is for. The reference layout opens its
-            second block with the problem rather than the product, and it is
-            right: somebody who has not felt this does not need the rest of the
-            page. Three scenes, not three problems — you recognise yours in two
-            seconds or you never do. */}
+      {/* ── The pain ─────────────────────────────────────────────────────── */}
+      <Band>
         <Section eyebrow={copy.home.painTitle} title={copy.home.painBody}>
           <Grid columns={{ base: "1", md: "repeat(3, 1fr)" }} gap="4" align="stretch">
             {copy.home.pains.map((pain) => (
@@ -312,23 +327,17 @@ function HomePage() {
             ))}
           </Grid>
         </Section>
+      </Band>
 
-        {/* ── Three reasons ────────────────────────────────────────────────
-            Not a feature list. Three questions somebody organizing something
-            on a Thursday already has, in the order they hurt: who is coming,
-            who has paid, and what it costs the people you are inviting. */}
-        <Stack gap="4">
-          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
-            {copy.home.featuresTitle}
-          </Text>
-
+      {/* ── What it is for ───────────────────────────────────────────────── */}
+      <Band tone="tint">
+        <Section eyebrow={copy.home.featuresTitle} title={copy.home.featuresBody}>
           <Grid columns={{ base: "1", md: "repeat(3, 1fr)" }} gap="4" align="stretch">
             {copy.home.features.map((feature) => (
-              /* No height prop needed: `align="stretch"` on the grid makes
-                 every cell the height of the tallest, and the card IS the
-                 cell — so three blocks of unequal copy still line up at the
-                 bottom edge. `Card` exposes no height of its own anyway. */
-              <Card key={feature.title} surface="outlined">
+              /* `solid` rather than `outlined` here: on the tinted band an
+                 outlined card is a rectangle of the same colour as its
+                 surroundings with a line around it. A filled card lifts. */
+              <Card key={feature.title} surface="solid">
                 <CardContent>
                   <Stack gap="2">
                     <Text as="h3" variant="h5" fontFamily="var(--junti-display)">
@@ -342,22 +351,21 @@ function HomePage() {
               </Card>
             ))}
           </Grid>
-        </Stack>
+        </Section>
+      </Band>
 
-        {/* ── How it works ─────────────────────────────────────────────────
-            Full width, with the steps in two columns once there is room. The
-            first version put the steps beside the money caveat and left the
-            caveat's column mostly empty — a two-line card holding open a
-            half-page of nothing, which draws the eye to the gap rather than to
-            the words. Stacking them gives the caveat the full measure and the
-            steps a shape that fits four items. */}
+      {/* ── How it works ───────────────────────────────────────────────────
+          Two columns from `lg`: the four steps beside a photograph. This
+          section was the last block on the page with no image at all, and it
+          showed — a wall of numbered lines between two picture-heavy bands.
+          The photo is a plan mid-flight, which is what the steps describe. */}
+      <Band>
+        <Grid columns={{ base: "1", lg: "1.1fr 0.9fr" }} gap={{ base: "6", lg: "8" }} align="center">
         <Stack gap="4">
           <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
             {copy.home.howItWorksTitle}
           </Text>
 
-          {/* No dividers: four numbered steps already read as a sequence, and
-              rules here would stack against the card's own border below. */}
           <Grid columns={{ base: "1", md: "repeat(2, 1fr)" }} gap={{ base: "2", md: "4" }}>
             {copy.home.steps.map((step: string, index: number) => (
               <Flex key={step} gap="3" align="baseline">
@@ -371,13 +379,6 @@ function HomePage() {
             ))}
           </Grid>
 
-          {/*
-            The money caveat, its own card and never softened. It is the single
-            most important thing on this page for anybody deciding whether to
-            trust it with a group's money, and burying it in small print would
-            be the exact opposite of what it says. Full width now, so it reads
-            as a statement rather than as a note in a margin.
-          */}
           <Card surface="outlined">
             <CardContent>
               <Text color="muted">{copy.home.disclaimer}</Text>
@@ -385,82 +386,105 @@ function HomePage() {
           </Card>
         </Stack>
 
-        {/* ── Why you can trust it ─────────────────────────────────────────
-            Where the reference layout puts a personal-brand "about me", this
-            puts the three decisions that make the product trustworthy. Junti
-            has no founder to introduce and a group's money to be trusted with,
-            so the honest occupant of that slot is what we decided, not who we
-            are.
+          <Box overflow="hidden" borderRadius="var(--sm-radius-lg)" aspectRatio="4 / 3">
+            <img
+              src="/landing/cena-terraza.webp"
+              srcSet="/landing/cena-terraza@sm.webp 450w, /landing/cena-terraza.webp 900w"
+              sizes="(min-width: 64rem) 40vw, 100vw"
+              alt={copy.home.stepsImageAlt}
+              width={900}
+              height={600}
+              loading="lazy"
+              decoding="async"
+              className="landing-photo"
+            />
+          </Box>
+        </Grid>
+      </Band>
 
-            Alternating split rather than three more cards: the page has had two
-            card grids by now, and a third would read as a list of lists. Each
-            row is one claim and its proof. */}
-        <Stack gap="5">
-          <Stack gap="2" maxWidth="42rem">
-            <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
-              {copy.home.differenceTitle}
-            </Text>
-            <Text color="muted">{copy.home.differenceBody}</Text>
-          </Stack>
+      {/*
+        ── Why you can trust it ──────────────────────────────────────────────
+        The ink band, and the page's centre of gravity. Where the reference
+        layout puts a personal-brand "about me", this puts the three decisions
+        that make the product trustworthy — and it is dark because that is the
+        moment the page stops selling and starts committing.
 
-          <Stack gap="4">
-            {copy.home.differences.map((item, index) => (
-              <Grid
-                key={item.title}
-                columns={{ base: "1", md: "auto 1fr" }}
-                gap={{ base: "2", md: "5" }}
-                align="start"
-              >
-                {/* The number is the only ornament on this page, and it earns
-                    its place by making three long rows scannable. */}
-                <Box color="var(--sm-text-brand)" minWidth="2rem">
-                  <Text as="span" variant="h4" weight="bold" color="inherit">
-                    {String(index + 1).padStart(2, "0")}
-                  </Text>
-                </Box>
-                <Stack gap="1">
-                  <Text as="h3" variant="h5" fontFamily="var(--junti-display)">
-                    {item.title}
-                  </Text>
-                  <Text color="muted">{item.body}</Text>
-                </Stack>
-              </Grid>
-            ))}
-          </Stack>
-        </Stack>
+        The photograph earns its place by being the only human face in a
+        section about money and consent. Two friends, nothing staged about a
+        product.
+      */}
+      <Band tone="ink">
+        <Grid columns={{ base: "1", lg: "0.8fr 1.2fr" }} gap={{ base: "6", lg: "8" }} align="center">
+          <Box overflow="hidden" borderRadius="var(--sm-radius-lg)" className="landing-hero-frame">
+            <img
+              src="/landing/amigos.webp"
+              srcSet="/landing/amigos@sm.webp 450w, /landing/amigos.webp 900w"
+              sizes="(min-width: 64rem) 30vw, 100vw"
+              alt={copy.home.trustImageAlt}
+              width={900}
+              height={600}
+              loading="lazy"
+              decoding="async"
+              className="landing-photo"
+            />
+          </Box>
 
-        {/*
-          ── The numbers ──────────────────────────────────────────────────────
-          The slot where the reference layout puts testimonials, and Junti has
-          nobody to quote yet. Rather than inventing quotes on the front page of
-          a product that handles money between friends, this states what is
-          verifiably true — and renders NOTHING until there is enough of it to
-          be worth saying. See `loadLandingStats`.
-        */}
-        {stats ? (
-          <>
-            <Divider />
+          <Section
+            eyebrow={copy.home.differenceTitle}
+            title={copy.home.differenceBody}
+            onInk
+          >
             <Stack gap="4">
-              <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
-                {copy.home.statsTitle}
-              </Text>
-              <Grid columns={{ base: "1", sm: "repeat(3, 1fr)" }} gap="4">
-                <Metric value={stats.events} label={copy.home.statsEvents} />
-                <Metric value={stats.answers} label={copy.home.statsAnswers} />
-                <Metric value={stats.payments} label={copy.home.statsPayments} />
-              </Grid>
+              {/* A Flex, not a Grid. `columns="auto 1fr"` left the number
+                  column ~280px wide — the `auto` track did not shrink to its
+                  content the way the equivalent CSS would, and the numbers
+                  ended up marooned a third of the way across the band. A flex
+                  item shrink-wraps, which is all this ever needed. */}
+              {copy.home.differences.map((item, index) => (
+                <Flex key={item.title} gap="4" align="baseline">
+                  {/* The brand orange, not the link colour: on ink #FF7A3D is
+                      the readable one and #B6541A is not. */}
+                  <Box color="var(--junti-naranja)" flexShrink={0}>
+                    <Text as="span" variant="h4" weight="bold" color="inherit">
+                      {String(index + 1).padStart(2, "0")}
+                    </Text>
+                  </Box>
+                  <Stack gap="1">
+                    <Text as="h3" variant="h5" fontFamily="var(--junti-display)" color="inherit">
+                      {item.title}
+                    </Text>
+                    <Box opacity={0.75}>
+                      <Text color="inherit">{item.body}</Text>
+                    </Box>
+                  </Stack>
+                </Flex>
+              ))}
             </Stack>
-          </>
-        ) : null}
 
-        <Divider />
+            {/*
+              The real numbers, inside the same band. They belong with the
+              trust argument rather than in a strip of their own — a count is
+              evidence for a claim, and putting it next to the claim is what
+              makes it read as one. Hidden entirely below the floor; see
+              `loadLandingStats`.
+            */}
+            {stats ? (
+              <>
+                <Box pt="3" />
+                <Grid columns={{ base: "1", sm: "repeat(3, 1fr)" }} gap="4">
+                  <Metric value={stats.events} label={copy.home.statsEvents} />
+                  <Metric value={stats.answers} label={copy.home.statsAnswers} />
+                  <Metric value={stats.payments} label={copy.home.statsPayments} />
+                </Grid>
+              </>
+            ) : null}
+          </Section>
+        </Grid>
+      </Band>
 
-        {/* ── FAQ ──────────────────────────────────────────────────────────
-            An accordion rather than six open blocks: every question here is
-            one somebody either has or does not, and a page that answers all
-            six at full length buries the two that matter to any one reader.
-            First one open, so it is obvious the rest expand. */}
-        <Stack gap="4">
+      {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+      <Band>
+        <Stack gap="4" maxWidth="52rem">
           <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
             {copy.home.faqTitle}
           </Text>
@@ -476,32 +500,25 @@ function HomePage() {
             ))}
           </Accordion>
         </Stack>
+      </Band>
 
-        <Divider />
-
-        {/* ── The close ────────────────────────────────────────────────────
-            The same action once more, for somebody who read to the bottom.
-            One button, not two: whoever is still here has stopped comparing
-            options. */}
-        <Stack gap="3" maxWidth="36rem">
-          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+      {/*
+        ── The close ────────────────────────────────────────────────────────
+        The orange band, used exactly once. It is the loudest surface the brand
+        has, and spending it anywhere but the last ask would leave the last ask
+        quieter than something above it.
+      */}
+      <Band tone="brand">
+        <Stack gap="3" maxWidth="40rem">
+          <Text as="h2" variant="h2" fontFamily="var(--junti-display)" color="inherit">
             {copy.home.closingTitle}
           </Text>
-          <Text color="muted">{copy.home.closingBody}</Text>
-          {/* A Flex, not a Box: a block-level wrapper set to `auto` is still
-              100% of its parent, so `fullWidth` stretched this to the full
-              36rem measure and the button stopped reading as a button. As a
-              flex item it shrinks to its label, and still fills the width on a
-              phone where the thumb wants the whole row. */}
-          <Flex pt="1">
-            <Box width={{ base: "100%", sm: "auto" }}>
-              <Button asChild size="lg" fullWidth>
-                <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
-              </Button>
-            </Box>
-          </Flex>
+          <Box opacity={0.8}>
+            <Text color="inherit">{copy.home.closingBody}</Text>
+          </Box>
+          <Flex pt="2">{cta}</Flex>
         </Stack>
-      </Stack>
-    </Container>
+      </Band>
+    </Box>
   );
 }

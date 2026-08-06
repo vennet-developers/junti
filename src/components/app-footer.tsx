@@ -1,3 +1,4 @@
+import { Button } from "@stackmyth/button";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
@@ -62,7 +63,27 @@ export function AppFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <Box as="footer" borderTop="1px solid var(--sm-border-default)" mt="7">
+    /*
+      A tinted surface, not paper. The footer sat on exactly the same
+      background as the page and was separated from it by one hairline, which
+      is why it read as "more page" rather than as the end of one — and on the
+      landing, where the section above it is a full orange band, that hairline
+      disappeared entirely.
+
+      `--junti-chip` rather than ink. A dark footer is the obvious "make it
+      look professional" move and it would be wrong here: this component
+      renders on every screen in the app, not just the landing, and a black
+      slab under a roster is a heavier ending than the roster deserves.
+    */
+    /*
+      No top margin any more. It existed to separate a paper footer from a
+      paper page, and the tint does that job now — on the landing the margin
+      showed up as a stripe of page between the closing orange band and the
+      footer, which read as a gap rather than as an edge. Short pages still
+      push this to the bottom: that comes from the spacer in the root layout,
+      not from here.
+    */
+    <Box as="footer" backgroundColor="var(--junti-chip)">
       {/* The same frame width as the header, for the same reason: the shell
           belongs to the app, not to whichever page is under it. */}
       <Container size="4" px="4">
@@ -93,6 +114,22 @@ export function AppFooter() {
               <Text variant="small" color="muted">
                 {copy.footer.blurb}
               </Text>
+
+              {/* The one action worth repeating down here. Somebody who read
+                  to the bottom of a legal page and decided they are in should
+                  not have to scroll back up to act on it. */}
+              <Box width="fit-content" pt="1">
+                {/* `primary`, not `secondary`. The secondary surface and
+                    `--junti-chip` are within a shade of each other, so on this
+                    background the button rendered as bare text with a hit area
+                    nobody could see. */}
+                {/* `md`, not `sm`. At `sm` this measured 38px on a phone —
+                    under the 44px floor the whole app is tuned to, and this is
+                    a real call to action rather than a label. */}
+                <Button asChild size="md">
+                  <Link to={ROUTES.newEvent}>{copy.home.cta}</Link>
+                </Button>
+              </Box>
             </Stack>
 
             <Grid columns="repeat(2, auto)" gap={{ base: "4", md: "7" }} align="start">

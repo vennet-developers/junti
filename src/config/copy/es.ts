@@ -152,6 +152,9 @@ export const es = {
       importa — quién viene primero, porque es la que duele antes.
     */
     featuresTitle: "Para qué sirve",
+    featuresBody: "Tres cosas que dejas de hacer a mano desde el primer evento.",
+    stepsImageAlt: "Un grupo brindando alrededor de una mesa larga en una terraza, de noche.",
+    trustImageAlt: "Dos amigos conversando y riéndose al aire libre.",
     features: [
       {
         title: "Sabes quién viene",

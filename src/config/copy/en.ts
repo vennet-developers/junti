@@ -124,6 +124,9 @@ export const en: Copy = {
     heroSecondary: "I already have an account",
 
     featuresTitle: "What it is for",
+    featuresBody: "Three things you stop doing by hand from the first event on.",
+    stepsImageAlt: "A group toasting around a long table on a terrace at night.",
+    trustImageAlt: "Two friends talking and laughing outdoors.",
     features: [
       {
         title: "You know who is coming",
