@@ -54,37 +54,6 @@ export const en: Copy = {
     guestMenuLabel: "Sign in and preferences",
   },
 
-  welcome: {
-    /*
-      Written for somebody who arrived as a guest at another person's event and
-      now has an account. They do not know they can organize; that is the only
-      thing this screen has to achieve. No tour, no checklist.
-    */
-    link: "How it works",
-    title: "How Junti works",
-    steps: [
-      {
-        heading: "You already know half of it",
-        body: "You joined an event with a link — no password, nothing to install. That is all your own guests will have to do too.",
-      },
-      {
-        heading: "From the other side you see who is coming",
-        body: "When you organize, the list is live: who said yes, who has not answered, and who is on the waitlist if it filled up.",
-      },
-      {
-        heading: "And who has paid",
-        body: "If the event costs something, Junti splits it and keeps track of who paid. The money is transferred to you directly — Junti never touches it, it only keeps the count.",
-      },
-    ],
-    next: "Next",
-    back: "Back",
-    skip: "Skip",
-    finish: "Create my first event",
-    finishSecondary: "Not now",
-    promptTitle: "Never organized one?",
-    promptBody: "Take a minute to see what it looks like from the other side.",
-    promptCta: "See how it works",
-  },
   home: {
     title: `${BRAND_NAME} — organize without chasing anyone`,
     heading: BRAND_NAME,
@@ -541,6 +510,7 @@ export const en: Copy = {
     productHeading: "Product",
     legalHeading: "Legal",
     contactHeading: "Contact",
+    howItWorksLink: "How it works",
     socialHeading: "Follow us",
 
     blurb: "Organize plans with your people and keep track of who has paid. No passwords, nothing to install.",

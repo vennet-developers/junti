@@ -836,19 +836,6 @@ export const sendCounters = pgTable(
 export const userPreferences = pgTable("user_preferences", {
   userId: uuid("user_id").primaryKey(),
 
-  /**
-   * When this account finished or dismissed the welcome.
-   *
-   * One timestamp for both outcomes, deliberately. The card asks that skipping
-   * be "neither penalized nor re-prompted", and a column that distinguished
-   * "completed" from "skipped" would exist so something could eventually treat
-   * them differently — which is the penalty arriving by the back door.
-   *
-   * NULL means the prompt on the empty agenda is still worth showing. The
-   * welcome itself stays reachable from the account menu forever: seen once is
-   * not the same as never wanted again.
-   */
-  welcomeSeenAt: timestamp("welcome_seen_at", { withTimezone: true }),
 
   /** Interface language, or NULL to follow `Accept-Language`. */
   locale: text("locale"),

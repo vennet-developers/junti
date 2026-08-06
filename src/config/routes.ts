@@ -50,10 +50,18 @@ export const ROUTES = {
   /** Every receipt waiting on this organizer, across all of their events. */
   approvals: "/approvals",
   /**
-   * What Junti is, for somebody who has only ever been a guest. Reachable from
-   * the account menu and the footer, and offered once on an empty agenda.
+   * How Junti works — a section of the landing page, not a route of its own.
+   *
+   * It WAS `/welcome`: three screens behind a session, reachable from the
+   * account menu and offered once on an empty agenda. Two things were wrong
+   * with that. The footer link to it sat on the PUBLIC landing, so a stranger
+   * who clicked "Cómo funciona" was asked to sign in before being told what
+   * the product was. And the landing already explains it better and at more
+   * length — hero, the pain, what it is for, the four steps, why to trust it,
+   * and a FAQ — so the gated version was the weaker of two answers to the same
+   * question.
    */
-  welcome: "/welcome",
+  howItWorks: "/#como-funciona",
   /**
    * The organizer's groups: who they invite, over and over.
    *

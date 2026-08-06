@@ -362,7 +362,10 @@ function HomePage() {
       <Band>
         <Grid columns={{ base: "1", lg: "1.1fr 0.9fr" }} gap={{ base: "6", lg: "8" }} align="center">
         <Stack gap="4">
-          <Text as="h2" variant="h3" fontFamily="var(--junti-display)">
+          {/* The anchor the footer's "Cómo funciona" points at. This section
+              replaced a session-gated `/welcome` route that explained the same
+              thing worse and asked a stranger to sign in first. */}
+          <Text as="h2" id="como-funciona" variant="h3" fontFamily="var(--junti-display)">
             {copy.home.howItWorksTitle}
           </Text>
 

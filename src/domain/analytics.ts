@@ -16,8 +16,6 @@
 export const ANALYTICS_EVENTS = [
   // Organizer funnel
   "landing_viewed",
-  "welcome_step_viewed",
-  "welcome_finished",
   "create_started",
   "create_step_viewed",
   "create_step_completed",
@@ -66,8 +64,6 @@ export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
  */
 export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
   landing_viewed: "client",
-  welcome_step_viewed: "client",
-  welcome_finished: "server",
   create_started: "client",
   create_step_viewed: "client",
   create_step_completed: "client",

@@ -18,7 +18,6 @@ import {
   CalendarIcon,
   CheckCircleIcon,
   ChevronDownIcon,
-  InfoIcon,
   LogOutIcon,
   MessageCircleIcon,
   MonitorIcon,
@@ -239,17 +238,6 @@ export function ProfileMenu({
                   <Flex gap="3" align="center">
                     <UserPlusIcon size={18} aria-hidden="true" />
                     {copy.groups.link}
-                  </Flex>
-                </Link>
-              </Button>
-
-              {/* Reachable forever, not only while the agenda is empty: read
-                  once is not the same as never wanted again. */}
-              <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
-                <Link to={ROUTES.welcome} onClick={closeUnlessOpeningElsewhere}>
-                  <Flex gap="3" align="center">
-                    <InfoIcon size={18} aria-hidden="true" />
-                    {copy.welcome.link}
                   </Flex>
                 </Link>
               </Button>

@@ -116,7 +116,7 @@ export function AppFooter() {
 
             <FooterColumn heading={copy.footer.productHeading}>
               <FooterLink to={ROUTES.newEvent}>{copy.home.cta}</FooterLink>
-              <FooterLink to={ROUTES.welcome}>{copy.welcome.link}</FooterLink>
+              <FooterLink to={ROUTES.howItWorks}>{copy.footer.howItWorksLink}</FooterLink>
               <FooterLink to={ROUTES.myEvents}>{copy.auth.myEventsLink}</FooterLink>
             </FooterColumn>
 

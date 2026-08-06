@@ -1,0 +1,1 @@
+ALTER TABLE "user_preferences" DROP COLUMN "welcome_seen_at";

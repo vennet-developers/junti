@@ -60,8 +60,6 @@ re-renders is not a second view.
 | Event | Fired | `props` |
 | --- | --- | --- |
 | `landing_viewed` | Client, on `/` — which only renders for a visitor with no session | `{}` |
-| `welcome_step_viewed` | Client, on each step of `/welcome` | `{ step: number }` |
-| `welcome_finished` | **Server**, when the welcome is completed or dismissed | `{ step: number, skipped: boolean }` |
 | `create_started` | Client, when `/new` renders for a signed-in organizer | `{ from_duplicate: boolean }` |
 | `create_step_viewed` | Client, on each wizard step | `{ step: 1\|2\|3 }` |
 | `create_step_completed` | Client, when a step validates and advances | `{ step: 1\|2\|3 }` |
@@ -175,3 +173,15 @@ A deletion request removes the account and its rows; analytics events keyed on
 set `actor_id` to null rather than deleting the row, because the funnel counts
 are what the events are for and one fewer denominator is a silently wrong
 number.
+
+## Two events that were removed with the feature they measured
+
+`welcome_step_viewed` and `welcome_finished` measured `/welcome`, a
+session-gated three-screen explainer. That route is gone: the landing page
+explains the same thing publicly, at more length, and without asking a stranger
+to sign in first — see `ROUTES.howItWorks`. Removing the events with it rather
+than leaving two names in a closed union that nothing can ever fire again.
+
+Any rows already recorded under those names stay in `analytics_events` until
+the retention job reaches them. They are historical and harmless; nothing reads
+them.
