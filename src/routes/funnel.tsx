@@ -6,6 +6,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { pageTitle } from "@/lib/page-title";
+import { OverviewPanel } from "@/components/overview-panel";
 import {
   CALENDAR_REPEAT_THRESHOLD,
   CALENDAR_SHARE_THRESHOLD,
@@ -30,9 +31,10 @@ import {
  * Not in `ROUTES` on purpose: nothing links here, and it should stay that way.
  */
 const getFunnel = createServerFn({ method: "POST" }).handler(async () => {
-  const [{ getOrganizer }, { loadFunnel }] = await Promise.all([
+  const [{ getOrganizer }, { loadFunnel }, { loadOverview }] = await Promise.all([
     import("@/lib/organizer"),
     import("@/lib/funnel"),
+    import("@/lib/overview"),
   ]);
 
   const owner = process.env.ANALYTICS_OWNER_ID;
@@ -42,7 +44,15 @@ const getFunnel = createServerFn({ method: "POST" }).handler(async () => {
   // widen access.
   if (!owner || !organizer || organizer.id !== owner) throw notFound();
 
-  return loadFunnel(30);
+  /*
+    Sequential, not `Promise.all`. Both halves fan out internally, and running
+    them together put roughly fourteen statements through a pool of five — see
+    the note in `db/client.ts`, and the 500 that produced. This page is opened
+    by one person and an extra second is invisible; a timeout is not.
+  */
+  const funnel = await loadFunnel(30);
+  const overview = await loadOverview(30);
+  return { ...funnel, overview };
 });
 
 export const Route = createFileRoute("/funnel")({
@@ -173,13 +183,31 @@ function FunnelPage() {
       <Stack gap="6">
         <Stack gap="2">
           <Text as="h1" variant="h3" fontFamily="var(--junti-display)">
-            Funnel
+            Panel
           </Text>
           <Text color="muted">
+            Cuánto hay, hacia dónde va, y dónde se cae la gente. Sólo lo ve la cuenta
+            en <code>ANALYTICS_OWNER_ID</code>; para todos los demás esta ruta no existe.
+          </Text>
+        </Stack>
+
+        {/*
+          Apilado y no en pestañas. Se probaron, y lo que las descartó no fue
+          el diseño: perseguir un cuelgue del SSR me llevó por Tabs, por
+          `React.lazy` y por un import dinámico antes de encontrar la causa
+          real — un componente que importa `@tanstack/charts` desde dentro de
+          `src/routes/` cuelga el render del servidor, sin error, para
+          siempre. Vive en `components/` por eso. Las pestañas ya no eran
+          necesarias sin ese ruido, y una página que se desplaza es más simple
+          que una que hay que recordar dónde guarda cada cosa.
+        */}
+        <OverviewPanel overview={report.overview} />
+
+        <Stack gap="5" pt="4">
+          <Text variant="small" color="muted">
             Los últimos {report.days} días. Cada porcentaje es contra el primer paso, no contra el
             anterior: tres pasos seguidos al 80% suenan bien y significan que se fue la mitad.
           </Text>
-        </Stack>
 
         <Funnel
           title="Participantes"
@@ -258,9 +286,10 @@ function FunnelPage() {
           </CardContent>
         </Card>
 
-        {/* AC-7 of the send-limits card. Here rather than on a second admin
-            page: there is one owner-gated screen in this product and a second
-            one would be a second thing to remember exists. */}
+        </Stack>
+
+        <Stack gap="5">
+        {/* AC-7 of the send-limits card. */}
         <Card surface="outlined">
           <CardContent>
             <Stack gap="4">
@@ -423,6 +452,7 @@ function FunnelPage() {
             </Stack>
           </CardContent>
         </Card>
+        </Stack>
       </Stack>
     </Container>
   );
