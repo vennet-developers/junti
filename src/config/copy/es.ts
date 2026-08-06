@@ -94,9 +94,24 @@ export const es = {
   home: {
     title: `${BRAND_NAME} — organiza sin perseguir a nadie`,
     heading: BRAND_NAME,
+    /*
+      El titular del hero, SEPARADO de la tagline de marca a propósito.
+
+      Eran la misma constante, y eso costaba dos cosas. Una: `en.ts` importaba
+      `BRAND_TAGLINE` igual que este archivo, así que un lector en inglés veía
+      el titular en español. Dos: la tagline vive en la pestaña del navegador,
+      en el bloque de marca y en los correos, donde tiene que ser estable —
+      mientras que un titular de landing se prueba y se cambia. Atar los dos
+      significaba que no se podía tocar uno sin mover el otro.
+
+      Dos tiempos, no una frase. El punto en la mitad es el que hace el trabajo:
+      obliga a leer «un link» como una cosa terminada antes de dar el resultado.
+    */
+    heroTitle: "Un link.",
+    heroTitleSecond: "Y ya sabes cuántos son.",
     subheading: BRAND_TAGLINE,
     pitch:
-      "Crea el evento, comparte el link por WhatsApp y mira en tiempo real quién viene y quién ya te pagó. Se entra con Google o con un link al correo — sin contraseñas.",
+      "Tus invitados abren el link y responden. Tú ves la lista llenarse y quién ya te pagó, en vivo. Sin contraseñas y sin instalar nada.",
     cta: "Crear un evento",
     howItWorksTitle: "Cómo funciona",
     steps: [

@@ -88,9 +88,11 @@ export const en: Copy = {
   home: {
     title: `${BRAND_NAME} — organize without chasing anyone`,
     heading: BRAND_NAME,
+    heroTitle: "One link.",
+    heroTitleSecond: "And you know how many.",
     subheading: BRAND_TAGLINE,
     pitch:
-      "Create the event, share the link on WhatsApp, and watch in real time who is coming and who has already paid you. Sign in with Google or a link to your email — no passwords.",
+      "Your guests open the link and answer. You watch the list fill up, and who has already paid you, live. No passwords, nothing to install.",
     cta: "Create an event",
     howItWorksTitle: "How it works",
     steps: [

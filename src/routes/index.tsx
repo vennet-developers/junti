@@ -213,11 +213,22 @@ function HomePage() {
             </Text>
           </Box>
 
-          {/* The tagline is the heading, not the brand name: the header says
-              "Junti" one line above, and repeating it as <h1> reads as a
-              stutter. */}
+          {/*
+            Not the brand name: the header says "Junti" one line above, and
+            repeating it as <h1> reads as a stutter. And no longer the brand
+            tagline either — that string lives in the browser tab, the brand
+            block and the emails, where it has to hold still, while a landing
+            headline is the thing you rewrite. They were one constant, which
+            also meant an English reader got the Spanish line.
+
+            Two beats inside one <h1>, so the outline stays a single heading.
+            The break is not decoration: "Un link." has to land as a finished
+            thing before the payoff arrives, and a line that wraps wherever the
+            viewport happens to end would break it in the wrong place.
+          */}
           <Text as="h1" variant="h1" fontFamily="var(--junti-display)">
-            {copy.home.subheading}
+            {copy.home.heroTitle}
+            <Box display="block">{copy.home.heroTitleSecond}</Box>
           </Text>
 
           {/* Capped tighter than the heading. A 46rem line of body text is
