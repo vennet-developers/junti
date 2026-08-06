@@ -272,9 +272,17 @@ function HomePage() {
             </Box>
 
             {/*
-              Not the brand name: the header says "Junti" one line above.
               Two beats inside one <h1>, so the outline stays a single heading
               — "Un link." has to land as a finished thing before the payoff.
+
+              It deliberately does NOT carry the brand name, and that used to
+              be justified here with "the header says Junti one line above".
+              The header says it in an SVG. That is fine for a person, who
+              reads a logo as a name, and it failed for the one reader who was
+              checking whether the name matched: Google refused OAuth
+              verification because the app name on the consent screen did not
+              appear on the homepage. The name is now the first text on the
+              page, in the line above, and in the pitch below.
             */}
             <Text as="h1" variant="h1" fontFamily="var(--junti-display)">
               {copy.home.heroTitle}
@@ -284,6 +292,13 @@ function HomePage() {
             <Box maxWidth="36rem">
               <Text>{copy.home.pitch}</Text>
             </Box>
+
+            {/* The terms, moved down off the eyebrow so the name and the
+                purpose could take that line. They read better here anyway —
+                right before the buttons they qualify. */}
+            <Text variant="small" color="muted">
+              {copy.home.heroTerms}
+            </Text>
 
             <Flex gap="3" wrap="wrap" pt="2">
               {cta}

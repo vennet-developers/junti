@@ -97,8 +97,16 @@ export const es = {
     heroTitle: "Un link.",
     heroTitleSecond: "Y ya sabes cuántos son.",
     subheading: BRAND_TAGLINE,
+    /*
+      La frase que dice qué ES esto, y la única de la página escrita para
+      alguien que llegó sin saberlo — incluido el revisor de Google, que
+      rechazó la verificación de OAuth porque la página principal no explicaba
+      el propósito de la app. Empieza por el nombre a propósito: la marca solo
+      existía como logo, y un logo no le sirve a quien está comprobando que el
+      nombre de la pantalla de consentimiento coincide con el del sitio.
+    */
     pitch:
-      "Tus invitados abren el link y responden. Tú ves la lista llenarse y quién ya te pagó, en vivo. Sin contraseñas y sin instalar nada.",
+      `${BRAND_NAME} es una app gratuita para organizar planes con tu gente: partidos, fiestas, paseos, comidas. Tus invitados abren el link y responden; tú ves la lista llenarse y quién ya te pagó, en vivo.`,
     cta: "Crear un evento",
     howItWorksTitle: "Cómo funciona",
     steps: [
@@ -110,8 +118,17 @@ export const es = {
     disclaimer:
       "Esta app no mueve plata. Solo lleva la cuenta de quién pagó — los pagos los recibes tú, por fuera.",
 
-    /* La promesa de arriba, en una línea que se lee antes de decidir nada. */
-    heroKicker: "Gratis · Sin contraseñas · Sin instalar nada",
+    /*
+      El nombre y el propósito en cinco palabras, encima del titular.
+
+      Antes decía «Gratis · Sin contraseñas · Sin instalar nada», que son las
+      condiciones y no el qué. Las condiciones bajaron a {@link heroTerms},
+      justo antes de los botones, que es donde pesan: se leen cuando ya
+      decidiste mirar y estás por decidir entrar.
+    */
+    heroKicker: `${BRAND_NAME} · Organiza planes con tu gente`,
+    /* Lo que antes era el kicker. Mismo texto, otro sitio. */
+    heroTerms: "Gratis · Sin contraseñas · Sin instalar nada",
     heroSecondary: "Ya tengo cuenta",
 
     /*

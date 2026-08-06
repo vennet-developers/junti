@@ -77,7 +77,7 @@ export const en: Copy = {
     heroTitleSecond: "And you know how many.",
     subheading: BRAND_TAGLINE,
     pitch:
-      "Your guests open the link and answer. You watch the list fill up, and who has already paid you, live. No passwords, nothing to install.",
+      `${BRAND_NAME} is a free app for organizing plans with your people: matches, parties, trips, dinners. Your guests open the link and answer; you watch the list fill up, and who has already paid you, live.`,
     cta: "Create an event",
     howItWorksTitle: "How it works",
     steps: [
@@ -89,7 +89,8 @@ export const en: Copy = {
     disclaimer:
       "This app never moves money. It only keeps track of who paid — you collect the payments yourself, outside of it.",
 
-    heroKicker: "Free · No passwords · Nothing to install",
+    heroKicker: `${BRAND_NAME} · Organize plans with your people`,
+    heroTerms: "Free · No passwords · Nothing to install",
     heroSecondary: "I already have an account",
 
     featuresTitle: "What it is for",
