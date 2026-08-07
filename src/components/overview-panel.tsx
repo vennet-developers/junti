@@ -12,11 +12,7 @@ import {
 import { Box, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
-import { AreaChart } from "@/components/area-chart";
-import { Donut } from "@/components/donut";
-import { MiniBars } from "@/components/mini-bars";
-import { SegmentBar } from "@/components/segment-bar";
-import { Sparkline } from "@/components/sparkline";
+import { AreaChart, Donut, MiniBars, SegmentBar, Sparkline } from "@stackmyth/charts";
 import { formatMoney } from "@/lib/format";
 import type { Metric, OverviewReport } from "@/lib/overview";
 
@@ -341,13 +337,17 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
               <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
                 Respuestas por tipo
               </Text>
+              {/* The categorical slots are remapped to the attendance colors
+                  the rest of the app already speaks — see `.junti-respuestas`
+                  in globals.css. Slot order must match part order. */}
               <SegmentBar
+                className="junti-respuestas"
                 ariaLabel="Respuestas por tipo"
                 parts={[
-                  { label: "Van", value: overview.attendance.going, token: "var(--junti-viene-fill, var(--junti-viene-fg))" },
-                  { label: "Tal vez", value: overview.attendance.maybe, token: "var(--junti-talvez-fill, var(--junti-talvez-fg))" },
-                  { label: "No van", value: overview.attendance.notGoing, token: "var(--junti-noviene-fill, var(--junti-noviene-fg))" },
-                  { label: "En espera", value: overview.attendance.waitlisted, token: "var(--junti-espera-fill, var(--junti-espera-fg))" },
+                  { label: "Van", value: overview.attendance.going, color: 1 },
+                  { label: "Tal vez", value: overview.attendance.maybe, color: 2 },
+                  { label: "No van", value: overview.attendance.notGoing, color: 3 },
+                  { label: "En espera", value: overview.attendance.waitlisted, color: 4 },
                 ]}
               />
             </Stack>

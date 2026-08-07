@@ -190,6 +190,14 @@
   --sm-primary: var(--junti-accion);
   --sm-primary-text: var(--junti-accion-texto);
   --sm-primary-hover: var(--junti-accion-hover);
+
+  /* Charts en naranja, no en el color de acción: el dashboard es lectura, y
+     la chapa es lo que la marca usa para señalar sin invitar a presionar.
+     Un solo token gobierna el tono "brand" de sparkline, área y mini-barras;
+     el donut y su tamaño (4rem, como el espejo que reemplazan) van aparte. */
+  --sm-charts-sparkline-brand: var(--junti-naranja);
+  --sm-charts-donut-fill: var(--junti-naranja);
+  --sm-charts-donut-size: 4rem;
   --sm-surface: var(--junti-papel);
   --sm-surface-raised: var(--junti-tarjeta);
   --sm-surface-border: var(--junti-borde);

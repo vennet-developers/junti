@@ -19,6 +19,7 @@
 */
 
 @import "@stackmyth/core/core.vars.css";
+@import "@stackmyth/charts/charts.vars.css";
 
 @import "./brand-fonts.css";
 
@@ -49,6 +50,7 @@
 @import "@stackmyth/list-item/list-item.css";
 @import "@stackmyth/empty-state/empty-state.css";
 @import "@stackmyth/stat/stat.css";
+@import "@stackmyth/charts/charts.css";
 @import "@stackmyth/progress/progress.css";
 @import "@stackmyth/spinner/spinner.css";
 @import "@stackmyth/skeleton/skeleton.css";

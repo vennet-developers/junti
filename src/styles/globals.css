@@ -573,94 +573,17 @@ body {
 }
 
 /*
-  Sparkline y donut del panel de dueño — espejos temporales de
-  @stackmyth/charts (los tokens ya siguen su convención de nombres). Cuando el
-  paquete se libere, estos selectores mueren con los componentes locales.
+  Los charts ahora vienen de @stackmyth/charts (0.26.2) — los espejos locales
+  y sus selectores murieron con la release, como prometía la nota que vivía
+  aquí. Lo único que queda es de Junti: qué significan los colores.
+
+  El SegmentBar de respuestas habla la paleta de asistencia que el resto de
+  la app ya usa. Los slots categóricos del paquete se remapean en el ámbito
+  del componente — el orden de los slots es el orden de las partes.
 */
-.junti-sparkline {
-  display: block;
-  width: 100%;
-  height: 100%;
+.junti-respuestas {
+  --sm-charts-cat-1: var(--junti-viene-fill, var(--junti-viene-fg));
+  --sm-charts-cat-2: var(--junti-talvez-fill, var(--junti-talvez-fg));
+  --sm-charts-cat-3: var(--junti-noviene-fill, var(--junti-noviene-fg));
+  --sm-charts-cat-4: var(--junti-espera-fill, var(--junti-espera-fg));
 }
-
-.junti-sparkline__line {
-  fill: none;
-  stroke: var(--junti-naranja);
-  stroke-width: 2px;
-  vector-effect: non-scaling-stroke;
-}
-
-.junti-sparkline__area {
-  fill: var(--junti-naranja);
-  opacity: 0.12;
-}
-
-.junti-donut {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 4rem;
-  height: 4rem;
-  flex-shrink: 0;
-}
-
-.junti-donut svg {
-  width: 100%;
-  height: 100%;
-}
-
-.junti-donut__track {
-  fill: none;
-  stroke: var(--sm-border-default);
-  stroke-width: 3.5;
-}
-
-.junti-donut__fill {
-  fill: none;
-  stroke: var(--junti-naranja);
-  stroke-width: 3.5;
-  stroke-linecap: round;
-}
-
-.junti-donut__center {
-  position: absolute;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-/* Área suave, mini-barras y segmentos — espejos de @stackmyth/charts. */
-.junti-area { display: block; }
-.junti-area__grid { stroke: var(--sm-border-default); stroke-width: 1; }
-.junti-area__tick,
-.junti-area__label { fill: var(--sm-text-secondary); font-size: 11px; }
-.junti-area__line {
-  fill: none;
-  stroke: var(--junti-naranja);
-  stroke-width: 2px;
-  vector-effect: non-scaling-stroke;
-}
-.junti-area__dot {
-  fill: var(--junti-papel, #fbf7f0);
-  stroke: var(--junti-naranja);
-  stroke-width: 2px;
-}
-
-.junti-minibars { display: block; width: 100%; height: 100%; }
-.junti-minibars__bar { fill: var(--junti-naranja); opacity: 0.35; }
-.junti-minibars__bar--accent { opacity: 1; }
-.junti-minibars__dot { fill: var(--sm-border-strong, var(--sm-border-default)); }
-
-.junti-segments { display: flex; flex-direction: column; gap: 0.75rem; }
-.junti-segments__legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem 1.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.junti-segments__item { display: inline-flex; align-items: center; gap: 0.5rem; }
-.junti-segments__swatch { display: inline-flex; flex-shrink: 0; }
-.junti-segments__name { font-size: 0.8125rem; color: var(--sm-text-secondary); }
-.junti-segments__value { font-size: 0.8125rem; font-weight: 600; }
