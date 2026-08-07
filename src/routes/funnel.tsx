@@ -1,8 +1,9 @@
 import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
-import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { List, ListItem } from "@stackmyth/list-item";
+import { Skeleton } from "@stackmyth/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
 import { useState, useTransition } from "react";
@@ -156,8 +157,66 @@ export const Route = createFileRoute("/funnel")({
   head: () => ({
     meta: [{ title: pageTitle("Funnel") }, { name: "robots", content: "noindex, nofollow" }],
   }),
+  pendingComponent: FunnelPending,
   component: FunnelPage,
 });
+
+/**
+ * The panel's own loading silhouette, replacing the generic three-block
+ * `RoutePending` that resembled nothing on this page. Ivan's observation:
+ * a skeleton that does not match what replaces it makes the swap read as a
+ * SECOND load. This one traces the real layout — title, filter chips,
+ * legend, tab bar, the four headline cards and the money row — so the data
+ * lands into the shapes already on screen.
+ */
+function FunnelPending() {
+  const pill = (width: string) => (
+    <Skeleton width={width} height="2.09375rem" borderRadius="999px" />
+  );
+
+  return (
+    <Container size="3" px="4" py="6">
+      <Stack gap="6" aria-hidden="true">
+        <Stack gap="2">
+          <Skeleton width="8rem" height="34px" borderRadius="var(--sm-radius-md)" />
+          <Skeleton width="24rem" height="16px" borderRadius="var(--sm-radius-sm)" />
+        </Stack>
+
+        <Stack gap="2">
+          <Flex gap="2" wrap="wrap" align="center">
+            {pill("8.5rem")}
+            {pill("8rem")}
+            {pill("4.5rem")}
+            {pill("7.5rem")}
+            {pill("10rem")}
+            {pill("8.5rem")}
+          </Flex>
+          <Skeleton width="30rem" height="13px" borderRadius="var(--sm-radius-sm)" />
+        </Stack>
+
+        <Skeleton width="100%" height="56px" borderRadius="var(--sm-radius-lg)" animate="shimmer" />
+
+        <Grid columns={{ base: "1", sm: "2", lg: "4" }} gap="3">
+          {Array.from({ length: 4 }, (_, index) => (
+            <Skeleton
+              key={index}
+              width="100%"
+              height="150px"
+              borderRadius="var(--sm-radius-lg)"
+              animate="shimmer"
+            />
+          ))}
+        </Grid>
+
+        <Grid columns={{ base: "1", lg: "3" }} gap="3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <Skeleton key={index} width="100%" height="140px" borderRadius="var(--sm-radius-lg)" />
+          ))}
+        </Grid>
+      </Stack>
+    </Container>
+  );
+}
 
 /**
  * The period every number on the page is filtered to.
@@ -281,9 +340,13 @@ function DirectoryPanel({
     startTransition(async () => {
       const result = await getDirectory({ data: Object.fromEntries(params.entries()) });
       setView({ directory: result.directory, query: result.query });
-      // After the data, not before: a URL promising a view that then fails
-      // to load would deep-link to the failure.
-      window.history.replaceState(null, "", `/funnel?${params.toString()}`);
+      /*
+        NO history.replaceState here, and its absence is the fix for "se
+        recarga todo": the router watches the URL, and rewriting it fired the
+        whole page loader — fourteen queries — behind every one-query flip.
+        Deep links still work inbound; the price is that the address bar
+        stops narrating clicks, which nobody asked it to do.
+      */
     });
   }
 
@@ -371,12 +434,16 @@ function DirectoryPanel({
         </Flex>
       ) : null}
 
-      {/* The old page dims under the new request rather than vanishing: a
-          list that blanks on every click reads as breakage, and the rows
-          are usually half-right already. */}
-      <Card surface="outlined" className={pending ? "junti-directorio-cargando" : undefined}>
+      <Card surface="outlined">
         <CardContent>
           <Stack gap="3" aria-busy={pending}>
+            {/* While the one query flies, rows-shaped skeletons — the same
+                two-line-left, date-right silhouette the data will paint —
+                so the swap lands in place instead of reflowing. */}
+            {pending ? (
+              <DirectoryRowsSkeleton />
+            ) : (
+              <>
             <Flex gap="3" align="center" justify="between" wrap="wrap">
               <Text variant="small" color="muted">
                 {d.results(directory.total)}
@@ -463,9 +530,39 @@ function DirectoryPanel({
                 ) : null}
               </Flex>
             ) : null}
+              </>
+            )}
           </Stack>
         </CardContent>
       </Card>
+    </Stack>
+  );
+}
+
+/**
+ * Rows-shaped placeholders for the directory while its one query flies.
+ *
+ * Traced from the real row — name over detail over meta on the left, the
+ * created date on the right — because a skeleton that does not match what
+ * replaces it is worse than a spinner: the reflow it causes is the "se
+ * recarga todo" feeling with extra steps.
+ */
+function DirectoryRowsSkeleton() {
+  return (
+    <Stack gap="3" aria-hidden="true">
+      <Flex gap="3" align="center" justify="between">
+        <Skeleton width="7rem" height="14px" borderRadius="var(--sm-radius-sm)" />
+        <Skeleton width="6rem" height="14px" borderRadius="var(--sm-radius-sm)" />
+      </Flex>
+      {Array.from({ length: 6 }, (_, index) => (
+        <Flex key={index} gap="3" align="start" justify="between" pt="2">
+          <Stack gap="2" width="60%">
+            <Skeleton width="45%" height="16px" borderRadius="var(--sm-radius-sm)" animate="shimmer" />
+            <Skeleton width="70%" height="12px" borderRadius="var(--sm-radius-sm)" />
+          </Stack>
+          <Skeleton width="8rem" height="12px" borderRadius="var(--sm-radius-sm)" />
+        </Flex>
+      ))}
     </Stack>
   );
 }
