@@ -181,7 +181,10 @@ export function PushToggle() {
     <Stack gap="2">
       <Button
         type="button"
-        variant={state === "on" ? "ghost" : "secondary"}
+        /* Red when armed — Ivan's call, and consistent with the cancel
+           button: the action that takes something away wears the color that
+           says so before the label is read. */
+        variant={state === "on" ? "destructive" : "secondary"}
         size="sm"
         fullWidth
         disabled={pending}
