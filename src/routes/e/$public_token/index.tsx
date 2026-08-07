@@ -24,11 +24,9 @@ import { participantPath } from "@/lib/paths";
 import type { ParticipantRosterMember } from "@/lib/roster";
 
 import { CommitmentNote } from "./-commitment-note";
-import { CommitmentPanel } from "./-commitment-panel";
 import { GatedPreview } from "./-gated-preview";
-import { JoinPanel } from "./-join-panel";
-import { HeldSpotsPanel } from "./-held-spots-panel";
-import { PolicyPanel, type PolicyPanelItem } from "./-policy-panel";
+import { JoinWizard } from "./-join-wizard";
+import { type PolicyPanelItem } from "./-policy-panel";
 import { PreviewBar } from "./-preview-bar";
 import { SignInToJoin } from "./-sign-in-to-join";
 
@@ -227,12 +225,24 @@ const getEventPage = createServerFn({ method: "GET" })
       myGuests,
       maxHeldSpots,
       pendingNotes,
-      commitments: commitments.map((item) => ({
-        id: item.id,
-        participantId: item.participantId,
-        note: item.note,
-        reaction: item.reaction,
-      })),
+      /*
+        Only notes whose author is CONFIRMED, when the event has requirements
+        — Ivan's step 3: the message is written any time but published once
+        its author counts. Absent from the payload, not hidden in the
+        component, same reasoning as the projection below.
+      */
+      commitments: commitments
+        .filter(
+          (item) =>
+            roster.policies.length === 0 ||
+            roster.confirmed.some((member) => member.id === item.participantId),
+        )
+        .map((item) => ({
+          id: item.id,
+          participantId: item.participantId,
+          note: item.note,
+          reaction: item.reaction,
+        })),
       /*
         The participant projection, not the full view.
 
@@ -586,45 +596,42 @@ function ParticipantPage() {
           >
             {copy.event.convocationClosedBody}
           </Banner>
-        ) : signedIn && account ? (
-          <JoinPanel
-            publicToken={publicToken}
-            mine={mine}
-            isFull={roster.openSlots !== null && roster.openSlots === 0}
-            account={account}
-            refund={
-              event.hasCost && event.refundNoticeHours !== null
-                ? { hours: event.refundNoticeHours, startsAt: event.startsAt }
+        ) : null}
+
+        {/* The three tabs of taking part — answer, requirements, message —
+            one wizard moment inside (a fresh "voy" on a gated event advances
+            to the receipt), plain tabs every visit after. Still rendered once
+            the convocation closes: the deadline settles the headcount, not
+            the receipt — see `stopped` against `answersClosed`. */}
+        {!event.isCancelled && signedIn && account && (answersOpen || mineId) ? (
+          <JoinWizard
+            join={{
+              publicToken,
+              mine,
+              isFull: roster.openSlots !== null && roster.openSlots === 0,
+              account,
+              refund:
+                event.hasCost && event.refundNoticeHours !== null
+                  ? { hours: event.refundNoticeHours, startsAt: event.startsAt }
+                  : null,
+              guests:
+                maxHeldSpots - myGuests.filter((g) => !g.claimed).length > 0
+                  ? { remaining: maxHeldSpots - myGuests.filter((g) => !g.claimed).length }
+                  : null,
+            }}
+            policies={myPolicies}
+            hasPolicies={roster.policies.length > 0}
+            commitment={{ own: ownCommitment }}
+            guestsHeld={myGuests}
+            shareMinor={
+              mineId
+                ? (roster.members.find((member) => member.id === mineId)?.share
+                    ?.computedAmountMinor ?? null)
                 : null
             }
-          />
-        ) : null}
-
-        {/* Immediately under the answer — the rest of the same act.
-
-            Still shown once the convocation closes, and that is the decision
-            behind the whole feature: the deadline settles the headcount, not
-            the receipt. Somebody who said they were coming on Tuesday can send
-            the photo of their transfer on Friday. The server agrees — see
-            `stopped` against `answersClosed` in the actions. */}
-        {!event.isClosed && !event.isCancelled && myPolicies.length > 0 ? (
-          <PolicyPanel publicToken={publicToken} items={myPolicies} />
-        ) : null}
-
-        {/* The sentence after "I'm in". Only for somebody on the roster, and
-            open past the deadline for the same reason as the policies. */}
-        {!event.isClosed && !event.isCancelled && mineId ? (
-          <CommitmentPanel publicToken={publicToken} own={ownCommitment} />
-        ) : null}
-
-        {/* Bring people. Only for somebody attending, and gated like the
-            "¿vienes?": holding seats is answering for more people, so the
-            convocatoria applies. Claiming does not — see the claim route. */}
-        {answersOpen && mine?.attendance === "in" && mineId ? (
-          <HeldSpotsPanel
-            publicToken={publicToken}
-            spots={myGuests}
-            maxHeldSpots={maxHeldSpots}
+            currency={event.currency}
+            answersOpen={answersOpen && !event.isClosed}
+            attendance={mine?.attendance ?? null}
           />
         ) : null}
 

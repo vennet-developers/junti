@@ -539,6 +539,23 @@ export const en: Copy = {
     overAllowance: (max: number) => `At most ${max} spots per person on each event.`,
     overCapacity: "Not enough open spots left to hold those.",
     broughtBy: (name: string) => `Bringing: ${name}`,
+    switchLabel: "I'm bringing people",
+  },
+
+  joinWizard: {
+    tabs: {
+      answer: "Answer",
+      requirements: "Receipt",
+      message: "Message",
+    },
+    pendingBanner:
+      "You are not confirmed yet — your spot stays pending until the organizer approves your receipt.",
+    confirmedBanner: "You are confirmed. All set.",
+    totalToPay: "Total to pay",
+    messageHeldNote:
+      "Your message saves now, but publishes on the event once you are confirmed.",
+    answersClosedButRecorded:
+      "The call to confirm closed — your answer is recorded. You can still send the receipt and your message.",
   },
 
   roster: {

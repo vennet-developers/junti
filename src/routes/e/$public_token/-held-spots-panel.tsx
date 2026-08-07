@@ -1,4 +1,4 @@
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "@tanstack/react-router";
 
 import { Button } from "@stackmyth/button";
@@ -9,7 +9,7 @@ import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 
-import { holdSpotsFn, releaseSpotFn } from "./-fns";
+import { releaseSpotFn } from "./-fns";
 
 export interface HeldSpotView {
   id: string;
@@ -19,7 +19,12 @@ export interface HeldSpotView {
 }
 
 /**
- * "Trae gente": hold seats, hand out the links, watch them get claimed.
+ * The seats you already answer for: hand out the links, watch them get
+ * claimed, release the ones nobody will use.
+ *
+ * Management only — HOLDING seats moved into the answer form itself, where
+ * "voy con dos más" belongs, and the native <select>/<input> the add-section
+ * carried died with the move (the unbreakable rule collects again).
  *
  * The links are surfaced HERE and only here — the sponsor's own panel — never
  * on the shared roster, because a claim token is a seat and the roster crosses
@@ -29,49 +34,15 @@ export interface HeldSpotView {
 export function HeldSpotsPanel({
   publicToken,
   spots,
-  maxHeldSpots,
 }: {
   publicToken: string;
   spots: HeldSpotView[];
-  maxHeldSpots: number;
 }) {
   const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [count, setCount] = useState(1);
-  const [names, setNames] = useState<string[]>([""]);
-  const [error, setError] = useState<string | null>(null);
 
   const strings = copy.heldSpots;
-  const unclaimed = spots.filter((spot) => !spot.claimed);
-  const remaining = Math.max(0, maxHeldSpots - unclaimed.length);
-
-  function setCountClamped(next: number) {
-    const clamped = Math.min(Math.max(1, next), remaining || 1);
-    setCount(clamped);
-    setNames((current) =>
-      Array.from({ length: clamped }, (_, index) => current[index] ?? ""),
-    );
-  }
-
-  function hold() {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.set("publicToken", publicToken);
-      formData.set("count", String(count));
-      names.forEach((name, index) => formData.set(`name-${index}`, name));
-
-      const result = await holdSpotsFn({ data: formData });
-      if (result.errors._form) {
-        setError(result.errors._form);
-      } else {
-        setError(null);
-        setCountClamped(1);
-        setNames([""]);
-        await router.invalidate();
-      }
-    });
-  }
 
   function release(spotId: string) {
     startTransition(async () => {
@@ -141,55 +112,6 @@ export function HeldSpotsPanel({
             </Stack>
           ) : null}
 
-          {remaining > 0 ? (
-            <Stack gap="3">
-              <Flex gap="3" align="center" wrap="wrap">
-                <label htmlFor="hold-count">
-                  <Text as="span" variant="small" weight="medium">
-                    {strings.countLabel}
-                  </Text>
-                </label>
-                <select
-                  id="hold-count"
-                  className="sm-input sm-input--md"
-                  value={count}
-                  onChange={(e) => setCountClamped(Number(e.target.value))}
-                >
-                  {Array.from({ length: remaining }, (_, i) => (
-                    <option key={i + 1} value={i + 1}>
-                      {i + 1}
-                    </option>
-                  ))}
-                </select>
-              </Flex>
-
-              {names.map((name, index) => (
-                <input
-                  key={index}
-                  className="sm-input sm-input--md"
-                  value={name}
-                  maxLength={40}
-                  placeholder={strings.namePlaceholder}
-                  aria-label={strings.nameLabel(index + 1)}
-                  onChange={(e) =>
-                    setNames((current) =>
-                      current.map((n, i) => (i === index ? e.target.value : n)),
-                    )
-                  }
-                />
-              ))}
-
-              {error ? (
-                <Text variant="small" color="error">
-                  {error}
-                </Text>
-              ) : null}
-
-              <Button type="button" size="md" onClick={hold} disabled={pending}>
-                {pending ? strings.submitting : strings.submit}
-              </Button>
-            </Stack>
-          ) : null}
         </Stack>
       </CardContent>
     </Card>

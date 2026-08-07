@@ -29,6 +29,8 @@ export interface OneTapJoinProps {
   refund: { hours: number; startsAt: Date } | null;
   /** Falls back to the full form — used when the name is taken. */
   onUseForm: () => void;
+  /** Fires after a successful one-tap join. Always "in". */
+  onSaved?: (attendance: string) => void;
 }
 
 /**
@@ -54,6 +56,7 @@ export function OneTapJoin({
   isFull,
   refund,
   onUseForm,
+  onSaved,
 }: OneTapJoinProps) {
   const { copy } = useCopy();
   const router = useRouter();
@@ -80,6 +83,7 @@ export function OneTapJoin({
       // The roster now includes them; re-run the loaders so every part of
       // the page agrees (the server's revalidatePath, said the TanStack way).
       await router.invalidate();
+      onSaved?.("in");
     });
   }
 

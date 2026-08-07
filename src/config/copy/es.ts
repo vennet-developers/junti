@@ -633,6 +633,25 @@ export const es = {
     overAllowance: (max: number) => `Máximo ${max} cupos por persona en cada evento.`,
     overCapacity: "No quedan cupos suficientes para apartar esos.",
     broughtBy: (name: string) => `Trae: ${name}`,
+    /** El switch del paso 1 del wizard: cupos declarados con la respuesta. */
+    switchLabel: "Traigo gente",
+  },
+
+  /** El wizard de participación: Respuesta · Comprobante · Mensaje. */
+  joinWizard: {
+    tabs: {
+      answer: "Respuesta",
+      requirements: "Comprobante",
+      message: "Mensaje",
+    },
+    pendingBanner:
+      "Aún no estás confirmado — tu cupo queda pendiente hasta que el organizador apruebe tu comprobante.",
+    confirmedBanner: "Estás confirmado. Todo en orden.",
+    totalToPay: "Total a pagar",
+    messageHeldNote:
+      "Tu mensaje se guarda ya, pero se publica en el evento cuando estés confirmado.",
+    answersClosedButRecorded:
+      "La convocatoria cerró — tu respuesta quedó registrada. Puedes seguir con el comprobante y tu mensaje.",
   },
 
   roster: {

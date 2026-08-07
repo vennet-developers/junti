@@ -17,6 +17,10 @@ export interface JoinPanelProps {
   account: { displayName: string; avatarUrl: string | null };
   /** The organizer's refund rule, when there is one. See `RsvpFormProps`. */
   refund: { hours: number; startsAt: Date } | null;
+  /** Guest spots the answer can carry. See `RsvpFormProps`. */
+  guests: { remaining: number } | null;
+  /** Fires after a successful save, with the recorded answer. */
+  onSaved?: (attendance: string) => void;
 }
 
 /**
@@ -31,7 +35,7 @@ export interface JoinPanelProps {
  * roster goes straight to it, one-tap having nothing to offer someone who is
  * already in.
  */
-export function JoinPanel({ publicToken, mine, isFull, account, refund }: JoinPanelProps) {
+export function JoinPanel({ publicToken, mine, isFull, account, refund, guests, onSaved }: JoinPanelProps) {
   const [useForm, setUseForm] = useState(false);
 
   if (mine === null && !useForm) {
@@ -42,10 +46,20 @@ export function JoinPanel({ publicToken, mine, isFull, account, refund }: JoinPa
         avatarUrl={account.avatarUrl}
         isFull={isFull}
         refund={refund}
+        onSaved={onSaved}
         onUseForm={() => setUseForm(true)}
       />
     );
   }
 
-  return <RsvpForm publicToken={publicToken} mine={mine} isFull={isFull} refund={refund} />;
+  return (
+    <RsvpForm
+      publicToken={publicToken}
+      mine={mine}
+      isFull={isFull}
+      refund={refund}
+      guests={guests}
+      onSaved={onSaved}
+    />
+  );
 }
