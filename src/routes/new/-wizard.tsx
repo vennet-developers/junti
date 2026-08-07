@@ -8,7 +8,7 @@ import { Box, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { useCopy } from "@/components/copy-provider";
-import { WIZARD_STEPS, type WizardStep } from "@/domain/wizard";
+import { WIZARD_STEPS, isLastStep, type WizardStep } from "@/domain/wizard";
 import { trackClient } from "@/lib/track-client";
 
 /**
@@ -60,21 +60,18 @@ export function StepPanel({ active, children }: { active: boolean; children: Rea
  */
 export function WizardProgress({
   step,
-  total,
   pending,
   onBack,
 }: {
   step: WizardStep;
-  total: number;
   pending: boolean;
   onBack: () => void;
 }) {
   const { copy } = useCopy();
 
-  // Only the steps this event actually has. A free event is two steps long and
-  // the bar says two — a third segment that never fills reads as something
-  // that went wrong.
-  const shown = WIZARD_STEPS.slice(0, total);
+  // A fixed two. The count used to depend on the cost answer and MUTATED
+  // mid-flight — the exact noise that retired the third step.
+  const shown = WIZARD_STEPS;
 
   return (
     <Stack gap="2">
@@ -118,7 +115,7 @@ export function WizardProgress({
       </Flex>
 
       <Text variant="small" color="muted">
-        {copy.createEvent.wizard.progress(step, total)} ·{" "}
+        {copy.createEvent.wizard.progress(step, WIZARD_STEPS.length)} ·{" "}
         {copy.createEvent.wizard.stepTitle[step]}
       </Text>
     </Stack>
@@ -136,22 +133,13 @@ export function WizardProgress({
 export function WizardNav({
   step,
   pending,
-  freeEvent,
 }: {
   step: WizardStep;
   pending: boolean;
-  /** No money on this event, so step 3 has nothing to ask. */
-  freeEvent: boolean;
 }) {
   const { copy } = useCopy();
 
-  /*
-    The last step is 3, but an event with no cost has nothing to fill in there
-    — so the button on step 2 says "create" rather than "next" and submits.
-    AC-1 calls step 3 skippable; this is what skippable means in practice,
-    rather than hiding a step and renumbering the other two.
-  */
-  const submits = step === 3 || (step === 2 && freeEvent);
+  const submits = isLastStep(step);
 
   return (
     <Box width="100%" maxWidth={{ base: "100%", md: "22rem" }}>

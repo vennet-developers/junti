@@ -33,11 +33,9 @@ import { makeEventClientSchema } from "@/lib/validation";
 import {
   firstStepWithError,
   normaliseStep,
-  isMoneyStepEmpty,
   nextStep as advance,
   previousStep,
   stepOf,
-  totalSteps,
   type WizardStep,
 } from "@/domain/wizard";
 import { trackClient } from "@/lib/track-client";
@@ -270,7 +268,7 @@ function CreateEventFormBody({
    * not invent a second way to show them. AC-2.
    */
   function submit(data: Record<string, unknown>) {
-    const lastStep = step === 3 || (step === 2 && isMoneyStepEmpty(String(data.costMode ?? "none")));
+    const lastStep = step === 2;
 
     if (!lastStep) {
       trackClient("create_step_completed", { step });
@@ -326,7 +324,7 @@ function CreateEventFormBody({
 
     // Nothing on this step is wrong. Advance — or, on the last step, send them
     // back to whichever earlier step is actually blocking the create.
-    const isLast = step === 3 || (step === 2 && isMoneyStepEmpty(costMode));
+    const isLast = step === 2;
     if (!isLast) {
       trackClient("create_step_completed", { step });
       goTo(advance(step));
@@ -360,7 +358,6 @@ function CreateEventFormBody({
 
           <WizardProgress
             step={step}
-            total={totalSteps(costMode)}
             pending={pending}
             onBack={() => goTo(previousStep(step))}
           />
@@ -529,10 +526,11 @@ function CreateEventFormBody({
             />
           </ControlledField>
 
-          {/* The yes/no on money closes step 2, because the answer decides
-              whether there is a step 3 at all. Asking it on step 3 was
-              circular, and made the wizard promise three steps to somebody
-              who would only fill two. */}
+          {/* The money question, and its fields unfolding RIGHT HERE when
+              the answer is yes. These used to live on a third step, and Ivan
+              hit both ways that fails: the step count mutated under him, and
+              the amount hid on a screen he was not expecting. The question
+              and its consequences share one screen now. */}
           <ControlledField label={copy.createEvent.fields.costMode}>
             <SelectField
               name="costMode"
@@ -541,9 +539,6 @@ function CreateEventFormBody({
               onValueChange={setCostMode}
             />
           </ControlledField>
-          </StepPanel>
-
-          <StepPanel active={step === 3}>
 
           {costMode !== "none" ? (
             <ControlledField
@@ -611,7 +606,6 @@ function CreateEventFormBody({
               />
             </ControlledField>
           ) : null}
-
           </StepPanel>
 
           <StepPanel active={step === 1}>
@@ -657,7 +651,6 @@ function CreateEventFormBody({
           <WizardControls
             step={step}
             pending={pending}
-            freeEvent={isMoneyStepEmpty(costMode)}
             finished={finished}
           />
         </Stack>
@@ -694,18 +687,16 @@ function str(value: unknown): string | undefined {
 function WizardControls({
   step,
   pending,
-  freeEvent,
   finished,
 }: {
   step: WizardStep;
   pending: boolean;
-  freeEvent: boolean;
   finished: boolean;
 }) {
   return (
     <>
       <StepTracking step={step} finished={finished} />
-      <WizardNav step={step} pending={pending} freeEvent={freeEvent} />
+      <WizardNav step={step} pending={pending} />
     </>
   );
 }

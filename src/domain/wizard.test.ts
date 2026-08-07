@@ -6,12 +6,10 @@ import {
   WIZARD_STEPS,
   firstStepWithError,
   isLastStep,
-  isMoneyStepEmpty,
   nextStep,
   normaliseStep,
   previousStep,
   stepOf,
-  totalSteps,
 } from "./wizard";
 
 /**
@@ -52,28 +50,23 @@ describe("every field has exactly one home", () => {
     expect([...ALL_WIZARD_FIELDS].sort()).toEqual([...submitted].sort());
   });
 
-  it("keeps the confirmation requirements out of the skippable step", () => {
-    // `policies` includes "Leí las indicaciones", which has nothing to do with
-    // money. On step 3 it would be unreachable for a free event.
-    expect(STEP_FIELDS[2]).toContain("policies");
-    expect(STEP_FIELDS[3]).not.toContain("policies");
-  });
-
   /**
-   * The circularity the first version had: "does this cost anything?" decides
-   * whether step 3 is reached, so it cannot live there. It also made the
-   * wizard promise three steps to somebody who would only fill two.
+   * The money lives WITH its question, on the same step. It used to live on a
+   * third step that only appeared once the cost answer was given, and that
+   * design failed a real organizer twice in one pass: the step count mutated
+   * under him, and the amount hid on a screen he was not expecting.
    */
-  it("asks whether there is a cost before the step that depends on the answer", () => {
+  it("keeps the money fields on the same step as the cost question", () => {
     expect(STEP_FIELDS[2]).toContain("costMode");
-    expect(STEP_FIELDS[3]).not.toContain("costMode");
-    expect(STEP_FIELDS[3]).toEqual(["currency", "costAmount", "refundNotice"]);
+    expect(STEP_FIELDS[2]).toContain("costAmount");
+    expect(STEP_FIELDS[2]).toContain("currency");
+    expect(STEP_FIELDS[2]).toContain("refundNotice");
   });
 
   it("knows which step a field is on", () => {
     expect(stepOf("title")).toBe(1);
     expect(stepOf("capacity")).toBe(2);
-    expect(stepOf("costAmount")).toBe(3);
+    expect(stepOf("costAmount")).toBe(2);
     expect(stepOf("inventado")).toBeNull();
   });
 });
@@ -82,7 +75,7 @@ describe("where a server error sends you back to", () => {
   it("picks the earliest step carrying an error", () => {
     expect(firstStepWithError(["costAmount", "title"])).toBe(1);
     expect(firstStepWithError(["costAmount", "capacity"])).toBe(2);
-    expect(firstStepWithError(["currency"])).toBe(3);
+    expect(firstStepWithError(["currency"])).toBe(2);
   });
 
   it("stays put when the error belongs to no field", () => {
@@ -94,10 +87,15 @@ describe("where a server error sends you back to", () => {
 });
 
 describe("navigation", () => {
+  it("is two steps, always — the count must never mutate mid-form", () => {
+    expect(WIZARD_STEPS).toEqual([1, 2]);
+  });
+
   it("clamps anything arriving from the URL", () => {
     expect(normaliseStep("2")).toBe(2);
     expect(normaliseStep(2)).toBe(2);
-    // A typed URL is not a crash.
+    // A typed URL is not a crash — and old ?step=3 links land safely.
+    expect(normaliseStep("3")).toBe(1);
     expect(normaliseStep("9")).toBe(1);
     expect(normaliseStep("0")).toBe(1);
     expect(normaliseStep("dos")).toBe(1);
@@ -107,30 +105,13 @@ describe("navigation", () => {
 
   it("does not walk off either end", () => {
     expect(previousStep(1)).toBe(1);
-    expect(nextStep(3)).toBe(3);
-    expect(isLastStep(3)).toBe(true);
+    expect(nextStep(2)).toBe(2);
+    expect(isLastStep(2)).toBe(true);
     expect(isLastStep(1)).toBe(false);
   });
 
   it("walks the steps in order", () => {
-    expect(WIZARD_STEPS).toEqual([1, 2, 3]);
     expect(nextStep(1)).toBe(2);
-    expect(previousStep(3)).toBe(2);
-  });
-});
-
-describe("the money step", () => {
-  it("has nothing to ask when the event is free", () => {
-    expect(isMoneyStepEmpty("none")).toBe(true);
-    expect(isMoneyStepEmpty("total")).toBe(false);
-    expect(isMoneyStepEmpty("per_person")).toBe(false);
-  });
-
-  it("says the wizard is two steps long for a free event", () => {
-    // The denominator the progress indicator shows. Promising three steps to
-    // somebody who fills two reads as a step that went missing.
-    expect(totalSteps("none")).toBe(2);
-    expect(totalSteps("per_person")).toBe(3);
-    expect(totalSteps("total")).toBe(3);
+    expect(previousStep(2)).toBe(1);
   });
 });

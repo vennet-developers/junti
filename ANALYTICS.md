@@ -61,9 +61,9 @@ re-renders is not a second view.
 | --- | --- | --- |
 | `landing_viewed` | Client, on `/` — which only renders for a visitor with no session | `{}` |
 | `create_started` | Client, when `/new` renders for a signed-in organizer | `{ from_duplicate: boolean }` |
-| `create_step_viewed` | Client, on each wizard step | `{ step: 1\|2\|3 }` |
-| `create_step_completed` | Client, when a step validates and advances | `{ step: 1\|2\|3 }` |
-| `create_abandoned` | Client, on unload with a started-but-unfinished form | `{ last_step: 1\|2\|3 }` |
+| `create_step_viewed` | Client, on each wizard step | `{ step: 1\|2 }` — `3` exists in rows before 2026-08-07, when the money step folded into step 2 |
+| `create_step_completed` | Client, when a step validates and advances | `{ step: 1\|2 }` |
+| `create_abandoned` | Client, on unload with a started-but-unfinished form | `{ last_step: 1\|2 }` |
 | `event_created` | **Server**, in `createEventFn` after the transaction | `{ event_id, has_cost: boolean, cost_mode, has_group: boolean, policy_count: number }` |
 | `event_edited` | **Server**, in `editEvent` | `{ event_id, changed: string[] }` — field names, never values |
 | `event_closed` | **Server**, in `setEventClosed` | `{ event_id, closed: boolean }` |

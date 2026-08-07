@@ -253,8 +253,7 @@ export const es = {
       progress: (step: number, total: number) => `Paso ${step} de ${total}`,
       stepTitle: {
         1: "Qué, cuándo y dónde",
-        2: "A quién y con qué requisitos",
-        3: "Cuánto cuesta",
+        2: "A quién, requisitos y cuentas",
       } as Record<number, string>,
       next: "Siguiente",
       back: "Atrás",

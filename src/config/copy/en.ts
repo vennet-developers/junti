@@ -192,8 +192,7 @@ export const en: Copy = {
       progress: (step: number, total: number) => `Step ${step} of ${total}`,
       stepTitle: {
         1: "What, when and where",
-        2: "Who, and what they must do",
-        3: "What it costs",
+        2: "Who, requirements and money",
       } as Record<number, string>,
       next: "Next",
       back: "Back",
