@@ -343,7 +343,6 @@ export const en: Copy = {
     row: (paid: string, share: string) => `Paid ${paid} · final share ${share}`,
     missing: (amount: string) => `Lacks ${amount}`,
     received: "Got the difference",
-    receiving: "Saving…",
     receivedDone: (name: string) => `Done — ${name} is square.`,
     requestEmails: "Request the balance by email",
     requesting: "Sending…",
@@ -388,7 +387,7 @@ export const en: Copy = {
   roster: {
     heading: "Who is coming",
     inTitle: "Coming",
-    outTitle: "Not coming",
+    outTitle: "Backed out",
     pillRefund: (amount: string) => `Refund ${amount}`,
     pillForfeit: "No refund",
     pillPaidOut: (amount: string) => `Paid ${amount}`,
@@ -594,9 +593,18 @@ export const en: Copy = {
       n === 1
         ? "There is 1 free spot and someone waiting. Move them up so they find out."
         : `There are ${n} free spots and people waiting. Move them up so they find out.`,
-    closeEvent: "Close event",
+    closeEvent: "Close the call to confirm",
     closeEventHelp: "Freezes the answers. You can reopen it later.",
-    reopenEvent: "Reopen event",
+    reopenEvent: "Reopen the call to confirm",
+    closeConfirmTitle: "Close the call to confirm?",
+    closeConfirmBody:
+      "Nobody else will be able to answer or change their answer. The event still happens, and you can reopen whenever you like.",
+    reopenConfirmTitle: "Reopen the call to confirm?",
+    reopenConfirmBody: "Answers open again: people can confirm or change what they said.",
+    closing: "Closing…",
+    reopening: "Reopening…",
+    closedDone: "Call to confirm closed.",
+    reopenedDone: "Call to confirm reopened.",
     editEvent: "Edit event",
     editNotYours:
       "This event belongs to another account, so only that one can change its details. Everything else — payments, invitations, the waitlist, closing it — you can do from this link.",

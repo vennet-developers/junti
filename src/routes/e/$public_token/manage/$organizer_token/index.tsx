@@ -578,7 +578,11 @@ function ManagePage() {
 
                   {roster.notAttending.length > 0 ? (
                     <RosterGroup
-                      headingSize="label"
+                      /* Same rank as "Vienen", not a quiet label: since the
+                         refund pills, this group carries money the organizer
+                         is deciding about, and a caption-sized heading read
+                         as a footnote to the list above it. */
+                      headingSize="section"
                       title={copy.roster.outTitle}
                       members={roster.notAttending}
                       currency={event.currency}
@@ -681,9 +685,16 @@ function ManagePage() {
               )}
             </Disclosure>
 
-            {/* Closing is deliberately last and low-key. */}
-            {/* Cancelling sits under closing and reads quieter, because the
-                two are one misread apart and only one of them can be undone. */}
+            {/* Closing the convocation, then — dead last — calling the event
+                off. The two are one misread apart and only one can be undone,
+                so the irreversible one sits at the very bottom of the column,
+                quieter, where reaching it is a decision rather than a slip. */}
+            <CloseEventControl
+              publicToken={publicToken}
+              organizerToken={organizerToken}
+              isClosed={event.isClosed}
+            />
+
             {event.isCancelled ? null : (
               <Stack gap="2">
                 <Text variant="small" weight="semibold">
@@ -692,21 +703,13 @@ function ManagePage() {
                 <Text variant="small" color="muted">
                   {copy.manage.cancelHelp}
                 </Text>
-                <Flex>
-                  <CancelEventControl
-                    publicToken={publicToken}
-                    organizerToken={organizerToken}
-                    title={event.title}
-                  />
-                </Flex>
+                <CancelEventControl
+                  publicToken={publicToken}
+                  organizerToken={organizerToken}
+                  title={event.title}
+                />
               </Stack>
             )}
-
-            <CloseEventControl
-              publicToken={publicToken}
-              organizerToken={organizerToken}
-              isClosed={event.isClosed}
-            />
           </Stack>
         </Grid>
       </Stack>

@@ -43,13 +43,19 @@ export function SettlementCard({
   const router = useRouter();
 
   /*
-    WHICH row is saving, not WHETHER something is. One shared transition put
-    every button into "Guardando…" the moment any one was pressed — eight
-    buttons announcing work that one of them was doing. The id scopes the
-    state to the row that owns it; the other rows stay pressable, which is
-    safe because the write is idempotent per person.
+    Rows settled optimistically, ahead of the server saying so.
+
+    The press is the organizer stating a fact about the physical world — "I
+    have the money in my hand" — and the app's write is bookkeeping after
+    the fact. So the row leaves and the banner drops IMMEDIATELY, and the
+    request runs underneath; waiting a round trip plus a full loader refresh
+    to acknowledge cash already received made the button feel broken. Same
+    contract as one-tap join: optimistic, with the rollback written out —
+    a server error puts the row back and says why. The set survives the
+    background refresh harmlessly: once the roster reflects the write, the
+    settled row stops being a top-up at all.
   */
-  const [settlingId, setSettlingId] = useState<string | null>(null);
+  const [settled, setSettled] = useState<ReadonlySet<string>>(new Set());
   const [requesting, startRequest] = useTransition();
 
   const { event } = roster;
@@ -64,32 +70,40 @@ export function SettlementCard({
     (id) => attendanceOf.get(id) ?? "out",
   );
 
-  if (settlement.topUps.length === 0 && settlement.refundables.length === 0) return null;
+  // The card renders from these, never from settlement.topUps directly:
+  // the optimistic set has already removed what the organizer just settled.
+  const topUps = settlement.topUps.filter((topUp) => !settled.has(topUp.participantId));
+  const shortfallMinor = topUps.reduce((sum, topUp) => sum + topUp.missingMinor, 0);
+
+  if (topUps.length === 0 && settlement.refundables.length === 0) return null;
 
   const money = (minor: number) => formatMoney(minor, event.currency, copy.intlLocale);
   const strings = copy.settlement;
 
   function received(participantId: string) {
-    setSettlingId(participantId);
+    // The receipt lands before the server replies — see the note on `settled`.
+    setSettled((prev) => new Set(prev).add(participantId));
+    toast.success(strings.receivedDone(names.get(participantId) ?? ""));
 
-    void settleTopUpFn({ data: { publicToken, organizerToken, participantId } })
-      .then(async (result) => {
-        /*
-          A failure used to vanish here — the card swallowed `errors` and the
-          press ended in nothing, which reads as a broken button. Every
-          outcome now says something: the error out loud, or the row leaving
-          the list WITH a receipt, because the disappearance alone reads as
-          "nothing happened" to someone watching the button they pressed.
-        */
+    void settleTopUpFn({ data: { publicToken, organizerToken, participantId } }).then(
+      async (result) => {
         if (result.errors._form) {
+          // Roll the row back into the list and say why — an optimistic
+          // receipt that quietly stayed wrong would be a lie about money.
+          setSettled((prev) => {
+            const next = new Set(prev);
+            next.delete(participantId);
+            return next;
+          });
           toast.error(result.errors._form);
           return;
         }
 
-        toast.success(strings.receivedDone(names.get(participantId) ?? ""));
+        // Background reconciliation: the rest of the page (Recaudado, the
+        // payment stickers) catches up without holding the card hostage.
         await router.invalidate();
-      })
-      .finally(() => setSettlingId(null));
+      },
+    );
   }
 
   /*
@@ -123,17 +137,17 @@ export function SettlementCard({
             </Text>
           </Stack>
 
-          {settlement.topUps.length > 0 ? (
+          {topUps.length > 0 ? (
             <>
               <Banner
                 variant="warning"
                 live="off"
                 icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
-                title={strings.shortfall(money(settlement.shortfallMinor))}
+                title={strings.shortfall(money(shortfallMinor))}
               />
 
               <Stack gap="3">
-                {settlement.topUps.map((topUp) => (
+                {topUps.map((topUp) => (
                   <Flex key={topUp.participantId} gap="3" align="center" justify="between" wrap="wrap">
                     <Stack gap="1" minWidth="0">
                       <Text variant="small" weight="semibold">
@@ -151,12 +165,9 @@ export function SettlementCard({
                         type="button"
                         size="sm"
                         variant="secondary"
-                        disabled={settlingId === topUp.participantId}
                         onClick={() => received(topUp.participantId)}
                       >
-                        {settlingId === topUp.participantId
-                          ? strings.receiving
-                          : strings.received}
+                        {strings.received}
                       </Button>
                     </Flex>
                   </Flex>
@@ -196,7 +207,7 @@ export function SettlementCard({
               ) : (
                 <DropoutVerdicts
                   refundables={settlement.refundables}
-                  shortfallMinor={settlement.shortfallMinor}
+                  shortfallMinor={shortfallMinor}
                   noticeHours={event.refundNoticeHours}
                   startsAt={event.startsAt}
                   names={names}

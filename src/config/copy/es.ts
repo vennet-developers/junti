@@ -427,7 +427,6 @@ export const es = {
     row: (paid: string, share: string) => `Pagó ${paid} · cuota final ${share}`,
     missing: (amount: string) => `Le falta ${amount}`,
     received: "Recibí la diferencia",
-    receiving: "Guardando…",
     receivedDone: (name: string) => `Listo — ${name} quedó al día.`,
     requestEmails: "Pedir el saldo por correo",
     requesting: "Enviando…",
@@ -474,7 +473,11 @@ export const es = {
   roster: {
     heading: "Quién viene",
     inTitle: "Vienen",
-    outTitle: "No vienen",
+    /* "Se bajaron", no "No vienen": a este grupo solo se llega respondiendo.
+       Quien nunca contestó no aparece en ninguna lista, así que estas filas
+       son gente que estuvo en la conversación y se salió — y ese es el hecho
+       que el organizador rastrea, sobre todo cuando dejaron plata. */
+    outTitle: "Se bajaron",
     /* Pills del carril de estado para quien se bajó con plata confirmada.
        El estado va en un pill, nunca pegado al nombre. */
     pillRefund: (amount: string) => `Devolverle ${amount}`,
@@ -682,9 +685,19 @@ export const es = {
       n === 1
         ? "Hay 1 cupo libre y alguien esperando. Súbelo tú para que se entere."
         : `Hay ${n} cupos libres y gente esperando. Súbelos tú para que se enteren.`,
-    closeEvent: "Cerrar evento",
-    closeEventHelp: "Congela las confirmaciones. Puedes reabrirlo después.",
-    reopenEvent: "Reabrir evento",
+    closeEvent: "Cerrar convocatoria al evento",
+    closeEventHelp: "Congela las confirmaciones. Puedes reabrirla después.",
+    reopenEvent: "Reabrir convocatoria al evento",
+    closeConfirmTitle: "¿Cerrar la convocatoria?",
+    closeConfirmBody:
+      "Nadie más podrá decir si viene ni cambiar su respuesta. El evento sigue en pie y puedes reabrir la convocatoria cuando quieras.",
+    reopenConfirmTitle: "¿Reabrir la convocatoria?",
+    reopenConfirmBody:
+      "Las respuestas vuelven a abrirse: la gente podrá confirmar o cambiar lo que dijo.",
+    closing: "Cerrando…",
+    reopening: "Reabriendo…",
+    closedDone: "Convocatoria cerrada.",
+    reopenedDone: "Convocatoria reabierta.",
     editEvent: "Editar evento",
     editNotYours:
       "Este evento está a nombre de otra cuenta, así que solo esa puede cambiar sus datos. Todo lo demás —pagos, invitaciones, lista de espera, cerrarlo— sí puedes hacerlo desde este link.",
