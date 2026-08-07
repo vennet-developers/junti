@@ -82,8 +82,24 @@ export function PushToggle() {
   }, []);
 
   function enable() {
+    /*
+      The permission request MUST be the first thing the tap does. iOS grants
+      a short user-activation window, and a network round trip spends it — ask
+      for the key first and the prompt never appears, subscribe() throws
+      NotAllowedError, and the person sees a failure toast for a dialog they
+      were never shown. Ivan hit exactly that on the first device that tried.
+      Once permission is granted, nothing that follows needs activation.
+    */
+    const permissionRequest = Notification.requestPermission();
+
     startTransition(async () => {
       try {
+        const permission = await permissionRequest;
+        if (permission !== "granted") {
+          setState(permission === "denied" ? "denied" : "off");
+          return;
+        }
+
         const { publicKey } = await getPushConfigFn();
         if (!publicKey) {
           toast.error(copy.notifications.push.failed);
@@ -91,6 +107,9 @@ export function PushToggle() {
         }
 
         const registration = await navigator.serviceWorker.register("/sw.js");
+        // Subscribing against a worker that has not finished activating is
+        // another quietly iOS-shaped failure; ready resolves when it has.
+        await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(publicKey) as BufferSource,
