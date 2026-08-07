@@ -291,6 +291,34 @@ export const Route = createFileRoute("/e/$public_token/")({
   component: ParticipantPage,
 });
 
+/**
+ * What the Pago tab asks for: the CONVOCATORIA's quota, per seat.
+ *
+ * A total-mode event with a capacity was planned as "total entre N cupos" —
+ * $260.000 entre 10 es $26.000 por cabeza — and that is the number a person
+ * transfers when they confirm, times the seats they answer for. It is NOT
+ * today's split among whoever has confirmed so far: that number starts at
+ * the full total for the first person in and shrinks with each arrival,
+ * which Ivan read (twice) as the app charging him the event. The living
+ * split stays where it belongs — the roster below and Cuentas finales — and
+ * any gap between quotas paid and the real split is exactly what the
+ * settlement card reconciles after the fact.
+ *
+ * Per-person mode's computed share already IS the quota; a total-mode event
+ * without a capacity has no planned denominator, so today's split is the
+ * only honest number left.
+ */
+function quotaFor(
+  event: { costMode: string; costAmountMinor: number | null; capacity: number | null },
+  units: number,
+  computedShareMinor: number | null,
+): number | null {
+  if (event.costMode === "total" && event.capacity && event.costAmountMinor) {
+    return Math.round((event.costAmountMinor * units) / event.capacity);
+  }
+  return computedShareMinor;
+}
+
 function ParticipantPage() {
   const { public_token: publicToken } = Route.useParams();
   const {
@@ -625,13 +653,15 @@ function ParticipantPage() {
             guestsHeld={myGuests}
             shareMinor={
               mineId
-                ? (roster.members.find((member) => member.id === mineId)?.share
-                    ?.computedAmountMinor ?? null)
+                ? quotaFor(
+                    event,
+                    1 + myGuests.filter((guest) => !guest.claimed).length,
+                    roster.members.find((member) => member.id === mineId)?.share
+                      ?.computedAmountMinor ?? null,
+                  )
                 : null
             }
             currency={event.currency}
-            costMode={event.costMode}
-            attendingCount={roster.attending.length}
             answersOpen={answersOpen && !event.isClosed}
             attendance={mine?.attendance ?? null}
           />

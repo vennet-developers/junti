@@ -552,10 +552,6 @@ export const en: Copy = {
       "You are not confirmed yet — your spot stays pending until the organizer approves your receipt.",
     confirmedBanner: "You are confirmed. All set.",
     yourShare: "Your share",
-    shareSplitNote: (n: number) =>
-      n === 1
-        ? "The total cost splits among whoever confirms — right now that is just you, and your share drops with every person who joins."
-        : `The total cost splits among whoever confirms — currently ${n}, and your share drops if more join.`,
     shareIncludesGuests: (n: number) =>
       n === 1 ? "Includes your guest." : `Includes your ${n} guests.`,
     messageHeldNote:

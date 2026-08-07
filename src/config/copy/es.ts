@@ -650,10 +650,6 @@ export const es = {
       "Aún no estás confirmado — tu cupo queda pendiente hasta que el organizador apruebe tu comprobante.",
     confirmedBanner: "Estás confirmado. Todo en orden.",
     yourShare: "Tu cuota",
-    shareSplitNote: (n: number) =>
-      n === 1
-        ? "El costo total se reparte entre quienes confirmen — por ahora solo vas tú, y tu cuota baja con cada persona que entre."
-        : `El costo total se reparte entre quienes confirmen — hoy son ${n}, y tu cuota baja si entran más.`,
     shareIncludesGuests: (n: number) =>
       n === 1 ? "Incluye tu invitado." : `Incluye tus ${n} invitados.`,
     messageHeldNote:
