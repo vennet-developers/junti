@@ -5,6 +5,7 @@
   out again in this file — would mean a route rename silently breaking exactly
   the links `deepLink` exists to keep correct.
 */
+import type { Copy } from "@/config/copy";
 import { managePath, participantPath } from "@/lib/paths";
 
 /**
@@ -86,6 +87,96 @@ export function deepLink(type: NotificationType, context: LinkContext): string {
   return RECIPIENT_ROLE[type] === "organizer"
     ? managePath(context.publicToken, context.organizerToken)
     : participantPath(context.publicToken);
+}
+
+/**
+ * The sentence for one notification, in the reader's language.
+ *
+ * Moved here from the lib so the push channel and the inbox read the SAME
+ * sentence from the same function — and so it can be tested, which a module
+ * that imports the database client at top level cannot be.
+ *
+ * Defensive about its own payload on purpose: these rows outlive deploys, and a
+ * type whose payload shape changes later would otherwise render "undefined" at
+ * somebody. Anything missing falls back to the event title alone, which is
+ * still a true and openable thing to say.
+ */
+export function sentenceFor(
+  type: NotificationType,
+  payload: Record<string, unknown>,
+  copy: Copy,
+): string {
+  const strings = copy.notifications.types;
+  const name = typeof payload.name === "string" ? payload.name : "";
+
+  switch (type) {
+    case "rsvp_received": {
+      const attendance = payload.attendance;
+      const label =
+        typeof attendance === "string" && attendance in copy.attendance
+          ? copy.attendance[attendance as keyof typeof copy.attendance]
+          : "";
+      return name && label ? strings.rsvpReceived(name, label) : copy.notifications.title;
+    }
+
+    case "approval_pending":
+      return name ? strings.approvalPending(name) : copy.notifications.title;
+
+    case "payment_recorded":
+      return payload.status === "waived" ? strings.paymentWaived : strings.paymentConfirmed;
+
+    case "event_updated": {
+      const changed = Array.isArray(payload.changed) ? (payload.changed as ChangedField[]) : [];
+      const labels = changed
+        .map((field) => copy.notifications.fields[field])
+        .filter((label): label is string => Boolean(label));
+
+      if (labels.length === 0) return copy.notifications.title;
+
+      /*
+        `Intl.ListFormat`, not `join(", ")`. Spanish and English disagree about
+        the last separator ("la fecha y el lugar" against "the date and the
+        place"), and one of the two languages is always wrong when a sentence
+        is assembled with a comma.
+      */
+      return strings.eventUpdated(
+        new Intl.ListFormat(copy.intlLocale, { style: "long", type: "conjunction" }).format(labels),
+      );
+    }
+
+    case "event_cancelled":
+      return strings.eventCancelled;
+  }
+}
+
+/**
+ * Everything a push notification carries, derived — like the inbox — at the
+ * moment of sending, never stored.
+ *
+ * The event title is the push TITLE and the sentence is the body: on a lock
+ * screen the event is the context that makes the sentence readable, exactly
+ * inverse to the drawer, where the sentence leads because the row shows the
+ * title underneath. The URL is `deepLink`'s answer, so a tap lands where the
+ * drawer's tap lands and the two channels cannot drift.
+ */
+export interface PushPayload {
+  title: string;
+  body: string;
+  url: string;
+}
+
+export function pushPayload(
+  type: NotificationType,
+  payload: Record<string, unknown>,
+  eventTitle: string,
+  context: LinkContext,
+  copy: Copy,
+): PushPayload {
+  return {
+    title: eventTitle,
+    body: sentenceFor(type, payload, copy),
+    url: deepLink(type, context),
+  };
 }
 
 /**

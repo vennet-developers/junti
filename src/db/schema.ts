@@ -1271,6 +1271,51 @@ export const outboxMessages = pgTable(
 );
 
 /**
+ * Where a device can be reached with a push, one row per subscription.
+ *
+ * **A delivery address, not an identity.** The endpoint is a browser-minted
+ * URL at the push service (FCM, Mozilla's autopush, Apple's), unique per
+ * browser profile per site — a person has one per device they enabled. It is
+ * held for exactly one purpose: pushing the same notifications the in-app
+ * inbox records, to the devices their owner asked to be reached on.
+ *
+ * **Self-cleaning by protocol.** A push service answers 404/410 for a
+ * subscription that no longer exists — browser reinstalled, permission
+ * revoked, site data cleared — and the sender deletes the row on that answer.
+ * No sweep needed: the next send is the sweep.
+ *
+ * `endpoint` is unique on its own, not per user: the same browser
+ * re-subscribing lands on its existing row (ownership follows the current
+ * session), instead of a device accumulating ghost rows across sign-ins.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey(),
+
+    /** Whose notifications this device receives. */
+    userId: uuid("user_id").notNull(),
+
+    endpoint: text("endpoint").notNull().unique(),
+
+    /** The browser's public key and auth secret — what web-push encrypts to. */
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+
+    /**
+     * Free-text hint of which device this is, for a future "your devices"
+     * list. Never parsed, never trusted.
+     */
+    userAgent: text("user_agent"),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("push_subscriptions_user_idx").on(table.userId)],
+);
+
+export type PushSubscriptionRow = typeof pushSubscriptions.$inferSelect;
+
+/**
  * The in-app inbox: one row per thing somebody should know about.
  *
  * **A real record, not a log of toasts.** The card's own words for what this

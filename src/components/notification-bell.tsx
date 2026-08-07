@@ -15,6 +15,7 @@ import { Text } from "@stackmyth/text";
 import { useRouter } from "@tanstack/react-router";
 
 import { useCopy } from "@/components/copy-provider";
+import { PushToggle } from "@/components/push-toggle";
 import { DrawerContent } from "@/components/drawer-content";
 import { Link } from "@/components/link";
 import { unreadBadge } from "@/domain/notifications";
@@ -245,11 +246,17 @@ function NotificationPanel({ unread, onClose }: { unread: number; onClose: () =>
 
   if (items.length === 0) {
     return (
-      <EmptyState
-        icon={<BellIcon size={24} aria-hidden="true" />}
-        title={copy.notifications.emptyTitle}
-        description={copy.notifications.emptyHelp}
-      />
+      <Stack gap="3">
+        <EmptyState
+          icon={<BellIcon size={24} aria-hidden="true" />}
+          title={copy.notifications.emptyTitle}
+          description={copy.notifications.emptyHelp}
+        />
+        <Divider />
+        {/* The empty inbox is exactly where "reach me when something DOES
+            happen" belongs. */}
+        <PushToggle />
+      </Stack>
     );
   }
 
@@ -324,6 +331,9 @@ function NotificationPanel({ unread, onClose }: { unread: number; onClose: () =>
           {loading ? copy.common.loading : copy.notifications.more}
         </Button>
       ) : null}
+
+      <Divider />
+      <PushToggle />
     </Stack>
   );
 }

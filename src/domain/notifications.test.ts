@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { es } from "@/config/copy/es";
+
 import {
   NOTIFICATION_TYPES,
   RECIPIENT_ROLE,
   changedFields,
   deepLink,
   isNotificationType,
+  pushPayload,
   relativeParts,
   unreadBadge,
   type EventSnapshot,
@@ -161,5 +164,34 @@ describe("how long ago", () => {
    */
   it("never reports the future", () => {
     expect(relativeParts(now + 4_000, now)).toEqual({ value: -0, unit: "second" });
+  });
+});
+
+describe("the push payload", () => {
+  const context = { publicToken: "pub123", organizerToken: "org456" };
+
+  it("leads with the event, then the sentence, then the drawer's own link", () => {
+    const built = pushPayload(
+      "rsvp_received",
+      { name: "Ana", attendance: "in" },
+      "Fútbol del viernes",
+      context,
+      es,
+    );
+
+    expect(built.title).toBe("Fútbol del viernes");
+    expect(built.body).toContain("Ana");
+    // The organizer-facing type deep-links to manage, like the drawer does.
+    expect(built.url).toContain("org456");
+  });
+
+  /**
+   * Rows outlive deploys: a payload whose shape changed later must still
+   * push a true sentence, not "undefined dijo undefined".
+   */
+  it("falls back to a generic line on a payload it no longer understands", () => {
+    const built = pushPayload("rsvp_received", {}, "Fútbol del viernes", context, es);
+    expect(built.body).toBe(es.notifications.title);
+    expect(built.body).not.toContain("undefined");
   });
 });

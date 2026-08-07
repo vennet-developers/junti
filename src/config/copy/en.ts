@@ -928,7 +928,7 @@ export const en: Copy = {
       "Junti is a Vennet product, operated by Iván Elías Ávila Almanza, an individual based in Colombia, who acts as the data controller. For questions, complaints, or to exercise any of your rights, write to hello@vennet.dev. We answer questions within ten business days and complaints within fifteen, as Colombia's Ley 1581 de 2012 requires.",
     dataTitle: "What we keep",
     dataBody:
-      "Your email, your name, your profile photo if you signed in with Google, and your WhatsApp number only if you gave it by ticking the box. If you hold spots for your people, we keep the name you type for each spot — the name only, never an email or a phone: you share the invite link yourself. That name deletes itself when the spot is claimed or a few days after the event, and the person can ask for its removal at any time. For events we keep which ones you joined, what you answered, and whether the organizer recorded your payment. If you accepted a group link, we keep that you are in that group — or that you said no — so whoever runs it can invite you to their events.",
+      "Your email, your name, your profile photo if you signed in with Google, and your WhatsApp number only if you gave it by ticking the box. If you hold spots for your people, we keep the name you type for each spot — the name only, never an email or a phone: you share the invite link yourself. That name deletes itself when the spot is claimed or a few days after the event, and the person can ask for its removal at any time. If you turn alerts on for a device, we keep the technical delivery address your browser creates — it does not identify the device and serves no purpose but sending you your own alerts, and it is deleted when you turn them off or the browser invalidates it. For events we keep which ones you joined, what you answered, and whether the organizer recorded your payment. If you accepted a group link, we keep that you are in that group — or that you said no — so whoever runs it can invite you to their events.",
     purposesTitle: "What for",
     purposesBody:
       "Email is how you get in: there is no password, we send you a link. Your name is what everyone else sees on the event's list. The phone number exists for exactly one thing — so the organizer of an event you joined can reach you on WhatsApp. Groups exist so that we never write to anybody who has not agreed first: you only get invitations from someone whose group you accepted, and you can leave whenever you want.",
@@ -1207,6 +1207,19 @@ export const en: Copy = {
     more: "See more",
     emptyTitle: "Nothing new",
     emptyHelp: "When somebody answers or something changes on your events, you will hear about it here.",
+
+    push: {
+      enable: "Alert me on this device",
+      disable: "Stop alerting this device",
+      help: "You get a notification even with Junti closed. Enabled per device, removable whenever you like.",
+      enabled: "Done — this device now gets alerts.",
+      disabled: "This device no longer gets alerts.",
+      failed: "Could not enable. Try again.",
+      denied:
+        "This browser has Junti's alerts blocked. Unblock them in the site settings, not from here.",
+      iosInstallFirst:
+        "On iPhone, alerts require installing Junti: Share → “Add to Home Screen”, then enable them from the installed app.",
+    },
 
     types: {
       rsvpReceived: (name: string, attendance: string) => `${name}: ${attendance}`,

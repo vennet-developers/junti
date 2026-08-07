@@ -1035,7 +1035,7 @@ export const es = {
       "Junti es un producto de Vennet, operado por Iván Elías Ávila Almanza, persona natural domiciliada en Colombia, quien actúa como responsable del tratamiento. Para consultas, reclamos o para ejercer cualquiera de tus derechos, escribe a hello@vennet.dev. Respondemos consultas dentro de los diez días hábiles y reclamos dentro de los quince que fija la Ley 1581 de 2012.",
     dataTitle: "Qué guardamos",
     dataBody:
-      "Tu correo, tu nombre, tu foto de perfil si entraste con Google, y tu número de WhatsApp solo si lo diste marcando la casilla. Si apartas cupos para tu gente, guardamos el nombre que escribas para cada cupo — solo el nombre, nunca un correo ni un teléfono: el link de invitación lo compartes tú directamente. Ese nombre se borra solo cuando el cupo se reclama o unos días después del evento, y la persona puede pedir su retiro en cualquier momento. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
+      "Tu correo, tu nombre, tu foto de perfil si entraste con Google, y tu número de WhatsApp solo si lo diste marcando la casilla. Si apartas cupos para tu gente, guardamos el nombre que escribas para cada cupo — solo el nombre, nunca un correo ni un teléfono: el link de invitación lo compartes tú directamente. Ese nombre se borra solo cuando el cupo se reclama o unos días después del evento, y la persona puede pedir su retiro en cualquier momento. Si activas los avisos en un dispositivo, guardamos la dirección técnica de entrega que crea tu navegador — no identifica el aparato ni sirve para otra cosa que mandarte tus propios avisos, y se borra al desactivarlos o cuando el navegador la invalida. De los eventos guardamos a qué te apuntaste, qué respondiste y si el organizador registró tu pago. Si aceptaste el link de un grupo, guardamos que estás en ese grupo — o que dijiste que no — para que quien lo organiza pueda invitarte a sus eventos.",
     purposesTitle: "Para qué",
     purposesBody:
       "El correo es cómo entras: no hay contraseña, te mandamos un link. El nombre es lo que ven los demás en la lista del evento. El teléfono existe para una sola cosa, y es que el organizador de un evento al que te apuntaste pueda escribirte por WhatsApp. Los grupos existen para que no tengamos que escribirle a nadie que no haya aceptado antes: solo recibes invitaciones de alguien cuyo grupo aceptaste, y puedes salirte cuando quieras.",
@@ -1346,6 +1346,20 @@ export const es = {
     more: "Ver más",
     emptyTitle: "Nada nuevo",
     emptyHelp: "Cuando alguien responda o cambie algo en tus eventos, te avisamos acá.",
+
+    /** El canal push: activarlo y apagarlo POR DISPOSITIVO, desde el panel. */
+    push: {
+      enable: "Avisarme en este dispositivo",
+      disable: "Ya no avisar en este dispositivo",
+      help: "Te llega una notificación aunque Junti esté cerrado. Se activa por dispositivo y la quitas cuando quieras.",
+      enabled: "Listo — este dispositivo recibe avisos.",
+      disabled: "Este dispositivo ya no recibe avisos.",
+      failed: "No se pudo activar. Intenta de nuevo.",
+      denied:
+        "Este navegador tiene los avisos de Junti bloqueados. Se desbloquean en la configuración del sitio, no desde acá.",
+      iosInstallFirst:
+        "En iPhone los avisos requieren instalar Junti: Compartir → «Añadir a pantalla de inicio», y actívalos desde la app instalada.",
+    },
 
     /** What each type says. The event's own title goes on the line below. */
     types: {

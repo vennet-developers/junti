@@ -41,8 +41,15 @@ import { consentEvents, emailSuppressions, invitations } from "@/db/schema";
  * lifecycle stated: name only, self-deleting, removable on request. Two
  * substance changes sharing one version string is fine; the string names the
  * text that was on screen, and both changes shipped together.
+ *
+ * 2026-08-07: push subscriptions. A new class of data — the delivery
+ * endpoint a browser mints when somebody turns device alerts on — with its
+ * lifecycle stated: sends nothing but their own notifications, deleted on
+ * opt-out or when the push service invalidates it. User-initiated and
+ * per-device, but a stored technical address about a person is a stored
+ * technical address, and the notice now says so.
  */
-export const POLICY_VERSION = "2026-08-06";
+export const POLICY_VERSION = "2026-08-07";
 
 /**
  * What can be consented to, separately.

@@ -197,6 +197,13 @@
       "when": 1786053466017,
       "tag": "0027_unknown_orphan",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1786106935284,
+      "tag": "0028_deep_banshee",
+      "breakpoints": true
     }
   ]
 }

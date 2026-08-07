@@ -137,6 +137,16 @@ received an email (verified address, not suppressed, not a same-day repeat).
 The distance between the two numbers is the feature's coverage, which is why
 both travel.
 
+## Push
+
+| Event | Fired | `props` |
+| --- | --- | --- |
+| `push_enabled` | **Server**, in `savePushSubscriptionFn` | `{}` |
+
+One device turned alerts on. No endpoint, no user agent in `props` — the
+subscription row holds those, and this table only needs to answer "is anyone
+using this".
+
 ## Groups
 
 | Event | Fired | `props` |

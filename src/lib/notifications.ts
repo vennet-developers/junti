@@ -11,7 +11,7 @@ import {
   UNREAD_CAP,
   deepLink,
   relativeParts,
-  type ChangedField,
+  sentenceFor,
   type NotificationType,
 } from "@/domain/notifications";
 
@@ -65,6 +65,21 @@ export async function record(
 
   try {
     await db.insert(notifications).values(rows);
+
+    /*
+      The push mirror, fed the same filtered inputs the inbox just stored —
+      one call site, both channels, which is the only way a lock screen and a
+      bell can be made to agree. Awaited (a serverless runtime may not finish
+      unawaited work) but wrapped in its own silence: push failing must not
+      report the inbox write as failed.
+    */
+    try {
+      const { pushRecorded } = await import("@/lib/push");
+      await pushRecorded(inputs.filter((input) => input.userId !== actorId));
+    } catch {
+      // Best-effort by design — see src/lib/push.ts.
+    }
+
     return rows.length;
   } catch {
     return 0;
@@ -162,7 +177,7 @@ export async function loadNotifications(
 
     return {
       id: row.id,
-      text: sentence(type, row.payload as Record<string, unknown>, copy),
+      text: sentenceFor(type, row.payload as Record<string, unknown>, copy),
       eventTitle: row.eventTitle,
       when: relative.format(value, unit),
       href: deepLink(type, {
@@ -179,58 +194,6 @@ export async function loadNotifications(
     // more" control cannot appear over an empty next page.
     cursor: rows.length > PAGE_SIZE ? (page[page.length - 1]?.id ?? null) : null,
   };
-}
-
-/**
- * The sentence for one row, in the reader's language.
- *
- * Defensive about its own payload on purpose: these rows outlive deploys, and a
- * type whose payload shape changes later would otherwise render "undefined" at
- * somebody. Anything missing falls back to the event title alone, which is
- * still a true and openable thing to say.
- */
-function sentence(type: NotificationType, payload: Record<string, unknown>, copy: Copy): string {
-  const strings = copy.notifications.types;
-  const name = typeof payload.name === "string" ? payload.name : "";
-
-  switch (type) {
-    case "rsvp_received": {
-      const attendance = payload.attendance;
-      const label =
-        typeof attendance === "string" && attendance in copy.attendance
-          ? copy.attendance[attendance as keyof typeof copy.attendance]
-          : "";
-      return name && label ? strings.rsvpReceived(name, label) : copy.notifications.title;
-    }
-
-    case "approval_pending":
-      return name ? strings.approvalPending(name) : copy.notifications.title;
-
-    case "payment_recorded":
-      return payload.status === "waived" ? strings.paymentWaived : strings.paymentConfirmed;
-
-    case "event_updated": {
-      const changed = Array.isArray(payload.changed) ? (payload.changed as ChangedField[]) : [];
-      const labels = changed
-        .map((field) => copy.notifications.fields[field])
-        .filter((label): label is string => Boolean(label));
-
-      if (labels.length === 0) return copy.notifications.title;
-
-      /*
-        `Intl.ListFormat`, not `join(", ")`. Spanish and English disagree about
-        the last separator ("la fecha y el lugar" against "the date and the
-        place"), and one of the two languages is always wrong when a sentence
-        is assembled with a comma.
-      */
-      return strings.eventUpdated(
-        new Intl.ListFormat(copy.intlLocale, { style: "long", type: "conjunction" }).format(labels),
-      );
-    }
-
-    case "event_cancelled":
-      return strings.eventCancelled;
-  }
 }
 
 /**
