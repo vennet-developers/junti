@@ -349,17 +349,17 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
               <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
                 {p.attendance.heading}
               </Text>
-              {/* The categorical slots are remapped to the attendance colors
-                  the rest of the app already speaks — see `.junti-respuestas`
-                  in globals.css. Slot order must match part order. */}
+              {/* Each part carries its own semantic token — "van" HAS a color
+                  in this product — through the prop the library grew for
+                  exactly this. The scoped CSS that remapped the categorical
+                  slots died with it. */}
               <SegmentBar
-                className="junti-respuestas"
                 ariaLabel={p.attendance.heading}
                 parts={[
-                  { label: p.attendance.going, value: overview.attendance.going, color: 1 },
-                  { label: p.attendance.maybe, value: overview.attendance.maybe, color: 2 },
-                  { label: p.attendance.notGoing, value: overview.attendance.notGoing, color: 3 },
-                  { label: p.attendance.waitlisted, value: overview.attendance.waitlisted, color: 4 },
+                  { label: p.attendance.going, value: overview.attendance.going, token: "--junti-viene-fill" },
+                  { label: p.attendance.maybe, value: overview.attendance.maybe, token: "--junti-talvez-fill" },
+                  { label: p.attendance.notGoing, value: overview.attendance.notGoing, token: "--junti-noviene-fg" },
+                  { label: p.attendance.waitlisted, value: overview.attendance.waitlisted, token: "--junti-espera-fill" },
                 ]}
               />
             </Stack>

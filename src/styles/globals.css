@@ -572,21 +572,6 @@ body {
   flex-direction: column;
 }
 
-/*
-  Los charts ahora vienen de @stackmyth/charts (0.26.2) — los espejos locales
-  y sus selectores murieron con la release, como prometía la nota que vivía
-  aquí. Lo único que queda es de Junti: qué significan los colores.
-
-  El SegmentBar de respuestas habla la paleta de asistencia que el resto de
-  la app ya usa. Los slots categóricos del paquete se remapean en el ámbito
-  del componente — el orden de los slots es el orden de las partes.
-*/
-.junti-respuestas {
-  --sm-charts-cat-1: var(--junti-viene-fill, var(--junti-viene-fg));
-  --sm-charts-cat-2: var(--junti-talvez-fill, var(--junti-talvez-fg));
-  --sm-charts-cat-3: var(--junti-noviene-fill, var(--junti-noviene-fg));
-  --sm-charts-cat-4: var(--junti-espera-fill, var(--junti-espera-fg));
-}
 
 /* La campana del header: un círculo clavado a la altura exacta de la cápsula
    de la cuenta (46px — la infla su avatar de 32px, no el padding), con el
@@ -600,14 +585,4 @@ body {
   position: absolute;
   top: -0.3rem;
   right: -0.3rem;
-}
-
-/* El trigger del DatePicker del panel, clavado a la altura medida de los
-   chips (33.5px): la escala de campos encierra a la de botones — sm da 28px,
-   md da 36px — y la fila debe ser UNA altura. */
-.junti-fecha-rango button {
-  height: 2.09375rem;
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
 }

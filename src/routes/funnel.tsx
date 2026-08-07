@@ -279,13 +279,12 @@ function RangeFilter({
             Choosing a day IS the action: it navigates like the chips do,
             full reload, because a date change moves every number on the
             page. */}
-        <Box className="junti-fecha-rango">
         <DatePicker
-          /* `md`, then pinned: the field scale brackets the button scale —
-             `sm` lands at 28px and `md` at 36px around chips of 33.5px — so
-             the wrapper clamps the trigger to the chips' measured height,
-             the same trick the native input needed before it. */
-          size="md"
+          /* `sm`, plain: since 0.26.3 every sized control constructs its
+             height from the same core tokens, so the trigger measures
+             exactly like the chips beside it with no clamp. The wrapper
+             that pinned it dies with the scale bug. */
+          size="sm"
           value={range.preset === "custom" ? new Date(range.fromISO) : null}
           onValueChange={(date) => {
             if (date) window.location.assign(`/funnel?desde=${asParam(date)}`);
@@ -299,7 +298,6 @@ function RangeFilter({
           showOutsideDays
           clearable={false}
         />
-        </Box>
       </Flex>
 
       <Text variant="small" color="muted">
