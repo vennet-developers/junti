@@ -1001,6 +1001,31 @@ export async function reviewSubmission(
   */
   if (parsed.data.decision === "approved") await deleteEvidence(submission.id);
 
+  /*
+    Approving a PAYMENT receipt is receiving the payment — one act, not two.
+
+    Ivan approved Elias's comprobante and then watched "Cuentas" insist
+    nothing had been collected, because approval only settled the policy
+    while the money waited for a separate "Pagó" tap the flow never pointed
+    at. For the one policy whose evidence IS the transfer (`proof_of_payment`
+    by slug), the approval now confirms the payment at the amount the ledger
+    was asking — the quota — exactly as pressing "Pagó" would. Other
+    policies ("Leí las indicaciones") keep money and compliance apart, as
+    they should: reading the rules is not paying.
+
+    Confirmed-only-if-pending: an organizer who already recorded a different
+    amount by hand is not overwritten by a review click.
+  */
+  if (parsed.data.decision === "approved" && submission.policySlug === "proof_of_payment") {
+    await syncPayments(event);
+    await db
+      .update(payments)
+      .set({ status: "confirmed", confirmedAt: new Date() })
+      .where(
+        and(eq(payments.participantId, submission.participantId), eq(payments.status, "pending")),
+      );
+  }
+
   // The decision, not the reason. A rejection reason is free text somebody
   // typed about another person.
   track("policy_reviewed", { event_id: event.id, decision: parsed.data.decision });

@@ -22,51 +22,72 @@ export type { RsvpState, SubmissionState };
 
 const token = (data: FormData) => String(data.get("publicToken") ?? "");
 
+/**
+ * Broadcasts "changed" on the event's topic after a mutation that took, so
+ * every OTHER open page re-reads its loaders too — the caller's own
+ * `router.invalidate()` only refreshes the person who clicked. Success is
+ * exactly what the callers already test: an empty `errors` record. Applied
+ * here, at the RPC boundary, so no action body has to remember it — a
+ * mutation nobody announces is how "aprobado" sat on one screen while the
+ * other still said "pendiente". Runs server-side only; the dynamic import
+ * keeps this browser-bound module clean of server code.
+ */
+async function pinged<T extends { errors: Record<string, string> }>(
+  publicToken: string,
+  result: T,
+): Promise<T> {
+  if (Object.keys(result.errors).length === 0) {
+    const { pingEvent } = await import("@/lib/live");
+    await pingEvent(publicToken);
+  }
+  return result;
+}
+
 export const submitRsvpFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }): Promise<RsvpState> => {
     const { submitRsvp } = await import("./-actions.server");
-    return submitRsvp(token(data), data);
+    return pinged(token(data), await submitRsvp(token(data), data));
   });
 
 export const joinOneTapFn = createServerFn({ method: "POST" })
   .validator((data: { publicToken: string }) => data)
   .handler(async ({ data }): Promise<RsvpState> => {
     const { joinOneTap } = await import("./-actions.server");
-    return joinOneTap(data.publicToken);
+    return pinged(data.publicToken, await joinOneTap(data.publicToken));
   });
 
 export const submitPolicyResponseFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }): Promise<SubmissionState> => {
     const { submitPolicyResponse } = await import("./-actions.server");
-    return submitPolicyResponse(token(data), data);
+    return pinged(token(data), await submitPolicyResponse(token(data), data));
   });
 
 export const saveCommitmentFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }): Promise<RsvpState> => {
     const { saveCommitment } = await import("./-actions.server");
-    return saveCommitment(token(data), data);
+    return pinged(token(data), await saveCommitment(token(data), data));
   });
 
 export const deleteCommitmentFn = createServerFn({ method: "POST" })
   .validator((data: { publicToken: string; noteId: string }) => data)
   .handler(async ({ data }): Promise<RsvpState> => {
     const { deleteCommitment } = await import("./-actions.server");
-    return deleteCommitment(data.publicToken, data.noteId);
+    return pinged(data.publicToken, await deleteCommitment(data.publicToken, data.noteId));
   });
 
 export const holdSpotsFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }): Promise<RsvpState> => {
     const { holdSpots } = await import("./-actions.server");
-    return holdSpots(token(data), data);
+    return pinged(token(data), await holdSpots(token(data), data));
   });
 
 export const releaseSpotFn = createServerFn({ method: "POST" })
   .validator((data: FormData) => data)
   .handler(async ({ data }): Promise<RsvpState> => {
     const { releaseSpot } = await import("./-actions.server");
-    return releaseSpot(token(data), data);
+    return pinged(token(data), await releaseSpot(token(data), data));
   });

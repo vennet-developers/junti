@@ -797,6 +797,7 @@ function toSubmissionDetail(
   return {
     id: row.id,
     policyId: row.policyId,
+    policySlug: row.policySlug,
     policyLabel: row.policyOverride ?? pickLabel(row.policyLabels, locale, row.policySlug),
     policyHandler: row.policyHandler,
     participantId: row.participantId,
@@ -811,6 +812,8 @@ function toSubmissionDetail(
 export interface SubmissionDetail {
   id: string;
   policyId: string;
+  /** The definition's slug — the stable name behaviour can key on (`proof_of_payment`). */
+  policySlug: string;
   policyLabel: string;
   policyHandler: string;
   participantId: string;

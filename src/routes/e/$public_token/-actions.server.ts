@@ -861,6 +861,9 @@ export async function holdSpots(publicToken: string, formData: FormData): Promis
 
   await db.insert(heldSpots).values(values);
 
+  // Held seats weigh on the sponsor's bill now — the ledger must hear.
+  await syncPayments(event);
+
   track("spot_held", { event_id: event.id, count: requested }, organizer.id);
   return { errors: {}, ok: true };
 }
@@ -894,6 +897,9 @@ export async function releaseSpot(publicToken: string, formData: FormData): Prom
         isNull(heldSpots.claimedBy),
       ),
     );
+
+  // A released seat stops weighing on the sponsor's bill.
+  await syncPayments(event);
 
   return { errors: {}, ok: true };
 }

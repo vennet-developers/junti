@@ -485,3 +485,68 @@ describe("computeSplit — the definition-of-done scenario", () => {
     expect(result.discrepancies).toHaveLength(0);
   });
 });
+
+describe("the convocatoria's quota (total mode with capacity)", () => {
+  const people = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `p${i + 1}`,
+      joinedAt: new Date(2026, 0, i + 1),
+      attendance: "in" as const,
+      payment: null,
+    }));
+
+  it("asks each pending seat for total/capacity, not the live split", () => {
+    // $260.000 entre 10 cupos = $26.000 la cuota — aunque solo haya UNA
+    // persona adentro. El primero en llegar NO carga el evento entero.
+    const split = computeSplit({
+      costMode: "total",
+      costAmountMinor: 260_000_00,
+      capacity: 10,
+      participants: people(1),
+    });
+
+    expect(split.shares[0]!.effectiveAmountMinor).toBe(26_000_00);
+    // The FINAL truth stays the live split — settlement depends on it.
+    expect(split.shares[0]!.computedAmountMinor).toBe(260_000_00);
+    expect(split.outstandingMinor).toBe(26_000_00);
+  });
+
+  it("bills a sponsor the quota times their seats", () => {
+    const [sponsor] = people(1);
+    const split = computeSplit({
+      costMode: "total",
+      costAmountMinor: 260_000_00,
+      capacity: 10,
+      participants: [{ ...sponsor!, weight: 3 }],
+    });
+
+    expect(split.shares[0]!.effectiveAmountMinor).toBe(78_000_00);
+  });
+
+  it("keeps confirmed money and the settlement arithmetic untouched", () => {
+    // Paid the quota, then the roster settled at 8 of 10: the discrepancy
+    // against the LIVE split is what Cuentas finales reads.
+    const eight = people(8).map((p) => ({
+      ...p,
+      payment: { status: "confirmed" as const, amountMinor: 26_000_00 },
+    }));
+    const split = computeSplit({
+      costMode: "total",
+      costAmountMinor: 260_000_00,
+      capacity: 10,
+      participants: eight,
+    });
+
+    expect(split.shares[0]!.computedAmountMinor).toBe(32_500_00);
+    expect(split.shares[0]!.discrepancyMinor).toBe(-6_500_00);
+  });
+
+  it("changes nothing without a capacity", () => {
+    const split = computeSplit({
+      costMode: "total",
+      costAmountMinor: 100_00,
+      participants: people(2),
+    });
+    expect(split.shares.map((s) => s.effectiveAmountMinor)).toEqual([50_00, 50_00]);
+  });
+});

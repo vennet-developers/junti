@@ -9,6 +9,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
+import { LiveEvent } from "@/components/live-event";
 import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RsvpCountdown, useConvocation } from "@/components/rsvp-countdown";
@@ -511,6 +512,11 @@ function ParticipantPage() {
         {/* Writes this device's zone into a cookie on a first visit, so the
             server renders every later paint on the right clock. */}
         <TimeZoneSync hasPreference={hasTimeZonePreference} />
+
+        {/* Re-reads the loaders when anyone else changes this event — an
+            approval, a claim, a dropout — so "Pendiente" becomes
+            "Confirmado" without a refresh. */}
+        <LiveEvent publicToken={publicToken} />
 
         {/* The top of the participant funnel. `signedIn` is the closest thing
             to "did they arrive from an invitation" that does not require a

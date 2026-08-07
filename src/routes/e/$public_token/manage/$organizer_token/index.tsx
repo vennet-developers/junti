@@ -11,6 +11,7 @@ import { CreatedToast } from "@/components/created-toast";
 import { Disclosure } from "@/components/disclosure";
 import { EventHeader } from "@/components/event-header";
 import { Link } from "@/components/link";
+import { LiveEvent } from "@/components/live-event";
 import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
@@ -340,6 +341,10 @@ function ManagePage() {
   return (
     <Container size="4" px="4" py="6">
       <Stack gap="6">
+        {/* The organizer's side of the same wire: a comprobante or an RSVP
+            arriving lands in the queue and the roster without a refresh. */}
+        <LiveEvent publicToken={publicToken} />
+
         <PageBreadcrumb
           label={copy.nav.breadcrumbLabel}
           items={[

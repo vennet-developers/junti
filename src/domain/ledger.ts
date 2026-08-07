@@ -25,6 +25,8 @@ export interface LedgerParticipant {
   /** `created_at`. Decides who absorbs the rounding remainder. */
   joinedAt: Date;
   attendance: Attendance;
+  /** Seats this row answers for — 1 plus unclaimed held guests. */
+  weight?: number;
   /** Null when no payment row exists yet. */
   payment: { id: string; status: PaymentStatus; amountMinor: number } | null;
 }
@@ -33,6 +35,8 @@ export interface LedgerInput {
   costMode: CostMode;
   costAmountMinor: number | null;
   participants: readonly LedgerParticipant[];
+  /** The convocatoria's size — see `SplitInput.capacity`. */
+  capacity?: number | null;
 }
 
 export interface LedgerPlan {
@@ -51,7 +55,7 @@ export interface LedgerPlan {
  * remove — they are disjoint, so the order only matters for readability.
  */
 export function planLedger(input: LedgerInput): LedgerPlan {
-  const { costMode, costAmountMinor, participants } = input;
+  const { costMode, costAmountMinor, participants, capacity } = input;
 
   const plan: LedgerPlan = { create: [], update: [], remove: [] };
 
@@ -78,7 +82,7 @@ export function planLedger(input: LedgerInput): LedgerPlan {
     return plan;
   }
 
-  const split = computeSplit({ costMode, costAmountMinor, participants });
+  const split = computeSplit({ costMode, costAmountMinor, participants, capacity });
   const sharesById = new Map(split.shares.map((share) => [share.participantId, share]));
 
   for (const participant of participants) {
@@ -86,7 +90,9 @@ export function planLedger(input: LedgerInput): LedgerPlan {
     if (!share) continue;
 
     if (!participant.payment) {
-      plan.create.push({ participantId: participant.id, amountMinor: share.computedAmountMinor });
+      // The ASK, not the live split — see computeSplit's planned/computed
+      // note. For pending rows the share's effective amount IS the ask.
+      plan.create.push({ participantId: participant.id, amountMinor: share.effectiveAmountMinor });
       continue;
     }
 
@@ -94,10 +100,10 @@ export function planLedger(input: LedgerInput): LedgerPlan {
     // organizer by `computeSplit` as a discrepancy rather than reconciled here.
     if (participant.payment.status === "confirmed") continue;
 
-    if (participant.payment.amountMinor !== share.computedAmountMinor) {
+    if (participant.payment.amountMinor !== share.effectiveAmountMinor) {
       plan.update.push({
         paymentId: participant.payment.id,
-        amountMinor: share.computedAmountMinor,
+        amountMinor: share.effectiveAmountMinor,
       });
     }
   }

@@ -34,6 +34,13 @@ export interface SplitInput {
   /** Minor units. Null or absent when `costMode` is `none`. */
   costAmountMinor: number | null;
   participants: readonly SplitParticipant[];
+  /**
+   * The convocatoria's size. When set on a total-mode event, the QUOTA —
+   * what each seat is asked to pay up front — is total/capacity, the number
+   * the plan was agreed on ("$260.000 la cancha entre 10"). Without it there
+   * is no planned denominator and the ask falls back to the live split.
+   */
+  capacity?: number | null;
 }
 
 export interface Share {
@@ -137,11 +144,41 @@ export function evenShares(totalMinor: number, count: number): number[] {
  * vanish, the organizer absorbs it.
  */
 export function computeSplit(input: SplitInput): SplitResult {
-  const { costMode, costAmountMinor, participants } = input;
+  const { costMode, costAmountMinor, participants, capacity } = input;
 
   const attending = participants.filter((p) => p.attendance === ATTENDING).sort(byJoinOrder);
 
   const amounts = new Map<string, number>();
+
+  /*
+    Two different numbers per share, on purpose:
+
+    - `computed` — the FINAL truth: the live split among whoever attends.
+      Settlement compares confirmed money against this, which is what makes
+      "Cuentas finales" able to say who still owes what after dropouts.
+    - `planned` — the ASK: what a pending person is billed today. On a
+      total-mode event with a capacity that is the convocatoria's quota
+      (total/capacity × their seats), because "$260.000 entre 10 cupos" is
+      the number people agreed to transfer — NOT the live split, which
+      starts at the full total for the first person in and reads as the app
+      charging them the event. Everywhere else the two coincide.
+  */
+  const planned = new Map<string, number>();
+
+  if (costMode === "total" && costAmountMinor !== null && capacity && capacity > 0) {
+    const unitQuotas = evenShares(costAmountMinor, capacity);
+    let cursor = 0;
+    for (const participant of attending) {
+      const weight = participant.weight ?? 1;
+      let amount = 0;
+      for (let i = 0; i < weight; i++) {
+        // Units past the convocatoria's size (guests squeezed in over
+        // capacity) still pay a quota — the last one's, the base rate.
+        amount += unitQuotas[Math.min(cursor++, unitQuotas.length - 1)] ?? 0;
+      }
+      planned.set(participant.id, amount);
+    }
+  }
 
   if (costMode === "per_person" && costAmountMinor !== null) {
     for (const participant of attending) {
@@ -181,7 +218,7 @@ export function computeSplit(input: SplitInput): SplitResult {
 
     totalComputedMinor += computedAmountMinor;
 
-    let effectiveAmountMinor = computedAmountMinor;
+    let effectiveAmountMinor = planned.get(participant.id) ?? computedAmountMinor;
     let discrepancyMinor = 0;
 
     if (status === "confirmed" && participant.payment) {

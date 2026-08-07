@@ -239,6 +239,15 @@ const claimSpotFn = createServerFn({ method: "POST" })
 
     if (result === "taken") return { error: copy.claim.taken };
 
+    // The seat left the sponsor's weight and became the claimant's own row.
+    const { syncPayments } = await import("@/lib/payments");
+    await syncPayments(event);
+
+    // The sponsor is usually looking at the event page when their guest
+    // claims — this is the mutation most often watched from another screen.
+    const { pingEvent } = await import("@/lib/live");
+    await pingEvent(event.publicToken);
+
     track("spot_claimed", { event_id: event.id }, organizer.id);
     return { error: null, eventPath: `/e/${event.publicToken}` };
   });

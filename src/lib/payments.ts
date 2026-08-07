@@ -1,10 +1,10 @@
 import "@/server/assert-server";
 
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 
 import { db } from "@/db/client";
-import { events, participants, payments } from "@/db/schema";
+import { events, heldSpots, participants, payments } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
 import { planLedger } from "@/domain/ledger";
 
@@ -41,13 +41,32 @@ export async function syncPayments(event: EventRow): Promise<void> {
       .leftJoin(payments, eq(payments.participantId, participants.id))
       .where(eq(participants.eventId, event.id));
 
+    /*
+      Unclaimed held spots weigh on their sponsor's bill. Read inside the
+      same transaction as the roster: a spot claimed between the two reads
+      would bill one answer for a seat another answer now owns. This read
+      was MISSING for as long as weights existed — the roster showed a
+      sponsor owing for three seats while the ledger billed them for one,
+      and confirming "Pagó" recorded a third of their real share.
+    */
+    const spots = await tx
+      .select({ sponsorParticipantId: heldSpots.sponsorParticipantId })
+      .from(heldSpots)
+      .where(and(eq(heldSpots.eventId, event.id), isNull(heldSpots.claimedBy)));
+    const guestsOf = new Map<string, number>();
+    for (const spot of spots) {
+      guestsOf.set(spot.sponsorParticipantId, (guestsOf.get(spot.sponsorParticipantId) ?? 0) + 1);
+    }
+
     const plan = planLedger({
       costMode: event.costMode,
       costAmountMinor: event.costAmountMinor,
+      capacity: event.capacity,
       participants: rows.map((row) => ({
         id: row.participant.id,
         joinedAt: row.participant.createdAt,
         attendance: row.participant.attendance,
+        weight: 1 + (guestsOf.get(row.participant.id) ?? 0),
         payment: row.payment
           ? {
               id: row.payment.id,
