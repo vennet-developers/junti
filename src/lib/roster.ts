@@ -368,6 +368,11 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
       ...toSplitParticipant(row),
       weight: weightOf(row.participant.id),
     })),
+    // Without this the page recomputes the LIVE split for pending rows —
+    // $260.000 "entre 1 persona" on the first joiner's screen — while the
+    // ledger underneath asks the quota. Same input as `planLedger`, so what
+    // is shown and what is billed can never disagree.
+    capacity: eventRow.capacity,
   });
 
   const sharesById = new Map(split.shares.map((share) => [share.participantId, share]));
