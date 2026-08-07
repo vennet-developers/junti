@@ -344,6 +344,7 @@ export const en: Copy = {
     missing: (amount: string) => `Lacks ${amount}`,
     received: "Got the difference",
     receiving: "Saving…",
+    receivedDone: (name: string) => `Done — ${name} is square.`,
     requestEmails: "Request the balance by email",
     requesting: "Sending…",
     requested: (n: number) =>

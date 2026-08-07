@@ -1,4 +1,4 @@
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "@tanstack/react-router";
 
 import { Banner } from "@stackmyth/banner";
@@ -41,7 +41,16 @@ export function SettlementCard({
 }) {
   const { copy } = useCopy();
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+
+  /*
+    WHICH row is saving, not WHETHER something is. One shared transition put
+    every button into "Guardando…" the moment any one was pressed — eight
+    buttons announcing work that one of them was doing. The id scopes the
+    state to the row that owns it; the other rows stay pressable, which is
+    safe because the write is idempotent per person.
+  */
+  const [settlingId, setSettlingId] = useState<string | null>(null);
+  const [requesting, startRequest] = useTransition();
 
   const { event } = roster;
   if (!event.hasCost) return null;
@@ -61,10 +70,26 @@ export function SettlementCard({
   const strings = copy.settlement;
 
   function received(participantId: string) {
-    startTransition(async () => {
-      await settleTopUpFn({ data: { publicToken, organizerToken, participantId } });
-      await router.invalidate();
-    });
+    setSettlingId(participantId);
+
+    void settleTopUpFn({ data: { publicToken, organizerToken, participantId } })
+      .then(async (result) => {
+        /*
+          A failure used to vanish here — the card swallowed `errors` and the
+          press ended in nothing, which reads as a broken button. Every
+          outcome now says something: the error out loud, or the row leaving
+          the list WITH a receipt, because the disappearance alone reads as
+          "nothing happened" to someone watching the button they pressed.
+        */
+        if (result.errors._form) {
+          toast.error(result.errors._form);
+          return;
+        }
+
+        toast.success(strings.receivedDone(names.get(participantId) ?? ""));
+        await router.invalidate();
+      })
+      .finally(() => setSettlingId(null));
   }
 
   /*
@@ -75,7 +100,7 @@ export function SettlementCard({
     everyone" and "three of eight had a verified email" are different facts.
   */
   function requestByEmail() {
-    startTransition(async () => {
+    startRequest(async () => {
       const result = await requestSettlementFn({ data: { publicToken, organizerToken } });
       if ((result.sent ?? 0) > 0) {
         toast.success(strings.requested(result.sent ?? 0));
@@ -126,10 +151,12 @@ export function SettlementCard({
                         type="button"
                         size="sm"
                         variant="secondary"
-                        disabled={pending}
+                        disabled={settlingId === topUp.participantId}
                         onClick={() => received(topUp.participantId)}
                       >
-                        {pending ? strings.receiving : strings.received}
+                        {settlingId === topUp.participantId
+                          ? strings.receiving
+                          : strings.received}
                       </Button>
                     </Flex>
                   </Flex>
@@ -141,10 +168,10 @@ export function SettlementCard({
                   type="button"
                   size="sm"
                   variant="primary"
-                  disabled={pending}
+                  disabled={requesting}
                   onClick={requestByEmail}
                 >
-                  {pending ? strings.requesting : strings.requestEmails}
+                  {requesting ? strings.requesting : strings.requestEmails}
                 </Button>
               </Flex>
             </>

@@ -428,6 +428,7 @@ export const es = {
     missing: (amount: string) => `Le falta ${amount}`,
     received: "Recibí la diferencia",
     receiving: "Guardando…",
+    receivedDone: (name: string) => `Listo — ${name} quedó al día.`,
     requestEmails: "Pedir el saldo por correo",
     requesting: "Enviando…",
     requested: (n: number) =>
