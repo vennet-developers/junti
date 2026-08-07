@@ -201,7 +201,13 @@ export function InviteForm({ publicToken, organizerToken, group, members }: Invi
           </Text>
         ) : null}
 
-        <Button type="submit" size="md" variant="secondary" disabled={pending || picked.size === 0}>
+        <Button
+          type="submit"
+          size="md"
+          variant="secondary"
+          disabled={pending || picked.size === 0}
+          loading={pending}
+        >
           {pending ? copy.invites.submitting : copy.invites.submit(picked.size)}
         </Button>
       </Stack>
@@ -281,6 +287,7 @@ export function InvitedList({
                 size="sm"
                 variant="ghost"
                 disabled={resending === invitation.id}
+                loading={resending === invitation.id}
                 onClick={() => resend(invitation.id)}
               >
                 {resending === invitation.id ? copy.invites.resending : copy.invites.resend}

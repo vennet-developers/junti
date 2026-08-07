@@ -73,7 +73,7 @@ export function CloseEventControl({
         title={isClosed ? copy.manage.reopenConfirmTitle : copy.manage.closeConfirmTitle}
         description={isClosed ? copy.manage.reopenConfirmBody : copy.manage.closeConfirmBody}
         confirm={
-          <Button type="button" size="md" variant="primary">
+          <Button type="button" size="md" variant="primary" loading={pending}>
             {pending
               ? isClosed
                 ? copy.manage.reopening
@@ -156,7 +156,7 @@ export function CancelEventControl({
       title={copy.manage.cancelConfirm(title)}
       description={copy.manage.cancelConfirmBody}
       confirm={
-        <Button type="button" size="md" variant="destructive">
+        <Button type="button" size="md" variant="destructive" loading={pending}>
           {pending ? copy.manage.cancelling : copy.manage.cancel}
         </Button>
       }

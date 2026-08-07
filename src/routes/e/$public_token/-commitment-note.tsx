@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@stackmyth/button";
 import { Flex } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 
@@ -66,11 +67,19 @@ export function CommitmentNote({
           variant="ghost"
           className="junti-accion-peligro"
           disabled={pending}
+          loading={pending}
           aria-label={`${copy.commitments.removeOne} — ${authorName}`}
           onClick={() => {
             setPending(true);
             void deleteCommitmentFn({ data: { publicToken, noteId } })
-              .then(() => router.invalidate())
+              .then(async (result) => {
+                if (result.errors._form) {
+                  toast.error(result.errors._form);
+                  return;
+                }
+                await router.invalidate();
+                toast.success(copy.commitments.removedToast);
+              })
               .finally(() => setPending(false));
           }}
         >

@@ -1,6 +1,6 @@
 import "@/server/assert-server";
 
-import { and, eq, inArray, notInArray } from "drizzle-orm";
+import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { uuidv7 } from "uuidv7";
 import { z } from "zod";
 
@@ -13,6 +13,7 @@ import {
   invitations,
   participants,
   payments,
+  policyDefinitions,
   policySubmissions,
 } from "@/db/schema";
 import type { EventRow } from "@/db/schema";
@@ -185,6 +186,42 @@ export async function setPaymentStatus(
     roster no longer supports, waiting for the first thing that trusts it.
   */
   if (status.data !== "confirmed") await syncPayments(event);
+
+  /*
+    reviewSubmission's rule, read in the other direction: recording the money
+    settles the receipt. "Marcar como pagado" while a comprobante waits in
+    the queue must not leave that comprobante asking for a second judgment
+    about the same transfer — the organizer just made it. So a confirmation
+    approves any pending proof_of_payment submission exactly as the review
+    button would: status, timestamps, and the evidence deleted, because a
+    receipt whose question is answered is only a liability (see
+    reviewSubmission). No separate notification — the payment_recorded one
+    below already tells them, and "aprobado" twice for one tap is noise.
+  */
+  if (status.data === "confirmed") {
+    const pendingProofs = await db
+      .select({ id: policySubmissions.id })
+      .from(policySubmissions)
+      .innerJoin(eventPolicies, eq(eventPolicies.id, policySubmissions.policyId))
+      .innerJoin(policyDefinitions, eq(policyDefinitions.id, eventPolicies.policyDefinitionId))
+      .where(
+        and(
+          eq(eventPolicies.eventId, event.id),
+          eq(policySubmissions.participantId, participant.id),
+          eq(policyDefinitions.slug, "proof_of_payment"),
+          eq(policySubmissions.status, "submitted"),
+        ),
+      );
+
+    for (const proof of pendingProofs) {
+      await db
+        .update(policySubmissions)
+        .set({ status: "approved", reviewNote: null, reviewedAt: new Date(), updatedAt: new Date() })
+        .where(eq(policySubmissions.id, proof.id));
+      await deleteEvidence(proof.id);
+      track("policy_reviewed", { event_id: event.id, decision: "approved" });
+    }
+  }
 
   /*
     Told, and only about the two settled outcomes.
@@ -512,8 +549,26 @@ export async function removeParticipant(
   const participantId = participantIdSchema.safeParse(rawParticipantId);
   if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
 
+  /*
+    A state, not a deletion. The row used to be DELETEd here, and with it every
+    fact a later dispute needs: that they were on the list, what they were
+    asked for, whether money changed hands, when they left. Now "Quitar" is
+    the organizer answering "out" on somebody's behalf — the person drops to
+    the same "Se bajaron" list a self-dropout lands in, wearing a "Removido"
+    pill so the two exits are never confused.
+
+    `outAt` is coalesced, not overwritten: removing somebody who ALREADY left
+    must not move the instant the refund policy judges them by — the notice
+    was given when it was given.
+  */
   await db
-    .delete(participants)
+    .update(participants)
+    .set({
+      attendance: "out",
+      outAt: sql`coalesce(${participants.outAt}, now())`,
+      removedAt: new Date(),
+      updatedAt: new Date(),
+    })
     .where(and(eq(participants.id, participantId.data), eq(participants.eventId, event.id)));
 
   // Removing an attendee changes everybody else's share.

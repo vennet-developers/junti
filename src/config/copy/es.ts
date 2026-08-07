@@ -628,6 +628,7 @@ export const es = {
     copyLink: "Copiar link de invitación",
     copied: "¡Copiado!",
     release: "Liberar",
+    released: "Cupo liberado.",
     shareHint: "Pásale el link por WhatsApp a cada persona: al abrirlo crea su cuenta y el cupo queda a su nombre.",
     mustJoinFirst: "Primero confirma que vienes; después apartas cupos para tu gente.",
     overAllowance: (max: number) => `Máximo ${max} cupos por persona en cada evento.`,
@@ -671,6 +672,9 @@ export const es = {
     pillRefund: (amount: string) => `Devolverle ${amount}`,
     pillForfeit: "Sin devolución",
     pillPaidOut: (amount: string) => `Pagó ${amount}`,
+    /* El otro camino de salida: no se bajó, lo bajaron. Mismo carril de
+       pills; la distinción existe porque una disputa empieza ahí. */
+    pillRemoved: "Removido",
     maybeTitle: "Tal vez",
     waitlistedTitle: "Lista de espera",
     empty: "Todavía nadie ha confirmado. Sé el primero.",
@@ -809,6 +813,7 @@ export const es = {
     update: "Actualizar",
     remove: "Borrar lo mío",
     removeOne: "Borrar",
+    removedToast: "Borrado.",
     feedHeading: "Quién lleva qué",
     feedEmpty: "Todavía nadie ha dicho qué lleva. Sé el primero.",
     mustJoinFirst: "Primero dinos que vienes.",
@@ -860,7 +865,7 @@ export const es = {
     removeParticipant: "Quitar",
     removeConfirmTitle: "¿Quitar a esta persona?",
     removeConfirmBody: (name: string) =>
-      `Se elimina a ${name} del evento junto con su registro de pago. Esto no se puede deshacer.`,
+      `${name} pasa a la lista de bajados, marcado como removido. Si vuelve a responder, la marca desaparece.`,
     removeConfirmAction: "Sí, quitar",
     markPaid: "Marcar como pagado",
     markPending: "Marcar que debe",
@@ -868,6 +873,13 @@ export const es = {
     paymentMethodLabel: "Método",
     paymentMethodPlaceholder: "nequi, efectivo, transferencia",
     promote: "Subir al evento",
+    /* El resultado de cada botón, dicho apenas termina: sin esto el tap se
+       sentía como nada hasta que la lista cambiaba sola un segundo después. */
+    toastPaid: "Pago registrado.",
+    toastPending: "Marcado como pendiente.",
+    toastWaived: "Ya no se le cobra.",
+    toastPromoted: "Ya está en el evento.",
+    toastRemoved: (name: string) => `${name} quedó como removido.`,
     promoteHelp: "Confírmale tú mismo. No subimos a nadie automáticamente.",
     slotOpenedTitle: "Se liberó un cupo",
     slotOpenedBody: (n: number) =>

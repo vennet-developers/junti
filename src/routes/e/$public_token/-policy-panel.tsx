@@ -221,7 +221,7 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
       ) : null}
 
       {done ? null : findHandler(item.handler)?.evidence === "none" ? (
-        <Button type="button" size="lg" fullWidth disabled={pending} onClick={submit}>
+        <Button type="button" size="lg" fullWidth disabled={pending} loading={pending} onClick={submit}>
           {pending ? copy.policies.uploadSubmitting : copy.policies.acknowledgeSubmit}
         </Button>
       ) : (
@@ -284,6 +284,7 @@ function PolicyItem({ publicToken, item }: { publicToken: string; item: PolicyPa
             size="lg"
             fullWidth
             disabled={pending || preparing || !prepared}
+            loading={pending}
             onClick={submit}
           >
             {pending

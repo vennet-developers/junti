@@ -473,6 +473,20 @@ export const participants = pgTable(
     outAt: timestamp("out_at", { withTimezone: true }),
 
     /**
+     * Set when the ORGANIZER took this person off the list, alongside the
+     * same transition into "out" a self-dropout makes.
+     *
+     * "Quitar" used to DELETE the row, and deleting somebody's answer erased
+     * the very facts a dispute needs — that they were in, that money may have
+     * changed hands, when they left. Now removal is a state like any other:
+     * the row survives, the dropout lists show it, and this column is the one
+     * bit the roster cannot reconstruct — whether they left or were removed.
+     * Cleared if they answer again: a new answer is theirs, not the
+     * organizer's.
+     */
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+
+    /**
      * The account this RSVP belongs to.
      *
      * This is the identity now, and the only one. It replaced a pair: a display

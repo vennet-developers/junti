@@ -1,4 +1,4 @@
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "@tanstack/react-router";
 
 import { Button } from "@stackmyth/button";
@@ -41,16 +41,26 @@ export function HeldSpotsPanel({
   const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  // The pressed row's button spins; its siblings only lock.
+  const [releasing, setReleasing] = useState<string | null>(null);
 
   const strings = copy.heldSpots;
 
   function release(spotId: string) {
+    setReleasing(spotId);
     startTransition(async () => {
       const formData = new FormData();
       formData.set("publicToken", publicToken);
       formData.set("spotId", spotId);
-      await releaseSpotFn({ data: formData });
-      await router.invalidate();
+      const result = await releaseSpotFn({ data: formData });
+
+      if (result.errors._form) {
+        toast.error(result.errors._form);
+      } else {
+        await router.invalidate();
+        toast.success(strings.released);
+      }
+      setReleasing(null);
     });
   }
 
@@ -97,6 +107,7 @@ export function HeldSpotsPanel({
                           size="sm"
                           variant="ghost"
                           disabled={pending}
+                          loading={releasing === spot.id}
                           onClick={() => release(spot.id)}
                         >
                           {strings.release}

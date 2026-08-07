@@ -304,11 +304,19 @@ function ManagePage() {
       <Stack gap="1">
         {commitment ? commitmentNote(member) : null}
 
+        {/* The Text IS the anchor. Nested the other way round the browser's
+            own a:link blue outranked the muted token and the number showed
+            up in default-blue, off the brand palette. */}
         {phone ? (
-          <Text variant="small" color="muted">
-            <Box as="a" href={whatsAppContactUrl(phone)} target="_blank" rel="noopener noreferrer">
-              {phone}
-            </Box>
+          <Text
+            as="a"
+            variant="small"
+            color="muted"
+            href={whatsAppContactUrl(phone)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {phone}
           </Text>
         ) : null}
       </Stack>
@@ -599,9 +607,21 @@ function ManagePage() {
                         without evidence of when they left) it is the fact.
                       */
                       renderBadge={(member) => {
+                        /* Which exit was it — their word or the organizer's
+                           hand? The full roster carries the answer; the
+                           projection this component types against does not,
+                           by design (see roster-projection). */
+                        const removed = (
+                          <Badge variant="secondary" size="sm" soft>
+                            {copy.roster.pillRemoved}
+                          </Badge>
+                        );
+                        const wasRemoved =
+                          roster.members.find((m) => m.id === member.id)?.removedAt != null;
+
                         const share = member.share;
                         if (!share || share.status !== "confirmed" || share.effectiveAmountMinor <= 0) {
-                          return null;
+                          return wasRemoved ? removed : null;
                         }
 
                         const verdict = refundVerdict({
@@ -615,18 +635,30 @@ function ManagePage() {
                           copy.intlLocale,
                         );
 
-                        return verdict === "refund" ? (
-                          <Badge variant="success" size="sm" soft>
-                            {copy.roster.pillRefund(paid)}
-                          </Badge>
-                        ) : verdict === "forfeit" ? (
-                          <Badge variant="warning" size="sm" soft>
-                            {copy.roster.pillForfeit}
-                          </Badge>
+                        const money =
+                          verdict === "refund" ? (
+                            <Badge variant="success" size="sm" soft>
+                              {copy.roster.pillRefund(paid)}
+                            </Badge>
+                          ) : verdict === "forfeit" ? (
+                            <Badge variant="warning" size="sm" soft>
+                              {copy.roster.pillForfeit}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" size="sm" soft>
+                              {copy.roster.pillPaidOut(paid)}
+                            </Badge>
+                          );
+
+                        // Both facts fit in the rail: how they left, and what
+                        // their money is waiting on.
+                        return wasRemoved ? (
+                          <>
+                            {removed}
+                            {money}
+                          </>
                         ) : (
-                          <Badge variant="secondary" size="sm" soft>
-                            {copy.roster.pillPaidOut(paid)}
-                          </Badge>
+                          money
                         );
                       }}
                       renderActions={(member) => (

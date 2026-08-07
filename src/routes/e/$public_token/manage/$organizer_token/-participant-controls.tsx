@@ -14,6 +14,7 @@ import {
 } from "@stackmyth/dialog";
 import { Flex } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import type { PaymentStatus } from "@/domain/types";
@@ -31,6 +32,12 @@ import { promoteParticipantFn, removeParticipantFn, setPaymentStatusFn } from ".
  * inputs would only be a way to smuggle values the caller already knows.
  * The actions validate those arguments server-side regardless, because a bound
  * argument is still client-supplied data.
+ *
+ * Every button here follows the same contract: the PRESSED button spins (its
+ * neighbours only lock), and the tap ends in a toast saying what happened —
+ * success or the server's error. A tap that visibly does nothing until the
+ * list rearranges itself a second later reads as a tap that failed, and the
+ * second press it invites is how double mutations happen.
  */
 
 interface Ctx {
@@ -50,13 +57,30 @@ export function PaymentControls({
   const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  // Which of the two buttons is doing the waiting. `pending` alone locks
+  // both; the spinner belongs only on the one that was pressed.
+  const [inFlight, setInFlight] = useState<PaymentStatus | null>(null);
 
   function set(next: PaymentStatus) {
+    setInFlight(next);
     startTransition(async () => {
-      await setPaymentStatusFn({
+      const result = await setPaymentStatusFn({
         data: { publicToken, organizerToken, participantId, status: next },
       });
-      await router.invalidate();
+
+      if (result.errors._form) {
+        toast.error(result.errors._form);
+      } else {
+        await router.invalidate();
+        toast.success(
+          next === "confirmed"
+            ? copy.manage.toastPaid
+            : next === "waived"
+              ? copy.manage.toastWaived
+              : copy.manage.toastPending,
+        );
+      }
+      setInFlight(null);
     });
   }
 
@@ -79,6 +103,7 @@ export function PaymentControls({
         variant={status === "confirmed" ? "ghost" : "success"}
         soft={status !== "confirmed"}
         disabled={pending}
+        loading={inFlight === toggleTarget}
         onClick={() => set(toggleTarget)}
       >
         {status === "confirmed" ? copy.manage.markPending : copy.manage.markPaid}
@@ -90,6 +115,7 @@ export function PaymentControls({
           size="sm"
           variant="ghost"
           disabled={pending}
+          loading={inFlight === "waived"}
           onClick={() => set("waived")}
         >
           {copy.manage.markWaived}
@@ -107,19 +133,35 @@ export function PromoteControl({ publicToken, organizerToken, participantId }: C
 
   function promote() {
     startTransition(async () => {
-      await promoteParticipantFn({ data: { publicToken, organizerToken, participantId } });
-      await router.invalidate();
+      const result = await promoteParticipantFn({
+        data: { publicToken, organizerToken, participantId },
+      });
+
+      if (result.errors._form) {
+        toast.error(result.errors._form);
+      } else {
+        await router.invalidate();
+        toast.success(copy.manage.toastPromoted);
+      }
     });
   }
 
   return (
-    <Button type="button" size="sm" variant="primary" soft disabled={pending} onClick={promote}>
+    <Button
+      type="button"
+      size="sm"
+      variant="primary"
+      soft
+      disabled={pending}
+      loading={pending}
+      onClick={promote}
+    >
       {copy.manage.promote}
     </Button>
   );
 }
 
-/** Removes a participant, behind a confirmation. */
+/** Marks a participant as removed, behind a confirmation. A state, not a deletion. */
 export function RemoveControl({ publicToken, organizerToken, participantId, displayName }: Ctx) {
   const { copy } = useCopy();
   const router = useRouter();
@@ -128,8 +170,16 @@ export function RemoveControl({ publicToken, organizerToken, participantId, disp
 
   function remove() {
     startTransition(async () => {
-      await removeParticipantFn({ data: { publicToken, organizerToken, participantId } });
-      await router.invalidate();
+      const result = await removeParticipantFn({
+        data: { publicToken, organizerToken, participantId },
+      });
+
+      if (result.errors._form) {
+        toast.error(result.errors._form);
+      } else {
+        await router.invalidate();
+        toast.success(copy.manage.toastRemoved(displayName));
+      }
       setOpen(false);
     });
   }
@@ -138,7 +188,7 @@ export function RemoveControl({ publicToken, organizerToken, participantId, disp
     <Dialog open={open} onOpenChange={setOpen}>
       {/* Ghost like its neighbours, but the ink stays destructive — see
           `.junti-accion-peligro`. Without it "Quitar" and "No le cobro" look
-          identical, and only one of them deletes a person. */}
+          identical, and only one of them takes a person off the list. */}
       <Button
         type="button"
         size="sm"
@@ -159,9 +209,17 @@ export function RemoveControl({ publicToken, organizerToken, participantId, disp
         </DialogBody>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="secondary">{copy.common.cancel}</Button>
+            <Button variant="secondary" disabled={pending}>
+              {copy.common.cancel}
+            </Button>
           </DialogClose>
-          <Button type="button" variant="destructive" disabled={pending} onClick={remove}>
+          <Button
+            type="button"
+            variant="destructive"
+            disabled={pending}
+            loading={pending}
+            onClick={remove}
+          >
             {copy.manage.removeConfirmAction}
           </Button>
         </DialogFooter>

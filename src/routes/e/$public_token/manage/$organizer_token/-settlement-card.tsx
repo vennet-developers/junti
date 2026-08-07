@@ -180,6 +180,7 @@ export function SettlementCard({
                   size="sm"
                   variant="primary"
                   disabled={requesting}
+                  loading={requesting}
                   onClick={requestByEmail}
                 >
                   {requesting ? strings.requesting : strings.requestEmails}

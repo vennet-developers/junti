@@ -8,6 +8,7 @@ import { Field, FieldLabel } from "@stackmyth/field";
 import { Input } from "@stackmyth/input";
 import { Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import { EvidenceImage } from "@/components/evidence-image";
@@ -85,15 +86,29 @@ function ReviewRow({
   const [pending, startTransition] = useTransition();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
+  // The pressed verdict spins; its neighbour only locks. And the tap ends in
+  // a toast either way — a decision that visibly does nothing until the queue
+  // rearranges itself invites the second tap that double-decides.
+  const [inFlight, setInFlight] = useState<"approved" | "rejected" | null>(null);
 
   function decide(decision: "approved" | "rejected") {
+    setInFlight(decision);
     startTransition(async () => {
-      await reviewSubmissionFn({
+      const result = await reviewSubmissionFn({
         data: { publicToken, organizerToken, submissionId: item.id, decision, reason },
       });
-      await router.invalidate();
-      setRejecting(false);
-      setReason("");
+
+      if (result.errors._form) {
+        toast.error(result.errors._form);
+      } else {
+        await router.invalidate();
+        toast.success(
+          decision === "approved" ? copy.review.approvedNotice : copy.review.rejectedNotice,
+        );
+        setRejecting(false);
+        setReason("");
+      }
+      setInFlight(null);
     });
   }
 
@@ -146,6 +161,7 @@ function ReviewRow({
                   size="md"
                   variant="destructive"
                   disabled={pending}
+                  loading={inFlight === "rejected"}
                   onClick={() => decide("rejected")}
                 >
                   {copy.review.reject}
@@ -168,6 +184,7 @@ function ReviewRow({
                 size="md"
                 variant="success"
                 disabled={pending}
+                loading={inFlight === "approved"}
                 onClick={() => decide("approved")}
               >
                 {copy.review.approve}

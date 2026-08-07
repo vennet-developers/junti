@@ -58,6 +58,8 @@ export interface RosterMember {
    * the drop predates tracking and no verdict may rest on it.
    */
   outAt: Date | null;
+  /** Set when the organizer took them off the list ("Quitar"), null for a self-dropout. */
+  removedAt: Date | null;
   joinedAt: Date;
   share: Share;
   /** Set when this RSVP came from a signed-in account. */
@@ -382,6 +384,7 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
     displayName: row.participant.displayName,
     attendance: row.participant.attendance,
     outAt: row.participant.outAt,
+    removedAt: row.participant.removedAt,
     joinedAt: row.participant.createdAt,
     userId: row.participant.userId,
     avatarUrl: row.participant.avatarUrl,

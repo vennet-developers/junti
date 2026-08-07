@@ -194,6 +194,10 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
             ? {}
             : { outAt: new Date() }
           : { outAt: null }),
+        // A fresh answer is theirs. Whatever the organizer decided about the
+        // old one ("Quitar" stamps this), the person speaking for themselves
+        // clears it — the "Removido" pill must never outlive the removal.
+        removedAt: null,
         // Kept fresh on every amend: a photo changed on the Google account
         // should not leave last year's picture on the roster.
         avatarUrl: organizer.avatarUrl,
