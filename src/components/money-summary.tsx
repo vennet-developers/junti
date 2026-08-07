@@ -78,6 +78,17 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
   */
   const surplusMinor = Math.max(0, collectedMinor - goalMinor);
 
+  /*
+    "Falta" measures against the GOAL, not against the roster. It used to be
+    `outstandingMinor` — what the people already on the list still owe — and
+    the moment the first quota was confirmed it read "$0" while the bar right
+    under it said "$26.000 de $260.000": three numbers on one card and two of
+    them contradicting the third, because the seats nobody has taken yet owe
+    nothing to a roster-sum. What the organizer wants from this label is the
+    distance to covered — goal minus collected, floor at zero.
+  */
+  const missingMinor = Math.max(0, goalMinor - collectedMinor);
+
   return (
     <Stack gap="4">
       <Text variant="h3" fontFamily="var(--junti-display)">
@@ -115,7 +126,7 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
               whiteSpace="nowrap"
               fontFamily="var(--junti-display)"
             >
-              {money(outstandingMinor)}
+              {money(missingMinor)}
             </Text>
           }
         />
