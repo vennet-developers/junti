@@ -467,6 +467,11 @@ export const es = {
     heading: "Quién viene",
     inTitle: "Vienen",
     outTitle: "No vienen",
+    /* Pills del carril de estado para quien se bajó con plata confirmada.
+       El estado va en un pill, nunca pegado al nombre. */
+    pillRefund: (amount: string) => `Devolverle ${amount}`,
+    pillForfeit: "Sin devolución",
+    pillPaidOut: (amount: string) => `Pagó ${amount}`,
     maybeTitle: "Tal vez",
     waitlistedTitle: "Lista de espera",
     empty: "Todavía nadie ha confirmado. Sé el primero.",

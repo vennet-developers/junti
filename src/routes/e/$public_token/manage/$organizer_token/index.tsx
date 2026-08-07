@@ -16,6 +16,7 @@ import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { RosterGroup } from "@/components/roster-list";
 import { getCopy } from "@/config/copy";
+import { refundVerdict } from "@/domain/refund-policy";
 import { formatMoney as formatMoneyLocal } from "@/lib/format";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
@@ -592,6 +593,45 @@ function ManagePage() {
                       currency={event.currency}
                       copy={copy}
                       showMoney={false}
+                      /*
+                        The dropout's money, as a pill in the status rail. The
+                        state never goes into the name — a name is what the
+                        person is called. Only dropouts whose money the
+                        organizer still HOLDS get one; with a stated refund
+                        policy the pill is the verdict, without one (or
+                        without evidence of when they left) it is the fact.
+                      */
+                      renderBadge={(member) => {
+                        const share = member.share;
+                        if (!share || share.status !== "confirmed" || share.effectiveAmountMinor <= 0) {
+                          return null;
+                        }
+
+                        const verdict = refundVerdict({
+                          noticeHours: event.refundNoticeHours,
+                          startsAt: event.startsAt,
+                          outAt: roster.members.find((m) => m.id === member.id)?.outAt ?? null,
+                        });
+                        const paid = formatMoneyLocal(
+                          share.effectiveAmountMinor,
+                          event.currency,
+                          copy.intlLocale,
+                        );
+
+                        return verdict === "refund" ? (
+                          <Badge variant="success" size="sm" soft>
+                            {copy.roster.pillRefund(paid)}
+                          </Badge>
+                        ) : verdict === "forfeit" ? (
+                          <Badge variant="warning" size="sm" soft>
+                            {copy.roster.pillForfeit}
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" size="sm" soft>
+                            {copy.roster.pillPaidOut(paid)}
+                          </Badge>
+                        );
+                      }}
                       renderActions={(member) => (
                         <RemoveControl
                           publicToken={publicToken}

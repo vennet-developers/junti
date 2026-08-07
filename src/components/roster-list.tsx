@@ -43,6 +43,14 @@ export interface RosterGroupProps {
   renderActions?: (member: ParticipantRosterMember) => ReactNode;
   /** A line under the name — what a pending participant is still waiting on. */
   renderNote?: (member: ParticipantRosterMember) => ReactNode;
+  /**
+   * A state pill in the row's status rail, beside the money.
+   *
+   * A state someone is IN belongs in a pill with an edge, never concatenated
+   * into their name — a name is what a person is called, and gluing "se bajó"
+   * onto it makes the fact unstylable, untranslatable, and half-invisible.
+   */
+  renderBadge?: (member: ParticipantRosterMember) => ReactNode;
 }
 
 /**
@@ -69,6 +77,7 @@ export function RosterGroup({
   headingSize = "section",
   renderActions,
   renderNote,
+  renderBadge,
 }: RosterGroupProps) {
   return (
     <Stack gap="3">
@@ -198,6 +207,7 @@ export function RosterGroup({
                       {showMoney && member.share?.owes ? (
                         <PaymentBadge status={member.share.status} copy={copy} compact />
                       ) : null}
+                      {renderBadge?.(member)}
                     </Flex>
                   </Flex>
 
