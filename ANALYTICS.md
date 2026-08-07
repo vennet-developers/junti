@@ -125,6 +125,18 @@ of "my friend reserved for me" into "I have an account". Guest names never
 appear in `props` — they are the one datum this feature touches that can
 belong to a non-user, and this table is the last place it may ever land.
 
+## Settlement
+
+| Event | Fired | `props` |
+| --- | --- | --- |
+| `settlement_requested` | **Server**, in `requestSettlement` | `{ event_id, owed, sent }` |
+
+One press of "Pedir el saldo por correo". `owed` is how many attendees the
+split says still lack part of the dropout gap; `sent` is how many actually
+received an email (verified address, not suppressed, not a same-day repeat).
+The distance between the two numbers is the feature's coverage, which is why
+both travel.
+
 ## Groups
 
 | Event | Fired | `props` |

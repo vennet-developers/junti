@@ -42,6 +42,7 @@ export const ANALYTICS_EVENTS = [
   "calendar_added",
   "spot_held",
   "spot_claimed",
+  "settlement_requested",
 
   // Groups
   "group_created",
@@ -84,6 +85,7 @@ export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
   calendar_added: "server",
   spot_held: "server",
   spot_claimed: "server",
+  settlement_requested: "server",
   payment_recorded: "server",
 
   group_created: "server",

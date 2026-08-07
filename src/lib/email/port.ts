@@ -30,7 +30,8 @@ export type MessageTemplate =
   | "auth-link"
   | "event-created"
   | "rsvp-confirmed"
-  | "event-cancelled";
+  | "event-cancelled"
+  | "settlement-request";
 
 export interface OutboundMessage {
   /** Where it goes. An email address today; a phone number for WhatsApp. */

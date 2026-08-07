@@ -1129,3 +1129,91 @@ export async function settleTopUp(
 
   return { errors: {}, ok: true };
 }
+
+/**
+ * Emails every attendee who still owes part of the dropout gap, asking for it.
+ *
+ * **Fired by a button, never by a clock.** Whether to chase the gap before
+ * the event (the roster clearly is not filling) or after it (it did not fill)
+ * is the organizer's read of their own group, so the app's whole contribution
+ * is doing the asking in one press instead of eight WhatsApp messages. The
+ * recipients and the amounts are exactly the settlement card's top-up rows —
+ * the organizer has read the list they are about to write to.
+ *
+ * Suppression is honoured inside `notify`, as everywhere: "stop writing to
+ * me" beats "you owe $4.000". The dedupe trigger carries the day, so a
+ * double-press sends nothing twice but a genuine second round — chasing again
+ * a week later — goes out.
+ */
+export async function requestSettlement(
+  publicToken: string,
+  organizerToken: string,
+): Promise<ManageState & { sent?: number }> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const [{ loadRoster }, { computeSettlement }, { loadVerifiedEmails }, { formatMoney }] =
+    await Promise.all([
+      import("@/lib/roster"),
+      import("@/domain/settlement"),
+      import("@/lib/accounts"),
+      import("@/lib/format"),
+    ]);
+
+  const roster = await loadRoster(event, await resolveEventLocale(event.locale));
+
+  const attendanceOf = new Map(roster.members.map((m) => [m.id, m.attendance]));
+  const settlement = computeSettlement(
+    roster.members.map((m) => m.share),
+    (id) => attendanceOf.get(id) ?? "out",
+  );
+
+  if (settlement.topUps.length === 0) return { errors: {}, ok: true, sent: 0 };
+
+  const membersById = new Map(roster.members.map((m) => [m.id, m]));
+  const userIds = settlement.topUps
+    .map((topUp) => membersById.get(topUp.participantId)?.userId)
+    .filter((id): id is string => Boolean(id));
+
+  const addresses = await loadVerifiedEmails(userIds);
+  const money = (minor: number) => formatMoney(minor, event.currency, copy.intlLocale);
+
+  // The day, not the instant: a double-press dedupes, a later round sends.
+  const round = new Date().toISOString().slice(0, 10);
+
+  const results = await Promise.all(
+    settlement.topUps.map((topUp) => {
+      const userId = membersById.get(topUp.participantId)?.userId;
+      const email = userId ? addresses.get(userId) : undefined;
+      if (!email) return Promise.resolve("failed" as const);
+
+      return notify(
+        {
+          to: email,
+          template: "settlement-request",
+          locale: event.locale,
+          values: {
+            eventTitle: event.title,
+            paidAmount: money(topUp.paidMinor),
+            finalShare: money(topUp.finalShareMinor),
+            missingAmount: money(topUp.missingMinor),
+            eventPath: participantPath(event.publicToken),
+          },
+        },
+        { eventId: event.id, trigger: `settlement:${round}` },
+      );
+    }),
+  );
+
+  const sent = results.filter((result) => result === "sent").length;
+
+  track("settlement_requested", {
+    event_id: event.id,
+    owed: settlement.topUps.length,
+    sent,
+  });
+
+  return { errors: {}, ok: true, sent };
+}

@@ -465,19 +465,10 @@ function ManagePage() {
               </Disclosure>
             ) : null}
 
-            {roster.discrepancies.map((discrepancy) => (
-              <Banner
-                key={discrepancy.participantId}
-                variant="warning" live="off" icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
-                title={copy.manage.splitWarningTitle}
-              >
-                {copy.manage.splitWarningBody(
-                  nameOf(discrepancy.participantId),
-                  formatMoneyLocal(discrepancy.confirmedAmountMinor, event.currency, copy.intlLocale),
-                  formatMoneyLocal(discrepancy.computedAmountMinor, event.currency, copy.intlLocale),
-                )}
-              </Banner>
-            ))}
+            {/* The per-person discrepancy banners used to render here — eight
+                identical yellow warnings on an eight-person gap. "Cuentas
+                finales" below says the same thing once, with a button per
+                person, which is why the banners went. */}
 
             <Divider />
 

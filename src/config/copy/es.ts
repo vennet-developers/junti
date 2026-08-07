@@ -428,6 +428,13 @@ export const es = {
     missing: (amount: string) => `Le falta ${amount}`,
     received: "Recibí la diferencia",
     receiving: "Guardando…",
+    requestEmails: "Pedir el saldo por correo",
+    requesting: "Enviando…",
+    requested: (n: number) =>
+      n === 1
+        ? "Enviamos 1 correo pidiendo el saldo."
+        : `Enviamos ${n} correos pidiendo el saldo.`,
+    requestedNone: "No había a quién escribir — nadie con correo verificado o ya se pidió hoy.",
     covered: "Todos los que pagaron están al día con la cuota final.",
     refundables: (n: number, total: string) =>
       n === 1
@@ -801,6 +808,18 @@ export const es = {
       yourShare: (amount: string) => `Te corresponden ${amount}.`,
       cta: "Ver el evento",
       changeNote: "¿Cambió el plan? Puedes cambiar tu respuesta desde el evento cuando quieras.",
+    },
+    settlementRequest: {
+      subject: (title: string) => `Quedó un saldo pendiente en «${title}»`,
+      preview: (title: string) => `La cuota de ${title} subió y falta un saldo tuyo.`,
+      heading: "Quedó un saldo pendiente",
+      body: (title: string) =>
+        `En ${title} no se llenaron todos los cupos, así que el costo se repartió entre menos personas y la cuota por persona subió.`,
+      numbers: (paid: string, share: string) =>
+        `Pagaste ${paid} y la cuota final quedó en ${share}.`,
+      missing: (amount: string) => `El saldo pendiente es ${amount}.`,
+      cta: "Ver el evento",
+      note: "El pago se coordina directo con el organizador, como siempre — Junti solo lleva la cuenta.",
     },
     eventInvitation: {
       subject: (organizer: string, event: string) => `${organizer} te invitó a ${event}`,

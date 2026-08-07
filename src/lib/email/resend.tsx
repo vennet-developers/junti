@@ -30,6 +30,11 @@ import {
   pendingApprovalSubject,
   type PendingApprovalValues,
 } from "./templates/pending-approval";
+import {
+  SettlementRequestEmail,
+  settlementRequestSubject,
+  type SettlementRequestValues,
+} from "./templates/settlement-request";
 
 /**
  * Resend, behind the port.
@@ -167,6 +172,19 @@ async function compose(
 
       return {
         subject: eventInvitationSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "settlement-request": {
+      const values = message.values as unknown as SettlementRequestValues;
+      const element = (
+        <SettlementRequestEmail values={values} locale={message.locale} origin={origin} />
+      );
+
+      return {
+        subject: settlementRequestSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };

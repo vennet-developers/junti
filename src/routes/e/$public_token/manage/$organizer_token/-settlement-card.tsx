@@ -7,6 +7,7 @@ import { Card, CardContent } from "@stackmyth/card";
 import { TriangleAlertIcon } from "@stackmyth/icons";
 import { Divider, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
+import { toast } from "@stackmyth/toast";
 
 import { useCopy } from "@/components/copy-provider";
 import { refundVerdict } from "@/domain/refund-policy";
@@ -16,7 +17,7 @@ import type { RosterView } from "@/lib/roster";
 
 type SettlementRoster = Omit<RosterView, "compliance">;
 
-import { settleTopUpFn } from "./-fns";
+import { requestSettlementFn, settleTopUpFn } from "./-fns";
 
 /**
  * "Cuentas finales": the dropout gap, as sentences with a button.
@@ -63,6 +64,24 @@ export function SettlementCard({
     startTransition(async () => {
       await settleTopUpFn({ data: { publicToken, organizerToken, participantId } });
       await router.invalidate();
+    });
+  }
+
+  /*
+    One press writes to everybody on the list above it. When to press —
+    before the event because the roster clearly is not filling, or after it
+    because it did not — is the organizer's read of their own group; the app
+    only does the asking. The toast reports the real count, because "I asked
+    everyone" and "three of eight had a verified email" are different facts.
+  */
+  function requestByEmail() {
+    startTransition(async () => {
+      const result = await requestSettlementFn({ data: { publicToken, organizerToken } });
+      if ((result.sent ?? 0) > 0) {
+        toast.success(strings.requested(result.sent ?? 0));
+      } else {
+        toast.info(strings.requestedNone);
+      }
     });
   }
 
@@ -116,6 +135,18 @@ export function SettlementCard({
                   </Flex>
                 ))}
               </Stack>
+
+              <Flex justify="end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  disabled={pending}
+                  onClick={requestByEmail}
+                >
+                  {pending ? strings.requesting : strings.requestEmails}
+                </Button>
+              </Flex>
             </>
           ) : (
             <Text variant="small" color="muted">

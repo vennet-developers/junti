@@ -109,3 +109,10 @@ export const settleTopUpFn = createServerFn({ method: "POST" })
     const { settleTopUp } = await import("./-actions.server");
     return settleTopUp(data.publicToken, data.organizerToken, data.participantId);
   });
+
+export const requestSettlementFn = createServerFn({ method: "POST" })
+  .validator((data: Tokens) => data)
+  .handler(async ({ data }): Promise<ManageState & { sent?: number }> => {
+    const { requestSettlement } = await import("./-actions.server");
+    return requestSettlement(data.publicToken, data.organizerToken);
+  });

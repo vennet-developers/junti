@@ -344,6 +344,11 @@ export const en: Copy = {
     missing: (amount: string) => `Lacks ${amount}`,
     received: "Got the difference",
     receiving: "Saving…",
+    requestEmails: "Request the balance by email",
+    requesting: "Sending…",
+    requested: (n: number) =>
+      n === 1 ? "Sent 1 email requesting the balance." : `Sent ${n} emails requesting the balance.`,
+    requestedNone: "Nobody to write to — no verified email, or already asked today.",
     covered: "Everyone who paid is square with the final share.",
     refundables: (n: number, total: string) =>
       n === 1
@@ -710,6 +715,17 @@ export const en: Copy = {
       yourShare: (amount: string) => `Your share is ${amount}.`,
       cta: "See the event",
       changeNote: "Plans changed? You can change your answer from the event whenever you like.",
+    },
+    settlementRequest: {
+      subject: (title: string) => `There is an outstanding balance for “${title}”`,
+      preview: (title: string) => `The share for ${title} went up and part of yours is missing.`,
+      heading: "There is an outstanding balance",
+      body: (title: string) =>
+        `Not every spot in ${title} was filled, so the cost was split among fewer people and the share per person went up.`,
+      numbers: (paid: string, share: string) => `You paid ${paid} and the final share is ${share}.`,
+      missing: (amount: string) => `The outstanding balance is ${amount}.`,
+      cta: "See the event",
+      note: "Payment is arranged directly with the organizer, as always — Junti only keeps the count.",
     },
     eventInvitation: {
       subject: (organizer: string, event: string) => `${organizer} invited you to ${event}`,
