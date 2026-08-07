@@ -44,6 +44,8 @@ export function JoinWizard({
   guestsHeld,
   shareMinor,
   currency,
+  costMode,
+  attendingCount,
   answersOpen,
   attendance,
 }: {
@@ -59,6 +61,10 @@ export function JoinWizard({
   /** My total to pay — my share, guests included. Null on a free event. */
   shareMinor: number | null;
   currency: string;
+  /** "total" splits among attendees, "per_person" is fixed — the note differs. */
+  costMode: string;
+  /** How many are attending right now, for the split-context line. */
+  attendingCount: number;
   answersOpen: boolean;
   /** My recorded answer, or null before one exists. */
   attendance: string | null;
@@ -160,14 +166,30 @@ export function JoinWizard({
             )}
 
             {shareMinor !== null && shareMinor > 0 ? (
-              <Flex gap="2" align="baseline" justify="between" wrap="wrap">
-                <Text variant="small" color="muted">
-                  {strings.totalToPay}
-                </Text>
-                <Text as="span" variant="h4" weight="bold" fontFamily="var(--junti-display)">
-                  {formatMoney(shareMinor, currency, copy.intlLocale)}
-                </Text>
-              </Flex>
+              <Stack gap="1">
+                <Flex gap="2" align="baseline" justify="between" wrap="wrap">
+                  <Text variant="small" color="muted">
+                    {strings.yourShare}
+                  </Text>
+                  <Text as="span" variant="h4" weight="bold" fontFamily="var(--junti-display)">
+                    {formatMoney(shareMinor, currency, copy.intlLocale)}
+                  </Text>
+                </Flex>
+                {/* The number alone misleads exactly when it matters most:
+                    the FIRST person into a "total a repartir" event owns the
+                    whole cost until someone else confirms, and without this
+                    line that reads as "the app is charging me the event". */}
+                {costMode === "total" ? (
+                  <Text variant="small" color="muted">
+                    {strings.shareSplitNote(attendingCount)}
+                  </Text>
+                ) : null}
+                {guestsHeld.filter((g) => !g.claimed).length > 0 ? (
+                  <Text variant="small" color="muted">
+                    {strings.shareIncludesGuests(guestsHeld.filter((g) => !g.claimed).length)}
+                  </Text>
+                ) : null}
+              </Stack>
             ) : null}
 
             <PolicyPanel publicToken={publicToken} items={policies} />

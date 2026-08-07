@@ -630,6 +630,8 @@ function ParticipantPage() {
                 : null
             }
             currency={event.currency}
+            costMode={event.costMode}
+            attendingCount={roster.attending.length}
             answersOpen={answersOpen && !event.isClosed}
             attendance={mine?.attendance ?? null}
           />
