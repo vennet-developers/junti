@@ -1,6 +1,8 @@
 import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
+import { DatePicker } from "@stackmyth/date-picker";
+import { Input } from "@stackmyth/input";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { List, ListItem } from "@stackmyth/list-item";
 import { Skeleton } from "@stackmyth/skeleton";
@@ -249,6 +251,14 @@ function RangeFilter({
       timeZone: "America/Bogota",
     });
 
+  /*
+    Local getters, never toISOString: the calendar hands over local midnight,
+    and converting through UTC would submit the previous day for anyone east
+    of Bogota. Same reasoning as DateTimeField's toDateInputValue.
+  */
+  const asParam = (date: Date) =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
   return (
     <Stack gap="2">
       <Flex gap="2" wrap="wrap" align="center">
@@ -264,22 +274,32 @@ function RangeFilter({
           </Button>
         ))}
 
-        {/* Native form: submitting navigates to /funnel?desde=YYYY-MM-DD. */}
-        <form method="get" action="/funnel">
-          <Flex gap="2" align="center">
-            <input
-              type="date"
-              name="desde"
-              className="junti-fecha-panel"
-              aria-label={p.fromDateAria}
-              defaultValue={range.preset === "custom" ? range.fromISO.slice(0, 10) : ""}
-              required
-            />
-            <Button type="submit" size="sm" shape="pill" variant={range.preset === "custom" ? "primary" : "outline"}>
-              {p.fromDate}
-            </Button>
-          </Flex>
-        </form>
+        {/* The library's own picker, not the browser's — the one control in
+            this row that ignored the design system, and Ivan noticed.
+            Choosing a day IS the action: it navigates like the chips do,
+            full reload, because a date change moves every number on the
+            page. */}
+        <Box className="junti-fecha-rango">
+        <DatePicker
+          /* `md`, then pinned: the field scale brackets the button scale —
+             `sm` lands at 28px and `md` at 36px around chips of 33.5px — so
+             the wrapper clamps the trigger to the chips' measured height,
+             the same trick the native input needed before it. */
+          size="md"
+          value={range.preset === "custom" ? new Date(range.fromISO) : null}
+          onValueChange={(date) => {
+            if (date) window.location.assign(`/funnel?desde=${asParam(date)}`);
+          }}
+          locale={copy.intlLocale}
+          formatOptions={{ day: "numeric", month: "short", year: "numeric" }}
+          placeholder={p.fromDate}
+          aria-label={p.fromDateAria}
+          weekStartsOn={1}
+          toDate={new Date()}
+          showOutsideDays
+          clearable={false}
+        />
+        </Box>
       </Flex>
 
       <Text variant="small" color="muted">
@@ -386,18 +406,21 @@ function DirectoryPanel({
         }}
       >
         <Flex gap="2" align="center" wrap="wrap">
-          <input
-            /* Uncontrolled, re-keyed per list so a leftover search does not
-               travel from Usuarios into Eventos as ghost text. */
-            key={query.kind}
-            type="search"
-            name="q"
-            className="junti-fecha-panel junti-buscador-panel"
-            placeholder={d.searchPlaceholder[query.kind]}
-            aria-label={d.searchPlaceholder[query.kind]}
-            defaultValue={query.q}
-            maxLength={80}
-          />
+          <Box width={{ base: "100%", sm: "18rem" }}>
+            <Input
+              /* Uncontrolled, re-keyed per list so a leftover search does not
+                 travel from Usuarios into Eventos as ghost text. */
+              key={query.kind}
+              type="search"
+              name="q"
+              size="sm"
+              fullWidth
+              placeholder={d.searchPlaceholder[query.kind]}
+              aria-label={d.searchPlaceholder[query.kind]}
+              defaultValue={query.q}
+              maxLength={80}
+            />
+          </Box>
           <Button type="submit" size="sm" shape="pill" variant="secondary" disabled={pending}>
             {d.searchSubmit}
           </Button>

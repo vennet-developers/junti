@@ -567,10 +567,10 @@ export const es = {
     operations: {
       sendsHeading: "Envíos por organizador",
       sendsHelp:
-        "Últimas 24 horas. El pico de una hora es la señal: cien envíos repartidos en un día es alguien ocupado; cien en una hora es alguien probando hasta dónde llega esto.",
-      sendsEmpty: "Nadie ha enviado nada en el último día.",
-      sendsDay: (n: number) => `${n} en el día`,
-      sendsPeak: (n: number) => `pico ${n}`,
+        "El periodo filtrado arriba. El pico de una hora es la señal: cien envíos repartidos en días es alguien ocupado; cien en una hora es alguien probando hasta dónde llega esto.",
+      sendsEmpty: "Nadie ha enviado nada en este periodo.",
+      sendsDay: (n: number) => `${n} en el periodo`,
+      sendsPeak: (n: number) => `pico ${n}/h`,
       limitsHeading: "Límites vigentes",
       limitsHelp: "Los topes de envío que protegen la reputación del correo.",
       limitDefault: "por defecto",
@@ -581,8 +581,8 @@ export const es = {
       mailPending: "pendientes",
       mailFailed: "fallidos",
       mailAttempts: (n: number) => `${n} intentos`,
-      recentHeading: "Últimos 50 eventos",
-      recentEmpty: "Nada todavía. Los eventos empiezan a llegar con el primer uso.",
+      recentHeading: "Últimos 50 eventos del periodo",
+      recentEmpty: "Nada en este periodo. Los eventos llegan con el uso.",
     },
   },
 

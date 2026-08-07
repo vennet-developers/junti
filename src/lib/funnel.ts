@@ -204,24 +204,30 @@ export async function loadFunnel(range: PanelRange): Promise<FunnelReport> {
     was halved. Three at a time stays comfortably under the pool of five while
     leaving room for the root loader running beside it.
   */
+  const from = range.from.toISOString();
+  const to = range.to.toISOString();
+
   const [counts, recent, sends] = await Promise.all([
     countOf([...PARTICIPANT, ...ORGANIZER, ...GROUPS], range),
     db.execute<{ name: string; at: Date; source: string }>(sql`
       select name, at, source from analytics_events
+      where at >= ${from} and at < ${to}
       order by at desc limit 50
     `),
 
     /*
-      Volume per key over a day, plus the busiest single hour in it. The peak
-      is the signal: a hundred sends spread over a day is a busy organizer, and
-      a hundred in one hour is somebody testing how far this goes.
+      Volume per key over the FILTERED period, plus the busiest single hour
+      in it. The peak is the signal: a hundred sends spread over days is a
+      busy organizer, and a hundred in one hour is somebody testing how far
+      this goes. This window used to be hardwired to 24 hours while the rest
+      of the page filtered — the exact "datos con suposiciones" Ivan banned.
     */
     db.execute<{ key: string; day: string; peak: string }>(sql`
       select key,
              sum(count)::text as day,
              max(count)::text as peak
       from send_counters
-      where window_start > now() - interval '24 hours'
+      where window_start >= ${from} and window_start < ${to}
       group by key
       order by sum(count) desc
       limit 20

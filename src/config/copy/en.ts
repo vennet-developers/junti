@@ -475,10 +475,10 @@ export const en: Copy = {
     operations: {
       sendsHeading: "Sends per organizer",
       sendsHelp:
-        "Last 24 hours. The single-hour peak is the signal: a hundred sends spread over a day is somebody busy; a hundred in one hour is somebody testing how far this goes.",
-      sendsEmpty: "Nobody has sent anything in the last day.",
-      sendsDay: (n: number) => `${n} in the day`,
-      sendsPeak: (n: number) => `peak ${n}`,
+        "The period filtered above. The single-hour peak is the signal: a hundred sends spread over days is somebody busy; a hundred in one hour is somebody testing how far this goes.",
+      sendsEmpty: "Nobody has sent anything in this period.",
+      sendsDay: (n: number) => `${n} in the period`,
+      sendsPeak: (n: number) => `peak ${n}/h`,
       limitsHeading: "Limits in force",
       limitsHelp: "The send caps that protect the email reputation.",
       limitDefault: "default",
@@ -489,8 +489,8 @@ export const en: Copy = {
       mailPending: "pending",
       mailFailed: "failed",
       mailAttempts: (n: number) => `${n} attempts`,
-      recentHeading: "Last 50 events",
-      recentEmpty: "Nothing yet. Events start arriving with the first use.",
+      recentHeading: "Last 50 events of the period",
+      recentEmpty: "Nothing in this period. Events arrive with use.",
     },
   },
 
