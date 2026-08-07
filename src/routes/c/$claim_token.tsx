@@ -133,7 +133,7 @@ const getClaimPage = createServerFn({ method: "GET" })
   });
 
 const claimSpotFn = createServerFn({ method: "POST" })
-  .validator((data: { claimToken: string; displayName: string }) => data)
+  .validator((data: { claimToken: string }) => data)
   .handler(async ({ data }) => {
     const [
       { db },
@@ -204,7 +204,8 @@ const claimSpotFn = createServerFn({ method: "POST" })
       return { error: message };
     }
 
-    const name = data.displayName.trim().slice(0, 40);
+    // The profile IS the name — same rule as every answer since 2026-08-08.
+    const name = organizer.displayName.trim().slice(0, 40);
     if (name.length === 0) return { error: copy.errors.nameRequired };
 
     /*
@@ -259,7 +260,6 @@ function ClaimPage() {
   const { copy } = useCopy();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [name, setName] = useState(data.suggestedName);
   const [error, setError] = useState<string | null>(null);
   const [claimedNow, setClaimedNow] = useState(false);
 
@@ -269,7 +269,7 @@ function ClaimPage() {
   function claim() {
     startTransition(async () => {
       const result = await claimSpotFn({
-        data: { claimToken: data.claimToken, displayName: name },
+        data: { claimToken: data.claimToken },
       });
       if (result.error) {
         setError(result.error);
@@ -362,20 +362,6 @@ function ClaimPage() {
             <CardContent>
               <Stack gap="3">
                 <Text weight="semibold">{strings.holdIsYours(data.sponsorName)}</Text>
-                <Stack gap="1">
-                  <label htmlFor="claim-name">
-                    <Text as="span" variant="small" weight="medium">
-                      {copy.rsvp.nameLabel}
-                    </Text>
-                  </label>
-                  <input
-                    id="claim-name"
-                    className="sm-input sm-input--lg"
-                    value={name}
-                    maxLength={40}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                </Stack>
                 {error ? (
                   <Text variant="small" color="error">
                     {error}

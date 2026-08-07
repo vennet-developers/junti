@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { OneTapJoin } from "./-one-tap-join";
 import { RsvpForm } from "./-rsvp-form";
 
@@ -36,9 +34,7 @@ export interface JoinPanelProps {
  * already in.
  */
 export function JoinPanel({ publicToken, mine, isFull, account, refund, guests, onSaved }: JoinPanelProps) {
-  const [useForm, setUseForm] = useState(false);
-
-  if (mine === null && !useForm) {
+  if (mine === null) {
     return (
       <OneTapJoin
         publicToken={publicToken}
@@ -47,7 +43,6 @@ export function JoinPanel({ publicToken, mine, isFull, account, refund, guests, 
         isFull={isFull}
         refund={refund}
         onSaved={onSaved}
-        onUseForm={() => setUseForm(true)}
       />
     );
   }

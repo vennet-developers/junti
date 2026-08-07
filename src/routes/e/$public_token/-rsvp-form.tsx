@@ -17,7 +17,6 @@ import {
   Form,
   FormController,
   FormError,
-  FormField,
   SubmitButton,
   createZodResolver,
 } from "@/components/form-shell";
@@ -163,7 +162,6 @@ export function RsvpForm({ publicToken, mine, isFull, refund, guests, onSaved }:
         <FormController
           resolver={resolver}
           defaultValues={{
-            displayName: mine?.displayName ?? "",
             attendance: defaultAttendance,
           }}
           mode="onBlur"
@@ -196,27 +194,6 @@ export function RsvpForm({ publicToken, mine, isFull, refund, guests, onSaved }:
                   {copy.rsvp.yourRsvp(mine.displayName)}
                 </Text>
               ) : null}
-
-              <FormField name="displayName">
-                {({ fieldProps, error }) => (
-                  <ControlledField
-                    label={copy.rsvp.nameLabel}
-                    description={copy.rsvp.nameHelp}
-                    error={error ?? serverState.errors.displayName}
-                    htmlFor={fieldProps.id}
-                  >
-                    <Input
-                      {...fieldProps}
-                      fullWidth
-                      size="lg"
-                      maxLength={40}
-                      autoComplete="name"
-                      placeholder={copy.rsvp.namePlaceholder}
-                      status={error ? "error" : "default"}
-                    />
-                  </ControlledField>
-                )}
-              </FormField>
 
               <ControlledField label={copy.rsvp.attendanceLabel}>
                 <RadioField

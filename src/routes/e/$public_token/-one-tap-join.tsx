@@ -27,8 +27,6 @@ export interface OneTapJoinProps {
    * screen before the tap that accepts it.
    */
   refund: { hours: number; startsAt: Date } | null;
-  /** Falls back to the full form — used when the name is taken. */
-  onUseForm: () => void;
   /** Fires after a successful one-tap join. Always "in". */
   onSaved?: (attendance: string) => void;
 }
@@ -55,7 +53,6 @@ export function OneTapJoin({
   avatarUrl,
   isFull,
   refund,
-  onUseForm,
   onSaved,
 }: OneTapJoinProps) {
   const { copy } = useCopy();
@@ -72,11 +69,9 @@ export function OneTapJoin({
       setState(result);
 
       if (Object.keys(result.errors).length > 0) {
-        // Roll the optimistic receipt back; the card explains itself below.
+        // Roll the optimistic receipt back; the card explains itself below —
+        // including a name clash, whose fix lives on the profile page now.
         setJoined(false);
-        // The account's name is already on the roster — hand over to the
-        // form, where they can pick something else.
-        if (result.errors.nameTaken) onUseForm();
         return;
       }
 
@@ -133,9 +128,6 @@ export function OneTapJoin({
             </Text>
           ) : null}
 
-          <Button type="button" size="sm" variant="ghost" onClick={onUseForm}>
-            {copy.rsvp.useAnotherName}
-          </Button>
         </Stack>
       </CardContent>
     </Card>

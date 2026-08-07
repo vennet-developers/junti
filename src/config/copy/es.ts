@@ -710,16 +710,15 @@ export const es = {
     willBeWaitlisted:
       "El cupo está lleno. Si eliges «Voy», quedas en lista de espera y el organizador te sube si alguien cancela.",
     duplicateName:
-      "Ya hay alguien con ese nombre en este evento. Usa otro (por ejemplo, agrega tu apellido).",
+      "Ya hay alguien con tu mismo nombre en este evento. Ajusta tu nombre en tu perfil (por ejemplo, agrega tu apellido) e inténtalo de nuevo.",
     closed: "El evento está cerrado y ya no acepta cambios.",
     oneTapHeading: "Apúntate de una",
     oneTapSubmit: (name: string) => `Voy — apúntame como ${name}`,
     oneTapSubmitting: "Apuntándote…",
     oneTapHelp: "Un toque y quedas en la lista. Después puedes cambiar tu respuesta.",
     oneTapNameTaken:
-      "Ya hay alguien con tu nombre en este evento. Ajústalo y te apuntamos igual de rápido.",
+      "Ya hay alguien con tu mismo nombre en este evento. Ajusta tu nombre en tu perfil e inténtalo de nuevo.",
     signedInAs: (name: string) => `Estás como ${name}.`,
-    useAnotherName: "Prefiero escribir otro nombre",
     signInHeading: (title: string) => `Entra para apuntarte a ${title}`,
     signInHelp:
       "Es con Google o con un link a tu correo, sin contraseña, y vuelves derecho a este evento.",

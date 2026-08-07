@@ -443,12 +443,15 @@ export function makeStepSchema(copy: Copy, fields: readonly string[]) {
   });
 }
 
-const displayNameSchema = (copy: Copy) =>
-  z.string().trim().min(1, copy.errors.nameRequired).max(NAME_MAX, copy.errors.nameTooLong);
-
+/**
+ * The RSVP submission: just the answer. The name is NOT here — it is the
+ * profile's, copied server-side on every write, because Ivan's rule is one
+ * sentence: "el nombre es lo que ponga el usuario en su perfil". A per-event
+ * name field was a second identity to maintain and a screen of noise on a
+ * form whose whole question is "¿vienes?".
+ */
 export const makeRsvpSchema = (copy: Copy) =>
   z.object({
-    displayName: displayNameSchema(copy),
     attendance: rsvpAttendanceSchema(copy),
   });
 

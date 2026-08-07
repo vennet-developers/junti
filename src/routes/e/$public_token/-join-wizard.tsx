@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Badge } from "@stackmyth/badge";
 import { Banner } from "@stackmyth/banner";
 import { CheckCircleIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { Flex, Stack } from "@stackmyth/layout";
@@ -75,17 +76,41 @@ export function JoinWizard({
 
   const publicToken = join.publicToken;
 
+  /*
+    The numbered circle before each label — Ivan's ask, and the right UX
+    call: three tabs alone read as places, and this flow is a SEQUENCE the
+    first time through. A number in a soft badge (a single digit in a pill
+    IS a circle) says "this comes second" without a single word. Numbering
+    is positional: on an event without requirements, Mensaje is 2.
+  */
+  const stepBadge = (n: number) => (
+    <Badge variant="secondary" size="sm" soft aria-hidden="true">
+      {n}
+    </Badge>
+  );
+
   return (
     <Tabs value={tab} onValueChange={setTab} size="lg">
       <TabsList fullWidth>
-        <TabsTrigger value="respuesta">{strings.tabs.answer}</TabsTrigger>
+        <TabsTrigger value="respuesta">
+          <Flex gap="2" align="center">
+            {stepBadge(1)}
+            {strings.tabs.answer}
+          </Flex>
+        </TabsTrigger>
         {hasPolicies ? (
           <TabsTrigger value="comprobante" disabled={!joined}>
-            {strings.tabs.requirements}
+            <Flex gap="2" align="center">
+              {stepBadge(2)}
+              {strings.tabs.requirements}
+            </Flex>
           </TabsTrigger>
         ) : null}
         <TabsTrigger value="mensaje" disabled={!joined}>
-          {strings.tabs.message}
+          <Flex gap="2" align="center">
+            {stepBadge(hasPolicies ? 3 : 2)}
+            {strings.tabs.message}
+          </Flex>
         </TabsTrigger>
       </TabsList>
 

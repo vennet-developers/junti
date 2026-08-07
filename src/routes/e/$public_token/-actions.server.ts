@@ -103,14 +103,13 @@ async function eventCopy(eventLocale: string): Promise<Copy> {
 /**
  * Records or amends an RSVP.
  *
- * Identity is the account, and the display name is only a label — still unique
- * per event so the roster reads cleanly, but no longer the thing that says who
- * you are. That used to be reversed: the name was the identity and a cookie
- * carried the right to amend it, which meant your answer belonged to a browser
- * rather than to you.
- *
- * The form still exists because the name on a Google account is not always the
- * name a group knows you by. What it no longer does is let a stranger answer.
+ * Identity is the account, and the display name is the PROFILE's — copied on
+ * every write, never a per-event field. Ivan's rule in one sentence: "el
+ * nombre es lo que ponga el usuario en su perfil". The per-event name box
+ * used to exist for "the group knows me by another name"; it cost a field on
+ * every answer and a second identity to maintain, and the profile page is
+ * where a name is edited now. Still unique per event so the roster reads
+ * cleanly; a clash tells the person to adjust their profile.
  */
 export async function submitRsvp(publicToken: string, formData: FormData): Promise<RsvpState> {
   const ip = clientIp(getRequest().headers);
@@ -131,7 +130,6 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
   if (shut) return { errors: { _form: shut } };
 
   const parsed = makeRsvpSchema(copy).safeParse({
-    displayName: field(formData, "displayName"),
     attendance: field(formData, "attendance"),
   });
 
@@ -139,10 +137,13 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
     return { errors: fieldErrors(parsed.error) };
   }
 
-  const { displayName, attendance: requested } = parsed.data;
+  const { attendance: requested } = parsed.data;
 
   const organizer = await getOrganizer();
   if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+  // The profile IS the name — never a per-event field. Same trim as one-tap.
+  const displayName = organizer.displayName.slice(0, 40);
 
   const rows = await loadParticipantRows(event.id);
   const rosterForCapacity = rows.map((row) => ({
@@ -162,7 +163,7 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
   );
 
   if (nameClash) {
-    return { errors: { displayName: copy.rsvp.duplicateName } };
+    return { errors: { _form: copy.rsvp.duplicateName } };
   }
 
   const attendance = resolveAttendance({
@@ -217,7 +218,7 @@ export async function submitRsvp(publicToken: string, formData: FormData): Promi
       // The unique index on (event_id, lower(display_name)) is the real
       // guard — two people submitting the same name at the same moment both
       // pass the check above and one loses here.
-      return { errors: { displayName: copy.rsvp.duplicateName } };
+      return { errors: { _form: copy.rsvp.duplicateName } };
     }
 
     // Closes the loop for somebody who got here from an invitation email, so

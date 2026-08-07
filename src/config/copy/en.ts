@@ -608,7 +608,7 @@ export const en: Copy = {
     willBeWaitlisted:
       "The event is full. If you choose “In”, you join the waitlist and the organizer moves you up if someone drops out.",
     duplicateName:
-      "Someone with that name is already on this event. Use another one — add your surname, for instance.",
+      "Somebody already has your exact name on this event. Adjust your name on your profile (add a last name, say) and try again.",
     closed: "The event is closed and no longer accepts changes.",
     oneTapHeading: "Join in one tap",
     oneTapSubmit: (name: string) => `I'm in — add me as ${name}`,
@@ -617,7 +617,6 @@ export const en: Copy = {
     oneTapNameTaken:
       "Someone on this event already has your name. Adjust it and we will add you just as fast.",
     signedInAs: (name: string) => `You are signed in as ${name}.`,
-    useAnotherName: "I'd rather type a different name",
     signInHeading: (title: string) => `Sign in to join ${title}`,
     signInHelp:
       "Google or a link to your email, no password, and you land right back on this event.",
