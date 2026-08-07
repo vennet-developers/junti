@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
@@ -43,40 +43,31 @@ const DISMISSED_KEY = "junti-install-dismissed";
 
 type Offer = "none" | "native" | "ios";
 
+/**
+ * The whole decision as a store snapshot — no effect, no setState cascade.
+ * `useSyncExternalStore` re-reads it when the captured prompt arrives or the
+ * app gets installed, and the server snapshot is "none": the offer appears
+ * after hydration on the devices it applies to, which is also the only
+ * moment the browser facts it reads exist.
+ */
+function computeOffer(): Offer {
+  const standalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    // iOS's pre-standard flag, still the truth on installed Safari PWAs.
+    ("standalone" in navigator && (navigator as { standalone?: boolean }).standalone === true);
+  if (standalone || localStorage.getItem(DISMISSED_KEY) !== null) return "none";
+
+  if (deferredInstallPrompt() !== null) return "native";
+
+  return /iP(hone|ad|od)/.test(navigator.userAgent) ? "ios" : "none";
+}
+
 export function InstallOffer() {
   const { copy } = useCopy();
   const strings = copy.install;
 
-  // Re-renders when the deferred prompt arrives or the app gets installed.
-  const nativePrompt = useSyncExternalStore(
-    onInstallStateChange,
-    () => deferredInstallPrompt() !== null,
-    () => false,
-  );
-
-  const [offer, setOffer] = useState<Offer>("none");
+  const offer = useSyncExternalStore(onInstallStateChange, computeOffer, () => "none" as Offer);
   const [gone, setGone] = useState(false);
-
-  useEffect(() => {
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      // iOS's pre-standard flag, still the truth on installed Safari PWAs.
-      ("standalone" in navigator && (navigator as { standalone?: boolean }).standalone === true);
-    const dismissed = localStorage.getItem(DISMISSED_KEY) !== null;
-
-    if (standalone || dismissed) {
-      setOffer("none");
-      return;
-    }
-
-    if (nativePrompt) {
-      setOffer("native");
-      return;
-    }
-
-    const isIos = /iP(hone|ad|od)/.test(navigator.userAgent);
-    setOffer(isIos ? "ios" : "none");
-  }, [nativePrompt]);
 
   if (offer === "none" || gone) return null;
 

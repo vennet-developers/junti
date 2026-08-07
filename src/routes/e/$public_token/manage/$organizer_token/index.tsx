@@ -3,7 +3,7 @@ import { Button } from "@stackmyth/button";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Banner } from "@stackmyth/banner";
-import { InfoIcon, TriangleAlertIcon } from "@stackmyth/icons";
+import { InfoIcon } from "@stackmyth/icons";
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -255,9 +255,6 @@ function ManagePage() {
   const showMoney = event.hasCost;
 
   const commitmentByParticipant = new Map(commitments.map((item) => [item.participantId, item]));
-
-  const nameOf = (participantId: string) =>
-    roster.members.find((m) => m.id === participantId)?.displayName ?? "";
 
   /** Just the commitment, for groups whose note slot is already spoken for. */
   const commitmentNote = (member: ParticipantRosterMember) => {
