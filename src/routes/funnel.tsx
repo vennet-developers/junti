@@ -2,6 +2,7 @@ import { Badge } from "@stackmyth/badge";
 import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
 import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
+import { List, ListItem } from "@stackmyth/list-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
 import { createFileRoute, notFound } from "@tanstack/react-router";
@@ -10,6 +11,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { pageTitle } from "@/lib/page-title";
 import { useCopy } from "@/components/copy-provider";
 import type { Copy } from "@/config/copy";
+import type { DirectoryQuery } from "@/domain/directory";
+import type { DirectoryPage } from "@/lib/directory";
 import { OverviewPanel } from "@/components/overview-panel";
 import {
   CALENDAR_REPEAT_THRESHOLD,
@@ -38,15 +41,26 @@ import {
  * signpost; this loader's check remains the gate.
  */
 const getFunnel = createServerFn({ method: "POST" })
-  .validator((data: { rango?: string; desde?: string }) => data)
+  .validator(
+    (data: { rango?: string; desde?: string; tipo?: string; q?: string; pagina?: string; estado?: string }) =>
+      data,
+  )
   .handler(async ({ data }) => {
-    const [{ getOrganizer }, { loadFunnel }, { loadOverview }, { resolveRange }] =
-      await Promise.all([
-        import("@/lib/organizer"),
-        import("@/lib/funnel"),
-        import("@/lib/overview"),
-        import("@/domain/panel-range"),
-      ]);
+    const [
+      { getOrganizer },
+      { loadFunnel },
+      { loadOverview },
+      { resolveRange },
+      { parseDirectoryParams },
+      { loadDirectory },
+    ] = await Promise.all([
+      import("@/lib/organizer"),
+      import("@/lib/funnel"),
+      import("@/lib/overview"),
+      import("@/domain/panel-range"),
+      import("@/domain/directory"),
+      import("@/lib/directory"),
+    ]);
 
     const owner = process.env.ANALYTICS_OWNER_ID;
     const organizer = await getOrganizer();
@@ -58,6 +72,7 @@ const getFunnel = createServerFn({ method: "POST" })
     // One resolver for the whole page, so both halves agree on what "the
     // period" is. Garbage in the URL resolves to the default view.
     const range = resolveRange(data, new Date());
+    const directoryQuery = parseDirectoryParams(data);
 
     /*
       Sequential, not `Promise.all`. Both halves fan out internally, and running
@@ -67,7 +82,8 @@ const getFunnel = createServerFn({ method: "POST" })
     */
     const funnel = await loadFunnel(range);
     const overview = await loadOverview(range);
-    return { ...funnel, overview };
+    const directory = await loadDirectory(range, directoryQuery);
+    return { ...funnel, overview, directory, directoryQuery };
   });
 
 export const Route = createFileRoute("/funnel")({
@@ -78,11 +94,27 @@ export const Route = createFileRoute("/funnel")({
     page froze. Interpretation happens exactly once, server-side, in
     `resolveRange`.
   */
-  validateSearch: (search: Record<string, unknown>): { rango?: string; desde?: string } => ({
-    rango: typeof search.rango === "string" ? search.rango : undefined,
-    desde: typeof search.desde === "string" ? search.desde : undefined,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { rango?: string; desde?: string; tipo?: string; q?: string; pagina?: string; estado?: string } => {
+    const keep = (value: unknown) => (typeof value === "string" ? value : undefined);
+    return {
+      rango: keep(search.rango),
+      desde: keep(search.desde),
+      tipo: keep(search.tipo),
+      q: keep(search.q),
+      pagina: keep(search.pagina),
+      estado: keep(search.estado),
+    };
+  },
+  loaderDeps: ({ search }) => ({
+    rango: search.rango,
+    desde: search.desde,
+    tipo: search.tipo,
+    q: search.q,
+    pagina: search.pagina,
+    estado: search.estado,
   }),
-  loaderDeps: ({ search }) => ({ rango: search.rango, desde: search.desde }),
   loader: ({ deps }) => getFunnel({ data: deps }),
   head: () => ({
     meta: [{ title: pageTitle("Funnel") }, { name: "robots", content: "noindex, nofollow" }],
@@ -157,6 +189,198 @@ function RangeFilter({
       <Text variant="small" color="muted">
         {p.note(day(range.fromISO), day(range.toISO))}
       </Text>
+    </Stack>
+  );
+}
+
+/**
+ * The Datos tab: one page of twenty rows, searched and filtered server-side.
+ *
+ * Same navigation contract as `RangeFilter` — plain anchors and a native GET
+ * form, full reload, no router — and for the same reason. Pagination lives in
+ * the query, so the DOM only ever holds one page; that is the entire point
+ * the feature was asked for with ("no saturar la carga de elementos en el
+ * DOM").
+ */
+function DirectoryPanel({
+  directory,
+  query,
+  search,
+  copy,
+}: {
+  directory: DirectoryPage;
+  query: DirectoryQuery;
+  search: { rango?: string; desde?: string };
+  copy: Copy;
+}) {
+  const d = copy.panel.directory;
+
+  /** Every link re-states the whole state; what is omitted resets. */
+  const url = (over: { tipo?: string; q?: string; pagina?: number; estado?: string }) => {
+    const params = new URLSearchParams();
+    if (search.rango) params.set("rango", search.rango);
+    if (search.desde) params.set("desde", search.desde);
+    params.set("tipo", over.tipo ?? query.kind);
+    const q = over.q ?? query.q;
+    if (q) params.set("q", q);
+    const estado = over.estado ?? (over.tipo ? "todos" : query.filter);
+    if (estado !== "todos") params.set("estado", estado);
+    if ((over.pagina ?? 1) > 1) params.set("pagina", String(over.pagina));
+    return `/funnel?${params.toString()}`;
+  };
+
+  const when = (iso: string) =>
+    new Date(iso).toLocaleDateString(copy.intlLocale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone: "America/Bogota",
+    });
+
+  return (
+    <Stack gap="5" pt="4">
+      <Flex gap="2" wrap="wrap" align="center">
+        {(["usuarios", "eventos", "grupos"] as const).map((kind) => (
+          <Button
+            key={kind}
+            asChild
+            size="sm"
+            shape="pill"
+            variant={query.kind === kind ? "primary" : "outline"}
+          >
+            {/* A kind switch resets search, filter and page: they describe
+                the list being left, not the one being opened. */}
+            <a href={url({ tipo: kind, q: "", estado: "todos" })}>{d.kinds[kind]}</a>
+          </Button>
+        ))}
+      </Flex>
+
+      {/* Native GET form; hidden inputs carry the state the text box is not
+          about, so searching does not silently drop the date range. */}
+      <form method="get" action="/funnel">
+        {search.rango ? <input type="hidden" name="rango" value={search.rango} /> : null}
+        {search.desde ? <input type="hidden" name="desde" value={search.desde} /> : null}
+        <input type="hidden" name="tipo" value={query.kind} />
+        {query.filter !== "todos" ? (
+          <input type="hidden" name="estado" value={query.filter} />
+        ) : null}
+        <Flex gap="2" align="center" wrap="wrap">
+          <input
+            type="search"
+            name="q"
+            className="junti-fecha-panel junti-buscador-panel"
+            placeholder={d.searchPlaceholder[query.kind]}
+            aria-label={d.searchPlaceholder[query.kind]}
+            defaultValue={query.q}
+            maxLength={80}
+          />
+          <Button type="submit" size="sm" shape="pill" variant="secondary">
+            {d.searchSubmit}
+          </Button>
+          {query.q !== "" ? (
+            <Button asChild size="sm" shape="pill" variant="ghost">
+              <a href={url({ q: "" })}>{d.clearSearch}</a>
+            </Button>
+          ) : null}
+        </Flex>
+      </form>
+
+      {query.kind === "eventos" ? (
+        <Flex gap="2" wrap="wrap" align="center">
+          {(["todos", "con_costo", "gratis", "cancelados"] as const).map((estado) => (
+            <Button
+              key={estado}
+              asChild
+              size="sm"
+              shape="pill"
+              variant={query.filter === estado ? "primary" : "outline"}
+            >
+              <a href={url({ estado })}>{d.filters[estado]}</a>
+            </Button>
+          ))}
+        </Flex>
+      ) : null}
+
+      <Card surface="outlined">
+        <CardContent>
+          <Stack gap="3">
+            <Flex gap="3" align="center" justify="between" wrap="wrap">
+              <Text variant="small" color="muted">
+                {d.results(directory.total)}
+              </Text>
+              <Text variant="small" color="muted">
+                {d.pageOf(directory.page, directory.pages)}
+              </Text>
+            </Flex>
+
+            {directory.rows.length === 0 ? (
+              <Text variant="small" color="muted">
+                {d.empty}
+              </Text>
+            ) : (
+              <List as="ul" divided>
+                {directory.rows.map((row) => (
+                  <ListItem key={row.id}>
+                    <Flex gap="3" align="start" justify="between" wrap="wrap" width="100%">
+                      <Stack gap="1" minWidth="0">
+                        <Text weight="medium">{row.name}</Text>
+                        {row.detail ? (
+                          <Text variant="small" color="muted">
+                            {row.detail}
+                          </Text>
+                        ) : null}
+                        <Text variant="small" color="muted">
+                          {"events" in row.meta && "rsvps" in row.meta
+                            ? d.userMeta(row.meta.events, row.meta.rsvps)
+                            : "attending" in row.meta
+                              ? d.eventMeta(row.meta.attending)
+                              : d.groupMeta(row.meta.members, row.meta.events)}
+                        </Text>
+                      </Stack>
+                      <Stack gap="1" align="end" flexShrink={0}>
+                        <Text variant="small" color="muted">
+                          {d.created(when(row.createdAtISO))}
+                        </Text>
+                        {"cancelled" in row.meta ? (
+                          <Flex gap="2" align="center">
+                            <Badge
+                              variant={row.meta.costMode === "none" ? "outline" : "success"}
+                              size="sm"
+                              soft
+                            >
+                              {row.meta.costMode === "none" ? d.eventFree : d.eventPaid}
+                            </Badge>
+                            {row.meta.cancelled ? (
+                              <Badge variant="error" size="sm" soft>
+                                {d.eventCancelled}
+                              </Badge>
+                            ) : null}
+                          </Flex>
+                        ) : null}
+                      </Stack>
+                    </Flex>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+
+            {directory.pages > 1 ? (
+              <Flex gap="2" align="center" justify="end">
+                {directory.page > 1 ? (
+                  <Button asChild size="sm" variant="outline">
+                    <a href={url({ pagina: directory.page - 1 })}>{d.previous}</a>
+                  </Button>
+                ) : null}
+                {directory.page < directory.pages ? (
+                  <Button asChild size="sm" variant="outline">
+                    <a href={url({ pagina: directory.page + 1 })}>{d.next}</a>
+                  </Button>
+                ) : null}
+              </Flex>
+            ) : null}
+          </Stack>
+        </CardContent>
+      </Card>
     </Stack>
   );
 }
@@ -271,8 +495,18 @@ function GateRow({
 
 function FunnelPage() {
   const report = Route.useLoaderData();
+  const search = Route.useSearch();
   const { copy } = useCopy();
   const p = copy.panel;
+
+  /*
+    Land on Datos when the URL carries directory state: the anchors reload
+    the whole page, and coming back to Resumen after every search would make
+    the tab unusable. Tab choice itself stays client-side — it costs nothing
+    and needs no URL.
+  */
+  const defaultTab =
+    search.tipo || search.q || search.pagina || search.estado ? "datos" : "resumen";
 
   // The hourly limit is what "unusual" is measured against, so the badge turns
   // colour relative to the live setting rather than a number baked in here.
@@ -305,15 +539,25 @@ function FunnelPage() {
           «Resumen» por defecto: es lo que se abre cuando no se viene buscando
           nada en particular.
         */}
-        <Tabs defaultValue="resumen" size="xl">
+        <Tabs defaultValue={defaultTab} size="xl">
           <TabsList fullWidth>
             <TabsTrigger value="resumen">{p.tabs.overview}</TabsTrigger>
+            <TabsTrigger value="datos">{p.tabs.directory}</TabsTrigger>
             <TabsTrigger value="embudos">{p.tabs.funnels}</TabsTrigger>
             <TabsTrigger value="operacion">{p.tabs.operations}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="resumen">
             <OverviewPanel overview={report.overview} />
+          </TabsContent>
+
+          <TabsContent value="datos">
+            <DirectoryPanel
+              directory={report.directory}
+              query={report.directoryQuery}
+              search={{ rango: search.rango, desde: search.desde }}
+              copy={copy}
+            />
           </TabsContent>
 
           <TabsContent value="embudos">

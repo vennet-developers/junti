@@ -429,7 +429,7 @@ export const es = {
   panel: {
     title: "Panel",
     subtitle: "Cuánto hay, hacia dónde va, y dónde se cae la gente.",
-    tabs: { overview: "Resumen", funnels: "Embudos", operations: "Operación" },
+    tabs: { overview: "Resumen", funnels: "Embudos", operations: "Operación", directory: "Datos" },
     range: {
       last30: "Últimos 30 días",
       lastWeek: "Última semana",
@@ -532,6 +532,37 @@ export const es = {
           : `${n} descargas fueron de un evento cancelado. No cuentan como demanda — sacar algo muerto del calendario es lo contrario de querer sincronizarlo.`,
       anonymousNote:
         "El porcentaje de repetición sólo ve a quien tenía sesión al descargar. La ruta no exige cuenta, así que a un lector anónimo no hay forma de contarlo dos veces.",
+    },
+    directory: {
+      kinds: { usuarios: "Usuarios", eventos: "Eventos", grupos: "Grupos" },
+      searchPlaceholder: {
+        usuarios: "Buscar por nombre o correo",
+        eventos: "Buscar por título",
+        grupos: "Buscar por nombre",
+      },
+      searchSubmit: "Buscar",
+      clearSearch: "Limpiar",
+      filters: {
+        todos: "Todos",
+        con_costo: "Con costo",
+        gratis: "Gratis",
+        cancelados: "Cancelados",
+      },
+      results: (n: number) => (n === 1 ? "1 resultado" : `${n.toLocaleString("es-CO")} resultados`),
+      pageOf: (page: number, pages: number) => `Página ${page} de ${pages}`,
+      previous: "Anterior",
+      next: "Siguiente",
+      empty: "Nada con ese filtro en este periodo.",
+      created: (when: string) => `creado ${when}`,
+      userMeta: (events: number, rsvps: number) =>
+        `${events} ${events === 1 ? "evento creado" : "eventos creados"} · ${rsvps} ${rsvps === 1 ? "participación" : "participaciones"}`,
+      eventMeta: (attending: number) =>
+        `${attending} ${attending === 1 ? "confirmado" : "confirmados"}`,
+      eventPaid: "con costo",
+      eventFree: "gratis",
+      eventCancelled: "cancelado",
+      groupMeta: (members: number, events: number) =>
+        `${members} ${members === 1 ? "miembro" : "miembros"} · ${events} ${events === 1 ? "evento" : "eventos"}`,
     },
     operations: {
       sendsHeading: "Envíos por organizador",

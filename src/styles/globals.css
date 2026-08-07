@@ -619,3 +619,10 @@ body {
   top: -0.3rem;
   right: -0.3rem;
 }
+
+/* El buscador del directorio comparte vestido con el input de fecha, pero
+   necesita espacio para escribir. */
+.junti-buscador-panel {
+  min-width: 16rem;
+  border-radius: 0.75rem;
+}

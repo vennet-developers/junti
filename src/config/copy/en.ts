@@ -339,7 +339,7 @@ export const en: Copy = {
   panel: {
     title: "Panel",
     subtitle: "How much there is, where it is heading, and where people fall off.",
-    tabs: { overview: "Overview", funnels: "Funnels", operations: "Operations" },
+    tabs: { overview: "Overview", funnels: "Funnels", operations: "Operations", directory: "Data" },
     range: {
       last30: "Last 30 days",
       lastWeek: "Last week",
@@ -441,6 +441,36 @@ export const en: Copy = {
           : `${n} downloads were of a cancelled event. They do not count as demand — removing something dead from a calendar is the opposite of wanting to sync it.`,
       anonymousNote:
         "The repeat percentage only sees people who were signed in when downloading. The route requires no account, so an anonymous reader cannot be counted twice.",
+    },
+    directory: {
+      kinds: { usuarios: "Users", eventos: "Events", grupos: "Groups" },
+      searchPlaceholder: {
+        usuarios: "Search by name or email",
+        eventos: "Search by title",
+        grupos: "Search by name",
+      },
+      searchSubmit: "Search",
+      clearSearch: "Clear",
+      filters: {
+        todos: "All",
+        con_costo: "Paid",
+        gratis: "Free",
+        cancelados: "Cancelled",
+      },
+      results: (n: number) => (n === 1 ? "1 result" : `${n.toLocaleString("en-US")} results`),
+      pageOf: (page: number, pages: number) => `Page ${page} of ${pages}`,
+      previous: "Previous",
+      next: "Next",
+      empty: "Nothing under that filter in this period.",
+      created: (when: string) => `created ${when}`,
+      userMeta: (events: number, rsvps: number) =>
+        `${events} ${events === 1 ? "event created" : "events created"} · ${rsvps} ${rsvps === 1 ? "participation" : "participations"}`,
+      eventMeta: (attending: number) => `${attending} confirmed`,
+      eventPaid: "paid",
+      eventFree: "free",
+      eventCancelled: "cancelled",
+      groupMeta: (members: number, events: number) =>
+        `${members} ${members === 1 ? "member" : "members"} · ${events} ${events === 1 ? "event" : "events"}`,
     },
     operations: {
       sendsHeading: "Sends per organizer",
