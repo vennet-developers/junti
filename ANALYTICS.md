@@ -147,6 +147,13 @@ One device turned alerts on. No endpoint, no user agent in `props` — the
 subscription row holds those, and this table only needs to answer "is anyone
 using this".
 
+| `app_installed` | Client, on the browser's `appinstalled` event | `{}` |
+
+Whether the install offer converts. Client because only the browser knows;
+Chrome-family only, which is also the only family that can install from the
+page. iOS installs are invisible to this — a manual "Add to Home Screen"
+fires no event — so the number is a floor, not a total.
+
 ## Groups
 
 | Event | Fired | `props` |

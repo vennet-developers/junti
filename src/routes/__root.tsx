@@ -16,6 +16,9 @@ import juntiCss from "@/styles/junti.css?url";
 
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
+/* Side-effect import, on purpose: registers the beforeinstallprompt capture
+   in the root bundle, before any route chunk could lose the race. */
+import "@/lib/install-prompt-client";
 import { CopyProvider } from "@/components/copy-provider";
 import { previewModeOf } from "@/domain/preview";
 import { BRAND_NAME, BRAND_TAGLINE } from "@/config/brand";

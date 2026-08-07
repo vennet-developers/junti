@@ -8,6 +8,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 import { useCopy } from "@/components/copy-provider";
 import { CreatedToast } from "@/components/created-toast";
+import { InstallOffer } from "@/components/install-offer";
 import { Link } from "@tanstack/react-router";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
@@ -178,6 +179,11 @@ function MyEventsPage() {
         {/* Creation redirects here for account holders, so the confirmation
             arrives as a flag on the URL rather than with the action. */}
         {created === "1" ? <CreatedToast /> : null}
+
+        {/* The install offer: silent when installed, dismissed, or where no
+            honest offer exists. Here and not on the landing, because the
+            person who installs is the organizer who keeps coming back. */}
+        <InstallOffer />
 
         {/*
           No breadcrumb here, and that is the trail being honest rather than

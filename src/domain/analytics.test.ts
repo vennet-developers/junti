@@ -56,6 +56,9 @@ describe("the taxonomy is closed and complete", () => {
       "create_abandoned",
       "event_viewed",
       "rsvp_started",
+      // Only the browser hears `appinstalled`. iOS installs stay invisible
+      // even to it, so the count is a floor.
+      "app_installed",
       "group_link_viewed",
     ]);
   });

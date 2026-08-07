@@ -1337,6 +1337,19 @@ export const es = {
    * else. The one exception is `paymentRecorded`, which is about the reader's
    * own money and would sound absurd narrated at them.
    */
+  /** La oferta de instalar la app, en my-events. Ver InstallOffer. */
+  install: {
+    title: "Lleva Junti en tu celular",
+    help: "Con la app en tu pantalla de inicio, tus eventos y avisos quedan a un toque.",
+    button: "Instalar",
+    howButton: "Cómo instalarla",
+    iosTitle: "Instalar Junti en tu iPhone",
+    iosStep1: "1 · Toca Compartir (el cuadrado con la flecha hacia arriba) en la barra de Safari.",
+    iosStep2: "2 · Elige «Añadir a pantalla de inicio» y confirma.",
+    iosNote: "Queda como una app: pantalla completa, con la chapa de Junti, y lista para recibir avisos.",
+    dismiss: "No volver a mostrar",
+  },
+
   notifications: {
     link: "Notificaciones",
     open: "Ver notificaciones",

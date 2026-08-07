@@ -1198,6 +1198,18 @@ export const en: Copy = {
     rejectHint: "Rejecting one? That happens inside the event, with the reason.",
   },
 
+  install: {
+    title: "Take Junti on your phone",
+    help: "With the app on your home screen, your events and alerts are one tap away.",
+    button: "Install",
+    howButton: "How to install",
+    iosTitle: "Install Junti on your iPhone",
+    iosStep1: "1 · Tap Share (the square with the upward arrow) in Safari's bar.",
+    iosStep2: "2 · Choose \u201cAdd to Home Screen\u201d and confirm.",
+    iosNote: "It behaves like an app: full screen, wearing Junti's chapa, ready for alerts.",
+    dismiss: "Don't show again",
+  },
+
   notifications: {
     link: "Notifications",
     open: "See notifications",
