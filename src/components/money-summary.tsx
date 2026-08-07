@@ -59,10 +59,24 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
     );
   }
 
-  // Waived money is neither collected nor owed, so it is excluded from the
-  // denominator — otherwise the bar could never reach 100%.
-  const target = collectedMinor + outstandingMinor;
-  const percent = target > 0 ? Math.round((collectedMinor / target) * 100) : 100;
+  /*
+    The GOAL is what the split says should come in — never
+    `collected + outstanding`, which is a bar measuring itself: once everyone
+    confirmed it reads "X de X" at ANY number, and Ivan caught it announcing
+    "$176.000 de $176.000" over an event whose whole cost is $160.000.
+    Waived money is forgiven out of the goal, or the bar could never fill.
+  */
+  const goalMinor = Math.max(0, totalComputedMinor - waivedMinor);
+  const percent =
+    goalMinor > 0 ? Math.min(100, Math.round((collectedMinor / goalMinor) * 100)) : 100;
+
+  /*
+    Collected can legitimately EXCEED the goal: money retained from a dropout
+    under the refund policy, or somebody who paid more than their share. The
+    bar caps at full and this names the difference instead of hiding it — the
+    organizer holding more than the cost is a fact worth a sentence.
+  */
+  const surplusMinor = Math.max(0, collectedMinor - goalMinor);
 
   return (
     <Stack gap="4">
@@ -111,11 +125,16 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
         <Progress
           value={percent}
           max={100}
-          aria-label={copy.money.progressLabel(money(collectedMinor), money(target))}
+          aria-label={copy.money.progressLabel(money(collectedMinor), money(goalMinor))}
         />
         <Text variant="small" color="muted">
-          {copy.money.progressLabel(money(collectedMinor), money(target))}
+          {copy.money.progressLabel(money(collectedMinor), money(goalMinor))}
         </Text>
+        {surplusMinor > 0 ? (
+          <Text variant="small" color="muted">
+            {copy.money.surplus(money(surplusMinor))}
+          </Text>
+        ) : null}
       </Stack>
 
       <Divider />

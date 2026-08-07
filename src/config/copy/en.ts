@@ -699,6 +699,8 @@ export const en: Copy = {
   },
 
   money: {
+    surplus: (amount: string) =>
+      `You hold ${amount} above the cost — retained from dropouts, or overpayments.`,
     heading: "The money",
     owesLabel: "Owes",
     collectedLabel: "Collected",

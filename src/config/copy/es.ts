@@ -798,6 +798,8 @@ export const es = {
   },
 
   money: {
+    surplus: (amount: string) =>
+      `Tienes ${amount} por encima del costo — retenidos de quien se bajó o pagos de más.`,
     heading: "Cuentas",
     owesLabel: "Debe",
     collectedLabel: "Recaudado",
