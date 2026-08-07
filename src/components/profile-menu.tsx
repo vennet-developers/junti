@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from "@stackmyth/dialog";
 import {
+  BarChart3Icon,
   CalendarIcon,
   CheckCircleIcon,
   ChevronDownIcon,
@@ -62,10 +63,17 @@ import { setThemeFn } from "@/lib/preference-fns";
 export function ProfileMenu({
   organizer,
   theme,
+  isOwner = false,
 }: {
   organizer: { displayName: string; email: string | null; avatarUrl: string | null };
   /** The forced appearance, or null when following the operating system. */
   theme: "light" | "dark" | null;
+  /**
+   * Shows the owner-panel entry. A signpost only: /funnel re-checks the same
+   * fact server-side and 404s for anybody else, so a spoofed flag buys a menu
+   * item that leads to a page that does not exist for you.
+   */
+  isOwner?: boolean;
 }) {
   const { copy } = useCopy();
   const router = useRouter();
@@ -261,6 +269,20 @@ export function ProfileMenu({
                   </Flex>
                 </Link>
               </Button>
+
+              {/* Owner only, and last: it is about the product, not about
+                  this account. A plain anchor, like the panel's own filter
+                  links — /funnel is deliberately outside `ROUTES`. */}
+              {isOwner ? (
+                <Button asChild variant="ghost" size="lg" fullWidth justify="start" flush>
+                  <a href="/funnel" onClick={closeUnlessOpeningElsewhere}>
+                    <Flex gap="3" align="center">
+                      <BarChart3Icon size={18} aria-hidden="true" />
+                      {copy.auth.panelLink}
+                    </Flex>
+                  </a>
+                </Button>
+              ) : null}
             </Stack>
 
             <Divider />

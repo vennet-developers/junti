@@ -1,4 +1,5 @@
 import { Badge } from "@stackmyth/badge";
+import { Button } from "@stackmyth/button";
 import { Card, CardContent } from "@stackmyth/card";
 import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
@@ -7,6 +8,8 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
 import { pageTitle } from "@/lib/page-title";
+import { useCopy } from "@/components/copy-provider";
+import type { Copy } from "@/config/copy";
 import { OverviewPanel } from "@/components/overview-panel";
 import {
   CALENDAR_REPEAT_THRESHOLD,
@@ -19,9 +22,10 @@ import {
  *
  * This is AC-4 of the analytics card: the two questions have to be answerable
  * "without engineering help", and with the events living in Postgres the only
- * honest reading of that is a screen with the numbers on it. Four fixed
- * queries, no filters, no date picker, no chart library — the point is to be
- * read, not configured.
+ * honest reading of that is a screen with the numbers on it. Fixed queries
+ * and one degree of freedom — the date range, because "cuánto dio ayer" and
+ * "cuánto dio el mes" are the same fixed questions asked about different
+ * days, not a reporting product.
  *
  * **Owner-only, and deliberately crude about it.** There is no admin role in
  * this product (see DECISIONS.md #56) and inventing one for a page of counts
@@ -29,40 +33,133 @@ import {
  * id, from an environment variable, and a 404 rather than a 403 for everybody
  * else — a page that says "forbidden" tells you it exists.
  *
- * Not in `ROUTES` on purpose: nothing links here, and it should stay that way.
+ * Not in `ROUTES` on purpose, but no longer unlinked: the account menu shows
+ * the owner — and only the owner — a plain anchor here. The menu flag is a
+ * signpost; this loader's check remains the gate.
  */
-const getFunnel = createServerFn({ method: "POST" }).handler(async () => {
-  const [{ getOrganizer }, { loadFunnel }, { loadOverview }] = await Promise.all([
-    import("@/lib/organizer"),
-    import("@/lib/funnel"),
-    import("@/lib/overview"),
-  ]);
+const getFunnel = createServerFn({ method: "POST" })
+  .validator((data: { rango?: string; desde?: string }) => data)
+  .handler(async ({ data }) => {
+    const [{ getOrganizer }, { loadFunnel }, { loadOverview }, { resolveRange }] =
+      await Promise.all([
+        import("@/lib/organizer"),
+        import("@/lib/funnel"),
+        import("@/lib/overview"),
+        import("@/domain/panel-range"),
+      ]);
 
-  const owner = process.env.ANALYTICS_OWNER_ID;
-  const organizer = await getOrganizer();
+    const owner = process.env.ANALYTICS_OWNER_ID;
+    const organizer = await getOrganizer();
 
-  // Unset variable means nobody, not everybody. A missing secret must never
-  // widen access.
-  if (!owner || !organizer || organizer.id !== owner) throw notFound();
+    // Unset variable means nobody, not everybody. A missing secret must never
+    // widen access.
+    if (!owner || !organizer || organizer.id !== owner) throw notFound();
 
-  /*
-    Sequential, not `Promise.all`. Both halves fan out internally, and running
-    them together put roughly fourteen statements through a pool of five — see
-    the note in `db/client.ts`, and the 500 that produced. This page is opened
-    by one person and an extra second is invisible; a timeout is not.
-  */
-  const funnel = await loadFunnel(30);
-  const overview = await loadOverview(30);
-  return { ...funnel, overview };
-});
+    // One resolver for the whole page, so both halves agree on what "the
+    // period" is. Garbage in the URL resolves to the default view.
+    const range = resolveRange(data, new Date());
+
+    /*
+      Sequential, not `Promise.all`. Both halves fan out internally, and running
+      them together put roughly fourteen statements through a pool of five — see
+      the note in `db/client.ts`, and the 500 that produced. This page is opened
+      by one person and an extra second is invisible; a timeout is not.
+    */
+    const funnel = await loadFunnel(range);
+    const overview = await loadOverview(range);
+    return { ...funnel, overview };
+  });
 
 export const Route = createFileRoute("/funnel")({
-  loader: () => getFunnel(),
+  /*
+    Strings in, the same strings out, or undefined. Nothing here coerces or
+    rewrites — the last date filter this app had put a number coercion in
+    `validateSearch` and the router chased its own rewrite in a loop until the
+    page froze. Interpretation happens exactly once, server-side, in
+    `resolveRange`.
+  */
+  validateSearch: (search: Record<string, unknown>): { rango?: string; desde?: string } => ({
+    rango: typeof search.rango === "string" ? search.rango : undefined,
+    desde: typeof search.desde === "string" ? search.desde : undefined,
+  }),
+  loaderDeps: ({ search }) => ({ rango: search.rango, desde: search.desde }),
+  loader: ({ deps }) => getFunnel({ data: deps }),
   head: () => ({
     meta: [{ title: pageTitle("Funnel") }, { name: "robots", content: "noindex, nofollow" }],
   }),
   component: FunnelPage,
 });
+
+/**
+ * The period every number on the page is filtered to.
+ *
+ * Plain anchors and a native GET form — deliberately no router `Link`, no
+ * client-side navigation. The previous attempt at a date filter here froze
+ * the page in a router rewrite loop, and an owner dashboard reloading whole
+ * is a cost of nothing. The chips are the presets Ivan asked for; the date
+ * input is "desde una fecha a hoy".
+ */
+function RangeFilter({
+  range,
+  copy,
+}: {
+  range: { preset: string; fromISO: string; toISO: string };
+  copy: Copy;
+}) {
+  const p = copy.panel.range;
+  const chips = [
+    { href: "/funnel", label: p.last30, preset: "30d" },
+    { href: "/funnel?rango=7d", label: p.lastWeek, preset: "7d" },
+    { href: "/funnel?rango=ayer", label: p.yesterday, preset: "ayer" },
+    { href: "/funnel?rango=24h", label: p.last24h, preset: "24h" },
+  ];
+
+  const day = (iso: string) =>
+    new Date(iso).toLocaleDateString(copy.intlLocale, {
+      day: "numeric",
+      month: "short",
+      timeZone: "America/Bogota",
+    });
+
+  return (
+    <Stack gap="2">
+      <Flex gap="2" wrap="wrap" align="center">
+        {chips.map((chip) => (
+          <Button
+            key={chip.preset}
+            asChild
+            size="sm"
+            shape="pill"
+            variant={range.preset === chip.preset ? "primary" : "outline"}
+          >
+            <a href={chip.href}>{chip.label}</a>
+          </Button>
+        ))}
+
+        {/* Native form: submitting navigates to /funnel?desde=YYYY-MM-DD. */}
+        <form method="get" action="/funnel">
+          <Flex gap="2" align="center">
+            <input
+              type="date"
+              name="desde"
+              className="junti-fecha-panel"
+              aria-label={p.fromDateAria}
+              defaultValue={range.preset === "custom" ? range.fromISO.slice(0, 10) : ""}
+              required
+            />
+            <Button type="submit" size="sm" shape="pill" variant={range.preset === "custom" ? "primary" : "outline"}>
+              {p.fromDate}
+            </Button>
+          </Flex>
+        </form>
+      </Flex>
+
+      <Text variant="small" color="muted">
+        {p.note(day(range.fromISO), day(range.toISO))}
+      </Text>
+    </Stack>
+  );
+}
 
 /**
  * One step, with how many of the step above it survived to here.
@@ -174,6 +271,8 @@ function GateRow({
 
 function FunnelPage() {
   const report = Route.useLoaderData();
+  const { copy } = useCopy();
+  const p = copy.panel;
 
   // The hourly limit is what "unusual" is measured against, so the badge turns
   // colour relative to the live setting rather than a number baked in here.
@@ -184,15 +283,15 @@ function FunnelPage() {
       <Stack gap="6">
         <Stack gap="2">
           <Text as="h1" variant="h3" fontFamily="var(--junti-display)">
-            Panel
+            {p.title}
           </Text>
           {/* Access mechanics (owner id, the 404) live in the code comments
               above, where an operator looks — not on a screen whose reader
               already got in. */}
-          <Text color="muted">
-            Cuánto hay, hacia dónde va, y dónde se cae la gente.
-          </Text>
+          <Text color="muted">{p.subtitle}</Text>
         </Stack>
+
+        <RangeFilter range={report.overview.range} copy={copy} />
 
         {/*
           Tres pestañas, una pregunta cada una: cuánto hay y si se mueve
@@ -208,9 +307,9 @@ function FunnelPage() {
         */}
         <Tabs defaultValue="resumen" size="xl">
           <TabsList fullWidth>
-            <TabsTrigger value="resumen">Resumen</TabsTrigger>
-            <TabsTrigger value="embudos">Embudos</TabsTrigger>
-            <TabsTrigger value="operacion">Operación</TabsTrigger>
+            <TabsTrigger value="resumen">{p.tabs.overview}</TabsTrigger>
+            <TabsTrigger value="embudos">{p.tabs.funnels}</TabsTrigger>
+            <TabsTrigger value="operacion">{p.tabs.operations}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="resumen">
@@ -220,27 +319,14 @@ function FunnelPage() {
           <TabsContent value="embudos">
         <Stack gap="5" pt="4">
           <Text variant="small" color="muted">
-            Los últimos {report.days} días. Cada porcentaje es contra el primer paso, no contra el
-            anterior: tres pasos seguidos al 80% suenan bien y significan que se fue la mitad.
+            {p.funnels.help}
           </Text>
 
-        <Funnel
-          title="Participantes"
-          help="Dónde se cae la gente entre abrir el link y quedar contada."
-          steps={report.participant}
-        />
+        <Funnel title={p.funnels.participants} help={p.funnels.participantsHelp} steps={report.participant} />
 
-        <Funnel
-          title="Organizadores"
-          help="Dónde se abandona entre abrir el formulario y tener un evento."
-          steps={report.organizer}
-        />
+        <Funnel title={p.funnels.organizers} help={p.funnels.organizersHelp} steps={report.organizer} />
 
-        <Funnel
-          title="Grupos"
-          help="Si el link se vuelve membresía, y cuántos dicen que no."
-          steps={report.groups}
-        />
+        <Funnel title={p.funnels.groups} help={p.funnels.groupsHelp} steps={report.groups} />
 
         {/*
           The Google Calendar gate, read rather than computed by whoever opens
@@ -254,28 +340,29 @@ function FunnelPage() {
             <Stack gap="4">
               <Stack gap="1">
                 <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                  ¿Alguien quiere calendario?
+                  {p.calendarGate.heading}
                 </Text>
                 <Text variant="small" color="muted">
-                  La compuerta de la tarjeta de Google Calendar. Se lee sobre un
-                  ciclo completo de un evento recurrente — seis a ocho semanas.
-                  Una semana es una lectura de novedad, no de hábito.
+                  {p.calendarGate.help}
                 </Text>
               </Stack>
 
               <Stack gap="3">
                 <GateRow
-                  label="Descargan el .ics"
-                  detail={`${report.calendar.downloads} de ${report.calendar.viewers} que abrieron un evento`}
+                  label={p.calendarGate.downloads}
+                  detail={p.calendarGate.downloadsDetail(report.calendar.downloads, report.calendar.viewers)}
                   percent={report.calendar.sharePercent}
                   threshold={CALENDAR_SHARE_THRESHOLD}
                 />
                 <GateRow
-                  label="Repiten"
+                  label={p.calendarGate.repeats}
                   detail={
                     report.calendar.knownDownloaders === 0
-                      ? "Nadie con sesión ha descargado todavía"
-                      : `${report.calendar.repeatDownloaders} de ${report.calendar.knownDownloaders} con sesión, más de una vez`
+                      ? p.calendarGate.repeatsNobody
+                      : p.calendarGate.repeatsDetail(
+                          report.calendar.repeatDownloaders,
+                          report.calendar.knownDownloaders,
+                        )
                   }
                   percent={report.calendar.repeatPercent}
                   threshold={CALENDAR_REPEAT_THRESHOLD}
@@ -284,18 +371,12 @@ function FunnelPage() {
 
               {report.calendar.cancellations > 0 ? (
                 <Text variant="small" color="muted">
-                  {report.calendar.cancellations} descarga
-                  {report.calendar.cancellations === 1 ? "" : "s"} fue
-                  {report.calendar.cancellations === 1 ? "" : "ron"} de un evento
-                  cancelado. No cuentan como demanda — sacar algo muerto del
-                  calendario es lo contrario de querer sincronizarlo.
+                  {p.calendarGate.cancellations(report.calendar.cancellations)}
                 </Text>
               ) : null}
 
               <Text variant="small" color="muted">
-                El porcentaje de repetición sólo ve a quien tenía sesión al
-                descargar. La ruta no exige cuenta, así que a un lector anónimo
-                no hay forma de contarlo dos veces.
+                {p.calendarGate.anonymousNote}
               </Text>
             </Stack>
           </CardContent>
@@ -312,18 +393,16 @@ function FunnelPage() {
             <Stack gap="4">
               <Stack gap="1">
                 <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                  Envíos por organizador
+                  {p.operations.sendsHeading}
                 </Text>
                 <Text variant="small" color="muted">
-                  Últimas 24 horas. El pico de una hora es la señal: cien envíos
-                  repartidos en un día es alguien ocupado; cien en una hora es
-                  alguien probando hasta dónde llega esto.
+                  {p.operations.sendsHelp}
                 </Text>
               </Stack>
 
               {report.sends.length === 0 ? (
                 <Text variant="small" color="muted">
-                  Nadie ha enviado nada en el último día.
+                  {p.operations.sendsEmpty}
                 </Text>
               ) : (
                 <Stack gap="2">
@@ -334,14 +413,14 @@ function FunnelPage() {
                       </Text>
                       <Flex gap="3" align="center">
                         <Text variant="small" color="muted">
-                          {row.day} en el día
+                          {p.operations.sendsDay(Number(row.day))}
                         </Text>
                         <Badge
                           variant={row.peakHour >= peakLimit ? "error" : row.peakHour >= peakLimit / 2 ? "warning" : "outline"}
                           size="sm"
                           soft
                         >
-                          pico {row.peakHour}
+                          {p.operations.sendsPeak(row.peakHour)}
                         </Badge>
                       </Flex>
                     </Flex>
@@ -353,10 +432,10 @@ function FunnelPage() {
 
               <Stack gap="1">
                 <Text variant="small" weight="semibold">
-                  Límites vigentes
+                  {p.operations.limitsHeading}
                 </Text>
                 <Text variant="small" color="muted">
-                  Los topes de envío que protegen la reputación del correo.
+                  {p.operations.limitsHelp}
                 </Text>
               </Stack>
 
@@ -369,7 +448,7 @@ function FunnelPage() {
                     <Flex gap="2" align="center">
                       <Text weight="semibold">{limit.value}</Text>
                       <Badge variant={limit.isDefault ? "outline" : "warning"} size="sm" soft>
-                        {limit.isDefault ? "por defecto" : "ajustado"}
+                        {limit.isDefault ? p.operations.limitDefault : p.operations.limitAdjusted}
                       </Badge>
                     </Flex>
                   </Flex>
@@ -387,12 +466,10 @@ function FunnelPage() {
             <Stack gap="4">
               <Stack gap="1">
                 <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                  Correos
+                  {p.operations.mailHeading}
                 </Text>
                 <Text variant="small" color="muted">
-                  Pendiente es normal por un momento: cada mensaje se intenta al
-                  escribirlo y el barrido corre cada seis horas. Fallido es que
-                  se agotaron los cinco intentos.
+                  {p.operations.mailHelp}
                 </Text>
               </Stack>
 
@@ -400,13 +477,13 @@ function FunnelPage() {
                 <Flex gap="2" align="center">
                   <Text weight="semibold">{report.outbox.pending}</Text>
                   <Text variant="small" color="muted">
-                    pendientes
+                    {p.operations.mailPending}
                   </Text>
                 </Flex>
                 <Flex gap="2" align="center">
                   <Text weight="semibold">{report.outbox.failed}</Text>
                   <Badge variant={report.outbox.failed > 0 ? "error" : "outline"} size="sm" soft>
-                    fallidos
+                    {p.operations.mailFailed}
                   </Badge>
                 </Flex>
               </Flex>
@@ -421,7 +498,7 @@ function FunnelPage() {
                           {row.template}
                         </Text>
                         <Text variant="small" color="muted">
-                          {row.attempts} intentos
+                          {p.operations.mailAttempts(row.attempts)}
                         </Text>
                       </Flex>
                       <Text variant="small" color="error">
@@ -439,13 +516,13 @@ function FunnelPage() {
           <CardContent>
             <Stack gap="3">
               <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                Últimos 50 eventos
+                {p.operations.recentHeading}
               </Text>
               <Divider />
               <Stack gap="2">
                 {report.recent.length === 0 ? (
                   <Text variant="small" color="muted">
-                    Nada todavía. Los eventos empiezan a llegar con el primer uso.
+                    {p.operations.recentEmpty}
                   </Text>
                 ) : (
                   report.recent.map((row, index) => (

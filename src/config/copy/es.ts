@@ -420,6 +420,141 @@ export const es = {
     viewGroup: "Ver grupo",
   },
 
+  /**
+   * El panel del dueño (/funnel). Una sola lectora hoy, y aun así localizado:
+   * los textos quemados en un componente son los que nadie encuentra cuando
+   * toca traducir, y la regla de la casa es una — todo string visible vive
+   * aquí.
+   */
+  panel: {
+    title: "Panel",
+    subtitle: "Cuánto hay, hacia dónde va, y dónde se cae la gente.",
+    tabs: { overview: "Resumen", funnels: "Embudos", operations: "Operación" },
+    range: {
+      last30: "Últimos 30 días",
+      lastWeek: "Última semana",
+      yesterday: "Ayer",
+      last24h: "Últimas 24 h",
+      fromDate: "Desde esa fecha",
+      fromDateAria: "Desde esta fecha hasta hoy",
+      note: (from: string, to: string) =>
+        `Todo lo de abajo cuenta lo creado del ${from} al ${to}. Lo marcado «toda la vida» no se filtra.`,
+    },
+    noData: "Sin datos",
+    noDataYet: "Sin datos todavía.",
+    inPeriod: (n: string) => `+${n} en el periodo`,
+    headlines: {
+      accounts: "Usuarios registrados",
+      events: "Eventos creados",
+      groups: "Grupos",
+      emails: "Correos enviados",
+    },
+    money: {
+      label: "Plata coordinada",
+      breakdown: (confirmed: string, inWindow: string) =>
+        `${confirmed} confirmada · ${inWindow} en el periodo`,
+    },
+    activity: {
+      label: "Actividad",
+      caption: (days: number) =>
+        days === 1 ? "respuestas en el día" : `respuestas en ${days} días`,
+      aria: "Tendencia de respuestas",
+    },
+    paidRing: {
+      label: "Eventos con costo",
+      help: "Base de cualquier comisión futura.",
+      aria: (percent: number) => `${percent}% de los eventos tienen costo`,
+    },
+    trends: {
+      accounts: "Cuentas nuevas",
+      events: "Eventos creados",
+      rsvps: "Respuestas",
+      emails: "Correos enviados",
+      aria: (title: string) => `${title} en el periodo`,
+    },
+    attendance: {
+      heading: "Respuestas por tipo",
+      going: "Van",
+      maybe: "Tal vez",
+      notGoing: "No van",
+      waitlisted: "En espera",
+    },
+    projection: {
+      heading: "Al ritmo actual, en 30 días",
+      help: "Con «≈»: extrapolado de las últimas 4 semanas completas. Sin él: el ritmo real del periodo, mientras se acumula historial.",
+      accounts: "Usuarios nuevos",
+      events: "Eventos",
+      rsvps: "Respuestas",
+      fallback: (label: string) => `${label} · lo que dio el periodo`,
+    },
+    depth: {
+      heading: "Si esto sirve o no",
+      help: "Toda la vida, no el periodo.",
+      of: (part: number, whole: number) => `${part} de ${whole}`,
+      repeatOrganizers: "Organizadores que repiten",
+      repeatOrganizersHelp: "Crearon un segundo evento — el número que decide todo.",
+      repeatParticipants: "Participantes que vuelven",
+      repeatParticipantsHelp: "Se apuntaron a un segundo evento distinto.",
+      typicalSize: "Tamaño típico",
+      typicalSizeHelp: "Confirmados por evento, promedio.",
+      people: (n: number) => `${n} personas`,
+      firstAnswer: "Del evento a la primera respuesta",
+      firstAnswerHelp: "Mediana de creación → primer «voy».",
+      lessThanHour: "Menos de una hora",
+      hours: (h: number) => `${h} h`,
+      undelivered: "Correos que no llegaron",
+      undeliveredHelp: "Fallidos + suprimidos. El costo marginal real.",
+      undeliveredDetail: (failed: number, suppressed: number) =>
+        `${failed} fallidos · ${suppressed} suprimidos`,
+    },
+    funnels: {
+      help: "El periodo filtrado arriba. Cada porcentaje es contra el primer paso, no contra el anterior: tres pasos seguidos al 80% suenan bien y significan que se fue la mitad.",
+      participants: "Participantes",
+      participantsHelp: "Dónde se cae la gente entre abrir el link y quedar contada.",
+      organizers: "Organizadores",
+      organizersHelp: "Dónde se abandona entre abrir el formulario y tener un evento.",
+      groups: "Grupos",
+      groupsHelp: "Si el link se vuelve membresía, y cuántos dicen que no.",
+    },
+    calendarGate: {
+      heading: "¿Alguien quiere calendario?",
+      help: "La compuerta de la tarjeta de Google Calendar. Se lee sobre un ciclo completo de un evento recurrente — seis a ocho semanas. Una semana es una lectura de novedad, no de hábito.",
+      downloads: "Descargan el .ics",
+      downloadsDetail: (downloads: number, viewers: number) =>
+        `${downloads} de ${viewers} que abrieron un evento`,
+      repeats: "Repiten",
+      repeatsNobody: "Nadie con sesión ha descargado todavía",
+      repeatsDetail: (repeat: number, known: number) =>
+        `${repeat} de ${known} con sesión, más de una vez`,
+      cancellations: (n: number) =>
+        n === 1
+          ? "1 descarga fue de un evento cancelado. No cuentan como demanda — sacar algo muerto del calendario es lo contrario de querer sincronizarlo."
+          : `${n} descargas fueron de un evento cancelado. No cuentan como demanda — sacar algo muerto del calendario es lo contrario de querer sincronizarlo.`,
+      anonymousNote:
+        "El porcentaje de repetición sólo ve a quien tenía sesión al descargar. La ruta no exige cuenta, así que a un lector anónimo no hay forma de contarlo dos veces.",
+    },
+    operations: {
+      sendsHeading: "Envíos por organizador",
+      sendsHelp:
+        "Últimas 24 horas. El pico de una hora es la señal: cien envíos repartidos en un día es alguien ocupado; cien en una hora es alguien probando hasta dónde llega esto.",
+      sendsEmpty: "Nadie ha enviado nada en el último día.",
+      sendsDay: (n: number) => `${n} en el día`,
+      sendsPeak: (n: number) => `pico ${n}`,
+      limitsHeading: "Límites vigentes",
+      limitsHelp: "Los topes de envío que protegen la reputación del correo.",
+      limitDefault: "por defecto",
+      limitAdjusted: "ajustado",
+      mailHeading: "Correos",
+      mailHelp:
+        "Pendiente es normal por un momento: cada mensaje se intenta al escribirlo y el barrido corre cada seis horas. Fallido es que se agotaron los cinco intentos.",
+      mailPending: "pendientes",
+      mailFailed: "fallidos",
+      mailAttempts: (n: number) => `${n} intentos`,
+      recentHeading: "Últimos 50 eventos",
+      recentEmpty: "Nada todavía. Los eventos empiezan a llegar con el primer uso.",
+    },
+  },
+
   settlement: {
     heading: "Cuentas finales",
     help: "El costo se reparte entre quienes vienen. Si alguien se bajó después de que otros pagaron, la cuota subió y acá está lo que falta por persona.",
@@ -1247,6 +1382,8 @@ export const es = {
       "Se enviaron demasiados correos en la última hora. Espera un rato o entra con Google.",
     emailInvalid: "Escribe un correo válido.",
     signOut: "Salir",
+    /** Solo lo ve el dueño del producto — la entrada a /funnel. */
+    panelLink: "Panel del producto",
     failed: "No pudimos completar el ingreso. Intenta de nuevo.",
     linkWrongBrowser: "Abre el link donde lo pediste",
     linkWrongBrowserHelp:

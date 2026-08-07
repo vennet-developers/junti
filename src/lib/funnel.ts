@@ -3,6 +3,7 @@ import "@/server/assert-server";
 import { sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
+import type { PanelRange } from "@/domain/panel-range";
 
 /**
  * The two questions, as four queries.
@@ -100,8 +101,10 @@ export interface CalendarAdoption {
  * route works without a session, so an anonymous reader cannot be counted twice
  * — and inventing an identity to fix that would be worse than the gap.
  */
-async function calendar(days: number): Promise<CalendarAdoption> {
-  const window = sql.raw(`interval '${Number(days)} days'`);
+async function calendar(range: PanelRange): Promise<CalendarAdoption> {
+  // ISO strings for the raw-sql path — see the note in overview.ts.
+  const from = range.from.toISOString();
+  const to = range.to.toISOString();
 
   const [totals] = await db.execute<{
     downloads: string;
@@ -117,7 +120,7 @@ async function calendar(days: number): Promise<CalendarAdoption> {
       )::text as cancellations,
       count(*) filter (where name = 'event_viewed')::text as viewers
     from analytics_events
-    where at > now() - ${window}
+    where at >= ${from} and at < ${to}
   `);
 
   /*
@@ -135,7 +138,7 @@ async function calendar(days: number): Promise<CalendarAdoption> {
       where name = 'calendar_added'
         and actor_id is not null
         and coalesce((props->>'cancelled')::boolean, false) = false
-        and at > now() - ${window}
+        and at >= ${from} and at < ${to}
       group by actor_id
     ) as per_person
   `);
@@ -166,11 +169,11 @@ async function calendar(days: number): Promise<CalendarAdoption> {
  * anybody who has not signed in, and `count(distinct actor_id)` silently drops
  * every one of them — which is precisely the top of the participant funnel.
  */
-async function countOf(names: readonly string[], days: number): Promise<Map<string, number>> {
+async function countOf(names: readonly string[], range: PanelRange): Promise<Map<string, number>> {
   const rows = await db.execute<{ name: string; total: string }>(sql`
     select name, count(*)::text as total
     from analytics_events
-    where at > now() - ${sql.raw(`interval '${Number(days)} days'`)}
+    where at >= ${range.from.toISOString()} and at < ${range.to.toISOString()}
       and name in (${sql.join(names.map((n) => sql`${n}`), sql`, `)})
     group by name
   `);
@@ -184,7 +187,7 @@ const PARTICIPANT = ["event_viewed", "rsvp_started", "rsvp_completed", "policy_s
 const ORGANIZER = ["landing_viewed", "create_started", "event_created", "invite_sent"] as const;
 const GROUPS = ["group_created", "group_link_viewed", "group_answered", "group_left"] as const;
 
-export async function loadFunnel(days = 30): Promise<FunnelReport> {
+export async function loadFunnel(range: PanelRange): Promise<FunnelReport> {
   const [{ getAllSettings }, { outboxHealth }] = await Promise.all([
     import("@/lib/settings"),
     import("@/lib/outbox"),
@@ -202,7 +205,7 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
     leaving room for the root loader running beside it.
   */
   const [counts, recent, sends] = await Promise.all([
-    countOf([...PARTICIPANT, ...ORGANIZER, ...GROUPS], days),
+    countOf([...PARTICIPANT, ...ORGANIZER, ...GROUPS], range),
     db.execute<{ name: string; at: Date; source: string }>(sql`
       select name, at, source from analytics_events
       order by at desc limit 50
@@ -229,13 +232,13 @@ export async function loadFunnel(days = 30): Promise<FunnelReport> {
   const [limits, outbox, calendarAdoption] = await Promise.all([
     getAllSettings(),
     outboxHealth(),
-    calendar(days),
+    calendar(range),
   ]);
 
   const step = (name: string): FunnelStep => ({ name, count: counts.get(name) ?? 0 });
 
   return {
-    days,
+    days: range.days,
     participant: PARTICIPANT.map(step),
     organizer: ORGANIZER.map(step),
     groups: GROUPS.map(step),

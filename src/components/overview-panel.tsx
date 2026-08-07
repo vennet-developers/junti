@@ -13,6 +13,7 @@ import { Box, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 
 import { AreaChart, Donut, MiniBars, SegmentBar, Sparkline } from "@stackmyth/charts";
+import { useCopy } from "@/components/copy-provider";
 import { formatMoney } from "@/lib/format";
 import type { Metric, OverviewReport } from "@/lib/overview";
 
@@ -55,10 +56,14 @@ function HeadlineCard({
   icon,
   label,
   metric,
+  inPeriod,
+  intlLocale,
 }: {
   icon: ReactNode;
   label: string;
   metric: Metric;
+  inPeriod: (n: string) => string;
+  intlLocale: string;
 }) {
   return (
     <Card surface="outlined">
@@ -67,7 +72,7 @@ function HeadlineCard({
           <IconChip>{icon}</IconChip>
           <Stack gap="1">
             <Text as="span" variant="h3" weight="semibold" fontFamily="var(--junti-display)">
-              {metric.total.toLocaleString("es-CO")}
+              {metric.total.toLocaleString(intlLocale)}
             </Text>
             <Text variant="small" color="muted">
               {label}
@@ -75,7 +80,7 @@ function HeadlineCard({
           </Stack>
           <Flex gap="2" align="baseline" wrap="wrap">
             <Text variant="small" weight="medium">
-              +{metric.window.toLocaleString("es-CO")} en el periodo
+              {inPeriod(metric.window.toLocaleString(intlLocale))}
             </Text>
             {/* `Text` has no "success" color (STACKMYTH-GAPS #25 territory);
                 a Box carries the token and Text inherits. */}
@@ -190,12 +195,15 @@ function DepthRow({
   );
 }
 
-const pct = (value: number | null) => (value === null ? "Sin datos" : `${value}%`);
-const cop = (minor: number) => formatMoney(minor, "COP", "es-CO");
-
 export function OverviewPanel({ overview }: { overview: OverviewReport }) {
+  const { copy } = useCopy();
+  const p = copy.panel;
+
   const { depth, money, emails, projection } = overview;
   const paidShare = depth.paidEventPercent;
+
+  const pct = (value: number | null) => (value === null ? p.noData : `${value}%`);
+  const cop = (minor: number) => formatMoney(minor, "COP", copy.intlLocale);
 
   return (
     <Stack gap="5" pt="4">
@@ -203,22 +211,30 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
       <Grid columns={{ base: "1", sm: "2", lg: "4" }} gap="3">
         <HeadlineCard
           icon={<UserIcon size={18} aria-hidden="true" />}
-          label="Usuarios registrados"
+          label={p.headlines.accounts}
+          inPeriod={p.inPeriod}
+          intlLocale={copy.intlLocale}
           metric={overview.accounts}
         />
         <HeadlineCard
           icon={<CalendarIcon size={18} aria-hidden="true" />}
-          label="Eventos creados"
+          label={p.headlines.events}
+          inPeriod={p.inPeriod}
+          intlLocale={copy.intlLocale}
           metric={overview.events}
         />
         <HeadlineCard
           icon={<UserPlusIcon size={18} aria-hidden="true" />}
-          label="Grupos"
+          label={p.headlines.groups}
+          inPeriod={p.inPeriod}
+          intlLocale={copy.intlLocale}
           metric={overview.groups}
         />
         <HeadlineCard
           icon={<MailIcon size={18} aria-hidden="true" />}
-          label="Correos enviados"
+          label={p.headlines.emails}
+          inPeriod={p.inPeriod}
+          intlLocale={copy.intlLocale}
           metric={emails.sent}
         />
       </Grid>
@@ -239,14 +255,13 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
               </IconChip>
               <Stack gap="1">
                 <Text variant="small" color="muted">
-                  Plata coordinada
+                  {p.money.label}
                 </Text>
                 <Text as="span" variant="h4" weight="semibold" fontFamily="var(--junti-display)">
                   {cop(money.trackedMinor)}
                 </Text>
                 <Text variant="small" color="muted">
-                  {cop(money.confirmedMinor)} confirmada · {cop(money.windowConfirmedMinor)} en el
-                  periodo
+                  {p.money.breakdown(cop(money.confirmedMinor), cop(money.windowConfirmedMinor))}
                 </Text>
               </Stack>
             </Stack>
@@ -255,11 +270,11 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
 
         <TrendCard
           icon={<ZapIcon size={18} aria-hidden="true" />}
-          label="Actividad"
-          value={overview.rsvps.window.toLocaleString("es-CO")}
-          caption={`respuestas en ${overview.days} días`}
+          label={p.activity.label}
+          value={overview.rsvps.window.toLocaleString(copy.intlLocale)}
+          caption={p.activity.caption(overview.days)}
           values={overview.weeklyRsvps.map((week) => week.value)}
-          ariaLabel="Tendencia semanal de respuestas"
+          ariaLabel={p.activity.aria}
           variant="minibars"
         />
 
@@ -271,18 +286,15 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
         <Card surface="outlined">
           <CardContent>
             <Flex gap="4" align="center">
-              <Donut
-                share={(paidShare ?? 0) / 100}
-                ariaLabel={`${paidShare ?? 0}% de los eventos tienen costo`}
-              >
+              <Donut share={(paidShare ?? 0) / 100} ariaLabel={p.paidRing.aria(paidShare ?? 0)}>
                 {pct(paidShare)}
               </Donut>
               <Stack gap="1" minWidth="0">
                 <Text variant="small" weight="semibold">
-                  Eventos con costo
+                  {p.paidRing.label}
                 </Text>
                 <Text variant="small" color="muted">
-                  Base de cualquier comisión futura.
+                  {p.paidRing.help}
                 </Text>
               </Stack>
             </Flex>
@@ -294,10 +306,10 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
       <Grid columns={{ base: "1", md: "2" }} gap="3">
         {(
           [
-            ["Cuentas nuevas", overview.weeklyAccounts, overview.accounts.window],
-            ["Eventos creados", overview.weeklyEvents, overview.events.window],
-            ["Respuestas", overview.weeklyRsvps, overview.rsvps.window],
-            ["Correos enviados", emails.weekly, emails.sent.window],
+            [p.trends.accounts, overview.weeklyAccounts, overview.accounts.window],
+            [p.trends.events, overview.weeklyEvents, overview.events.window],
+            [p.trends.rsvps, overview.weeklyRsvps, overview.rsvps.window],
+            [p.trends.emails, emails.weekly, emails.sent.window],
           ] as const
         ).map(([title, points, windowTotal]) => (
           <Card key={title} surface="outlined">
@@ -308,15 +320,15 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
                     {title}
                   </Text>
                   <Text as="span" weight="semibold">
-                    {windowTotal.toLocaleString("es-CO")}
+                    {windowTotal.toLocaleString(copy.intlLocale)}
                   </Text>
                 </Flex>
                 {points.every((p) => p.value === 0) ? (
                   <Text variant="small" color="muted">
-                    Sin datos todavía.
+                    {p.noDataYet}
                   </Text>
                 ) : (
-                  <AreaChart points={points} ariaLabel={`${title} por semana`} />
+                  <AreaChart points={points} ariaLabel={p.trends.aria(title)} />
                 )}
               </Stack>
             </CardContent>
@@ -335,19 +347,19 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
           <CardContent>
             <Stack gap="3">
               <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                Respuestas por tipo
+                {p.attendance.heading}
               </Text>
               {/* The categorical slots are remapped to the attendance colors
                   the rest of the app already speaks — see `.junti-respuestas`
                   in globals.css. Slot order must match part order. */}
               <SegmentBar
                 className="junti-respuestas"
-                ariaLabel="Respuestas por tipo"
+                ariaLabel={p.attendance.heading}
                 parts={[
-                  { label: "Van", value: overview.attendance.going, color: 1 },
-                  { label: "Tal vez", value: overview.attendance.maybe, color: 2 },
-                  { label: "No van", value: overview.attendance.notGoing, color: 3 },
-                  { label: "En espera", value: overview.attendance.waitlisted, color: 4 },
+                  { label: p.attendance.going, value: overview.attendance.going, color: 1 },
+                  { label: p.attendance.maybe, value: overview.attendance.maybe, color: 2 },
+                  { label: p.attendance.notGoing, value: overview.attendance.notGoing, color: 3 },
+                  { label: p.attendance.waitlisted, value: overview.attendance.waitlisted, color: 4 },
                 ]}
               />
             </Stack>
@@ -361,11 +373,10 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
           <Stack gap="4">
             <Stack gap="1">
               <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                Al ritmo actual, en 30 días
+                {p.projection.heading}
               </Text>
               <Text variant="small" color="muted">
-                Con «≈»: extrapolado de las últimas 4 semanas completas. Sin él:
-                el ritmo real del periodo, mientras se acumula historial.
+                {p.projection.help}
               </Text>
             </Stack>
 
@@ -378,19 +389,19 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
               */}
               {(
                 [
-                  ["Usuarios nuevos", projection.accountsNext30, overview.accounts.window],
-                  ["Eventos", projection.eventsNext30, overview.events.window],
-                  ["Respuestas", projection.rsvpsNext30, overview.rsvps.window],
+                  [p.projection.accounts, projection.accountsNext30, overview.accounts.window],
+                  [p.projection.events, projection.eventsNext30, overview.events.window],
+                  [p.projection.rsvps, projection.rsvpsNext30, overview.rsvps.window],
                 ] as const
               ).map(([label, value, windowActual]) => (
                 <Stack key={label} gap="1">
                   <Text as="span" variant="h4" weight="semibold" fontFamily="var(--junti-display)">
                     {value === null
-                      ? windowActual.toLocaleString("es-CO")
-                      : `≈ ${value.toLocaleString("es-CO")}`}
+                      ? windowActual.toLocaleString(copy.intlLocale)
+                      : `≈ ${value.toLocaleString(copy.intlLocale)}`}
                   </Text>
                   <Text variant="small" color="muted">
-                    {value === null ? `${label} · lo que dieron los últimos 30 días` : label}
+                    {value === null ? p.projection.fallback(label) : label}
                   </Text>
                 </Stack>
               ))}
@@ -405,10 +416,10 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
           <Stack gap="4">
             <Stack gap="1">
               <Text as="h2" variant="h5" fontFamily="var(--junti-display)">
-                Si esto sirve o no
+                {p.depth.heading}
               </Text>
               <Text variant="small" color="muted">
-                Toda la vida, no el periodo.
+                {p.depth.help}
               </Text>
             </Stack>
 
@@ -416,44 +427,44 @@ export function OverviewPanel({ overview }: { overview: OverviewReport }) {
 
             <Stack gap="4">
               <DepthRow
-                label="Organizadores que repiten"
-                help="Crearon un segundo evento — el número que decide todo."
+                label={p.depth.repeatOrganizers}
+                help={p.depth.repeatOrganizersHelp}
                 value={pct(depth.repeatOrganizerPercent)}
-                detail={`${depth.repeatOrganizers} de ${depth.organizers}`}
+                detail={p.depth.of(depth.repeatOrganizers, depth.organizers)}
               />
               <DepthRow
-                label="Participantes que vuelven"
-                help="Se apuntaron a un segundo evento distinto."
+                label={p.depth.repeatParticipants}
+                help={p.depth.repeatParticipantsHelp}
                 value={pct(depth.repeatParticipantPercent)}
-                detail={`${depth.repeatParticipants} de ${depth.participants}`}
+                detail={p.depth.of(depth.repeatParticipants, depth.participants)}
               />
               <DepthRow
-                label="Tamaño típico"
-                help="Confirmados por evento, promedio."
+                label={p.depth.typicalSize}
+                help={p.depth.typicalSizeHelp}
                 value={
                   depth.averageAttendance === null
-                    ? "Sin datos"
-                    : `${depth.averageAttendance} personas`
+                    ? p.noData
+                    : p.depth.people(depth.averageAttendance)
                 }
               />
               <DepthRow
-                label="Del evento a la primera respuesta"
-                help="Mediana de creación → primer «voy»."
+                label={p.depth.firstAnswer}
+                help={p.depth.firstAnswerHelp}
                 value={
                   depth.medianHoursToFirstRsvp === null
-                    ? "Sin datos"
+                    ? p.noData
                     : depth.medianHoursToFirstRsvp < 1
-                      ? "Menos de una hora"
-                      : `${depth.medianHoursToFirstRsvp} h`
+                      ? p.depth.lessThanHour
+                      : p.depth.hours(depth.medianHoursToFirstRsvp)
                 }
               />
               <DepthRow
-                label="Correos que no llegaron"
-                help="Fallidos + suprimidos. El costo marginal real."
+                label={p.depth.undelivered}
+                help={p.depth.undeliveredHelp}
                 value={String(emails.failed + emails.suppressed)}
                 detail={
                   emails.failed + emails.suppressed > 0
-                    ? `${emails.failed} fallidos · ${emails.suppressed} suprimidos`
+                    ? p.depth.undeliveredDetail(emails.failed, emails.suppressed)
                     : undefined
                 }
               />

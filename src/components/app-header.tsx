@@ -53,11 +53,14 @@ export function AppHeader({
   organizer,
   theme,
   unread,
+  isOwner = false,
 }: {
   organizer: Organizer | null;
   theme: Theme | null;
   /** How many notifications are waiting. Always 0 without a session. */
   unread: number;
+  /** Unlocks the owner-panel entry in the account menu. Checked server-side. */
+  isOwner?: boolean;
 }) {
   return (
     <Box as="header" borderBottom="1px solid var(--sm-border-default)">
@@ -98,7 +101,7 @@ export function AppHeader({
             */
             <Flex gap="2" align="center">
               <NotificationBell unread={unread} />
-              <ProfileMenu organizer={organizer} theme={theme} />
+              <ProfileMenu organizer={organizer} theme={theme} isOwner={isOwner} />
             </Flex>
           ) : (
             <GuestMenu theme={theme} />

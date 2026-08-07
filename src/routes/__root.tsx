@@ -58,11 +58,22 @@ const getShell = createServerFn({ method: "GET" }).handler(async () => {
     ? await import("@/lib/notifications").then((module) => module.unreadCount(organizer.id))
     : 0;
 
-  return { locale, theme, organizer, unread } as {
+  /*
+    Whether this session is the product's owner — a boolean, never the id.
+    It only unlocks a menu entry to /funnel, whose loader re-checks the same
+    fact server-side; the flag is a signpost, not the gate.
+  */
+  const isOwner =
+    organizer !== null &&
+    Boolean(process.env.ANALYTICS_OWNER_ID) &&
+    organizer.id === process.env.ANALYTICS_OWNER_ID;
+
+  return { locale, theme, organizer, unread, isOwner } as {
     locale: Locale;
     theme: Theme | null;
     organizer: Organizer | null;
     unread: number;
+    isOwner: boolean;
   };
 });
 
@@ -105,7 +116,7 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  const { locale, theme, organizer, unread } = Route.useLoaderData();
+  const { locale, theme, organizer, unread, isOwner } = Route.useLoaderData();
 
   /*
     The shell, when the page below it is being read through a stranger's eyes.
@@ -142,6 +153,9 @@ function RootComponent() {
              bell only renders with an organizer. Passing 0 means the two
              cannot disagree if either of those ever changes. */
           unread={asStranger ? 0 : unread}
+          /* The stranger preview must not leak the one menu entry that
+             proves whose account this is. */
+          isOwner={asStranger ? false : isOwner}
         />
 
         <Outlet />

@@ -336,6 +336,134 @@ export const en: Copy = {
     viewGroup: "View group",
   },
 
+  panel: {
+    title: "Panel",
+    subtitle: "How much there is, where it is heading, and where people fall off.",
+    tabs: { overview: "Overview", funnels: "Funnels", operations: "Operations" },
+    range: {
+      last30: "Last 30 days",
+      lastWeek: "Last week",
+      yesterday: "Yesterday",
+      last24h: "Last 24 h",
+      fromDate: "From that date",
+      fromDateAria: "From this date until today",
+      note: (from: string, to: string) =>
+        `Everything below counts what was created from ${from} to ${to}. Anything marked "all time" is not filtered.`,
+    },
+    noData: "No data",
+    noDataYet: "No data yet.",
+    inPeriod: (n: string) => `+${n} in the period`,
+    headlines: {
+      accounts: "Registered users",
+      events: "Events created",
+      groups: "Groups",
+      emails: "Emails sent",
+    },
+    money: {
+      label: "Money coordinated",
+      breakdown: (confirmed: string, inWindow: string) =>
+        `${confirmed} confirmed · ${inWindow} in the period`,
+    },
+    activity: {
+      label: "Activity",
+      caption: (days: number) => (days === 1 ? "answers in the day" : `answers in ${days} days`),
+      aria: "Answer trend",
+    },
+    paidRing: {
+      label: "Paid events",
+      help: "The base of any future fee.",
+      aria: (percent: number) => `${percent}% of events charge money`,
+    },
+    trends: {
+      accounts: "New accounts",
+      events: "Events created",
+      rsvps: "Answers",
+      emails: "Emails sent",
+      aria: (title: string) => `${title} over the period`,
+    },
+    attendance: {
+      heading: "Answers by kind",
+      going: "In",
+      maybe: "Maybe",
+      notGoing: "Out",
+      waitlisted: "Waitlisted",
+    },
+    projection: {
+      heading: "At the current pace, in 30 days",
+      help: "With “≈”: extrapolated from the trailing 4 completed weeks. Without it: the period's actual figure, while history accumulates.",
+      accounts: "New users",
+      events: "Events",
+      rsvps: "Answers",
+      fallback: (label: string) => `${label} · what the period produced`,
+    },
+    depth: {
+      heading: "Whether this works",
+      help: "All time, not the period.",
+      of: (part: number, whole: number) => `${part} of ${whole}`,
+      repeatOrganizers: "Organizers who repeat",
+      repeatOrganizersHelp: "Created a second event — the number that decides everything.",
+      repeatParticipants: "Participants who return",
+      repeatParticipantsHelp: "Joined a second, different event.",
+      typicalSize: "Typical size",
+      typicalSizeHelp: "Confirmed per event, on average.",
+      people: (n: number) => `${n} people`,
+      firstAnswer: "Event to first answer",
+      firstAnswerHelp: "Median from creation to the first “in”.",
+      lessThanHour: "Under an hour",
+      hours: (h: number) => `${h} h`,
+      undelivered: "Emails that never arrived",
+      undeliveredHelp: "Failed + suppressed. The real marginal cost.",
+      undeliveredDetail: (failed: number, suppressed: number) =>
+        `${failed} failed · ${suppressed} suppressed`,
+    },
+    funnels: {
+      help: "The period filtered above. Every percentage is against the first step, not the previous one: three consecutive 80% steps sound fine and mean half the people are gone.",
+      participants: "Participants",
+      participantsHelp: "Where people fall off between opening the link and being counted.",
+      organizers: "Organizers",
+      organizersHelp: "Where people give up between opening the form and having an event.",
+      groups: "Groups",
+      groupsHelp: "Whether the link becomes membership, and how many say no.",
+    },
+    calendarGate: {
+      heading: "Does anyone want calendar?",
+      help: "The Google Calendar card's gate. Read over a full cycle of a recurring event — six to eight weeks. One week reads novelty, not habit.",
+      downloads: "Download the .ics",
+      downloadsDetail: (downloads: number, viewers: number) =>
+        `${downloads} of ${viewers} who opened an event`,
+      repeats: "Repeat",
+      repeatsNobody: "Nobody signed in has downloaded yet",
+      repeatsDetail: (repeat: number, known: number) =>
+        `${repeat} of ${known} signed in, more than once`,
+      cancellations: (n: number) =>
+        n === 1
+          ? "1 download was of a cancelled event. They do not count as demand — removing something dead from a calendar is the opposite of wanting to sync it."
+          : `${n} downloads were of a cancelled event. They do not count as demand — removing something dead from a calendar is the opposite of wanting to sync it.`,
+      anonymousNote:
+        "The repeat percentage only sees people who were signed in when downloading. The route requires no account, so an anonymous reader cannot be counted twice.",
+    },
+    operations: {
+      sendsHeading: "Sends per organizer",
+      sendsHelp:
+        "Last 24 hours. The single-hour peak is the signal: a hundred sends spread over a day is somebody busy; a hundred in one hour is somebody testing how far this goes.",
+      sendsEmpty: "Nobody has sent anything in the last day.",
+      sendsDay: (n: number) => `${n} in the day`,
+      sendsPeak: (n: number) => `peak ${n}`,
+      limitsHeading: "Limits in force",
+      limitsHelp: "The send caps that protect the email reputation.",
+      limitDefault: "default",
+      limitAdjusted: "adjusted",
+      mailHeading: "Emails",
+      mailHelp:
+        "Pending is normal for a moment: every message is attempted as it is written and the sweep runs every six hours. Failed means all five attempts ran out.",
+      mailPending: "pending",
+      mailFailed: "failed",
+      mailAttempts: (n: number) => `${n} attempts`,
+      recentHeading: "Last 50 events",
+      recentEmpty: "Nothing yet. Events start arriving with the first use.",
+    },
+  },
+
   settlement: {
     heading: "Final tally",
     help: "The cost splits among those coming. If somebody dropped out after others paid, the share went up — here is what each person still lacks.",
@@ -1110,6 +1238,7 @@ export const en: Copy = {
     emailRateLimited: "Too many emails went out in the last hour. Wait a while, or use Google.",
     emailInvalid: "Enter a valid email address.",
     signOut: "Sign out",
+    panelLink: "Product panel",
     failed: "We could not complete the sign-in. Try again.",
     linkWrongBrowser: "Open the link where you asked for it",
     linkWrongBrowserHelp:

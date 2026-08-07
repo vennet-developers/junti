@@ -4,6 +4,7 @@ import { sql } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { delta, projectNext30, share } from "@/domain/chart";
+import { bucketOf, type PanelRange } from "@/domain/panel-range";
 
 /**
  * The state of the system, and whether it is moving.
@@ -106,6 +107,8 @@ export interface AttendanceSplit {
 
 export interface OverviewReport {
   days: number;
+  /** The applied range, echoed back so the page can label and highlight. */
+  range: { fromISO: string; toISO: string; preset: string };
   accounts: Metric;
   events: Metric;
   rsvps: Metric;
@@ -120,8 +123,13 @@ export interface OverviewReport {
   attendance: AttendanceSplit;
 }
 
-/** Postgres interval literals, built from a number this module controls. */
-const days = (n: number) => sql.raw(`interval '${Number(n)} days'`);
+/**
+ * The comparison window: same length as the range, ending where it starts.
+ * "¿Subió?" only means something against a stretch of the same size.
+ */
+function previousFrom(range: PanelRange): Date {
+  return new Date(range.from.getTime() - (range.to.getTime() - range.from.getTime()));
+}
 
 /**
  * Every headline number in ONE query, and every series in a second.
@@ -135,26 +143,35 @@ const days = (n: number) => sql.raw(`interval '${Number(n)} days'`);
  * self-inflicted.
  *
  * Subselects over four tiny tables cost one round trip and nothing else.
+ * Every window is [from, to) on the row's CREATION time — the one rule the
+ * whole panel filters by.
  */
-async function headlines(window: number) {
+async function headlines(range: PanelRange) {
+  // ISO strings, not Date objects: the raw-sql path binds parameters without
+  // column type info, and postgres.js refuses a bare Date there. Postgres
+  // infers timestamptz from the comparison context.
+  const from = range.from.toISOString();
+  const to = range.to.toISOString();
+  const prev = previousFrom(range).toISOString();
+
   const [row] = await db.execute<Record<string, string>>(sql`
     select
       (select count(*) from user_profiles)::text as accounts_total,
-      (select count(*) from user_profiles where created_at > now() - ${days(window)})::text as accounts_win,
-      (select count(*) from user_profiles where created_at > now() - ${days(window * 2)}
-         and created_at <= now() - ${days(window)})::text as accounts_prev,
+      (select count(*) from user_profiles where created_at >= ${from} and created_at < ${to})::text as accounts_win,
+      (select count(*) from user_profiles where created_at >= ${prev}
+         and created_at < ${from})::text as accounts_prev,
       (select count(*) from events)::text as events_total,
-      (select count(*) from events where created_at > now() - ${days(window)})::text as events_win,
-      (select count(*) from events where created_at > now() - ${days(window * 2)}
-         and created_at <= now() - ${days(window)})::text as events_prev,
+      (select count(*) from events where created_at >= ${from} and created_at < ${to})::text as events_win,
+      (select count(*) from events where created_at >= ${prev}
+         and created_at < ${from})::text as events_prev,
       (select count(*) from participants)::text as rsvps_total,
-      (select count(*) from participants where created_at > now() - ${days(window)})::text as rsvps_win,
-      (select count(*) from participants where created_at > now() - ${days(window * 2)}
-         and created_at <= now() - ${days(window)})::text as rsvps_prev,
+      (select count(*) from participants where created_at >= ${from} and created_at < ${to})::text as rsvps_win,
+      (select count(*) from participants where created_at >= ${prev}
+         and created_at < ${from})::text as rsvps_prev,
       (select count(*) from groups)::text as groups_total,
-      (select count(*) from groups where created_at > now() - ${days(window)})::text as groups_win,
-      (select count(*) from groups where created_at > now() - ${days(window * 2)}
-         and created_at <= now() - ${days(window)})::text as groups_prev
+      (select count(*) from groups where created_at >= ${from} and created_at < ${to})::text as groups_win,
+      (select count(*) from groups where created_at >= ${prev}
+         and created_at < ${from})::text as groups_prev
   `);
 
   const pick = (prefix: string): Metric => {
@@ -187,8 +204,18 @@ async function headlines(window: number) {
  *
  * All three read off the same calendar in one query, so their bars line up by
  * construction rather than by three separate queries happening to agree.
+ *
+ * The bucket follows the range: a filtered week draws seven daily bars, the
+ * default month draws its weeks — see `bucketOf`. Only rows created inside
+ * the range count toward a bucket, so a bucket the range half-covers reports
+ * the covered half rather than smuggling the rest back in.
  */
-async function series(window: number) {
+async function series(range: PanelRange, bucket: "day" | "week") {
+  const from = range.from.toISOString();
+  const to = range.to.toISOString();
+  const unit = sql.raw(`'${bucket}'`);
+  const step = sql.raw(bucket === "day" ? "interval '1 day'" : "interval '1 week'");
+
   const rows = await db.execute<{
     week: Date;
     accounts: string;
@@ -197,19 +224,22 @@ async function series(window: number) {
   }>(sql`
     with calendar as (
       select generate_series(
-        date_trunc('week', now() - ${days(window)}),
-        date_trunc('week', now()),
-        interval '1 week'
+        date_trunc(${unit}, ${from}::timestamptz),
+        date_trunc(${unit}, ${to}::timestamptz),
+        ${step}
       ) as week
     )
     select
       c.week,
       (select count(*) from user_profiles u
-         where date_trunc('week', u.created_at) = c.week)::text as accounts,
+         where date_trunc(${unit}, u.created_at) = c.week
+           and u.created_at >= ${from} and u.created_at < ${to})::text as accounts,
       (select count(*) from events e
-         where date_trunc('week', e.created_at) = c.week)::text as events,
+         where date_trunc(${unit}, e.created_at) = c.week
+           and e.created_at >= ${from} and e.created_at < ${to})::text as events,
       (select count(*) from participants p
-         where date_trunc('week', p.created_at) = c.week)::text as rsvps
+         where date_trunc(${unit}, p.created_at) = c.week
+           and p.created_at >= ${from} and p.created_at < ${to})::text as rsvps
     from calendar c
     order by c.week
   `);
@@ -311,19 +341,23 @@ async function depth(): Promise<Depth> {
 }
 
 /** Money and email totals in one round trip — see the wave note below. */
-async function moneyAndEmails(window: number): Promise<{ money: MoneyFlow; emails: Omit<Emails, "weekly"> }> {
+async function moneyAndEmails(range: PanelRange): Promise<{ money: MoneyFlow; emails: Omit<Emails, "weekly"> }> {
+  const from = range.from.toISOString();
+  const to = range.to.toISOString();
+  const prev = previousFrom(range).toISOString();
+
   const [row] = await db.execute<Record<string, string>>(sql`
     select
       coalesce(sum(p.amount_minor) filter (where p.status = 'confirmed'), 0)::text as confirmed,
       coalesce(sum(p.amount_minor) filter (where p.status in ('confirmed','pending')), 0)::text as tracked,
       coalesce(sum(p.amount_minor) filter (
-        where p.status = 'confirmed' and p.confirmed_at > now() - ${days(window)}
+        where p.status = 'confirmed' and p.confirmed_at >= ${from} and p.confirmed_at < ${to}
       ), 0)::text as window_confirmed,
       (select count(*) from outbox_messages where status = 'sent')::text as sent_total,
       (select count(*) from outbox_messages where status = 'sent'
-         and sent_at > now() - ${days(window)})::text as sent_win,
+         and sent_at >= ${from} and sent_at < ${to})::text as sent_win,
       (select count(*) from outbox_messages where status = 'sent'
-         and sent_at > now() - ${days(window * 2)} and sent_at <= now() - ${days(window)})::text as sent_prev,
+         and sent_at >= ${prev} and sent_at < ${from})::text as sent_prev,
       (select count(*) from outbox_messages where status = 'failed')::text as failed,
       (select count(*) from outbox_messages where status = 'suppressed')::text as suppressed
     from payments p
@@ -351,8 +385,8 @@ async function moneyAndEmails(window: number): Promise<{ money: MoneyFlow; email
   };
 }
 
-/** Answers by kind, one query. */
-async function attendanceSplit(): Promise<AttendanceSplit> {
+/** Answers by kind — answers GIVEN inside the range, per the one filter rule. */
+async function attendanceSplit(range: PanelRange): Promise<AttendanceSplit> {
   const [row] = await db.execute<Record<string, string>>(sql`
     select
       count(*) filter (where attendance = 'in')::text as going,
@@ -360,6 +394,7 @@ async function attendanceSplit(): Promise<AttendanceSplit> {
       count(*) filter (where attendance = 'out')::text as not_going,
       count(*) filter (where attendance = 'waitlisted')::text as waitlisted
     from participants
+    where created_at >= ${range.from.toISOString()} and created_at < ${range.to.toISOString()}
   `);
   return {
     going: Number(row?.going ?? 0),
@@ -369,19 +404,25 @@ async function attendanceSplit(): Promise<AttendanceSplit> {
   };
 }
 
-/** Sent emails per week, on the same generated calendar as `series`. */
-async function emailSeries(window: number): Promise<SeriesPoint[]> {
+/** Sent emails per bucket, on the same generated calendar as `series`. */
+async function emailSeries(range: PanelRange, bucket: "day" | "week"): Promise<SeriesPoint[]> {
+  const from = range.from.toISOString();
+  const to = range.to.toISOString();
+  const unit = sql.raw(`'${bucket}'`);
+  const step = sql.raw(bucket === "day" ? "interval '1 day'" : "interval '1 week'");
+
   const rows = await db.execute<{ week: Date; total: string }>(sql`
     with calendar as (
       select generate_series(
-        date_trunc('week', now() - ${days(window)}),
-        date_trunc('week', now()),
-        interval '1 week'
+        date_trunc(${unit}, ${from}::timestamptz),
+        date_trunc(${unit}, ${to}::timestamptz),
+        ${step}
       ) as week
     )
     select c.week,
       (select count(*) from outbox_messages o
-         where o.status = 'sent' and date_trunc('week', o.sent_at) = c.week)::text as total
+         where o.status = 'sent' and date_trunc(${unit}, o.sent_at) = c.week
+           and o.sent_at >= ${from} and o.sent_at < ${to})::text as total
     from calendar c order by c.week
   `);
 
@@ -394,30 +435,52 @@ async function emailSeries(window: number): Promise<SeriesPoint[]> {
 }
 
 
-export async function loadOverview(window = 30): Promise<OverviewReport> {
+export async function loadOverview(range: PanelRange): Promise<OverviewReport> {
+  const bucket = bucketOf(range);
+
   /*
-    Sequential, deliberately. Three awaits against a pool of five leaves room
-    for the funnel's own queries; firing everything at once is what produced
-    the timeout described above.
+    Sequential, deliberately. Awaiting one at a time against a pool of five
+    leaves room for the funnel's own queries; firing everything at once is
+    what produced the timeout described above.
   */
-  const totals = await headlines(window);
-  const weeks = await series(window);
+  const totals = await headlines(range);
+  const buckets = await series(range, bucket);
   const depthRows = await depth();
-  const flows = await moneyAndEmails(window);
-  const weeklyEmails = await emailSeries(window);
-  const attendance = await attendanceSplit();
+  const flows = await moneyAndEmails(range);
+  const bucketEmails = await emailSeries(range, bucket);
+  const attendance = await attendanceSplit(range);
+
+  /*
+    "Al ritmo actual" is a statement about NOW, not about the filtered
+    period: the pace comes from the trailing completed weeks whatever the
+    range says, or the projection under a one-day filter would divine the
+    next month from yesterday. When the visible series is already weekly it
+    is reused; a short range pays one extra query for its own weekly view.
+  */
+  const paceWeeks =
+    bucket === "week"
+      ? buckets
+      : await series(
+          { ...range, from: new Date(range.to.getTime() - 56 * 24 * 60 * 60_000), to: range.to },
+          "week",
+        );
 
   return {
-    days: window,
+    days: range.days,
+    range: {
+      fromISO: range.from.toISOString(),
+      toISO: range.to.toISOString(),
+      preset: range.preset,
+    },
     ...totals,
-    ...weeks,
+    ...buckets,
     depth: depthRows,
     money: flows.money,
-    emails: { ...flows.emails, weekly: weeklyEmails },
+    emails: { ...flows.emails, weekly: bucketEmails },
     projection: {
-      accountsNext30: projectNext30(weeks.weeklyAccounts),
-      eventsNext30: projectNext30(weeks.weeklyEvents),
-      rsvpsNext30: projectNext30(weeks.weeklyRsvps),
+      accountsNext30: projectNext30(paceWeeks.weeklyAccounts),
+      eventsNext30: projectNext30(paceWeeks.weeklyEvents),
+      rsvpsNext30: projectNext30(paceWeeks.weeklyRsvps),
     },
     attendance,
   };

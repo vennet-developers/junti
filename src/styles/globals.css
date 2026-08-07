@@ -587,3 +587,16 @@ body {
   --sm-charts-cat-3: var(--junti-noviene-fill, var(--junti-noviene-fg));
   --sm-charts-cat-4: var(--junti-espera-fill, var(--junti-espera-fg));
 }
+
+/* El input de fecha del filtro del panel: vestido como los chips que lo
+   rodean, porque un control nativo crudo en medio de una fila de pills lee
+   como un descuido y no como una opción. */
+.junti-fecha-panel {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--sm-border-default);
+  border-radius: 999px;
+  background: var(--sm-surface-raised, transparent);
+  color: inherit;
+}
