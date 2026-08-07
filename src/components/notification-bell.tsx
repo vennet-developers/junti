@@ -60,24 +60,26 @@ export function NotificationBell({ unread }: { unread: number }) {
       <Button
         type="button"
         variant="secondary"
-        /* The account capsule beside it is `sm` for the density reasons written
-           in ProfileMenu; matching it keeps the two controls one bar rather
-           than two sizes of button that happen to be adjacent. */
+        /* A CIRCLE at the account capsule's exact height — Ivan's call, and
+           the bar reads as one set of controls for it. The height is pinned
+           in `.junti-campana` rather than trusted to size math: the capsule
+           measures 46px because a 32px avatar inflates it, and an icon-only
+           circle at the same `size` lands short of that on padding alone. */
         size="sm"
-        shape="pill"
+        shape="circle"
+        iconOnly
+        className="junti-campana"
         aria-label={
           unread > 0
             ? `${copy.notifications.open} — ${copy.notifications.unread(unread)}`
             : copy.notifications.open
         }
       >
-        <BellIcon size={18} aria-hidden="true" />
-        {/* Inline rather than pinned to a corner. A count sitting in the flow
-            of the button needs no absolute positioning to place it and no
-            second thought about what happens when it reaches three
-            characters. */}
+        <BellIcon size={20} aria-hidden="true" />
+        {/* Pinned to the rim now that the button is a circle: a count in the
+            flow would stretch the circle back into a pill. */}
         {badge ? (
-          <Badge variant="error" size="sm" aria-hidden="true">
+          <Badge variant="error" size="sm" aria-hidden="true" className="junti-campana__badge">
             {badge}
           </Badge>
         ) : null}
