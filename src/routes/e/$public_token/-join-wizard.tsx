@@ -82,9 +82,14 @@ export function JoinWizard({
     first time through. A number in a soft badge (a single digit in a pill
     IS a circle) says "this comes second" without a single word. Numbering
     is positional: on an event without requirements, Mensaje is 2.
+
+    Green once the step is DONE — answered, confirmed, published — gray
+    while it waits. A comprobante merely sent stays gray on purpose: the
+    tab's own banner says "not confirmed yet", and a green 2 above a yellow
+    "still pending" would be the interface disagreeing with itself.
   */
-  const stepBadge = (n: number) => (
-    <Badge variant="secondary" size="sm" soft aria-hidden="true">
+  const stepBadge = (n: number, done: boolean) => (
+    <Badge variant={done ? "success" : "secondary"} size="sm" soft aria-hidden="true">
       {n}
     </Badge>
   );
@@ -94,21 +99,21 @@ export function JoinWizard({
       <TabsList fullWidth>
         <TabsTrigger value="respuesta">
           <Flex gap="2" align="center">
-            {stepBadge(1)}
+            {stepBadge(1, joined)}
             {strings.tabs.answer}
           </Flex>
         </TabsTrigger>
         {hasPolicies ? (
           <TabsTrigger value="comprobante" disabled={!joined}>
             <Flex gap="2" align="center">
-              {stepBadge(2)}
+              {stepBadge(2, confirmed)}
               {strings.tabs.requirements}
             </Flex>
           </TabsTrigger>
         ) : null}
         <TabsTrigger value="mensaje" disabled={!joined}>
           <Flex gap="2" align="center">
-            {stepBadge(hasPolicies ? 3 : 2)}
+            {stepBadge(hasPolicies ? 3 : 2, commitment.own !== null)}
             {strings.tabs.message}
           </Flex>
         </TabsTrigger>
