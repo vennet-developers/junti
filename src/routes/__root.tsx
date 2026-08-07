@@ -134,6 +134,17 @@ export const Route = createRootRoute({
       */
       { name: "theme-color", media: "(prefers-color-scheme: light)", content: "#faf7f2" },
       { name: "theme-color", media: "(prefers-color-scheme: dark)", content: "#09090b" },
+      /*
+        The switch iOS actually checks before honouring the launch images
+        below. The manifest already says standalone and that is what
+        installs the app — but apple-touch-startup-image belongs to the
+        older web-clip path, and without `apple-mobile-web-app-capable` iOS
+        ignores every one of those links and paints white. Discovered the
+        way all of this family is: shipped, opened, stared at.
+      */
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: BRAND_NAME },
     ],
     links: [
       { rel: "stylesheet", href: juntiCss },
