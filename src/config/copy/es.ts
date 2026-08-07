@@ -1518,6 +1518,14 @@ export const es = {
     searchPlaceholder: "Buscar evento…",
     searchLabel: "Buscar entre tus eventos",
     tabUpcoming: "Próximos",
+    /* El segundo eje del filtro: mi papel en el evento, no su fecha. */
+    whoAll: "Todos",
+    whoOrganizing: "Organizo",
+    whoJoined: "Me uní",
+    /* La vista es una preferencia de lectura, no un filtro: mismas cartas,
+       otra densidad. */
+    viewCards: "Ver como tarjetas",
+    viewList: "Ver como lista",
     tabPast: "Pasados",
     tabAll: "Todos",
     /*

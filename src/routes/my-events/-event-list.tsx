@@ -5,11 +5,12 @@ import { useMemo, useState } from "react";
 import { Badge } from "@stackmyth/badge";
 import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";
-import { CalendarIcon, MapPinIcon, SearchIcon } from "@stackmyth/icons";
+import { CalendarIcon, LayoutGridIcon, ListIcon, MapPinIcon, SearchIcon } from "@stackmyth/icons";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@stackmyth/input-group";
-import { Box, Flex, Grid, Stack } from "@stackmyth/layout";
+import { Box, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
+import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
 import { AttendeeStack } from "@/components/attendee-stack";
 import { useCopy } from "@/components/copy-provider";
@@ -60,6 +61,8 @@ export interface EventListItem {
 }
 
 type Filter = "upcoming" | "past" | "all";
+type Who = "all" | "organizing" | "joined";
+type View = "cards" | "list";
 
 /**
  * Lower-cased and stripped of accents, for comparing.
@@ -89,17 +92,30 @@ export function EventList({ events }: { events: EventListItem[] }) {
   const { copy } = useCopy();
   const [term, setTerm] = useState("");
   const [filter, setFilter] = useState<Filter>("upcoming");
+  // The second axis: my ROLE in the event, not its date. "Joined" is every
+  // event I did not create — including ones I answered "no" to, because "the
+  // events I got into" is a relationship, not an attendance state.
+  const [who, setWho] = useState<Who>("all");
+  // A reading preference, not a filter: same events, another density.
+  const [view, setView] = useState<View>("cards");
 
   const buckets = useMemo(() => {
     const needle = foldForSearch(term.trim());
 
+    const byRole =
+      who === "all"
+        ? events
+        : events.filter((event) =>
+            who === "organizing" ? event.role === "organizer" : event.role !== "organizer",
+          );
+
     const matches = needle
-      ? events.filter(
+      ? byRole.filter(
           (event) =>
             foldForSearch(event.title).includes(needle) ||
             foldForSearch(event.location ?? "").includes(needle),
         )
-      : events;
+      : byRole;
 
     return {
       // Upcoming reads soonest-first — the next thing you have to think about
@@ -110,7 +126,7 @@ export function EventList({ events }: { events: EventListItem[] }) {
       past: matches.filter((event) => event.isPast),
       all: matches,
     };
-  }, [events, term]);
+  }, [events, term, who]);
 
   const shown = buckets[filter];
 
@@ -137,6 +153,46 @@ export function EventList({ events }: { events: EventListItem[] }) {
           aria-label={copy.auth.searchLabel}
         />
       </InputGroup>
+
+      {/*
+        The two controls that are not about time share a row: on the left,
+        which of my events these are (mine to run vs. mine to attend); on the
+        right, how densely to read them. Both are ToggleGroups because both
+        are single choices that stay on screen — a dropdown would hide the
+        state the whole page is being read through.
+      */}
+      <Flex gap="3" align="center" justify="between" wrap="wrap">
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="lg"
+          value={who}
+          onValueChange={(next: string) => {
+            if (next) setWho(next as Who);
+          }}
+        >
+          <Toggle value="all">{copy.auth.whoAll}</Toggle>
+          <Toggle value="organizing">{copy.auth.whoOrganizing}</Toggle>
+          <Toggle value="joined">{copy.auth.whoJoined}</Toggle>
+        </ToggleGroup>
+
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="lg"
+          value={view}
+          onValueChange={(next: string) => {
+            if (next) setView(next as View);
+          }}
+        >
+          <Toggle value="cards" aria-label={copy.auth.viewCards}>
+            <LayoutGridIcon size={18} aria-hidden="true" />
+          </Toggle>
+          <Toggle value="list" aria-label={copy.auth.viewList}>
+            <ListIcon size={18} aria-hidden="true" />
+          </Toggle>
+        </ToggleGroup>
+      </Flex>
 
       {/* xl for the touch target, not the type scale: it is the first Tabs
           size whose trigger clears 44px. */}
@@ -166,6 +222,26 @@ export function EventList({ events }: { events: EventListItem[] }) {
                   title={term.trim() ? copy.auth.noMatches(term.trim()) : emptyCopy[value].title}
                   description={term.trim() ? undefined : emptyCopy[value].description}
                 />
+              </Box>
+            ) : view === "list" ? (
+              /*
+                The compact reading: one outlined card, one divided row per
+                event. Everything a row keeps earned its place by being what
+                the list is scanned FOR — title, when/where, role, price and
+                the same actions the card offers. What it drops (band colour,
+                attendees) is what you open the cards view to browse.
+              */
+              <Box pt="4">
+                <Card surface="outlined" padding="0">
+                  <Stack gap="0">
+                    {shown.map((event, index) => (
+                      <Box key={event.id}>
+                        {index > 0 ? <Divider /> : null}
+                        <EventRow event={event} />
+                      </Box>
+                    ))}
+                  </Stack>
+                </Card>
               </Box>
             ) : (
               /*
@@ -197,6 +273,58 @@ export function EventList({ events }: { events: EventListItem[] }) {
         ))}
       </Tabs>
     </Stack>
+  );
+}
+
+/**
+ * One event as a row: the card's facts at reading density.
+ *
+ * The muted line folds type, date and place into one string because a
+ * compact list is scanned down the left edge — every fact that starts its
+ * own line would put the next event a line further away. Actions stay,
+ * identical to the card's: a denser view of the same list must not cost the
+ * things you came to do.
+ */
+function EventRow({ event }: { event: EventListItem }) {
+  const { copy } = useCopy();
+
+  const details = [event.typeLabel ?? copy.auth.eventFallbackLabel, event.when, event.location]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <Flex px="5" py="3" gap="3" align="center" justify="between" wrap="wrap">
+      <Box minWidth="0" flexGrow={1}>
+        <Stack gap="1">
+          <Flex gap="2" align="center" wrap="wrap">
+            <Text weight="semibold">{event.title}</Text>
+            <Badge variant={event.role === "organizer" ? "default" : "outline"} size="sm" soft>
+              {copy.auth.roles[event.role]}
+            </Badge>
+            {event.isClosed ? (
+              <Badge variant="error" size="sm" soft>
+                {copy.event.closedBadge}
+              </Badge>
+            ) : null}
+          </Flex>
+          <Text variant="small" color="muted">
+            {details}
+          </Text>
+        </Stack>
+      </Box>
+
+      <Flex flexShrink={0} gap="3" align="center" wrap="wrap" justify="end">
+        <Text variant="small" weight="semibold" whiteSpace="nowrap">
+          {event.cost}
+        </Text>
+        <EventCardActions
+          eventId={event.id}
+          managePath={event.managePath}
+          eventPath={event.eventPath}
+          whatsAppUrl={event.whatsAppUrl}
+        />
+      </Flex>
+    </Flex>
   );
 }
 

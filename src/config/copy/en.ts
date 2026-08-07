@@ -1363,6 +1363,11 @@ export const en: Copy = {
     searchPlaceholder: "Search events…",
     searchLabel: "Search your events",
     tabUpcoming: "Upcoming",
+    whoAll: "All",
+    whoOrganizing: "Organizing",
+    whoJoined: "Joined",
+    viewCards: "View as cards",
+    viewList: "View as list",
     tabPast: "Past",
     tabAll: "All",
     /*
