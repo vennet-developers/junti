@@ -626,3 +626,10 @@ body {
   min-width: 16rem;
   border-radius: 0.75rem;
 }
+
+/* La página vieja del directorio se atenúa bajo la petición nueva en vez de
+   desaparecer: una lista que se vacía en cada clic lee como rotura. */
+.junti-directorio-cargando {
+  opacity: 0.55;
+  transition: opacity 120ms ease;
+}

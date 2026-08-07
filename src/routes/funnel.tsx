@@ -5,6 +5,8 @@ import { Box, Container, Divider, Flex, Stack } from "@stackmyth/layout";
 import { List, ListItem } from "@stackmyth/list-item";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@stackmyth/tabs";
 import { Text } from "@stackmyth/text";
+import { useState, useTransition } from "react";
+
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -84,6 +86,41 @@ const getFunnel = createServerFn({ method: "POST" })
     const overview = await loadOverview(range);
     const directory = await loadDirectory(range, directoryQuery);
     return { ...funnel, overview, directory, directoryQuery };
+  });
+
+/**
+ * The directory alone, for interactions inside the Datos tab.
+ *
+ * Switching from Usuarios to Eventos through the page loader re-ran all
+ * fourteen of the panel's queries to change a twenty-row list — Ivan timed
+ * it at four seconds of nothing. This fn runs exactly one. The full reload
+ * remains the right cost for the DATE chips, which change every number on
+ * the page; it was never the right cost for a list.
+ *
+ * Re-checks the owner: it returns emails, and a server fn is a public
+ * endpoint no matter which page calls it.
+ */
+const getDirectory = createServerFn({ method: "POST" })
+  .validator(
+    (data: { rango?: string; desde?: string; tipo?: string; q?: string; pagina?: string; estado?: string }) =>
+      data,
+  )
+  .handler(async ({ data }) => {
+    const [{ getOrganizer }, { resolveRange }, { parseDirectoryParams }, { loadDirectory }] =
+      await Promise.all([
+        import("@/lib/organizer"),
+        import("@/domain/panel-range"),
+        import("@/domain/directory"),
+        import("@/lib/directory"),
+      ]);
+
+    const owner = process.env.ANALYTICS_OWNER_ID;
+    const organizer = await getOrganizer();
+    if (!owner || !organizer || organizer.id !== owner) throw notFound();
+
+    const range = resolveRange(data, new Date());
+    const query = parseDirectoryParams(data);
+    return { directory: await loadDirectory(range, query), query };
   });
 
 export const Route = createFileRoute("/funnel")({
@@ -196,27 +233,36 @@ function RangeFilter({
 /**
  * The Datos tab: one page of twenty rows, searched and filtered server-side.
  *
- * Same navigation contract as `RangeFilter` — plain anchors and a native GET
- * form, full reload, no router — and for the same reason. Pagination lives in
- * the query, so the DOM only ever holds one page; that is the entire point
- * the feature was asked for with ("no saturar la carga de elementos en el
- * DOM").
+ * Interactive, unlike the date chips above it, and the split is deliberate:
+ * a date change moves every number on the page, so a full reload is its
+ * honest price — but flipping Usuarios to Eventos only needs one query, and
+ * paying fourteen of them plus a reload made every click a four-second
+ * pause. Interactions here call `getDirectory` and swap local state; the
+ * URL is kept in step through `history.replaceState`, with no router
+ * involvement, so a deep link still opens exactly this view. Pagination
+ * stays server-side: the DOM only ever holds one page, which is the entire
+ * point the feature was asked for with ("no saturar la carga de elementos
+ * en el DOM").
  */
 function DirectoryPanel({
-  directory,
-  query,
+  initialDirectory,
+  initialQuery,
   search,
   copy,
 }: {
-  directory: DirectoryPage;
-  query: DirectoryQuery;
+  initialDirectory: DirectoryPage;
+  initialQuery: DirectoryQuery;
   search: { rango?: string; desde?: string };
   copy: Copy;
 }) {
   const d = copy.panel.directory;
+  const [pending, startTransition] = useTransition();
+  const [view, setView] = useState({ directory: initialDirectory, query: initialQuery });
+  const { query } = view;
+  const directory = view.directory;
 
-  /** Every link re-states the whole state; what is omitted resets. */
-  const url = (over: { tipo?: string; q?: string; pagina?: number; estado?: string }) => {
+  /** The whole next state as URL params; what is omitted resets. */
+  const paramsOf = (over: { tipo?: string; q?: string; pagina?: number; estado?: string }) => {
     const params = new URLSearchParams();
     if (search.rango) params.set("rango", search.rango);
     if (search.desde) params.set("desde", search.desde);
@@ -226,8 +272,20 @@ function DirectoryPanel({
     const estado = over.estado ?? (over.tipo ? "todos" : query.filter);
     if (estado !== "todos") params.set("estado", estado);
     if ((over.pagina ?? 1) > 1) params.set("pagina", String(over.pagina));
-    return `/funnel?${params.toString()}`;
+    return params;
   };
+
+  function show(over: { tipo?: string; q?: string; pagina?: number; estado?: string }) {
+    const params = paramsOf(over);
+
+    startTransition(async () => {
+      const result = await getDirectory({ data: Object.fromEntries(params.entries()) });
+      setView({ directory: result.directory, query: result.query });
+      // After the data, not before: a URL promising a view that then fails
+      // to load would deep-link to the failure.
+      window.history.replaceState(null, "", `/funnel?${params.toString()}`);
+    });
+  }
 
   const when = (iso: string) =>
     new Date(iso).toLocaleDateString(copy.intlLocale, {
@@ -243,29 +301,32 @@ function DirectoryPanel({
         {(["usuarios", "eventos", "grupos"] as const).map((kind) => (
           <Button
             key={kind}
-            asChild
+            type="button"
             size="sm"
             shape="pill"
             variant={query.kind === kind ? "primary" : "outline"}
+            disabled={pending}
+            /* A kind switch resets search, filter and page: they describe
+               the list being left, not the one being opened. */
+            onClick={() => show({ tipo: kind, q: "", estado: "todos" })}
           >
-            {/* A kind switch resets search, filter and page: they describe
-                the list being left, not the one being opened. */}
-            <a href={url({ tipo: kind, q: "", estado: "todos" })}>{d.kinds[kind]}</a>
+            {d.kinds[kind]}
           </Button>
         ))}
       </Flex>
 
-      {/* Native GET form; hidden inputs carry the state the text box is not
-          about, so searching does not silently drop the date range. */}
-      <form method="get" action="/funnel">
-        {search.rango ? <input type="hidden" name="rango" value={search.rango} /> : null}
-        {search.desde ? <input type="hidden" name="desde" value={search.desde} /> : null}
-        <input type="hidden" name="tipo" value={query.kind} />
-        {query.filter !== "todos" ? (
-          <input type="hidden" name="estado" value={query.filter} />
-        ) : null}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const box = new FormData(event.currentTarget).get("q");
+          show({ q: typeof box === "string" ? box : "" });
+        }}
+      >
         <Flex gap="2" align="center" wrap="wrap">
           <input
+            /* Uncontrolled, re-keyed per list so a leftover search does not
+               travel from Usuarios into Eventos as ghost text. */
+            key={query.kind}
             type="search"
             name="q"
             className="junti-fecha-panel junti-buscador-panel"
@@ -274,12 +335,19 @@ function DirectoryPanel({
             defaultValue={query.q}
             maxLength={80}
           />
-          <Button type="submit" size="sm" shape="pill" variant="secondary">
+          <Button type="submit" size="sm" shape="pill" variant="secondary" disabled={pending}>
             {d.searchSubmit}
           </Button>
           {query.q !== "" ? (
-            <Button asChild size="sm" shape="pill" variant="ghost">
-              <a href={url({ q: "" })}>{d.clearSearch}</a>
+            <Button
+              type="button"
+              size="sm"
+              shape="pill"
+              variant="ghost"
+              disabled={pending}
+              onClick={() => show({ q: "" })}
+            >
+              {d.clearSearch}
             </Button>
           ) : null}
         </Flex>
@@ -290,20 +358,25 @@ function DirectoryPanel({
           {(["todos", "con_costo", "gratis", "cancelados"] as const).map((estado) => (
             <Button
               key={estado}
-              asChild
+              type="button"
               size="sm"
               shape="pill"
               variant={query.filter === estado ? "primary" : "outline"}
+              disabled={pending}
+              onClick={() => show({ estado })}
             >
-              <a href={url({ estado })}>{d.filters[estado]}</a>
+              {d.filters[estado]}
             </Button>
           ))}
         </Flex>
       ) : null}
 
-      <Card surface="outlined">
+      {/* The old page dims under the new request rather than vanishing: a
+          list that blanks on every click reads as breakage, and the rows
+          are usually half-right already. */}
+      <Card surface="outlined" className={pending ? "junti-directorio-cargando" : undefined}>
         <CardContent>
-          <Stack gap="3">
+          <Stack gap="3" aria-busy={pending}>
             <Flex gap="3" align="center" justify="between" wrap="wrap">
               <Text variant="small" color="muted">
                 {d.results(directory.total)}
@@ -367,13 +440,25 @@ function DirectoryPanel({
             {directory.pages > 1 ? (
               <Flex gap="2" align="center" justify="end">
                 {directory.page > 1 ? (
-                  <Button asChild size="sm" variant="outline">
-                    <a href={url({ pagina: directory.page - 1 })}>{d.previous}</a>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() => show({ pagina: directory.page - 1 })}
+                  >
+                    {d.previous}
                   </Button>
                 ) : null}
                 {directory.page < directory.pages ? (
-                  <Button asChild size="sm" variant="outline">
-                    <a href={url({ pagina: directory.page + 1 })}>{d.next}</a>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() => show({ pagina: directory.page + 1 })}
+                  >
+                    {d.next}
                   </Button>
                 ) : null}
               </Flex>
@@ -553,8 +638,8 @@ function FunnelPage() {
 
           <TabsContent value="datos">
             <DirectoryPanel
-              directory={report.directory}
-              query={report.directoryQuery}
+              initialDirectory={report.directory}
+              initialQuery={report.directoryQuery}
               search={{ rango: search.rango, desde: search.desde }}
               copy={copy}
             />
