@@ -681,7 +681,7 @@ export const es = {
     empty: "Todavía nadie ha confirmado. Sé el primero.",
     emptyGroup: "Nadie por aquí.",
     countIn: (n: number) => (n === 1 ? "1 persona" : `${n} personas`),
-    pendingPolicyTitle: "Falta un requisito",
+    pendingPolicyTitle: "Sala de espera",
     pendingPolicyHelp:
       "Dijeron que vienen, pero todavía no cumplen lo que pide el evento. No cuentan como confirmados.",
     waitingOn: (labels: string) => `Falta: ${labels}`,

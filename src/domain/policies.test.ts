@@ -17,6 +17,7 @@ import { POLICY_HANDLERS } from "./policy-handlers";
 const payment: Policy = {
   id: "policy-payment",
   definitionId: "def-payment",
+  slug: "proof_of_payment",
   handler: "file_upload_reviewed",
   label: "Comprobante de pago",
   description: null,
@@ -28,6 +29,7 @@ const payment: Policy = {
 const rules: Policy = {
   id: "policy-rules",
   definitionId: "def-rules",
+  slug: "read_the_rules",
   handler: "self_acknowledged",
   label: "Leí las indicaciones",
   description: "Están en la descripción del evento.",
@@ -40,6 +42,7 @@ const rules: Policy = {
 const fromTheFuture: Policy = {
   id: "policy-future",
   definitionId: "def-future",
+  slug: "digital_signature",
   handler: "digital_signature",
   label: "Firma digital",
   description: null,

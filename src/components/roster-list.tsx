@@ -51,6 +51,14 @@ export interface RosterGroupProps {
    * onto it makes the fact unstylable, untranslatable, and half-invisible.
    */
   renderBadge?: (member: ParticipantRosterMember) => ReactNode;
+  /**
+   * A payment status that goes WITHOUT a badge in this group — the group's
+   * norm. On a payment-gated event the confirmed list is all "Pagó" and the
+   * waiting room is all "Debe": a pill repeated on every row says nothing,
+   * and hiding it leaves the exceptions ("Sin cobro", a payment the
+   * organizer reverted) as the only pills — which is what a pill is for.
+   */
+  mutePaymentStatus?: string;
 }
 
 /**
@@ -78,6 +86,7 @@ export function RosterGroup({
   renderActions,
   renderNote,
   renderBadge,
+  mutePaymentStatus,
 }: RosterGroupProps) {
   return (
     <Stack gap="3">
@@ -204,7 +213,7 @@ export function RosterGroup({
                           )}
                         </Text>
                       ) : null}
-                      {showMoney && member.share?.owes ? (
+                      {showMoney && member.share?.owes && member.share.status !== mutePaymentStatus ? (
                         <PaymentBadge status={member.share.status} copy={copy} compact />
                       ) : null}
                       {renderBadge?.(member)}

@@ -404,6 +404,16 @@ function ParticipantPage() {
    * {@link GatedPreview} for a signed-out reader. Writing it twice is how
    * the two drift.
    */
+  /*
+    Whether being ON the confirmed list already means "paid": true exactly
+    when a proof_of_payment policy gates confirmation, because approving the
+    receipt records the money. On such an event the per-row "Pagó" pill is
+    the group restating its own definition — muted below, so the pills that
+    remain are the exceptions worth a glance.
+  */
+  const paymentGated =
+    showMoney && roster.policies.some((policy) => policy.slug === "proof_of_payment");
+
   const eventTail = (
     <Stack gap="6">
       <Divider />
@@ -437,6 +447,7 @@ function ParticipantPage() {
               currency={event.currency}
               copy={copy}
               showMoney={showMoney}
+              mutePaymentStatus={paymentGated ? "confirmed" : undefined}
               renderNote={commitmentNote}
             />
 
@@ -458,6 +469,7 @@ function ParticipantPage() {
                     currency={event.currency}
                     copy={copy}
                     showMoney={showMoney}
+                    mutePaymentStatus={paymentGated ? "pending" : undefined}
                     renderNote={pendingNote}
                   />
                 </Stack>

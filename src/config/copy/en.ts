@@ -575,7 +575,7 @@ export const en: Copy = {
     empty: "Nobody has answered yet. Be the first.",
     emptyGroup: "Nobody here.",
     countIn: (n: number) => (n === 1 ? "1 person" : `${n} people`),
-    pendingPolicyTitle: "Something still missing",
+    pendingPolicyTitle: "Waiting room",
     pendingPolicyHelp:
       "They said they are coming, but have not met what the event asks for yet. They do not count as confirmed.",
     waitingOn: (labels: string) => `Waiting on: ${labels}`,

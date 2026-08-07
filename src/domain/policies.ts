@@ -26,6 +26,8 @@ export interface Policy {
   id: string;
   /** The catalogue entry this is an instance of. */
   definitionId: string;
+  /** The definition's stable name, for the rare rule that keys on WHICH policy this is. */
+  slug: string;
   /**
    * The behaviour key from the catalogue. Resolved through
    * `src/domain/policy-handlers.ts`; a value this deploy does not recognise is

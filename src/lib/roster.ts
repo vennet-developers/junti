@@ -298,6 +298,7 @@ export async function loadEventPolicies(eventId: string, locale: Locale): Promis
   return rows.map((row) => ({
     id: row.id,
     definitionId: row.definitionId,
+    slug: row.slug,
     handler: row.handler,
     label: row.override ?? pickLabel(row.labels, locale, row.slug),
     description: row.overrideDescription ?? pickOptionalLabel(row.descriptions, locale),
