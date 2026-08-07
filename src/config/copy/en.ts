@@ -541,6 +541,7 @@ export const en: Copy = {
     overCapacity: "Not enough open spots left to hold those.",
     broughtBy: (name: string) => `Bringing: ${name}`,
     switchLabel: "I'm bringing people",
+    switchHelp: "Hold spots for your people: you cover their share and hand each one a link.",
   },
 
   joinWizard: {

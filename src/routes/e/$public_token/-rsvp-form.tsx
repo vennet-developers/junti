@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@stackmyth/alert";
 import { Switch } from "@stackmyth/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@stackmyth/card";
 import { Input } from "@stackmyth/input";
-import { Flex, Stack } from "@stackmyth/layout";
+import { Box, Flex, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { toast } from "@stackmyth/toast";
 import { Banner } from "@stackmyth/banner";
@@ -224,21 +224,43 @@ export function RsvpForm({ publicToken, mine, isFull, refund, guests, onSaved }:
               ) : null}
 
               {/* Bringing people, declared with the answer itself. Only when
-                  the answer being given is "voy" and spots remain. */}
+                  the answer being given is "voy" and spots remain. Its own
+                  outlined card: on a phone the old one-line row sat glued to
+                  the submit button and the switch was the only thing that
+                  toggled — a target a few millimetres wide next to the
+                  biggest button on the page. */}
               {guests && selected === "in" ? (
-                <Stack gap="3">
-                  <Flex gap="3" align="center" justify="between">
-                    <Text variant="small" weight="medium">
-                      {copy.heldSpots.switchLabel}
-                    </Text>
-                    <Switch
-                      checked={bringGuests}
-                      onCheckedChange={(checked) => setBringGuests(checked === true)}
-                      aria-label={copy.heldSpots.switchLabel}
-                    />
-                  </Flex>
+                <Card surface="outlined">
+                  <CardContent>
+                    <Stack gap="3">
+                      {/*
+                        The whole header is one implicit label — the same
+                        composition the policy editor's rows use. Tapping the
+                        title, the help line or the switch all toggle: the row
+                        is the control. The switch keeps an explicit
+                        aria-label so a screen reader announces the act, not
+                        the paragraph.
+                      */}
+                      <Flex as="label" gap="3" align="start" justify="between" cursor="pointer">
+                        <Box minWidth="0">
+                          <Stack gap="1">
+                            <Text weight="semibold">{copy.heldSpots.switchLabel}</Text>
+                            <Text variant="small" color="muted">
+                              {copy.heldSpots.switchHelp}
+                            </Text>
+                          </Stack>
+                        </Box>
+                        <Box flexShrink={0} pt="1">
+                          <Switch
+                            size="lg"
+                            checked={bringGuests}
+                            onCheckedChange={(checked) => setBringGuests(checked === true)}
+                            aria-label={copy.heldSpots.switchLabel}
+                          />
+                        </Box>
+                      </Flex>
 
-                  {bringGuests ? (
+                      {bringGuests ? (
                     <Stack gap="3">
                       <ControlledField label={copy.heldSpots.countLabel}>
                         <SelectField
@@ -268,9 +290,11 @@ export function RsvpForm({ publicToken, mine, isFull, refund, guests, onSaved }:
                           }
                         />
                       ))}
+                        </Stack>
+                      ) : null}
                     </Stack>
-                  ) : null}
-                </Stack>
+                  </CardContent>
+                </Card>
               ) : null}
 
               <SubmitButton

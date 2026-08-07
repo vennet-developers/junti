@@ -636,6 +636,7 @@ export const es = {
     broughtBy: (name: string) => `Trae: ${name}`,
     /** El switch del paso 1 del wizard: cupos declarados con la respuesta. */
     switchLabel: "Traigo gente",
+    switchHelp: "Aparta cupos para tu gente: pagas su cuota y a cada uno le pasas un link.",
   },
 
   /** El wizard de participación: Respuesta · Comprobante · Mensaje. */
