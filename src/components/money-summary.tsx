@@ -151,11 +151,17 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
       <Divider />
 
       <Stack gap="1">
+        {/*
+          The GOAL again, not the gross cost. With somebody waived the two
+          differ, and this line used to show the gross while Falta and the
+          bar measured the goal — "lo que falta no coincide con el total",
+          exactly as Ivan read it. One reference number per card.
+        */}
         <Flex justify="between" gap="2">
           <Text variant="small" color="muted">
             {copy.money.totalLabel}
           </Text>
-          <Text variant="small">{money(totalComputedMinor)}</Text>
+          <Text variant="small">{money(goalMinor)}</Text>
         </Flex>
 
         {event.costMode === "total" ? (
@@ -173,14 +179,13 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
           </Flex>
         )}
 
-        {waivedMinor > 0 ? (
-          <Flex justify="between" gap="2">
-            <Text variant="small" color="muted">
-              {copy.money.waived}
-            </Text>
-            <Text variant="small">{money(waivedMinor)}</Text>
-          </Flex>
-        ) : null}
+        {/*
+          The waived row is gone on purpose. An amount nobody is being
+          charged is not part of the account — the quota distribution
+          already absorbed the decision, and the person still wears their
+          "Sin cobro" pill on the roster. Ivan: "no es necesario poner
+          valores que no se están cobrando".
+        */}
       </Stack>
     </Stack>
   );

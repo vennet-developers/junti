@@ -726,7 +726,7 @@ export const en: Copy = {
     owesLabel: "Owes",
     collectedLabel: "Collected",
     outstandingLabel: "Still owed",
-    totalLabel: "Event total",
+    totalLabel: "Total to collect",
     perPersonLabel: "Each",
     /** The same fact beside a price, where the label has to share the line. */
     perPersonShort: "each",

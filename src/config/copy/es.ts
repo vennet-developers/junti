@@ -831,7 +831,9 @@ export const es = {
     owesLabel: "Debe",
     collectedLabel: "Recaudado",
     outstandingLabel: "Falta",
-    totalLabel: "Total del evento",
+    /* Lo que se está cobrando, no el costo bruto: con gente exonerada los
+       dos difieren, y todos los números de la tarjeta miden contra este. */
+    totalLabel: "Total a recaudar",
     perPersonLabel: "Por persona",
     /** El mismo dato al lado de un precio, donde "Por persona" ya no cabe en la línea. */
     perPersonShort: "c/u",
