@@ -16,6 +16,7 @@ import juntiCss from "@/styles/junti.css?url";
 
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
+import { RefreshOnReturn } from "@/components/refresh-on-return";
 /* Side-effect import, on purpose: registers the beforeinstallprompt capture
    in the root bundle, before any route chunk could lose the race. */
 import "@/lib/install-prompt-client";
@@ -81,6 +82,36 @@ const getShell = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 /**
+ * One launch image per Apple device family, point size × pixel ratio. iOS
+ * matches these by exact pixel size — a near miss falls back to white — so
+ * the table IS the contract with `public/splash/`, where each `${w*r}x${h*r}`
+ * file was generated from.
+ */
+const appleSplash = (
+  [
+    [440, 956, 3],
+    [430, 932, 3],
+    [402, 874, 3],
+    [414, 896, 3],
+    [414, 896, 2],
+    [414, 736, 3],
+    [393, 852, 3],
+    [390, 844, 3],
+    [375, 812, 3],
+    [375, 667, 2],
+    [768, 1024, 2],
+    [810, 1080, 2],
+    [820, 1180, 2],
+    [834, 1194, 2],
+    [1024, 1366, 2],
+  ] as const
+).map(([w, h, r]) => ({
+  rel: "apple-touch-startup-image",
+  media: `(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${r}) and (orientation: portrait)`,
+  href: `/splash/apple-splash-${w * r}x${h * r}.png`,
+}));
+
+/**
  * The document — what `src/app/layout.tsx` was under Next, loader included.
  *
  * The loader runs on the server for the first paint and re-runs on
@@ -113,6 +144,17 @@ export const Route = createRootRoute({
       { rel: "icon", href: "/icon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/apple-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
+      /*
+        The installed app's launch screen. Without these iOS paints plain
+        white for however long the first response takes — the "blank for
+        three seconds" Ivan watched. iOS ignores the manifest here and only
+        accepts a PNG whose pixel size matches the device exactly, hence one
+        file per family, generated from the chapa over the paper color
+        (scripts kept with the PWA notes; regenerate if the brand moves).
+        Portrait only: the app is a phone page, and a missing orientation
+        just falls back to white, which is where we started.
+      */
+      ...appleSplash,
     ],
   }),
   component: RootComponent,
@@ -147,6 +189,9 @@ function RootComponent() {
   return (
     <RootDocument locale={locale} theme={theme}>
       <CopyProvider locale={locale}>
+        {/* Fresh data whenever the app returns to the foreground — the
+            installed app's stand-in for a reload button. */}
+        <RefreshOnReturn />
         {/* The frame's top edge, mirror of the footer at the bottom. In the
             root so it survives pending states and cannot be forgotten. */}
         <AppHeader
