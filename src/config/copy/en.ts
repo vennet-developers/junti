@@ -22,6 +22,7 @@ export const en: Copy = {
   },
 
   common: {
+    refreshing: "Refreshing…",
     save: "Save",
     cancel: "Cancel",
     close: "Close",

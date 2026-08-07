@@ -16,6 +16,7 @@ import juntiCss from "@/styles/junti.css?url";
 
 import { AppFooter } from "@/components/app-footer";
 import { AppHeader } from "@/components/app-header";
+import { PullRefresh } from "@/components/pull-refresh";
 import { RefreshOnReturn } from "@/components/refresh-on-return";
 /* Side-effect import, on purpose: registers the beforeinstallprompt capture
    in the root bundle, before any route chunk could lose the race. */
@@ -192,6 +193,10 @@ function RootComponent() {
         {/* Fresh data whenever the app returns to the foreground — the
             installed app's stand-in for a reload button. */}
         <RefreshOnReturn />
+
+        {/* And the gesture for asking on purpose: pull down from the top.
+            Standalone-only — a browser tab already owns this gesture. */}
+        <PullRefresh />
         {/* The frame's top edge, mirror of the footer at the bottom. In the
             root so it survives pending states and cannot be forgotten. */}
         <AppHeader

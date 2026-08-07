@@ -48,6 +48,7 @@
     "@stackmyth/list-item": "^0.26.3",
     "@stackmyth/popover": "^0.26.3",
     "@stackmyth/progress": "^0.26.3",
+    "@stackmyth/pull-to-refresh": "^0.26.4",
     "@stackmyth/radio-group": "^0.26.3",
     "@stackmyth/select": "^0.26.3",
     "@stackmyth/skeleton": "^0.26.3",

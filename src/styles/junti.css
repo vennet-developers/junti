@@ -53,6 +53,7 @@
 @import "@stackmyth/charts/charts.css";
 @import "@stackmyth/progress/progress.css";
 @import "@stackmyth/spinner/spinner.css";
+@import "@stackmyth/pull-to-refresh/pull-to-refresh.css";
 @import "@stackmyth/skeleton/skeleton.css";
 @import "@stackmyth/accordion/accordion.css";
 @import "@stackmyth/avatar/avatar.css";
