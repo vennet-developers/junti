@@ -64,7 +64,7 @@
 
   /* ── Brand ────────────────────────────────────────────────────────────── */
   --junti-naranja: #ff7a3d; /* the chapa, accents. Tinta on top, only. */
-  --junti-naranja-texto: #d9541f; /* links and orange text ON papel (contrast) */
+  --junti-naranja-texto: #c34b1b; /* orange text ON papel — 4.53:1 at 13px, AA measured, not eyeballed */
 
   /*
     Fixed, mode-independent ink and paper.
@@ -313,7 +313,7 @@
     #D9541F for headings and accents, where the large-text threshold applies
     and the specified colour is correct.
   */
-  --junti-enlace: #b6541a;
+  --junti-enlace: #a94e18; /* 4.54:1 on the footer's #ede8e0 — the old #b6541a sat at 4.03 */
   --sm-text-color-link: var(--junti-enlace);
   --sm-text-color-link-hover: var(--junti-naranja-texto);
 
@@ -510,7 +510,7 @@
   --junti-texto-suave: #6b655c;
   --junti-texto-tenue: #8a8378;
 
-  --junti-naranja-texto: #d9541f;
+  --junti-naranja-texto: #c34b1b;
 
   --junti-accion: var(--junti-tinta);
   --junti-accion-texto: var(--junti-papel-fijo);
@@ -544,6 +544,6 @@
   --sm-warning-text: var(--junti-papel-fijo);
   --sm-error-text: var(--junti-papel-fijo);
 
-  --junti-enlace: #b6541a;
+  --junti-enlace: #a94e18; /* 4.54:1 on the footer's #ede8e0 — the old #b6541a sat at 4.03 */
   --junti-borde-campo: #928c83;
 }

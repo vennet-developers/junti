@@ -43,6 +43,43 @@ self.addEventListener("push", (event) => {
   );
 });
 
+self.addEventListener("pushsubscriptionchange", (event) => {
+  /*
+    The browser rotated this device's subscription behind the app's back.
+    Re-subscribe with the SAME server key (carried on the dying
+    subscription) and tell the server which endpoint replaced which —
+    otherwise this device goes silently deaf until its owner re-toggles.
+    If anything here fails, silence is still the outcome, so best-effort.
+  */
+  const oldSubscription = event.oldSubscription;
+  const key = oldSubscription?.options?.applicationServerKey;
+  if (!oldSubscription || !key) return;
+
+  event.waitUntil(
+    (async () => {
+      try {
+        const renewed = await self.registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: key,
+        });
+        const json = renewed.toJSON();
+        await fetch("/api/push-rotate", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            oldEndpoint: oldSubscription.endpoint,
+            endpoint: renewed.endpoint,
+            p256dh: json.keys?.p256dh ?? "",
+            auth: json.keys?.auth ?? "",
+          }),
+        });
+      } catch {
+        // Nothing to show and nobody to tell; the toggle remains the repair.
+      }
+    })(),
+  );
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification.data?.url ?? "/my-events";

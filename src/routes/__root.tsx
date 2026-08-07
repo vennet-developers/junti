@@ -158,7 +158,13 @@ function RootComponent() {
           isOwner={asStranger ? false : isOwner}
         />
 
-        <Outlet />
+        {/* The one <main> landmark, around every page: a screen reader's
+            "skip to content" needs somewhere to land, and this is the root
+            that guarantees the landmark on screens nobody remembers to add
+            it to. */}
+        <Box as="main">
+          <Outlet />
+        </Box>
 
         {/* The spacer that puts the footer on the bottom edge of a short
             page: eats the leftover height, collapses to nothing when full. */}

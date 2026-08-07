@@ -10,6 +10,18 @@
   "display": "standalone",
   "background_color": "#faf7f2",
   "theme_color": "#faf7f2",
+  "shortcuts": [
+    {
+      "name": "Crear evento",
+      "url": "/new",
+      "icons": [{ "src": "/brand/junti-maskable-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Mis eventos",
+      "url": "/my-events",
+      "icons": [{ "src": "/brand/junti-maskable-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
   "icons": [
     {
       "src": "/brand/junti-favicon-192.webp",
