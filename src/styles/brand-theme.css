@@ -191,6 +191,16 @@
   --sm-primary-text: var(--junti-accion-texto);
   --sm-primary-hover: var(--junti-accion-hover);
 
+  /* Toggles: presionado = tinta, como cada acto primario de la marca. El
+     default del kit es un lavado al 15% del color de acción — sobre la tinta
+     casi negra de junti eso da un gris pálido, y el segmento elegido se
+     distingue apenas del que no lo está. Elegido se pinta como elegido. */
+  --sm-toggle-default-pressed-bg: var(--junti-accion);
+  --sm-toggle-default-pressed-text: var(--junti-accion-texto);
+  --sm-toggle-outline-pressed-bg: var(--junti-accion);
+  --sm-toggle-outline-pressed-text: var(--junti-accion-texto);
+  --sm-toggle-outline-pressed-border: var(--junti-accion);
+
   /* Charts en naranja, no en el color de acción: el dashboard es lectura, y
      la chapa es lo que la marca usa para señalar sin invitar a presionar.
      Un solo token gobierna el tono "brand" de sparkline, área y mini-barras;

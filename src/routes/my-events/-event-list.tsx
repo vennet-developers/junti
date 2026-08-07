@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+
 import { Badge } from "@stackmyth/badge";
 import { Card, CardContent } from "@stackmyth/card";
 import { EmptyState } from "@stackmyth/empty-state";
@@ -14,6 +15,7 @@ import { Toggle, ToggleGroup } from "@stackmyth/toggle";
 
 import { AttendeeStack } from "@/components/attendee-stack";
 import { useCopy } from "@/components/copy-provider";
+import { useLocalPref } from "@/lib/local-pref";
 
 import { EventCardActions } from "./-event-card-actions";
 
@@ -91,13 +93,24 @@ function foldForSearch(value: string): string {
 export function EventList({ events }: { events: EventListItem[] }) {
   const { copy } = useCopy();
   const [term, setTerm] = useState("");
-  const [filter, setFilter] = useState<Filter>("upcoming");
+  /*
+    All three selections survive the visit — Ivan asked for the page to
+    reopen the way he left it. localStorage through `useLocalPref`, whose
+    server snapshot is the default: SSR renders the defaults, hydration
+    brings the stored choice, and no effect writes state. Stored values are
+    validated against the known sets, so garbage (an old key, a devtools
+    edit) falls back instead of selecting nothing.
+  */
+  const [rawFilter, setFilter] = useLocalPref("junti.events.filter", "upcoming");
+  const filter: Filter = rawFilter === "past" || rawFilter === "all" ? rawFilter : "upcoming";
   // The second axis: my ROLE in the event, not its date. "Joined" is every
   // event I did not create — including ones I answered "no" to, because "the
   // events I got into" is a relationship, not an attendance state.
-  const [who, setWho] = useState<Who>("all");
+  const [rawWho, setWho] = useLocalPref("junti.events.who", "all");
+  const who: Who = rawWho === "organizing" || rawWho === "joined" ? rawWho : "all";
   // A reading preference, not a filter: same events, another density.
-  const [view, setView] = useState<View>("cards");
+  const [rawView, setView] = useLocalPref("junti.events.view", "cards");
+  const view: View = rawView === "list" ? "list" : "cards";
 
   const buckets = useMemo(() => {
     const needle = foldForSearch(term.trim());
@@ -168,7 +181,7 @@ export function EventList({ events }: { events: EventListItem[] }) {
           size="lg"
           value={who}
           onValueChange={(next: string) => {
-            if (next) setWho(next as Who);
+            if (next) setWho(next);
           }}
         >
           <Toggle value="all">{copy.auth.whoAll}</Toggle>
@@ -182,7 +195,7 @@ export function EventList({ events }: { events: EventListItem[] }) {
           size="lg"
           value={view}
           onValueChange={(next: string) => {
-            if (next) setView(next as View);
+            if (next) setView(next);
           }}
         >
           <Toggle value="cards" aria-label={copy.auth.viewCards}>
@@ -196,7 +209,7 @@ export function EventList({ events }: { events: EventListItem[] }) {
 
       {/* xl for the touch target, not the type scale: it is the first Tabs
           size whose trigger clears 44px. */}
-      <Tabs size="xl" value={filter} onValueChange={(next) => setFilter(next as Filter)}>
+      <Tabs size="xl" value={filter} onValueChange={(next) => setFilter(next)}>
         <TabsList fullWidth>
           <TabsTrigger value="upcoming">{copy.auth.tabUpcoming}</TabsTrigger>
           <TabsTrigger value="past">{copy.auth.tabPast}</TabsTrigger>
