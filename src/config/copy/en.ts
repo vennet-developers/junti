@@ -21,6 +21,22 @@ export const en: Copy = {
     tagline: BRAND_TAGLINE,
   },
 
+  credits: {
+    heading: "Balances",
+    owedToYouHeading: "Owed to you",
+    owedByYouHeading: "You owe",
+    owedToYouEmpty: "Nobody owes you anything right now.",
+    owedByYouEmpty: "You do not owe anyone.",
+    fromEvent: (title: string) => `From ${title}`,
+    fromEventUnknown: "From an earlier event",
+    since: (when: string) => `since ${when}`,
+    applied: (amount: string) => `Credit: −${amount}`,
+    payable: "To transfer",
+    settle: "I gave it back",
+    settledDone: "Done, it is settled.",
+    help: "Junti holds no money: this is what is outstanding between you, and the next event discounts it by itself.",
+  },
+
   common: {
     refreshing: "Refreshing…",
     save: "Save",
@@ -524,6 +540,10 @@ export const en: Copy = {
     returnedDone: (name: string) => `Done — ${name} is square.`,
     keepIt: "Leave it",
     keptDone: (name: string) => `Done — ${name}'s is left as it is.`,
+    credit: "Carry to the next one",
+    creditDone: (name: string) => `Done — ${name} has it toward your next event.`,
+    creditHelp:
+      "\"Carry to the next one\" keeps that balance in each person's name: your next event discounts it automatically, with nothing to transfer.",
     keepHelp:
       "\"Leave it\" only stops the asking: the money is still theirs and the two of you have sorted it out elsewhere.",
     refundables: (n: number, total: string) =>

@@ -142,6 +142,16 @@ export const reconcilePaymentFn = createServerFn({ method: "POST" })
     );
   });
 
+export const creditSurplusFn = createServerFn({ method: "POST" })
+  .validator((data: Tokens & { participantId: string }) => data)
+  .handler(async ({ data }): Promise<ManageState> => {
+    const { creditSurplus } = await import("./-actions.server");
+    return pinged(
+      data.publicToken,
+      await creditSurplus(data.publicToken, data.organizerToken, data.participantId),
+    );
+  });
+
 export const acceptDiscrepancyFn = createServerFn({ method: "POST" })
   .validator((data: Tokens & { participantId: string }) => data)
   .handler(async ({ data }): Promise<ManageState> => {

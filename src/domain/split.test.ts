@@ -625,3 +625,105 @@ describe("computeSplit — a roster bigger than the convocatoria", () => {
     expect(asked).toBe(260_000);
   });
 });
+
+describe("computeSplit — standing credit", () => {
+  const t0 = new Date("2026-08-01T00:00:00Z");
+
+  it("discounts what is transferred, never what is owed", () => {
+    const result = computeSplit({
+      costMode: "total",
+      costAmountMinor: 52_000,
+      capacity: 2,
+      participants: [
+        {
+          id: "owed",
+          joinedAt: t0,
+          attendance: "in",
+          payment: null,
+          creditMinor: 4_333,
+        },
+        { id: "other", joinedAt: new Date(t0.getTime() + 1000), attendance: "in", payment: null },
+      ],
+    });
+
+    const owed = result.shares[0]!;
+    // Their share of the cancha does not move — being owed money from last
+    // time changes how it is settled, not what the game cost.
+    expect(owed.effectiveAmountMinor).toBe(26_000);
+    expect(owed.creditAppliedMinor).toBe(4_333);
+    expect(owed.payableAmountMinor).toBe(21_667);
+
+    // And nobody else's share moves either.
+    expect(result.shares[1]?.payableAmountMinor).toBe(26_000);
+    expect(result.totalComputedMinor).toBe(52_000);
+  });
+
+  it("never discounts more than the ask", () => {
+    const result = computeSplit({
+      costMode: "per_person",
+      costAmountMinor: 3_000,
+      participants: [
+        { id: "rich", joinedAt: t0, attendance: "in", payment: null, creditMinor: 10_000 },
+      ],
+    });
+
+    expect(result.shares[0]?.payableAmountMinor).toBe(0);
+    expect(result.shares[0]?.creditAppliedMinor).toBe(3_000);
+  });
+
+  it("counts a credited payment as settled in full", () => {
+    /*
+      The invariant that keeps a credited payer off the "still owes" list:
+      they transferred $21.667 and $4.333 of credit covered the rest, so the
+      ledger has to read $26.000 — the same as their share, no discrepancy,
+      nothing for the settlement to chase.
+    */
+    const result = computeSplit({
+      costMode: "total",
+      costAmountMinor: 52_000,
+      capacity: 2,
+      participants: [
+        {
+          id: "credited",
+          joinedAt: t0,
+          attendance: "in",
+          payment: {
+            status: "confirmed",
+            amountMinor: 21_667,
+            creditAppliedMinor: 4_333,
+          },
+        },
+        { id: "other", joinedAt: new Date(t0.getTime() + 1000), attendance: "in", payment: null },
+      ],
+    });
+
+    const credited = result.shares[0]!;
+    expect(credited.effectiveAmountMinor).toBe(26_000);
+    expect(credited.discrepancyMinor).toBe(0);
+    expect(result.discrepancies).toHaveLength(0);
+    // The organizer really is holding all of it — part transferred now, part
+    // transferred at the last game.
+    expect(result.collectedMinor).toBe(26_000);
+  });
+
+  it("would show a shortfall if only the transfer were recorded", () => {
+    // The same payment WITHOUT the credit half, proving the column earns its
+    // place: this is what a credited payer used to look like.
+    const result = computeSplit({
+      costMode: "total",
+      costAmountMinor: 52_000,
+      capacity: 2,
+      participants: [
+        {
+          id: "credited",
+          joinedAt: t0,
+          attendance: "in",
+          payment: { status: "confirmed", amountMinor: 21_667 },
+        },
+        { id: "other", joinedAt: new Date(t0.getTime() + 1000), attendance: "in", payment: null },
+      ],
+    });
+
+    expect(result.shares[0]?.discrepancyMinor).toBe(-4_333);
+  });
+});

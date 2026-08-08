@@ -34,6 +34,7 @@ import { openSlots, promotableCount, waitlistOrder } from "@/domain/waitlist";
 
 import type { Locale } from "@/config/copy";
 
+import { loadBalances } from "./credits";
 import { hasEvidence } from "./evidence-store";
 import { pickLabel, pickOptionalLabel } from "./labels";
 
@@ -198,6 +199,7 @@ function toSplitParticipant(row: JoinedRow): SplitParticipant {
           status: row.payment.status,
           amountMinor: row.payment.amountMinor,
           discrepancyAcceptedMinor: row.payment.discrepancyAcceptedMinor,
+          creditAppliedMinor: row.payment.creditAppliedMinor,
         }
       : null,
   };
@@ -375,12 +377,30 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
   }
   const weightOf = (participantId: string) => 1 + (heldBySponsor.get(participantId)?.length ?? 0);
 
+  /*
+    What the organizer already owes each of these people, so the page can ask
+    them for the difference rather than for the whole share. Read live and
+    never written into the ledger — see `src/lib/credits.ts` for why.
+
+    Skipped entirely on a free event: there is no ask to discount, and this
+    is a query on the hot path of every event page.
+  */
+  const balances =
+    eventRow.costMode === "none"
+      ? new Map<string, number>()
+      : await loadBalances(
+          eventRow.organizerId,
+          rows.map((row) => row.participant.userId).filter((id): id is string => id !== null),
+          eventRow.currency,
+        );
+
   const split = computeSplit({
     costMode: eventRow.costMode,
     costAmountMinor: eventRow.costAmountMinor,
     participants: rows.map((row) => ({
       ...toSplitParticipant(row),
       weight: weightOf(row.participant.id),
+      creditMinor: row.participant.userId ? (balances.get(row.participant.userId) ?? 0) : 0,
     })),
     // Without this the page recomputes the LIVE split for pending rows —
     // $260.000 "entre 1 persona" on the first joiner's screen — while the
@@ -415,6 +435,8 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
       owes: false,
       discrepancyMinor: 0,
       discrepancyAccepted: false,
+      creditAppliedMinor: 0,
+      payableAmountMinor: 0,
     },
   }));
 

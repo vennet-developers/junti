@@ -23,7 +23,15 @@ export interface SplitParticipant {
     amountMinor: number;
     /** The drift the organizer already agreed to leave alone. See the column. */
     discrepancyAcceptedMinor?: number | null;
+    /** Credit that went toward this payment. Only set once confirmed. */
+    creditAppliedMinor?: number;
   } | null;
+  /**
+   * Standing credit this person can spend on THIS event — what the organizer
+   * already owes them, in the event's currency. Discounts the ask; never the
+   * share. Defaults to none.
+   */
+  creditMinor?: number;
   /**
    * Shares this row answers for: 1 + spots held for guests. The sponsor of
    * three held spots owes four shares — the guests are not on the roster, so
@@ -65,6 +73,14 @@ export interface Share {
    * Zero otherwise. Positive means they overpaid, negative means they underpaid.
    */
   discrepancyMinor: number;
+  /**
+   * What this person is asked to TRANSFER: the ask minus whatever standing
+   * credit covers it. Equal to `effectiveAmountMinor` when they have none,
+   * which is everybody until an organizer owes them something.
+   */
+  payableAmountMinor: number;
+  /** How much of the ask their credit covers. Zero for almost everyone. */
+  creditAppliedMinor: number;
   /**
    * True when THIS drift is the one the organizer already decided to leave
    * as it is. Settlement skips these; a drift that later changes size stops
@@ -273,11 +289,23 @@ export function computeSplit(input: SplitInput): SplitResult {
     let effectiveAmountMinor = planned.get(participant.id) ?? computedAmountMinor;
     let discrepancyMinor = 0;
     let discrepancyAccepted = false;
+    /*
+      Credit covers what somebody is ASKED to hand over, never what they owe.
+      Their share of the cancha is their share; being owed money from last
+      time changes how it gets settled, not how much the game cost.
+    */
+    let creditAppliedMinor = 0;
 
     if (status === "confirmed" && participant.payment) {
       // Money already handed over. Keep it, and report the drift instead of
       // quietly rewriting history.
-      effectiveAmountMinor = participant.payment.amountMinor;
+      /*
+        A confirmed payment is transfer PLUS credit. Storing only the
+        transfer would file somebody who settled half their share with a
+        credit under "le falta" — see the column's note.
+      */
+      creditAppliedMinor = participant.payment.creditAppliedMinor ?? 0;
+      effectiveAmountMinor = participant.payment.amountMinor + creditAppliedMinor;
       discrepancyMinor = effectiveAmountMinor - computedAmountMinor;
       discrepancyAccepted =
         discrepancyMinor !== 0 &&
@@ -305,6 +333,19 @@ export function computeSplit(input: SplitInput): SplitResult {
       owes,
       discrepancyMinor,
       discrepancyAccepted,
+      /*
+        Only a row still waiting to pay gets the discount applied here; a
+        confirmed one already had it applied when it was confirmed, and the
+        number above is the record of that.
+      */
+      creditAppliedMinor:
+        status === "confirmed"
+          ? creditAppliedMinor
+          : Math.min(participant.creditMinor ?? 0, effectiveAmountMinor),
+      payableAmountMinor:
+        status === "confirmed"
+          ? participant.payment?.amountMinor ?? effectiveAmountMinor
+          : Math.max(0, effectiveAmountMinor - (participant.creditMinor ?? 0)),
     });
   }
 

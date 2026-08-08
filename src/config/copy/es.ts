@@ -26,6 +26,23 @@ export const es = {
     tagline: BRAND_TAGLINE,
   },
 
+  credits: {
+    heading: "Saldos a favor",
+    owedToYouHeading: "Lo que te deben",
+    owedByYouHeading: "Lo que debes",
+    owedToYouEmpty: "Nadie te debe nada por ahora.",
+    owedByYouEmpty: "No le debes nada a nadie.",
+    fromEvent: (title: string) => `De ${title}`,
+    fromEventUnknown: "De un evento anterior",
+    since: (when: string) => `desde ${when}`,
+    /* En la cuota del participante: de dónde sale el descuento. */
+    applied: (amount: string) => `A favor tuyo: −${amount}`,
+    payable: "A transferir",
+    settle: "Ya se lo devolví",
+    settledDone: "Listo, quedó saldado.",
+    help: "Junti no guarda plata: esto es lo que quedó pendiente entre ustedes y se descuenta solo en el próximo evento.",
+  },
+
   common: {
     refreshing: "Actualizando…",
     save: "Guardar",
@@ -622,6 +639,10 @@ export const es = {
     keptDone: (name: string) => `Listo — lo de ${name} queda como está.`,
     keepHelp:
       "«Queda así» solo deja de preguntar: la plata sigue siendo suya y ustedes ya lo arreglaron por fuera.",
+    credit: "Abonar al próximo",
+    creditDone: (name: string) => `Listo — a ${name} le queda a favor para tu próximo evento.`,
+    creditHelp:
+      "«Abonar al próximo» guarda ese saldo a nombre de cada quien: en tu siguiente evento se le descuenta solo, sin que tengas que transferir.",
     refundables: (n: number, total: string) =>
       n === 1
         ? `Tienes ${total} de 1 persona que ya no viene — devolverlo o contarlo es entre ustedes.`

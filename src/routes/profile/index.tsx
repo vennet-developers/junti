@@ -8,6 +8,7 @@ import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { pageTitle } from "@/lib/page-title";
 import { ROUTES, signInPath } from "@/config/routes";
 
+import { CreditsPanel } from "./-credits-panel";
 import { ProfileForm } from "./-profile-form";
 
 /**
@@ -35,8 +36,41 @@ const gate = createServerFn({ method: "GET" }).handler(async () => {
   // than as whatever the browser happens to be right now.
   const stored = await loadStoredPreferences(organizer.id);
 
+  /*
+    Both sides of the standing credit, on the one screen that belongs to a
+    person rather than to an event. Owed-to-you is the reassurance; owed-by-
+    you is the half that actually gets debts settled, because an organizer
+    who sees "le debes a 10 personas" in one place acts on it and one who has
+    it scattered across old events does not.
+
+    Names are resolved for the counterpart so the list reads as people rather
+    than as ids.
+  */
+  const { loadCreditsOwedTo, loadCreditsOwedBy } = await import("@/lib/credits");
+  const [owedToYou, owedByYou] = await Promise.all([
+    loadCreditsOwedTo(organizer.id),
+    loadCreditsOwedBy(organizer.id),
+  ]);
+
+  const { loadDisplayNames } = await import("@/lib/accounts");
+  const names = await loadDisplayNames([
+    ...owedToYou.map((credit) => credit.counterpartId),
+    ...owedByYou.map((credit) => credit.counterpartId),
+  ]);
+
+  const withNames = (list: typeof owedToYou) =>
+    list.map((credit) => ({
+      id: credit.id,
+      availableMinor: credit.availableMinor,
+      currency: credit.currency,
+      counterpartName: names.get(credit.counterpartId) ?? "",
+      originEventTitle: credit.originEventTitle,
+    }));
+
   return {
     title: copy.profile.title,
+    owedToYou: withNames(owedToYou),
+    owedByYou: withNames(owedByYou),
     initialLocale: stored.locale,
     initialTimeZone: stored.timeZone,
     initialCurrency: stored.currency,
@@ -53,7 +87,8 @@ export const Route = createFileRoute("/profile/")({
 
 function ProfilePage() {
   const { copy } = useCopy();
-  const { initialLocale, initialTimeZone, initialCurrency } = Route.useLoaderData();
+  const { initialLocale, initialTimeZone, initialCurrency, owedToYou, owedByYou } =
+    Route.useLoaderData();
 
   return (
     <Container size="2" px="4" py="6">
@@ -86,6 +121,12 @@ function ProfilePage() {
           initialTimeZone={initialTimeZone}
           initialCurrency={initialCurrency}
         />
+
+        {/* Below the preferences, because money between people outlives a
+            language setting and deserves its own card rather than a row in
+            somebody else's form. Renders nothing when there is nothing owed
+            in either direction. */}
+        <CreditsPanel owedToYou={owedToYou} owedByYou={owedByYou} />
       </Stack>
     </Container>
   );

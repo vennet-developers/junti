@@ -310,17 +310,6 @@ export const Route = createFileRoute("/e/$public_token/")({
  * without a capacity has no planned denominator, so today's split is the
  * only honest number left.
  */
-function quotaFor(
-  event: { costMode: string; costAmountMinor: number | null; capacity: number | null },
-  units: number,
-  computedShareMinor: number | null,
-): number | null {
-  if (event.costMode === "total" && event.capacity && event.costAmountMinor) {
-    return Math.round((event.costAmountMinor * units) / event.capacity);
-  }
-  return computedShareMinor;
-}
-
 function ParticipantPage() {
   const { public_token: publicToken } = Route.useParams();
   const {
@@ -414,6 +403,10 @@ function ParticipantPage() {
   */
   const paymentGated =
     showMoney && roster.policies.some((policy) => policy.slug === "proof_of_payment");
+
+  const myShare = mineId
+    ? roster.members.find((member) => member.id === mineId)?.share
+    : undefined;
 
   const eventTail = (
     <Stack gap="6">
@@ -695,16 +688,17 @@ function ParticipantPage() {
             hasPolicies={roster.policies.length > 0}
             commitment={{ own: ownCommitment }}
             guestsHeld={myGuests}
-            shareMinor={
-              mineId
-                ? quotaFor(
-                    event,
-                    1 + myGuests.filter((guest) => !guest.claimed).length,
-                    roster.members.find((member) => member.id === mineId)?.share
-                      ?.computedAmountMinor ?? null,
-                  )
-                : null
-            }
+            /*
+              Straight from the split now. This used to recompute the quota
+              here — total × seats ÷ capacity — which was correct until the
+              split learned two things this copy never would: that the quota
+              stops applying once the roster passes the cap, and that a
+              standing credit discounts what you actually transfer. Two
+              formulas for one number is how "Falta $0" happened.
+            */
+            shareMinor={myShare?.effectiveAmountMinor ?? null}
+            creditMinor={myShare?.creditAppliedMinor ?? 0}
+            payableMinor={myShare?.payableAmountMinor ?? null}
             currency={event.currency}
             answersOpen={answersOpen && !event.isClosed}
             attendance={mine?.attendance ?? null}

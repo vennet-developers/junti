@@ -17,7 +17,12 @@ import type { RosterView } from "@/lib/roster";
 
 type SettlementRoster = Omit<RosterView, "compliance">;
 
-import { acceptDiscrepancyFn, reconcilePaymentFn, requestSettlementFn } from "./-fns";
+import {
+  acceptDiscrepancyFn,
+  creditSurplusFn,
+  reconcilePaymentFn,
+  requestSettlementFn,
+} from "./-fns";
 
 /**
  * "Cuentas finales": the dropout gap, as sentences with a button.
@@ -130,12 +135,23 @@ export function SettlementCard({
    * way, and rolled back with a reason if the server refuses — this is money,
    * and a row that quietly stayed wrong would be a lie about it.
    */
-  function resolveSurplus(participantId: string, action: "returned" | "keep") {
+  function resolveSurplus(participantId: string, action: "returned" | "keep" | "credit") {
     setResolvedSurplus((prev) => new Set(prev).add(participantId));
     const name = names.get(participantId) ?? "";
-    toast.success(action === "returned" ? strings.returnedDone(name) : strings.keptDone(name));
+    toast.success(
+      action === "returned"
+        ? strings.returnedDone(name)
+        : action === "credit"
+          ? strings.creditDone(name)
+          : strings.keptDone(name),
+    );
 
-    const call = action === "returned" ? reconcilePaymentFn : acceptDiscrepancyFn;
+    const call =
+      action === "returned"
+        ? reconcilePaymentFn
+        : action === "credit"
+          ? creditSurplusFn
+          : acceptDiscrepancyFn;
 
     void call({ data: { publicToken, organizerToken, participantId } }).then(async (result) => {
       if (result.errors._form) {
@@ -278,6 +294,21 @@ export function SettlementCard({
                       <Text variant="small" weight="semibold">
                         {strings.surplusExtra(money(over.extraMinor))}
                       </Text>
+                      {/* Only where there is a plausible next time. A credit
+                          with somebody you will never play with again is
+                          clutter in their profile, so the choice appears on
+                          an event that belongs to a group and nowhere else. */}
+                      {event.groupId ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="primary"
+                          soft
+                          onClick={() => resolveSurplus(over.participantId, "credit")}
+                        >
+                          {strings.credit}
+                        </Button>
+                      ) : null}
                       <Button
                         type="button"
                         size="sm"
@@ -300,7 +331,7 @@ export function SettlementCard({
               </Stack>
 
               <Text variant="small" color="muted">
-                {strings.keepHelp}
+                {event.groupId ? strings.creditHelp : strings.keepHelp}
               </Text>
             </>
           ) : null}

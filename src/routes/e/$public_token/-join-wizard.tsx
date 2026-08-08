@@ -43,6 +43,8 @@ export function JoinWizard({
   commitment,
   guestsHeld,
   shareMinor,
+  creditMinor,
+  payableMinor,
   currency,
   answersOpen,
   attendance,
@@ -58,6 +60,10 @@ export function JoinWizard({
   guestsHeld: HeldSpotView[];
   /** My total to pay — my share, guests included. Null on a free event. */
   shareMinor: number | null;
+  /** What the organizer already owed me, going toward this share. */
+  creditMinor: number;
+  /** What is left to actually transfer, once the credit is taken off. */
+  payableMinor: number | null;
   currency: string;
   answersOpen: boolean;
   /** My recorded answer, or null before one exists. */
@@ -170,10 +176,39 @@ export function JoinWizard({
                   <Text variant="small" color="muted">
                     {strings.yourShare}
                   </Text>
-                  <Text as="span" variant="h4" weight="bold" fontFamily="var(--junti-display)">
+                  <Text
+                    as="span"
+                    variant={creditMinor > 0 ? "large" : "h4"}
+                    weight={creditMinor > 0 ? "medium" : "bold"}
+                    fontFamily="var(--junti-display)"
+                  >
                     {formatMoney(shareMinor, currency, copy.intlLocale)}
                   </Text>
                 </Flex>
+
+                {/*
+                  The discount, shown as arithmetic rather than as a smaller
+                  number appearing from nowhere. Somebody who was owed $4.333
+                  should see where it went — a quota that silently shrinks is
+                  indistinguishable from a bug.
+                */}
+                {creditMinor > 0 && payableMinor !== null ? (
+                  <>
+                    <Flex gap="2" align="baseline" justify="between" wrap="wrap">
+                      <Text variant="small" color="muted">
+                        {copy.credits.applied(formatMoney(creditMinor, currency, copy.intlLocale))}
+                      </Text>
+                    </Flex>
+                    <Flex gap="2" align="baseline" justify="between" wrap="wrap">
+                      <Text variant="small" weight="medium">
+                        {copy.credits.payable}
+                      </Text>
+                      <Text as="span" variant="h4" weight="bold" fontFamily="var(--junti-display)">
+                        {formatMoney(payableMinor, currency, copy.intlLocale)}
+                      </Text>
+                    </Flex>
+                  </>
+                ) : null}
                 {guestsHeld.filter((g) => !g.claimed).length > 0 ? (
                   <Text variant="small" color="muted">
                     {strings.shareIncludesGuests(guestsHeld.filter((g) => !g.claimed).length)}

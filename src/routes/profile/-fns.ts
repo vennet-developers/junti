@@ -137,3 +137,30 @@ export const revokeWhatsAppFn = createServerFn({ method: "POST" }).handler(
     return { errors: {}, ok: true };
   },
 );
+
+/**
+ * Closes a debt the organizer settled outside the app.
+ *
+ * Scoped to the caller inside the action: a credit id is just a uuid, and the
+ * only person allowed to declare a debt paid is the one who owes it. The app
+ * never verifies that the money moved — the same posture it takes toward
+ * every payment it records.
+ */
+export const settleCreditFn = createServerFn({ method: "POST" })
+  .validator((data: { creditId: string }) => data)
+  .handler(async ({ data }): Promise<ProfileState> => {
+    const [{ getOrganizer }, { settleCredit }, { getViewerCopy }] = await Promise.all([
+      import("@/lib/organizer"),
+      import("@/lib/credits"),
+      import("@/lib/locale"),
+    ]);
+
+    const organizer = await getOrganizer();
+    const { copy } = await getViewerCopy();
+    if (!organizer) return { errors: { _form: copy.errors.signInRequired } };
+
+    const ok = await settleCredit(data.creditId, organizer.id);
+    if (!ok) return { errors: { _form: copy.errors.notFound } };
+
+    return { errors: {}, ok: true };
+  });

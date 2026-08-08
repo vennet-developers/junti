@@ -620,8 +620,98 @@ export const payments = pgTable(
      * was accepted", which is what every reconciled payment already is.
      */
     discrepancyAcceptedMinor: bigint("discrepancy_accepted_minor", { mode: "number" }),
+
+    /**
+     * How much of this person's standing credit with the organizer went
+     * toward covering this payment.
+     *
+     * The payment row answers "what did they hand over"; this answers "and
+     * what did they not have to, because they were already owed it". Both
+     * are needed, and keeping them apart is what stops a credited payer from
+     * looking like a debtor: somebody whose $26.000 share was met with
+     * $21.667 transferred plus $4.333 credited has paid in full, and a
+     * ledger that stored only the transfer would file them under "le falta".
+     *
+     * Written when the payment is CONFIRMED, never while it is pending —
+     * a person who is offered a discount and then walks away must not have
+     * burned the credit on the way out. Reverting a confirmation gives it
+     * back, for the same reason.
+     */
+    creditAppliedMinor: bigint("credit_applied_minor", { mode: "number" }).notNull().default(0),
   },
   (table) => [index("payments_participant_idx").on(table.participantId)],
+);
+
+/**
+ * Money one person is owed by one organizer, waiting for their next event
+ * together.
+ *
+ * **The problem it solves is arithmetic that ends in ten Nequi transfers.**
+ * A game sold as ten cupos fills to twelve, everybody's share drops, and the
+ * ten who paid first are each owed about $4.333 back. Nobody makes ten
+ * transfers of four thousand pesos, so the money quietly stayed with the
+ * organizer and the app said nothing. Now it can move to the only place it
+ * is genuinely useful: the next time those two people play.
+ *
+ * **Keyed to the ORGANIZER, not to a group**, because a group has no
+ * pocket — the organizer is holding the cash, and a debt recorded against a
+ * group would be orphaned the moment that group is left or the next game is
+ * run without one. Groups still shape it, but as a rule about when to
+ * OFFER it: a credit with somebody you will never play with again is
+ * clutter, so the choice only appears on an event that belongs to a group.
+ *
+ * **Junti still holds nothing.** This is a record of a promise between two
+ * people, exactly like `payments` is — which is why there is no way to
+ * withdraw and no attempt to call it a wallet.
+ */
+export const credits = pgTable(
+  "credits",
+  {
+    id: uuid("id").primaryKey(),
+
+    /** The account that is owed. */
+    userId: uuid("user_id").notNull(),
+
+    /** The account that owes it — whoever was holding the money. */
+    organizerId: uuid("organizer_id").notNull(),
+
+    /** Always positive. Consumption is tracked by `appliedMinor`, not by sign. */
+    amountMinor: bigint("amount_minor", { mode: "number" }).notNull(),
+
+    /**
+     * Credits do not convert. An organizer running events in two currencies
+     * owes two separate debts, and only the matching one may discount a
+     * given event.
+     */
+    currency: char("currency", { length: 3 }).notNull(),
+
+    /**
+     * Where the money came from, so the person can see WHY they are owed it.
+     * `set null` rather than cascade: deleting an event must not erase a debt
+     * that outlived it.
+     */
+    originEventId: uuid("origin_event_id").references(() => events.id, { onDelete: "set null" }),
+
+    /**
+     * How much has already been spent, so one credit can cover two small
+     * quotas without splitting the row. Available = `amountMinor - appliedMinor`.
+     */
+    appliedMinor: bigint("applied_minor", { mode: "number" }).notNull().default(0),
+
+    /**
+     * Set when the organizer settled it outside the app — cash, a transfer,
+     * a beer. Closes whatever is left: the app cannot verify it and does not
+     * try, exactly as it does not verify that a payment happened.
+     */
+    settledAt: timestamp("settled_at", { withTimezone: true }),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // The one query that matters: what does this organizer owe this person,
+    // in this currency, right now.
+    index("credits_user_organizer_idx").on(table.userId, table.organizerId),
+  ],
 );
 
 /**

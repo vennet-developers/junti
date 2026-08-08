@@ -47,3 +47,30 @@ export async function loadVerifiedEmails(userIds: readonly string[]): Promise<Ma
 
   return found;
 }
+
+/**
+ * Display names for a handful of accounts, for lists that name people the
+ * reader already shares something with.
+ *
+ * `user_profiles`, never `auth.users`: the name somebody chose to be known by
+ * is ours to read, and their address is not — see the note above. An id with
+ * no profile row simply comes back missing rather than as a placeholder,
+ * because the caller knows better than this function what an unknown name
+ * should read as.
+ */
+export async function loadDisplayNames(
+  userIds: readonly string[],
+): Promise<Map<string, string>> {
+  const unique = [...new Set(userIds)];
+  if (unique.length === 0) return new Map();
+
+  const { inArray } = await import("drizzle-orm");
+  const { userProfiles } = await import("@/db/schema");
+
+  const rows = await db
+    .select({ userId: userProfiles.userId, fullName: userProfiles.fullName })
+    .from(userProfiles)
+    .where(inArray(userProfiles.userId, unique));
+
+  return new Map(rows.map((row) => [row.userId, row.fullName]));
+}

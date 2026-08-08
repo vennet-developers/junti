@@ -177,6 +177,37 @@ export async function setPaymentStatus(
     .where(eq(payments.participantId, participant.id));
 
   /*
+    Standing credit is spent at exactly this instant, and given back at its
+    opposite. The ask stored on the row is the FULL share; what the credit
+    covers is worked out here, so somebody who was asked for $21.667 because
+    they were owed $4.333 ends up recorded as having settled all $26.000 —
+    part transferred, part credited. See `src/lib/credits.ts`.
+  */
+  if (status.data === "confirmed") {
+    const { spendCreditsOnConfirm } = await import("@/lib/credits");
+    const [row] = await db
+      .select({ amountMinor: payments.amountMinor, creditApplied: payments.creditAppliedMinor })
+      .from(payments)
+      .where(eq(payments.participantId, participant.id))
+      .limit(1);
+
+    // Only on the way IN. Re-confirming a payment that already spent credit
+    // must not spend it twice.
+    if (row && row.creditApplied === 0) {
+      await spendCreditsOnConfirm({
+        participantId: participant.id,
+        userId: participant.userId,
+        organizerId: event.organizerId,
+        currency: event.currency,
+        askMinor: row.amountMinor,
+      });
+    }
+  } else {
+    const { releaseCredits } = await import("@/lib/credits");
+    await releaseCredits(participant.id);
+  }
+
+  /*
     Undoing a confirmation puts the row back under the split's control.
 
     While it was confirmed, the stored amount was frozen at whatever was
@@ -1166,12 +1197,38 @@ export async function reviewSubmission(
   */
   if (parsed.data.decision === "approved" && submission.policySlug === "proof_of_payment") {
     await syncPayments(event);
-    await db
+    const confirmed = await db
       .update(payments)
       .set({ status: "confirmed", confirmedAt: new Date() })
       .where(
         and(eq(payments.participantId, submission.participantId), eq(payments.status, "pending")),
-      );
+      )
+      .returning({ amountMinor: payments.amountMinor, creditApplied: payments.creditAppliedMinor });
+
+    /*
+      The same credit spend that "Pagó" does. Approving a receipt and marking
+      the payment by hand are two doors into one act, and a credit that only
+      one of them honoured would make the two disagree about what somebody
+      still owes.
+    */
+    if (confirmed[0] && confirmed[0].creditApplied === 0) {
+      const [{ spendCreditsOnConfirm }, [participant]] = await Promise.all([
+        import("@/lib/credits"),
+        db
+          .select({ userId: participants.userId })
+          .from(participants)
+          .where(eq(participants.id, submission.participantId))
+          .limit(1),
+      ]);
+
+      await spendCreditsOnConfirm({
+        participantId: submission.participantId,
+        userId: participant?.userId ?? null,
+        organizerId: event.organizerId,
+        currency: event.currency,
+        askMinor: confirmed[0].amountMinor,
+      });
+    }
   }
 
   // The decision, not the reason. A rejection reason is free text somebody
@@ -1305,6 +1362,65 @@ export async function reconcilePayment(
     .update(payments)
     .set({ amountMinor: target, discrepancyAcceptedMinor: null })
     .where(and(eq(payments.participantId, participantId.data), eq(payments.status, "confirmed")));
+
+  return { errors: {}, ok: true };
+}
+
+/**
+ * Moves somebody's surplus into what the organizer owes them next time.
+ *
+ * The answer that makes the other two bearable. Ten people each owed $4.333
+ * is ten Nequi transfers nobody is going to make, so the money stays with the
+ * organizer either way — the only question is whether the app remembers whose
+ * it is. This makes it remember, and spends it automatically the next time
+ * those two share an event.
+ *
+ * Reconciles the payment in the same breath, and that pairing is the point:
+ * the peso leaves this event's books exactly as it enters the person's
+ * balance, so it is never counted twice.
+ */
+export async function creditSurplus(
+  publicToken: string,
+  organizerToken: string,
+  rawParticipantId: string,
+): Promise<ManageState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const participantId = participantIdSchema.safeParse(rawParticipantId);
+  if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
+
+  const { loadRoster } = await import("@/lib/roster");
+  const { resolveEventLocale: resolveLocale } = await import("@/lib/locale");
+  const roster = await loadRoster(event, await resolveLocale(event.locale));
+
+  const member = roster.members.find((m) => m.id === participantId.data);
+  if (!member || member.share.status !== "confirmed" || member.share.discrepancyMinor <= 0) {
+    return { errors: { _form: copy.errors.notFound } };
+  }
+
+  // A credit belongs to an ACCOUNT. Somebody with no session has nowhere to
+  // carry it to, and inventing one would be a debt to nobody.
+  if (!member.userId) return { errors: { _form: copy.errors.notFound } };
+
+  const { creditOverpayment } = await import("@/lib/credits");
+
+  await creditOverpayment({
+    userId: member.userId,
+    organizerId: event.organizerId,
+    amountMinor: member.share.discrepancyMinor,
+    currency: event.currency,
+    originEventId: event.id,
+  });
+
+  await db
+    .update(payments)
+    .set({ amountMinor: member.share.computedAmountMinor, discrepancyAcceptedMinor: null })
+    .where(and(eq(payments.participantId, participantId.data), eq(payments.status, "confirmed")));
+
+  track("credit_granted", { event_id: event.id });
 
   return { errors: {}, ok: true };
 }
