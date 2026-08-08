@@ -166,7 +166,7 @@ describe("updating rows", () => {
     expect(plan.create).toEqual([{ participantId: "new", amountMinor: 30_000 }]);
   });
 
-  it("re-splits a waived row, so the organizer sees what is being forgiven", () => {
+  it("zeroes a waived row, because its cost moved to the people still paying", () => {
     const plan = planLedger({
       costMode: "total",
       costAmountMinor: 60_000,
@@ -176,7 +176,10 @@ describe("updating rows", () => {
       ],
     });
 
-    expect(plan.update).toEqual([{ paymentId: "pay-w", amountMinor: 30_000 }]);
+    // The waived row owes nothing, and "other" is now the whole denominator:
+    // the $60.000 lands on them rather than half on the organizer.
+    expect(plan.update).toEqual([{ paymentId: "pay-w", amountMinor: 0 }]);
+    expect(plan.create).toEqual([{ participantId: "other", amountMinor: 60_000 }]);
   });
 });
 

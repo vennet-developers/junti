@@ -140,7 +140,6 @@ export interface RosterView {
   pendingReview: number;
   collectedMinor: number;
   outstandingMinor: number;
-  waivedMinor: number;
   totalComputedMinor: number;
   discrepancies: ReturnType<typeof computeSplit>["discrepancies"];
   /** Null when capacity is unlimited. */
@@ -445,7 +444,6 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
       .filter((m): m is RosterMember => m !== undefined && waitlistIds.has(m.id)),
     collectedMinor: split.collectedMinor,
     outstandingMinor: split.outstandingMinor,
-    waivedMinor: split.waivedMinor,
     totalComputedMinor: split.totalComputedMinor,
     discrepancies: split.discrepancies,
     openSlots: openSlots(eventRow.capacity, capacityInput),

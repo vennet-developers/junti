@@ -24,7 +24,7 @@ import type { ParticipantRosterView } from "@/lib/roster";
  * share, which is `discrepancies` and is not in this type.
  */
 export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; copy: Copy }) {
-  const { event, collectedMinor, outstandingMinor, waivedMinor, totalComputedMinor } = roster;
+  const { event, collectedMinor, outstandingMinor, totalComputedMinor } = roster;
   const money = (amount: number) => formatMoney(amount, event.currency, copy.intlLocale);
 
   if (!event.hasCost) return null;
@@ -38,7 +38,6 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
   if (
     collectedMinor === null ||
     outstandingMinor === null ||
-    waivedMinor === null ||
     totalComputedMinor === null
   ) {
     return null;
@@ -64,9 +63,12 @@ export function MoneySummary({ roster, copy }: { roster: ParticipantRosterView; 
     `collected + outstanding`, which is a bar measuring itself: once everyone
     confirmed it reads "X de X" at ANY number, and Ivan caught it announcing
     "$176.000 de $176.000" over an event whose whole cost is $160.000.
-    Waived money is forgiven out of the goal, or the bar could never fill.
+
+    No waived subtraction any more: a waived share computes to zero and its
+    cost already moved onto the people still paying, so the sum of the shares
+    IS what there is to collect.
   */
-  const goalMinor = Math.max(0, totalComputedMinor - waivedMinor);
+  const goalMinor = Math.max(0, totalComputedMinor);
   const percent =
     goalMinor > 0 ? Math.min(100, Math.round((collectedMinor / goalMinor) * 100)) : 100;
 

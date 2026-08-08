@@ -36,7 +36,6 @@ const ALLOWED_KEYS = [
   "waitlisted",
   "collectedMinor",
   "outstandingMinor",
-  "waivedMinor",
   "totalComputedMinor",
   "openSlots",
 ].sort();
@@ -78,7 +77,6 @@ function fullView(): RosterView {
     pendingReview: 3,
     collectedMinor: 20_000,
     outstandingMinor: 20_000,
-    waivedMinor: 0,
     totalComputedMinor: 40_000,
     discrepancies: [{ participantId: "p2", differenceMinor: -5_000 }],
     openSlots: 8,
@@ -186,7 +184,6 @@ describe("what somebody with no session receives", () => {
 
     expect(view.collectedMinor).toBeNull();
     expect(view.outstandingMinor).toBeNull();
-    expect(view.waivedMinor).toBeNull();
     expect(view.totalComputedMinor).toBeNull();
   });
 

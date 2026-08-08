@@ -378,7 +378,7 @@ describe("computeSplit — confirmed payments are never recomputed", () => {
 });
 
 describe("computeSplit — totals", () => {
-  it("separates collected, outstanding and waived", () => {
+  it("spreads a waived share over everyone still paying", () => {
     const result = computeSplit({
       costMode: "total",
       costAmountMinor: 120_000,
@@ -396,11 +396,23 @@ describe("computeSplit — totals", () => {
       ],
     });
 
+    /*
+      Four attendees, one waived: the $120.000 divides among the THREE who
+      pay, at $40.000 each, instead of four at $30.000 with the organizer
+      quietly covering the fourth.
+    */
+    const byId = new Map(result.shares.map((share) => [share.participantId, share]));
+    expect(byId.get("d")?.computedAmountMinor).toBe(0);
+    expect(byId.get("c")?.computedAmountMinor).toBe(40_000);
+    expect(result.totalComputedMinor).toBe(120_000);
+
+    // The two who paid the old $30.000 now sit $10.000 behind — the exact
+    // gap `computeSettlement` turns into a collection round.
+    expect(byId.get("a")?.discrepancyMinor).toBe(-10_000);
+    expect(byId.get("b")?.discrepancyMinor).toBe(-10_000);
+
     expect(result.collectedMinor).toBe(60_000);
-    expect(result.outstandingMinor).toBe(30_000);
-    expect(result.waivedMinor).toBe(30_000);
-    // Collected + outstanding + waived accounts for the whole event cost.
-    expect(result.collectedMinor + result.outstandingMinor + result.waivedMinor).toBe(120_000);
+    expect(result.outstandingMinor).toBe(40_000);
   });
 
   it("does not count out / maybe / waitlisted towards outstanding", () => {

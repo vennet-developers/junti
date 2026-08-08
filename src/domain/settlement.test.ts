@@ -12,7 +12,7 @@ import { computeSplit } from "./split";
 const joined = new Date("2026-08-01T00:00:00Z");
 
 function roster(
-  people: { id: string; attendance: "in" | "out"; paid?: number }[],
+  people: { id: string; attendance: "in" | "out"; paid?: number; waived?: boolean }[],
   totalMinor: number,
 ) {
   const split = computeSplit({
@@ -22,7 +22,11 @@ function roster(
       id: p.id,
       joinedAt: joined,
       attendance: p.attendance,
-      payment: p.paid !== undefined ? { status: "confirmed" as const, amountMinor: p.paid } : null,
+      payment: p.waived
+        ? { status: "waived" as const, amountMinor: 0 }
+        : p.paid !== undefined
+          ? { status: "confirmed" as const, amountMinor: p.paid }
+          : null,
     })),
   });
   const byId = new Map(people.map((p) => [p.id, p.attendance]));
@@ -30,6 +34,39 @@ function roster(
 }
 
 describe("the settlement", () => {
+  it("turns a waiver into a collection round instead of an organizer's loss", () => {
+    /*
+      Ivan's rule, end to end. Four friends at $40.000 each on a $160.000
+      cancha; three have already paid. The organizer then waives the fourth —
+      and the cost of that seat must land on the three who are going, not on
+      the organizer.
+
+      $160.000 over the three who still pay is $53.333/$53.334 each, so every
+      early payer is about $13.334 behind. Those gaps ARE the collection
+      round: the settlement card lists them and "Pedir el saldo por correo"
+      sends them.
+    */
+    const settlement = roster(
+      [
+        { id: "a", attendance: "in", paid: 40_000 },
+        { id: "b", attendance: "in", paid: 40_000 },
+        { id: "c", attendance: "in", paid: 40_000 },
+        { id: "d", attendance: "in", waived: true },
+      ],
+      160_000,
+    );
+
+    expect(settlement.topUps).toHaveLength(3);
+    // The waived seat's $40.000 is fully recovered from the three payers,
+    // to the peso — nothing is left for the organizer to absorb.
+    expect(settlement.shortfallMinor).toBe(40_000);
+    for (const topUp of settlement.topUps) {
+      expect(topUp.paidMinor).toBe(40_000);
+      expect(topUp.missingMinor).toBeGreaterThan(0);
+    }
+    expect(settlement.refundables).toHaveLength(0);
+  });
+
   it("asks early payers for exactly the difference the dropouts left", () => {
     // Ten-way split of 160.000 = 16.000 each; two leave; eight-way = 20.000.
     const people = [

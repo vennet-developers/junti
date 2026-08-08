@@ -571,6 +571,7 @@ export const en: Copy = {
     pillForfeit: "No refund",
     pillPaidOut: (amount: string) => `Paid ${amount}`,
     pillRemoved: "Removed",
+    pillShortfall: (amount: string) => `${amount} short`,
     maybeTitle: "Maybe",
     waitlistedTitle: "Waitlist",
     empty: "Nobody has answered yet. Be the first.",

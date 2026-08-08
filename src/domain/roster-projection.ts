@@ -78,13 +78,11 @@ export type ParticipantRosterView = Omit<
   | "waitlisted"
   | "collectedMinor"
   | "outstandingMinor"
-  | "waivedMinor"
   | "totalComputedMinor"
 > & {
   /** Null for a reader with no session. See the note above. */
   collectedMinor: number | null;
   outstandingMinor: number | null;
-  waivedMinor: number | null;
   totalComputedMinor: number | null;
   members: ParticipantRosterMember[];
   attending: ParticipantRosterMember[];
@@ -175,7 +173,6 @@ export function toParticipantView(
     waitlisted: strip(roster.waitlisted),
     collectedMinor: reader.signedIn ? roster.collectedMinor : null,
     outstandingMinor: reader.signedIn ? roster.outstandingMinor : null,
-    waivedMinor: reader.signedIn ? roster.waivedMinor : null,
     totalComputedMinor: reader.signedIn ? roster.totalComputedMinor : null,
     openSlots: roster.openSlots,
   };

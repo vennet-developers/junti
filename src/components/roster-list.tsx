@@ -204,7 +204,10 @@ export function RosterGroup({
                         amounts are never sent, so there is nothing to hide
                         here. See `toParticipantView`. */}
                     <Flex gap="2" align="center" flexShrink={0}>
-                      {showMoney && member.share?.owes ? (
+                      {/* No amount on a waived row: the pill says "sin cobro"
+                          and a "$ 0" beside it is a number nobody is being
+                          charged. */}
+                      {showMoney && member.share?.owes && member.share.effectiveAmountMinor > 0 ? (
                         <Text variant="small" color="muted" whiteSpace="nowrap">
                           {formatMoney(
                             member.share.effectiveAmountMinor,
@@ -215,6 +218,25 @@ export function RosterGroup({
                       ) : null}
                       {showMoney && member.share?.owes && member.share.status !== mutePaymentStatus ? (
                         <PaymentBadge status={member.share.status} copy={copy} compact />
+                      ) : null}
+                      {/*
+                        Paid, but the account moved up underneath them — an
+                        empty seat, a dropout, somebody waived. The roster
+                        already publishes what a PENDING person owes, so
+                        hiding this would be treating the person who actually
+                        paid worse than the one who has not. It is also what
+                        makes the organizer's collection round legible: the
+                        email says "faltan $13.334" and so does the list.
+                      */}
+                      {showMoney &&
+                      member.share?.owes &&
+                      member.share.status === "confirmed" &&
+                      member.share.discrepancyMinor < 0 ? (
+                        <Badge variant="warning" size="sm" soft>
+                          {copy.roster.pillShortfall(
+                            formatMoney(-member.share.discrepancyMinor, currency, copy.intlLocale),
+                          )}
+                        </Badge>
                       ) : null}
                       {renderBadge?.(member)}
                     </Flex>

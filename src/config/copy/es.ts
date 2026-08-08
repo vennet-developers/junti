@@ -677,6 +677,11 @@ export const es = {
     /* El otro camino de salida: no se bajó, lo bajaron. Mismo carril de
        pills; la distinción existe porque una disputa empieza ahí. */
     pillRemoved: "Removido",
+    /* Quien ya pagó pero se quedó corto porque la cuenta subió — sillas
+       vacías, alguien que se bajó, alguien exonerado. La deuda de un
+       pendiente ya es pública en esta lista; ocultar esta sería tratar
+       distinto al que sí pagó. */
+    pillShortfall: (amount: string) => `Faltan ${amount}`,
     maybeTitle: "Tal vez",
     waitlistedTitle: "Lista de espera",
     empty: "Todavía nadie ha confirmado. Sé el primero.",

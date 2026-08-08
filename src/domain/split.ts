@@ -78,8 +78,6 @@ export interface SplitResult {
   collectedMinor: number;
   /** Still owed (status `pending`). */
   outstandingMinor: number;
-  /** Forgiven by the organizer (status `waived`) — neither collected nor owed. */
-  waivedMinor: number;
   /**
    * Confirmed payments that no longer match the computed share. Surfaced to the
    * organizer as a warning; never reconciled automatically.
@@ -133,20 +131,40 @@ export function evenShares(totalMinor: number, count: number): number[] {
  *   remainder to the earliest joiners.
  * - `out`, `maybe` and `waitlisted` owe nothing, and are not part of the
  *   denominator.
+ * - **`waived` leaves the denominator too.** Forgiving somebody spreads their
+ *   share over everyone still paying, rather than over the organizer alone.
  * - A **confirmed** payment is never recomputed. That money already changed
  *   hands. If the split has moved since, the confirmed amount stands and the
  *   difference is reported in `discrepancies` for the organizer to sort out
  *   with that person directly.
  *
- * A `waived` share is still computed (so the organizer can see what was
- * forgiven) but counts as neither collected nor outstanding. A waived
- * participant still occupies a slot in the denominator — the cost does not
- * vanish, the organizer absorbs it.
+ * A `waived` share computes to zero: there is no debt to show, and the pill on
+ * their roster row is where "sin cobro" is said. The cost does not vanish — it
+ * moves to the people still paying, and any of them who already paid the older,
+ * smaller share turns up in `computeSettlement` as a top-up to collect.
  */
 export function computeSplit(input: SplitInput): SplitResult {
   const { costMode, costAmountMinor, participants, capacity } = input;
 
   const attending = participants.filter((p) => p.attendance === ATTENDING).sort(byJoinOrder);
+
+  /*
+    Who the cost is actually divided among: the attendees MINUS anyone the
+    organizer waived.
+
+    A waived participant used to keep their slot in the denominator, so their
+    share sat in `waivedMinor` and came out of the organizer's pocket. That is
+    the loss Ivan refused to keep eating: "esos cupos deben cubrirse por todos
+    los que ya confirmaron". Forgiving somebody is now a decision the GROUP
+    pays for — the same way an empty seat or a dropout already spread across
+    whoever remains — and the organizer stops being the payer of last resort.
+
+    Waiving therefore raises everybody else's share, which is exactly what
+    makes it visible: confirmed payers fall behind their new share, and
+    `computeSettlement` turns that gap into the collection round the organizer
+    can actually send.
+  */
+  const paying = attending.filter((p) => p.payment?.status !== "waived");
 
   const amounts = new Map<string, number>();
 
@@ -168,7 +186,7 @@ export function computeSplit(input: SplitInput): SplitResult {
   if (costMode === "total" && costAmountMinor !== null && capacity && capacity > 0) {
     const unitQuotas = evenShares(costAmountMinor, capacity);
     let cursor = 0;
-    for (const participant of attending) {
+    for (const participant of paying) {
       const weight = participant.weight ?? 1;
       let amount = 0;
       for (let i = 0; i < weight; i++) {
@@ -181,7 +199,9 @@ export function computeSplit(input: SplitInput): SplitResult {
   }
 
   if (costMode === "per_person" && costAmountMinor !== null) {
-    for (const participant of attending) {
+    // Nothing to redistribute in per_person — each seat has its own price —
+    // so waiving one simply charges that person nothing.
+    for (const participant of paying) {
       amounts.set(participant.id, costAmountMinor * (participant.weight ?? 1));
     }
   } else if (costMode === "total" && costAmountMinor !== null) {
@@ -192,10 +212,10 @@ export function computeSplit(input: SplitInput): SplitResult {
       join order, so the rounding remainder still lands on the earliest
       joiners — one unit at a time, exactly as before weights existed.
     */
-    const totalUnits = attending.reduce((sum, p) => sum + (p.weight ?? 1), 0);
+    const totalUnits = paying.reduce((sum, p) => sum + (p.weight ?? 1), 0);
     const units = evenShares(costAmountMinor, totalUnits);
     let cursor = 0;
-    for (const participant of attending) {
+    for (const participant of paying) {
       const weight = participant.weight ?? 1;
       let amount = 0;
       for (let i = 0; i < weight; i++) amount += units[cursor++] ?? 0;
@@ -209,7 +229,6 @@ export function computeSplit(input: SplitInput): SplitResult {
   let totalComputedMinor = 0;
   let collectedMinor = 0;
   let outstandingMinor = 0;
-  let waivedMinor = 0;
 
   for (const participant of participants) {
     const computedAmountMinor = amounts.get(participant.id) ?? 0;
@@ -237,9 +256,7 @@ export function computeSplit(input: SplitInput): SplitResult {
       }
 
       collectedMinor += effectiveAmountMinor;
-    } else if (status === "waived") {
-      waivedMinor += effectiveAmountMinor;
-    } else if (owes) {
+    } else if (owes && status !== "waived") {
       outstandingMinor += effectiveAmountMinor;
     }
 
@@ -258,7 +275,6 @@ export function computeSplit(input: SplitInput): SplitResult {
     totalComputedMinor,
     collectedMinor,
     outstandingMinor,
-    waivedMinor,
     discrepancies,
   };
 }
