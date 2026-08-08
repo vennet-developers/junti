@@ -12,7 +12,13 @@ import { computeSplit } from "./split";
 const joined = new Date("2026-08-01T00:00:00Z");
 
 function roster(
-  people: { id: string; attendance: "in" | "out"; paid?: number; waived?: boolean }[],
+  people: {
+    id: string;
+    attendance: "in" | "out";
+    paid?: number;
+    waived?: boolean;
+    accepted?: number;
+  }[],
   totalMinor: number,
 ) {
   const split = computeSplit({
@@ -25,7 +31,11 @@ function roster(
       payment: p.waived
         ? { status: "waived" as const, amountMinor: 0 }
         : p.paid !== undefined
-          ? { status: "confirmed" as const, amountMinor: p.paid }
+          ? {
+              status: "confirmed" as const,
+              amountMinor: p.paid,
+              discrepancyAcceptedMinor: p.accepted ?? null,
+            }
           : null,
     })),
   });
@@ -142,5 +152,68 @@ describe("the settlement", () => {
     );
     expect(settlement.topUps).toHaveLength(0);
     expect(settlement.shortfallMinor).toBe(0);
+  });
+});
+
+describe("money the organizer is holding for somebody", () => {
+  it("names the overpayment when the roster grows under an early payer", () => {
+    /*
+      Ivan's case, arithmetic and all: ten paid $26.000 for a $260.000
+      cancha sold as ten cupos, then two more played. Twelve ways the share
+      is $21.667, so each of the ten is $4.333 ahead — and the organizer is
+      holding $43.330 belonging to ten named people.
+    */
+    const settlement = roster(
+      [
+        ...Array.from({ length: 10 }, (_, i) => ({
+          id: `paid${i}`,
+          attendance: "in" as const,
+          paid: 26_000,
+        })),
+        { id: "late1", attendance: "in" as const },
+        { id: "late2", attendance: "in" as const },
+      ],
+      260_000,
+    );
+
+    expect(settlement.overpayments).toHaveLength(10);
+    // $4.333 or $4.334 depending on where the rounding remainder landed —
+    // the split hands the odd pesos out in join order, so the total is not
+    // ten times any one person's figure.
+    expect(settlement.overpayments[0]?.extraMinor).toBe(4_333);
+    expect(settlement.surplusMinor).toBe(43_334);
+    // Nobody is short — this is the opposite failure.
+    expect(settlement.topUps).toHaveLength(0);
+  });
+
+  it("stops asking once the organizer accepts that drift", () => {
+    const settlement = roster(
+      [
+        { id: "a", attendance: "in", paid: 30_000, accepted: 10_000 },
+        { id: "b", attendance: "in", paid: 30_000 },
+        { id: "c", attendance: "in" },
+      ],
+      60_000,
+    );
+
+    // Both paid 30.000 against a 20.000 share; only the one who accepted
+    // theirs drops off the list.
+    expect(settlement.overpayments.map((o) => o.participantId)).toEqual(["b"]);
+  });
+
+  it("asks again when the drift changes size, because that is a new fact", () => {
+    // Accepted 10.000, but the roster moved and the drift is now 15.000.
+    const settlement = roster(
+      [
+        { id: "a", attendance: "in", paid: 30_000, accepted: 10_000 },
+        { id: "b", attendance: "in" },
+        { id: "c", attendance: "in" },
+        { id: "d", attendance: "in" },
+      ],
+      60_000,
+    );
+
+    expect(settlement.overpayments[0]?.participantId).toBe("a");
+    expect(settlement.overpayments[0]?.extraMinor).toBe(15_000);
   });
 });

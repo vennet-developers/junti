@@ -1267,7 +1267,7 @@ async function reconcilePolicies(
  * Guarded to only ever move UP to the computed share: a top-up cannot shrink
  * a payment, and cannot outrun the split.
  */
-export async function settleTopUp(
+export async function reconcilePayment(
   publicToken: string,
   organizerToken: string,
   rawParticipantId: string,
@@ -1290,14 +1290,62 @@ export async function settleTopUp(
   }
 
   const target = member.share.computedAmountMinor;
-  if (target <= member.share.effectiveAmountMinor) {
-    // Nothing missing — a stale button after someone else already settled it.
+  if (target === member.share.effectiveAmountMinor) {
+    // Already square — a stale button somebody else already pressed.
     return { errors: {}, ok: true };
+  }
+
+  /*
+    One write for both directions, and the acceptance is cleared with it: the
+    drift this row was carrying no longer exists, so a stored "leave it as it
+    is" would be an agreement about nothing, waiting to silence the next
+    genuine drift of the same size.
+  */
+  await db
+    .update(payments)
+    .set({ amountMinor: target, discrepancyAcceptedMinor: null })
+    .where(and(eq(payments.participantId, participantId.data), eq(payments.status, "confirmed")));
+
+  return { errors: {}, ok: true };
+}
+
+/**
+ * Records that this drift is fine as it is.
+ *
+ * The third answer, and the one the app used to have no room for: among
+ * friends "que quede para las cervezas" settles a surplus as legitimately as
+ * handing it back, and an organizer who decides that should not be asked
+ * again every time they open the panel.
+ *
+ * Stores the AMOUNT agreed to, never a flag — see the column. Accepting
+ * $4.333 says nothing about the $8.000 the same person might be owed after
+ * three more people join, and that one deserves its own decision.
+ */
+export async function acceptDiscrepancy(
+  publicToken: string,
+  organizerToken: string,
+  rawParticipantId: string,
+): Promise<ManageState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const participantId = participantIdSchema.safeParse(rawParticipantId);
+  if (!participantId.success) return { errors: { _form: copy.errors.notFound } };
+
+  const { loadRoster } = await import("@/lib/roster");
+  const { resolveEventLocale: resolveLocale } = await import("@/lib/locale");
+  const roster = await loadRoster(event, await resolveLocale(event.locale));
+
+  const member = roster.members.find((m) => m.id === participantId.data);
+  if (!member || member.share.status !== "confirmed" || member.share.discrepancyMinor === 0) {
+    return { errors: { _form: copy.errors.notFound } };
   }
 
   await db
     .update(payments)
-    .set({ amountMinor: target })
+    .set({ discrepancyAcceptedMinor: member.share.discrepancyMinor })
     .where(and(eq(payments.participantId, participantId.data), eq(payments.status, "confirmed")));
 
   return { errors: {}, ok: true };

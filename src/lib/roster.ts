@@ -194,7 +194,11 @@ function toSplitParticipant(row: JoinedRow): SplitParticipant {
     joinedAt: row.participant.createdAt,
     attendance: row.participant.attendance,
     payment: row.payment
-      ? { status: row.payment.status, amountMinor: row.payment.amountMinor }
+      ? {
+          status: row.payment.status,
+          amountMinor: row.payment.amountMinor,
+          discrepancyAcceptedMinor: row.payment.discrepancyAcceptedMinor,
+        }
       : null,
   };
 }
@@ -410,6 +414,7 @@ export async function loadRoster(eventRow: EventRow, locale: Locale): Promise<Ro
       status: "pending" as const,
       owes: false,
       discrepancyMinor: 0,
+      discrepancyAccepted: false,
     },
   }));
 

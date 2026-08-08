@@ -607,6 +607,21 @@ export const es = {
         : `Enviamos ${n} correos pidiendo el saldo.`,
     requestedNone: "No había a quién escribir — nadie con correo verificado o ya se pidió hoy.",
     covered: "Todos los que pagaron están al día con la cuota final.",
+    /* La otra cara: entró más gente de la esperada, la cuota bajó, y quedas
+       con plata que es de personas concretas. */
+    surplusHeading: "Pagaron de más",
+    surplusIntro: (n: number, total: string) =>
+      n === 1
+        ? `Tienes ${total} de 1 persona que pagó antes de que bajara la cuota.`
+        : `Tienes ${total} de ${n} personas que pagaron antes de que bajara la cuota.`,
+    surplusRow: (paid: string, share: string) => `Pagó ${paid} · cuota final ${share}`,
+    surplusExtra: (amount: string) => `Le sobran ${amount}`,
+    returned: "Ya se lo devolví",
+    returnedDone: (name: string) => `Listo — ${name} quedó al día.`,
+    keepIt: "Queda así",
+    keptDone: (name: string) => `Listo — lo de ${name} queda como está.`,
+    keepHelp:
+      "«Queda así» solo deja de preguntar: la plata sigue siendo suya y ustedes ya lo arreglaron por fuera.",
     refundables: (n: number, total: string) =>
       n === 1
         ? `Tienes ${total} de 1 persona que ya no viene — devolverlo o contarlo es entre ustedes.`

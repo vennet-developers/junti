@@ -132,11 +132,24 @@ export const reviewSubmissionFn = createServerFn({ method: "POST" })
     ));
   });
 
-export const settleTopUpFn = createServerFn({ method: "POST" })
+export const reconcilePaymentFn = createServerFn({ method: "POST" })
   .validator((data: Tokens & { participantId: string }) => data)
   .handler(async ({ data }): Promise<ManageState> => {
-    const { settleTopUp } = await import("./-actions.server");
-    return pinged(data.publicToken, await settleTopUp(data.publicToken, data.organizerToken, data.participantId));
+    const { reconcilePayment } = await import("./-actions.server");
+    return pinged(
+      data.publicToken,
+      await reconcilePayment(data.publicToken, data.organizerToken, data.participantId),
+    );
+  });
+
+export const acceptDiscrepancyFn = createServerFn({ method: "POST" })
+  .validator((data: Tokens & { participantId: string }) => data)
+  .handler(async ({ data }): Promise<ManageState> => {
+    const { acceptDiscrepancy } = await import("./-actions.server");
+    return pinged(
+      data.publicToken,
+      await acceptDiscrepancy(data.publicToken, data.organizerToken, data.participantId),
+    );
   });
 
 export const requestSettlementFn = createServerFn({ method: "POST" })

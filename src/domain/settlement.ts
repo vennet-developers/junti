@@ -33,6 +33,30 @@ export interface TopUp {
   missingMinor: number;
 }
 
+/**
+ * A confirmed payer who handed over MORE than their share turned out to be.
+ *
+ * The mirror of {@link TopUp}, and it exists now because the drift stopped
+ * being drift. It used to be a few pesos of rounding, which is why this
+ * module deliberately said nothing: "over-payment among friends usually
+ * stays in the pot". Then Ivan let two extra people into a ten-cupo game and
+ * ten people were suddenly $4.333 each ahead — money with ten named owners,
+ * which the organizer is holding and nobody was told about.
+ *
+ * Listing it is not the same as demanding it back. The organizer picks: hand
+ * it over, or agree it stays where it is. The app only refuses to keep the
+ * secret.
+ */
+export interface Overpayment {
+  participantId: string;
+  /** What they handed over, frozen at confirmation. */
+  paidMinor: number;
+  /** Their share at today's roster. */
+  finalShareMinor: number;
+  /** `paid - finalShare`. Always positive here. */
+  extraMinor: number;
+}
+
 export interface Refundable {
   participantId: string;
   /** Confirmed money held for somebody who no longer attends. */
@@ -44,6 +68,10 @@ export interface Settlement {
   topUps: TopUp[];
   /** Sum of everything the top-ups would recover. */
   shortfallMinor: number;
+  /** Confirmed payers whose share FELL after they paid. */
+  overpayments: Overpayment[];
+  /** Sum of everything the overpayments are holding. */
+  surplusMinor: number;
   /**
    * Money already in hand from people who left the roster. Reported, never
    * redistributed automatically: whether to refund a dropout or count their
@@ -58,6 +86,7 @@ export function computeSettlement(
   attendanceOf: (participantId: string) => string,
 ): Settlement {
   const topUps: TopUp[] = [];
+  const overpayments: Overpayment[] = [];
   const refundables: Refundable[] = [];
 
   for (const share of shares) {
@@ -72,12 +101,23 @@ export function computeSettlement(
     }
 
     /*
-      A negative discrepancy on an attending, confirmed payer IS the
-      shortfall: they paid the old share and the roster moved under them.
-      Positive discrepancies (paid more than the final share) are deliberately
-      NOT listed as refunds here — over-payment among friends usually stays in
-      the pot, and telling the organizer to hand money back is not this
-      module's call.
+      A drift the organizer already agreed to leave alone is not a question
+      any more — see `discrepancyAccepted`. Skipping it here rather than in
+      the card keeps every reader of this module agreeing about what is
+      still open.
+    */
+    if (share.discrepancyAccepted) continue;
+
+    /*
+      Both directions, now. A negative discrepancy is the shortfall: they
+      paid the old share and the roster moved under them. A positive one is
+      the reverse — the roster GREW and their share fell, so the organizer is
+      holding money that belongs to them.
+
+      Neither is an instruction. This module turns discrepancies into
+      sentences and the organizer does the deciding, which is why the
+      overpayment carries no "refund" in its name: handing it back and
+      agreeing it stays are both legitimate answers.
     */
     if (share.status === "confirmed" && attending && share.discrepancyMinor < 0) {
       topUps.push({
@@ -87,11 +127,22 @@ export function computeSettlement(
         missingMinor: -share.discrepancyMinor,
       });
     }
+
+    if (share.status === "confirmed" && attending && share.discrepancyMinor > 0) {
+      overpayments.push({
+        participantId: share.participantId,
+        paidMinor: share.effectiveAmountMinor,
+        finalShareMinor: share.computedAmountMinor,
+        extraMinor: share.discrepancyMinor,
+      });
+    }
   }
 
   return {
     topUps,
     shortfallMinor: topUps.reduce((sum, topUp) => sum + topUp.missingMinor, 0),
+    overpayments,
+    surplusMinor: overpayments.reduce((sum, over) => sum + over.extraMinor, 0),
     refundables,
   };
 }

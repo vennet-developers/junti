@@ -18,7 +18,12 @@ export interface SplitParticipant {
   joinedAt: Date;
   attendance: Attendance;
   /** Null when no payment row exists yet (cost mode `none`, or not yet created). */
-  payment: { status: PaymentStatus; amountMinor: number } | null;
+  payment: {
+    status: PaymentStatus;
+    amountMinor: number;
+    /** The drift the organizer already agreed to leave alone. See the column. */
+    discrepancyAcceptedMinor?: number | null;
+  } | null;
   /**
    * Shares this row answers for: 1 + spots held for guests. The sponsor of
    * three held spots owes four shares — the guests are not on the roster, so
@@ -60,6 +65,12 @@ export interface Share {
    * Zero otherwise. Positive means they overpaid, negative means they underpaid.
    */
   discrepancyMinor: number;
+  /**
+   * True when THIS drift is the one the organizer already decided to leave
+   * as it is. Settlement skips these; a drift that later changes size stops
+   * matching and comes back, because nobody agreed to the new number.
+   */
+  discrepancyAccepted: boolean;
 }
 
 export interface Discrepancy {
@@ -183,7 +194,30 @@ export function computeSplit(input: SplitInput): SplitResult {
   */
   const planned = new Map<string, number>();
 
-  if (costMode === "total" && costAmountMinor !== null && capacity && capacity > 0) {
+  /*
+    The quota only holds while the roster FITS the convocatoria.
+
+    "$260.000 entre 10 cupos" is a promise about ten seats. Let twelve in and
+    that promise is void — yet the ask kept charging the ten-person rate,
+    with the units past capacity repeating the last quota, so twelve people
+    were asked $26.000 each for a $260.000 cancha and the organizer ended up
+    holding $52.000 that was never theirs. Measured, not theorised.
+
+    Past capacity the honest ask IS the live split: no `planned` entry, so
+    `effectiveAmountMinor` falls through to `computedAmountMinor` and twelve
+    people are asked $21.667. Below capacity nothing changes, which is the
+    whole point of the quota — the first person in is asked their share of
+    the plan, not the price of the whole cancha.
+  */
+  const payingUnits = paying.reduce((sum, p) => sum + (p.weight ?? 1), 0);
+
+  if (
+    costMode === "total" &&
+    costAmountMinor !== null &&
+    capacity &&
+    capacity > 0 &&
+    payingUnits <= capacity
+  ) {
     const unitQuotas = evenShares(costAmountMinor, capacity);
     let cursor = 0;
     for (const participant of paying) {
@@ -212,8 +246,7 @@ export function computeSplit(input: SplitInput): SplitResult {
       join order, so the rounding remainder still lands on the earliest
       joiners — one unit at a time, exactly as before weights existed.
     */
-    const totalUnits = paying.reduce((sum, p) => sum + (p.weight ?? 1), 0);
-    const units = evenShares(costAmountMinor, totalUnits);
+    const units = evenShares(costAmountMinor, payingUnits);
     let cursor = 0;
     for (const participant of paying) {
       const weight = participant.weight ?? 1;
@@ -239,12 +272,16 @@ export function computeSplit(input: SplitInput): SplitResult {
 
     let effectiveAmountMinor = planned.get(participant.id) ?? computedAmountMinor;
     let discrepancyMinor = 0;
+    let discrepancyAccepted = false;
 
     if (status === "confirmed" && participant.payment) {
       // Money already handed over. Keep it, and report the drift instead of
       // quietly rewriting history.
       effectiveAmountMinor = participant.payment.amountMinor;
       discrepancyMinor = effectiveAmountMinor - computedAmountMinor;
+      discrepancyAccepted =
+        discrepancyMinor !== 0 &&
+        participant.payment.discrepancyAcceptedMinor === discrepancyMinor;
 
       if (discrepancyMinor !== 0) {
         discrepancies.push({
@@ -267,6 +304,7 @@ export function computeSplit(input: SplitInput): SplitResult {
       status,
       owes,
       discrepancyMinor,
+      discrepancyAccepted,
     });
   }
 

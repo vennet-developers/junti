@@ -562,3 +562,66 @@ describe("the convocatoria's quota (total mode with capacity)", () => {
     expect(split.shares.map((s) => s.effectiveAmountMinor)).toEqual([50_00, 50_00]);
   });
 });
+
+describe("computeSplit — a roster bigger than the convocatoria", () => {
+  const t0 = new Date("2026-08-01T00:00:00Z");
+  const seats = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: `p${i}`,
+      joinedAt: new Date(t0.getTime() + i * 1000),
+      attendance: "in" as const,
+      payment: null,
+    }));
+
+  it("stops charging the quota once the seats taken pass the cap", () => {
+    /*
+      Ivan's case: a $260.000 cancha sold as ten $26.000 cupos, and twelve
+      people end up playing. Charging all twelve the ten-person quota would
+      collect $312.000 for a $260.000 cancha — $52.000 that belongs to
+      nobody. Past capacity the ask becomes the live split.
+    */
+    const result = computeSplit({
+      costMode: "total",
+      costAmountMinor: 260_000,
+      capacity: 10,
+      participants: seats(12),
+    });
+
+    const asked = result.shares.reduce((sum, share) => sum + share.effectiveAmountMinor, 0);
+    expect(asked).toBe(260_000);
+    expect(result.shares[0]?.effectiveAmountMinor).toBe(21_667);
+    expect(result.shares[11]?.effectiveAmountMinor).toBe(21_666);
+  });
+
+  it("still asks the quota while the roster fits", () => {
+    // Eleven seats would break it; ten is exactly the promise.
+    const result = computeSplit({
+      costMode: "total",
+      costAmountMinor: 260_000,
+      capacity: 10,
+      participants: seats(10),
+    });
+
+    expect(result.shares[0]?.effectiveAmountMinor).toBe(26_000);
+  });
+
+  it("counts guest seats toward the cap, not rows", () => {
+    /*
+      Six rows, but the first brings five guests — eleven seats on a
+      ten-cupo event. Counting rows would keep the quota alive and overcharge
+      exactly as before.
+    */
+    const participants = seats(6);
+    const withGuests = [{ ...participants[0]!, weight: 6 }, ...participants.slice(1)];
+
+    const result = computeSplit({
+      costMode: "total",
+      costAmountMinor: 260_000,
+      capacity: 10,
+      participants: withGuests,
+    });
+
+    const asked = result.shares.reduce((sum, share) => sum + share.effectiveAmountMinor, 0);
+    expect(asked).toBe(260_000);
+  });
+});

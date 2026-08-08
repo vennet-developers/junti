@@ -513,6 +513,19 @@ export const en: Copy = {
       n === 1 ? "Sent 1 email requesting the balance." : `Sent ${n} emails requesting the balance.`,
     requestedNone: "Nobody to write to — no verified email, or already asked today.",
     covered: "Everyone who paid is square with the final share.",
+    surplusHeading: "Paid more than their share",
+    surplusIntro: (n: number, total: string) =>
+      n === 1
+        ? `You are holding ${total} for 1 person who paid before the share went down.`
+        : `You are holding ${total} for ${n} people who paid before the share went down.`,
+    surplusRow: (paid: string, share: string) => `Paid ${paid} · final share ${share}`,
+    surplusExtra: (amount: string) => `${amount} over`,
+    returned: "I gave it back",
+    returnedDone: (name: string) => `Done — ${name} is square.`,
+    keepIt: "Leave it",
+    keptDone: (name: string) => `Done — ${name}'s is left as it is.`,
+    keepHelp:
+      "\"Leave it\" only stops the asking: the money is still theirs and the two of you have sorted it out elsewhere.",
     refundables: (n: number, total: string) =>
       n === 1
         ? `You hold ${total} from 1 person no longer coming — refunding or keeping it is between you.`

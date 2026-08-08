@@ -598,6 +598,28 @@ export const payments = pgTable(
     method: text("method"),
 
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+
+    /**
+     * A drift between this confirmed payment and the share it now carries,
+     * that the organizer has decided to leave exactly as it is.
+     *
+     * The settlement lists both directions of drift so somebody can act on
+     * them — chase the shortfall, hand the surplus back. But among friends
+     * the third answer is common and legitimate ("que quede para las
+     * cervezas"), and without somewhere to record it the card would ask the
+     * same question forever about a thing that was already settled by
+     * agreement.
+     *
+     * **The ACCEPTED AMOUNT, not a flag**, and that is the whole design: it
+     * self-invalidates. Accept a $4.333 surplus, then let three more people
+     * in and the surplus becomes $8.000 — a different fact, which nobody
+     * agreed to, so it surfaces again. A boolean would have silenced the
+     * new one too.
+     *
+     * NULL means nothing was ever accepted. Zero would mean "a drift of zero
+     * was accepted", which is what every reconciled payment already is.
+     */
+    discrepancyAcceptedMinor: bigint("discrepancy_accepted_minor", { mode: "number" }),
   },
   (table) => [index("payments_participant_idx").on(table.participantId)],
 );

@@ -225,6 +225,13 @@
       "when": 1786161366335,
       "tag": "0031_flippant_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1786164042131,
+      "tag": "0032_abnormal_hex",
+      "breakpoints": true
     }
   ]
 }

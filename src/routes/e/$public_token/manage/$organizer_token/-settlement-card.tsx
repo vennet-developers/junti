@@ -17,7 +17,7 @@ import type { RosterView } from "@/lib/roster";
 
 type SettlementRoster = Omit<RosterView, "compliance">;
 
-import { requestSettlementFn, settleTopUpFn } from "./-fns";
+import { acceptDiscrepancyFn, reconcilePaymentFn, requestSettlementFn } from "./-fns";
 
 /**
  * "Cuentas finales": the dropout gap, as sentences with a button.
@@ -56,6 +56,14 @@ export function SettlementCard({
     settled row stops being a top-up at all.
   */
   const [settled, setSettled] = useState<ReadonlySet<string>>(new Set());
+  /*
+    The surplus half of the same optimism: a row leaves the list the instant
+    it is acted on, and comes back with an explanation if the server refuses.
+    Separate from `settled` because the two lists are disjoint — nobody is
+    both short and over — and one shared set would let a failure on one side
+    resurrect a row on the other.
+  */
+  const [resolvedSurplus, setResolvedSurplus] = useState<ReadonlySet<string>>(new Set());
   const [requesting, startRequest] = useTransition();
 
   const { event } = roster;
@@ -75,7 +83,14 @@ export function SettlementCard({
   const topUps = settlement.topUps.filter((topUp) => !settled.has(topUp.participantId));
   const shortfallMinor = topUps.reduce((sum, topUp) => sum + topUp.missingMinor, 0);
 
-  if (topUps.length === 0 && settlement.refundables.length === 0) return null;
+  const overpayments = settlement.overpayments.filter(
+    (over) => !resolvedSurplus.has(over.participantId),
+  );
+  const surplusMinor = overpayments.reduce((sum, over) => sum + over.extraMinor, 0);
+
+  if (topUps.length === 0 && overpayments.length === 0 && settlement.refundables.length === 0) {
+    return null;
+  }
 
   const money = (minor: number) => formatMoney(minor, event.currency, copy.intlLocale);
   const strings = copy.settlement;
@@ -85,7 +100,7 @@ export function SettlementCard({
     setSettled((prev) => new Set(prev).add(participantId));
     toast.success(strings.receivedDone(names.get(participantId) ?? ""));
 
-    void settleTopUpFn({ data: { publicToken, organizerToken, participantId } }).then(
+    void reconcilePaymentFn({ data: { publicToken, organizerToken, participantId } }).then(
       async (result) => {
         if (result.errors._form) {
           // Roll the row back into the list and say why — an optimistic
@@ -104,6 +119,37 @@ export function SettlementCard({
         await router.invalidate();
       },
     );
+  }
+
+  /**
+   * Both answers to a surplus, which differ only in what they write.
+   *
+   * `reconcilePayment` says the money went back, so the ledger records what
+   * they NET paid. `acceptDiscrepancy` says it stays where it is, so the
+   * ledger keeps the real figure and only stops asking. Optimistic either
+   * way, and rolled back with a reason if the server refuses — this is money,
+   * and a row that quietly stayed wrong would be a lie about it.
+   */
+  function resolveSurplus(participantId: string, action: "returned" | "keep") {
+    setResolvedSurplus((prev) => new Set(prev).add(participantId));
+    const name = names.get(participantId) ?? "";
+    toast.success(action === "returned" ? strings.returnedDone(name) : strings.keptDone(name));
+
+    const call = action === "returned" ? reconcilePaymentFn : acceptDiscrepancyFn;
+
+    void call({ data: { publicToken, organizerToken, participantId } }).then(async (result) => {
+      if (result.errors._form) {
+        setResolvedSurplus((prev) => {
+          const next = new Set(prev);
+          next.delete(participantId);
+          return next;
+        });
+        toast.error(result.errors._form);
+        return;
+      }
+
+      await router.invalidate();
+    });
   }
 
   /*
@@ -192,6 +238,72 @@ export function SettlementCard({
               {strings.covered}
             </Text>
           )}
+
+          {/*
+            The mirror of the shortfall, and the reason it exists: an event
+            that fills past its cupos drops everybody's share, so whoever
+            paid first is suddenly ahead — money the organizer is holding
+            that belongs to named people. Two answers, both legitimate, and
+            the app refuses only to keep it a secret.
+          */}
+          {overpayments.length > 0 ? (
+            <>
+              <Divider />
+
+              <Stack gap="1">
+                <Text weight="semibold">{strings.surplusHeading}</Text>
+                <Text variant="small" color="muted">
+                  {strings.surplusIntro(overpayments.length, money(surplusMinor))}
+                </Text>
+              </Stack>
+
+              <Stack gap="3">
+                {overpayments.map((over) => (
+                  <Flex
+                    key={over.participantId}
+                    gap="3"
+                    align="center"
+                    justify="between"
+                    wrap="wrap"
+                  >
+                    <Stack gap="1" minWidth="0">
+                      <Text variant="small" weight="semibold">
+                        {names.get(over.participantId) ?? "—"}
+                      </Text>
+                      <Text variant="small" color="muted">
+                        {strings.surplusRow(money(over.paidMinor), money(over.finalShareMinor))}
+                      </Text>
+                    </Stack>
+                    <Flex gap="2" align="center" flexShrink={0} wrap="wrap">
+                      <Text variant="small" weight="semibold">
+                        {strings.surplusExtra(money(over.extraMinor))}
+                      </Text>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => resolveSurplus(over.participantId, "returned")}
+                      >
+                        {strings.returned}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => resolveSurplus(over.participantId, "keep")}
+                      >
+                        {strings.keepIt}
+                      </Button>
+                    </Flex>
+                  </Flex>
+                ))}
+              </Stack>
+
+              <Text variant="small" color="muted">
+                {strings.keepHelp}
+              </Text>
+            </>
+          ) : null}
 
           {settlement.refundables.length > 0 ? (
             <>

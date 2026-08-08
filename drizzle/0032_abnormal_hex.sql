@@ -1,0 +1,1 @@
+ALTER TABLE "payments" ADD COLUMN "discrepancy_accepted_minor" bigint;
