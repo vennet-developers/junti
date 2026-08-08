@@ -239,6 +239,20 @@
       "when": 1786164503716,
       "tag": "0033_sour_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1786201253490,
+      "tag": "0034_wet_network",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1786201253491,
+      "tag": "0035_no_retroactive_welcome",
+      "breakpoints": true
     }
   ]
 }

@@ -1037,6 +1037,15 @@ export const es = {
 
   /** Lo que sale por correo. Cada plantilla, junto a su asunto. */
   emails: {
+  welcome: {
+    subject: "Bienvenido a Junti",
+    preview: "Organiza tu primer plan en un minuto.",
+    heading: (name: string) => `Hola, ${name}`,
+    body: "Junti es para organizar planes con tu gente y llevar la cuenta de quién ya pagó — sin perseguir a nadie por WhatsApp.",
+    howItWorks:
+      "Creas el evento, compartes el link y cada quien dice si viene. Tus invitados no necesitan instalar nada ni crear contraseñas.",
+    cta: "Crear mi primer evento",
+  },
   eventPostponed: {
     subject: (title: string) => `Se aplazó: ${title}`,
     preview: (title: string) => `${title} cambia de fecha`,

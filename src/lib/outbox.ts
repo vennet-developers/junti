@@ -12,6 +12,7 @@ import {
   type OutboxStatus,
 } from "@/domain/outbox";
 import { sendMessage } from "@/lib/email/provider";
+import { track } from "@/lib/analytics";
 import { suppressedAmong } from "@/lib/consent";
 import type { OutboundAttachment, OutboundMessage } from "@/lib/email/port";
 
@@ -144,6 +145,26 @@ export async function dispatchOne(id: string): Promise<OutboxStatus> {
         lastError: result.status === "failed" ? result.reason.slice(0, 500) : null,
       })
       .where(eq(outboxMessages.id, id));
+
+    /*
+      The one place that knows how a send ended, so the one place that counts
+      it. The row itself already records this — but `sent` rows are pruned at
+      thirty days by the retention job, which makes the table an operational
+      queue rather than a history. A metric outlives the message.
+
+      Only terminal outcomes. A `pending` status here means the attempt failed
+      and another is scheduled; counting that as a failure would report one
+      bad minute at a provider as several.
+    */
+    if (status === "sent") track("email_sent", { template: row.template });
+    else if (status === "suppressed") track("email_suppressed", { template: row.template });
+    else if (status === "failed") {
+      track("email_failed", {
+        template: row.template,
+        // The provider's own words, trimmed. Never the recipient.
+        reason: result.status === "failed" ? result.reason.slice(0, 120) : "unknown",
+      });
+    }
 
     return status;
   } catch (error) {

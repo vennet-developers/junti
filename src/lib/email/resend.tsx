@@ -25,6 +25,7 @@ import {
   eventPostponedSubject,
   type EventPostponedValues,
 } from "./templates/event-postponed";
+import { WelcomeEmail, welcomeSubject, type WelcomeValues } from "./templates/welcome";
 import {
   EventInvitationEmail,
   eventInvitationSubject,
@@ -164,6 +165,17 @@ async function compose(
 
       return {
         subject: eventCancelledSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "welcome": {
+      const values = message.values as unknown as WelcomeValues;
+      const element = <WelcomeEmail values={values} locale={message.locale} origin={origin} />;
+
+      return {
+        subject: welcomeSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };

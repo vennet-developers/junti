@@ -910,6 +910,15 @@ export const en: Copy = {
 
   /** What goes out by email. Each template, beside its subject. */
   emails: {
+  welcome: {
+    subject: "Welcome to Junti",
+    preview: "Organise your first plan in a minute.",
+    heading: (name: string) => `Hi ${name}`,
+    body: "Junti is for organising plans with your people and keeping track of who has paid — without chasing anybody on WhatsApp.",
+    howItWorks:
+      "You create the event, share the link, and everyone says whether they are coming. Your guests install nothing and create no passwords.",
+    cta: "Create my first event",
+  },
   eventPostponed: {
     subject: (title: string) => `Postponed: ${title}`,
     preview: (title: string) => `${title} is moving to another date`,

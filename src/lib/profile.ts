@@ -1,7 +1,7 @@
 import "@/server/assert-server";
 
 import type { User } from "@supabase/supabase-js";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db/client";
 import { userProfiles } from "@/db/schema";
@@ -78,6 +78,10 @@ export async function ensureProfile(user: User): Promise<{ needsOnboarding: bool
     // either way, so the loser of the race has nothing to correct.
     .onConflictDoNothing({ target: userProfiles.userId });
 
+  // Google: complete the instant it exists, so this is the moment. Guarded
+  // against the race by `sendWelcomeOnce` itself, not by the insert above.
+  await sendWelcomeOnce(user.id);
+
   return { needsOnboarding: false };
 }
 
@@ -106,4 +110,74 @@ export async function saveProfile(
       target: userProfiles.userId,
       set: { fullName: next.fullName, phone: next.phone, updatedAt: new Date() },
     });
+
+  /*
+    The other door. A magic-link signup has no name until this screen, so the
+    welcome waits for it — which is also when it is worth reading: the person
+    has seen what Junti is and the mail can point at the next thing instead of
+    landing in the same second as their sign-in link.
+
+    Safe to call on every save, including the fifth time somebody edits their
+    phone: the claim only ever succeeds once.
+  */
+  await sendWelcomeOnce(userId);
+}
+
+/**
+ * Sends the welcome, exactly once per account, ever.
+ *
+ * Ivan's rule with the race taken out: rather than asking whether the account
+ * exists — which is true a millisecond after it is created, by both doors —
+ * this claims the send with a conditional UPDATE. Only the caller that
+ * actually flips `welcomed_at` from NULL goes on to send, so two tabs
+ * finishing a sign-in together produce one message, and a retry after a
+ * provider failure produces none at all.
+ *
+ * That last part is a deliberate trade. Claiming BEFORE sending means a
+ * provider outage loses somebody's welcome permanently; claiming after would
+ * mean a crash between send and write mails them twice. Of the two, a missing
+ * welcome is the one nobody notices and nobody is harmed by — and the outbox
+ * retries around a bad minute anyway.
+ *
+ * Called from both doors into a usable profile: Google, which is complete the
+ * instant it exists, and a magic link, which is complete when onboarding ends.
+ */
+export async function sendWelcomeOnce(userId: string): Promise<void> {
+  const claimed = await db
+    .update(userProfiles)
+    .set({ welcomedAt: new Date() })
+    .where(and(eq(userProfiles.userId, userId), isNull(userProfiles.welcomedAt)))
+    .returning({ fullName: userProfiles.fullName });
+
+  const profile = claimed[0];
+  if (!profile) return;
+
+  const [{ loadVerifiedEmails }, { enqueueAndSend }, { resolvePreferences }, { ROUTES }] =
+    await Promise.all([
+      import("@/lib/accounts"),
+      import("@/lib/outbox"),
+      import("@/lib/preferences"),
+      import("@/config/routes"),
+    ]);
+
+  const address = (await loadVerifiedEmails([userId])).get(userId);
+  if (!address) return;
+
+  const { locale } = await resolvePreferences();
+
+  /*
+    Through the outbox like every other product message, which buys the
+    retries and the suppression check — and now also puts it in the delivery
+    metric, so a welcome that never goes out is visible in the panel rather
+    than only in somebody's absent inbox.
+  */
+  await enqueueAndSend({
+    message: {
+      to: address,
+      template: "welcome",
+      locale,
+      values: { name: profile.fullName, createPath: ROUTES.newEvent },
+    },
+    trigger: "welcome",
+  });
 }

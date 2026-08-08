@@ -221,16 +221,44 @@ export const Route = createFileRoute("/api/auth/send-email")({
         });
 
         /*
-          A provider failure is reported as retry-able, which is what gets Supabase to
-          try again rather than telling the person their sign-in failed. `retry-after`
-          has to be present and non-empty for that to happen; the whole invocation is
-          still capped at five seconds, retries included.
+          Counted here, and this is the half of the metric that matters most.
+
+          Auth mail never enters the outbox — Supabase calls this hook and we
+          send straight through the provider — so until now the sign-in link
+          was the ONE message with no record anywhere in this system. When
+          Ivan asked why a magic link had not arrived, answering meant reading
+          Supabase's own service logs, because our side had kept nothing.
+
+          The action type rides along (`magiclink`, `signup`, `recovery`),
+          since "no llegó el link" and "no llegó el de recuperación" are
+          different failures. The address never does.
         */
+        const { track } = await import("@/lib/analytics");
+        const action = String(data.email_action_type ?? "unknown");
+
         if (result.status === "failed") {
+          track("email_failed", {
+            template: "auth-link",
+            action,
+            reason: result.reason.slice(0, 120),
+          });
+
+          /*
+            A provider failure is reported as retry-able, which is what gets Supabase to
+            try again rather than telling the person their sign-in failed. `retry-after`
+            has to be present and non-empty for that to happen; the whole invocation is
+            still capped at five seconds, retries included.
+          */
           return json(
             { error: { message: `send failed: ${result.reason}` } },
             { status: 503, headers: { "retry-after": "true" } },
           );
+        }
+
+        if (result.status === "suppressed") {
+          track("email_suppressed", { template: "auth-link", action });
+        } else {
+          track("email_sent", { template: "auth-link", action });
         }
 
         // A suppressed address is not an error: they have already told the provider to

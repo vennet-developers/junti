@@ -1,0 +1,12 @@
+-- Everyone who already uses Junti counts as welcomed.
+--
+-- `welcomed_at` arrived NULL on every existing profile, which is the value
+-- that means "has not been welcomed yet" — so without this, the next sign-in
+-- of every current account would mail them an introduction to a product they
+-- have been using for weeks. Three accounts today; the same mistake on a
+-- grown user base is a mass mailing.
+--
+-- Stamped with `updated_at` rather than now(), so the column reads as the
+-- honest "known to us since" rather than "the day we shipped the feature".
+-- The welcome is for accounts created from here on.
+UPDATE "user_profiles" SET "welcomed_at" = "updated_at" WHERE "welcomed_at" IS NULL;

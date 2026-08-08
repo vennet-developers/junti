@@ -988,6 +988,20 @@ export const userProfiles = pgTable("user_profiles", {
 
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  /**
+   * When this account was welcomed, or NULL if it has not been.
+   *
+   * Ivan's rule — "si no está en la tabla, manda; si está, no" — made
+   * race-safe. Asking "does this account exist" cannot work at the moment of
+   * creation, because a millisecond later it always does; asking "have we
+   * welcomed them" has a stable answer forever.
+   *
+   * Claimed with a conditional UPDATE, so two tabs finishing a sign-in at the
+   * same instant produce exactly one welcome: the loser updates zero rows and
+   * sends nothing. A person who never gets the mail is a small loss; one who
+   * gets it twice on their first minute is the app looking broken.
+   */
+  welcomedAt: timestamp("welcomed_at", { withTimezone: true }),
 });
 
 /**

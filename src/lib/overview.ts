@@ -341,6 +341,21 @@ async function depth(): Promise<Depth> {
 }
 
 /** Money and email totals in one round trip — see the wave note below. */
+/*
+  Email counts come from `analytics_events`, NOT from `outbox_messages`, and
+  the difference is the whole reason these numbers can be trusted:
+
+  - The outbox is a QUEUE. Retention deletes its sent rows at thirty days, so
+    "total enviados" read from there was really "enviados este mes" wearing a
+    lifetime label, shrinking quietly as the job ran.
+  - Auth mail never enters the outbox at all. Supabase calls the send-email
+    hook and we send straight through the provider, so every sign-in link —
+    the single most-sent message in this product — was missing from the
+    figure entirely. That gap is why "el magic link no llegó" had to be
+    answered from Supabase's own service logs.
+
+  The events are kept a year and cover both paths, template by template.
+*/
 async function moneyAndEmails(range: PanelRange): Promise<{ money: MoneyFlow; emails: Omit<Emails, "weekly"> }> {
   const from = range.from.toISOString();
   const to = range.to.toISOString();
@@ -353,13 +368,13 @@ async function moneyAndEmails(range: PanelRange): Promise<{ money: MoneyFlow; em
       coalesce(sum(p.amount_minor) filter (
         where p.status = 'confirmed' and p.confirmed_at >= ${from} and p.confirmed_at < ${to}
       ), 0)::text as window_confirmed,
-      (select count(*) from outbox_messages where status = 'sent')::text as sent_total,
-      (select count(*) from outbox_messages where status = 'sent'
-         and sent_at >= ${from} and sent_at < ${to})::text as sent_win,
-      (select count(*) from outbox_messages where status = 'sent'
-         and sent_at >= ${prev} and sent_at < ${from})::text as sent_prev,
-      (select count(*) from outbox_messages where status = 'failed')::text as failed,
-      (select count(*) from outbox_messages where status = 'suppressed')::text as suppressed
+      (select count(*) from analytics_events where name = 'email_sent')::text as sent_total,
+      (select count(*) from analytics_events where name = 'email_sent'
+         and at >= ${from} and at < ${to})::text as sent_win,
+      (select count(*) from analytics_events where name = 'email_sent'
+         and at >= ${prev} and at < ${from})::text as sent_prev,
+      (select count(*) from analytics_events where name = 'email_failed')::text as failed,
+      (select count(*) from analytics_events where name = 'email_suppressed')::text as suppressed
     from payments p
   `);
 
@@ -420,8 +435,8 @@ async function emailSeries(range: PanelRange, bucket: "day" | "week"): Promise<S
       ) as week
     )
     select c.week,
-      (select count(*) from outbox_messages o
-         where o.status = 'sent' and date_trunc(${unit}, o.sent_at) = c.week
+      (select count(*) from analytics_events o
+         where o.name = 'email_sent' and date_trunc(${unit}, o.at) = c.week
            and o.sent_at >= ${from} and o.sent_at < ${to})::text as total
     from calendar c order by c.week
   `);

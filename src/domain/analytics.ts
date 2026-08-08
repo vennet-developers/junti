@@ -26,6 +26,19 @@ export const ANALYTICS_EVENTS = [
   "event_cancelled",
   "event_postponed",
   "credit_granted",
+  /*
+    Delivery, counted. Everything else here is somebody doing something; these
+    three are the system reporting whether it managed to speak. Without them a
+    provider outage is invisible until a person complains — which is how the
+    magic link that "never arrived" cost an afternoon of log archaeology.
+
+    The template and the reason, never the address: an analytics table that
+    accumulates the email of everyone written to is a copy of the contact list
+    this app is built not to keep.
+  */
+  "email_sent",
+  "email_failed",
+  "email_suppressed",
 
   // Participant funnel
   "invite_sent",
@@ -81,6 +94,9 @@ export const EVENT_SOURCE: Record<AnalyticsEvent, "server" | "client"> = {
   event_cancelled: "server",
   event_postponed: "server",
   credit_granted: "server",
+  email_sent: "server",
+  email_failed: "server",
+  email_suppressed: "server",
 
   invite_sent: "server",
   event_viewed: "client",

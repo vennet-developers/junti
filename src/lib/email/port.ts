@@ -28,6 +28,7 @@ export type MessageTemplate =
   | "pending-approval"
   | "event-invitation"
   | "auth-link"
+  | "welcome"
   | "event-created"
   | "rsvp-confirmed"
   | "event-cancelled"
