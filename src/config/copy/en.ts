@@ -220,6 +220,10 @@ export const en: Copy = {
       capacity: "Maximum spots",
       capacityPlaceholder: "10",
       capacityHelp: "Leave it empty for no limit. Once it fills up, the rest join the waitlist.",
+      minAttendees: "Minimum to go ahead",
+      minAttendeesPlaceholder: "8",
+      minAttendeesHelp:
+        "Leave it empty to go ahead with whoever turns up. We tell you if it falls short; you decide whether it happens, moves or is called off.",
       rsvpLead: "Deadline to answer",
       rsvpLeadHelp:
         "How long people have to confirm. Counted back from the event, so moving the event moves the deadline with it.",
@@ -273,6 +277,7 @@ export const en: Copy = {
 
   event: {
     closedBadge: "Closed",
+    postponedBadge: "Postponed",
     closedNotice: "This event is closed. Nobody can say they are coming or change their answer.",
     notFoundTitle: "We could not find this event",
     notFoundBody: "The link may be incomplete, or the event may have been deleted.",
@@ -781,6 +786,29 @@ export const en: Copy = {
       n === 1
         ? "There is 1 free spot and someone waiting. Move them up so they find out."
         : `There are ${n} free spots and people waiting. Move them up so they find out.`,
+    postponeEvent: "Postpone the event",
+    postponeEventHelp:
+      "Say it is not happening that day, without calling it off. The roster and anything already paid stay put; setting a new date resumes it by itself.",
+    resumeEvent: "Resume the event",
+    postponeConfirmTitle: "Postpone the event?",
+    postponeConfirmBody:
+      "We tell everyone who said they are coming and pull the date out of their calendars. The roster and the payments stay as they are. Setting a new date resumes the event by itself.",
+    resumeConfirmTitle: "Resume the event?",
+    resumeConfirmBody: "It goes back on, with the date it has now.",
+    postponing: "Postponing…",
+    resuming: "Resuming…",
+    postponedDone: "Event postponed. Everyone has been told.",
+    resumedDone: "Event resumed.",
+    postponedNotice: "This event is postponed.",
+    postponedNoticeBody:
+      "The organizer is looking for a new date. Your answer and anything you paid still stand.",
+    quorumLabel: "Minimum to go ahead",
+    quorumPlaceholder: "e.g. 8",
+    quorumHelp:
+      "How many have to come for it to be worth doing. We tell you if it falls short; you decide whether it happens, moves or is called off.",
+    quorumMet: (n: number) => `Quorum reached: ${n} or more confirmed.`,
+    quorumShort: (n: number) =>
+      n === 1 ? "1 person short of the minimum." : `${n} people short of the minimum.`,
     closeEvent: "Close the call to confirm",
     closeEventHelp: "Freezes the answers. You can reopen it later.",
     reopenEvent: "Reopen the call to confirm",
@@ -849,6 +877,18 @@ export const en: Copy = {
 
   /** What goes out by email. Each template, beside its subject. */
   emails: {
+  eventPostponed: {
+    subject: (title: string) => `Postponed: ${title}`,
+    preview: (title: string) => `${title} is moving to another date`,
+    heading: "The event was postponed",
+    body: (title: string) =>
+      `${title} is not happening on the date it had. The organizer is looking for a new one, and we will tell you as soon as it is set.`,
+    calendarNote:
+      "We removed it from your calendar so the old date does not linger. You will get the new one when it is chosen.",
+    moneyNote:
+      "Anything you already paid still counts toward this event — there is nothing to pay again when the new date is set.",
+    cta: "See the event",
+  },
   eventCancelled: {
     subject: (title: string) => `Cancelled: ${title}`,
     preview: (title: string) => `${title} was cancelled`,
@@ -1269,6 +1309,7 @@ export const en: Copy = {
       paymentConfirmed: "Your payment is on the record",
       paymentWaived: "The organizer waived your payment",
       eventUpdated: (fields: string) => `The organizer changed ${fields}`,
+      eventPostponed: "The event was postponed",
       eventCancelled: "The event was cancelled",
     },
 

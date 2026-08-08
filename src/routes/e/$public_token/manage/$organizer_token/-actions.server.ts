@@ -653,6 +653,70 @@ export async function setEventClosed(
  * what would destroy the only evidence either of them has. Junti never held
  * that money and cannot refund it; what it can do is keep the count honest.
  */
+/**
+ * Moves the event off its date without calling it off.
+ *
+ * The third answer Ivan asked for, between going ahead and cancelling: an
+ * organizer who sees the turnout is short can say "not that day" and keep
+ * everything — roster, requirements, money already collected — while they
+ * look for a new one. The people who confirmed hear about it immediately,
+ * which is the entire point: the failure being prevented is somebody
+ * travelling to an empty field.
+ *
+ * Reversible, unlike cancelling, so it takes a boolean. The usual way back is
+ * not this toggle at all — `editEvent` clears the flag the moment the date
+ * changes, because an organizer who picked a new day has resumed by
+ * definition. The toggle is for changing one's mind without touching the date.
+ *
+ * Only the postponement announces. Resuming with the OLD date is the organizer
+ * undoing their own click, usually within a minute, and a second round of
+ * "actually it is back on" for something nobody had time to read is noise; the
+ * announcement that matters — the new date — is `editEvent`'s to send.
+ */
+export async function setEventPostponed(
+  publicToken: string,
+  organizerToken: string,
+  postponed: boolean,
+): Promise<ManageState> {
+  const event = await authorize(publicToken, organizerToken);
+  if (!event) return denied();
+
+  const copy = await eventCopy(event.locale);
+
+  const organizer = await getOrganizer();
+  if (!organizer || organizer.id !== event.organizerId) {
+    return { errors: { _form: copy.manage.editNotYours } };
+  }
+
+  // A cancelled event is over, and "postponed" is a promise about a future
+  // this one no longer has.
+  if (event.cancelledAt) return { errors: { _form: copy.errors.eventClosed } };
+
+  // Already in the requested state: saying it twice would send a second round
+  // of messages about something everybody already heard.
+  if (Boolean(event.postponedAt) === postponed) return { errors: {}, ok: true };
+
+  const postponedAt = postponed ? new Date() : null;
+  const sequence = event.calendarSequence + 1;
+
+  await db
+    .update(events)
+    .set({ postponedAt, calendarSequence: sequence })
+    .where(eq(events.id, event.id));
+
+  track("event_postponed", { event_id: event.id, postponed }, organizer.id);
+
+  if (postponed) {
+    await announceToAttendees(
+      { ...event, postponedAt, calendarSequence: sequence },
+      copy,
+      "postpone",
+    );
+  }
+
+  return { errors: {}, ok: true };
+}
+
 export async function cancelEvent(
   publicToken: string,
   organizerToken: string,
@@ -687,7 +751,7 @@ export async function cancelEvent(
     it, and a message that failed to send is recoverable in a way that a
     half-cancelled event is not.
   */
-  await announceCancellation({ ...event, cancelledAt, calendarSequence: sequence }, copy);
+  await announceToAttendees({ ...event, cancelledAt, calendarSequence: sequence }, copy, "cancel");
 
   return { errors: {}, ok: true };
 }
@@ -698,8 +762,20 @@ export async function cancelEvent(
  * Sent only to people who said they were coming. Somebody who answered "no"
  * already made other plans, and somebody who never answered was never counting
  * on it — writing to either is noise about a thing they had already let go of.
+ *
+ * **One function for both endings**, because the machinery is identical and
+ * only the words differ: who to reach, an inbox row per person, verified
+ * addresses, who has money recorded, and a CANCEL calendar file — a date that
+ * will not happen has to leave the calendar whether the plan died or merely
+ * moved. Two copies of this drifted apart the moment one of them was fixed;
+ * the `kind` picks the notification type, the template and the trigger, and
+ * everything else is shared by construction.
  */
-async function announceCancellation(event: EventRow, copy: Copy): Promise<void> {
+async function announceToAttendees(
+  event: EventRow,
+  copy: Copy,
+  kind: "cancel" | "postpone",
+): Promise<void> {
   const [{ loadVerifiedEmails }, { calendarAttachment }, { formatEventDateTime }] =
     await Promise.all([
       import("@/lib/accounts"),
@@ -730,7 +806,7 @@ async function announceCancellation(event: EventRow, copy: Copy): Promise<void> 
   await record(
     userIds.map((userId) => ({
       userId,
-      type: "event_cancelled" as const,
+      type: kind === "cancel" ? ("event_cancelled" as const) : ("event_postponed" as const),
       eventId: event.id,
     })),
     owner?.id ?? null,
@@ -762,7 +838,7 @@ async function announceCancellation(event: EventRow, copy: Copy): Promise<void> 
       return notify(
         {
           to: email,
-          template: "event-cancelled",
+          template: kind === "cancel" ? "event-cancelled" : "event-postponed",
           locale: event.locale,
           attachments: calendar ? [calendar] : undefined,
           values: {
@@ -772,7 +848,7 @@ async function announceCancellation(event: EventRow, copy: Copy): Promise<void> 
             hadPaid: paid.has(row.participantId) ? "1" : "",
           },
         },
-        { eventId: event.id, trigger: "cancel" },
+        { eventId: event.id, trigger: kind },
       );
     }),
   );
@@ -822,6 +898,7 @@ export async function editEvent(
     locale: field(formData, "locale") || event.locale,
     location: field(formData, "location"),
     capacity: field(formData, "capacity"),
+    minAttendees: field(formData, "minAttendees"),
     rsvpLead: field(formData, "rsvpLead"),
     notes: field(formData, "notes"),
     costMode: field(formData, "costMode"),
@@ -910,8 +987,24 @@ export async function editEvent(
       locale: input.locale,
       location: input.location,
       capacity: input.capacity,
+      minAttendees: input.minAttendees,
       rsvpDeadline: input.rsvpDeadline,
       notes: input.notes,
+      /*
+        A new date IS the resumption. An organizer who postponed and has now
+        picked a day has already done the thing the flag was waiting for, and
+        leaving "aplazado" over a fresh date would be the app contradicting
+        itself on its own page. The `event_updated` notification below carries
+        the new date, so this needs no announcement of its own — one message,
+        not two.
+
+        Only when the date actually moved: re-saving the form to fix a typo in
+        the title must not quietly un-postpone the event.
+      */
+      postponedAt:
+        event.postponedAt && input.startsAt.getTime() !== event.startsAt.getTime()
+          ? null
+          : event.postponedAt,
       costMode: input.costMode,
       costAmountMinor: input.costAmountMinor,
       currency: input.currency,

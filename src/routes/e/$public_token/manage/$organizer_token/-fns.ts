@@ -94,6 +94,16 @@ export const setEventClosedFn = createServerFn({ method: "POST" })
     return pinged(data.publicToken, await setEventClosed(data.publicToken, data.organizerToken, data.closed));
   });
 
+export const setEventPostponedFn = createServerFn({ method: "POST" })
+  .validator((data: Tokens & { postponed: boolean }) => data)
+  .handler(async ({ data }): Promise<ManageState> => {
+    const { setEventPostponed } = await import("./-actions.server");
+    return pinged(
+      data.publicToken,
+      await setEventPostponed(data.publicToken, data.organizerToken, data.postponed),
+    );
+  });
+
 export const cancelEventFn = createServerFn({ method: "POST" })
   .validator((data: Tokens) => data)
   .handler(async ({ data }): Promise<ManageState> => {

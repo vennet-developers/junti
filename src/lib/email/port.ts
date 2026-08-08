@@ -31,6 +31,7 @@ export type MessageTemplate =
   | "event-created"
   | "rsvp-confirmed"
   | "event-cancelled"
+  | "event-postponed"
   | "settlement-request";
 
 export interface OutboundMessage {

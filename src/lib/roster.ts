@@ -90,6 +90,8 @@ export interface EventView {
   locale: string;
   location: string | null;
   capacity: number | null;
+  /** The quorum the organizer stated, or null. See the column's note. */
+  minAttendees: number | null;
   notes: string | null;
   costMode: EventRow["costMode"];
   costAmountMinor: number | null;
@@ -101,6 +103,9 @@ export interface EventView {
   /** Called off. A different fact from closed — see the schema. */
   cancelledAt: Date | null;
   isCancelled: boolean;
+  /** Looking for a new date. A different fact from cancelled — see the schema. */
+  postponedAt: Date | null;
+  isPostponed: boolean;
   /**
    * When the call to confirm closes, or null for no deadline.
    *
@@ -165,6 +170,7 @@ function toEventView(row: EventRow, type: { slug: string; label: string }): Even
     locale: row.locale,
     location: row.location,
     capacity: row.capacity,
+    minAttendees: row.minAttendees,
     notes: row.notes,
     costMode: row.costMode,
     costAmountMinor: row.costAmountMinor,
@@ -174,6 +180,8 @@ function toEventView(row: EventRow, type: { slug: string; label: string }): Even
     isClosed: row.closedAt !== null,
     cancelledAt: row.cancelledAt,
     isCancelled: row.cancelledAt !== null,
+    postponedAt: row.postponedAt,
+    isPostponed: row.postponedAt !== null,
     rsvpDeadline: row.rsvpDeadline,
     hasCost: row.costMode !== "none",
     refundNoticeHours: row.refundNoticeHours,
@@ -471,6 +479,8 @@ export interface OrganizerEventSummary {
   createdAt: Date;
   location: string | null;
   isClosed: boolean;
+  /** Looking for a new date, so the card can say so before anyone travels. */
+  isPostponed: boolean;
   /**
    * Whether the event has already started, decided by the DATABASE clock.
    *
@@ -540,6 +550,7 @@ const myEventColumns = {
   timeZone: events.timeZone,
   location: events.location,
   closedAt: events.closedAt,
+  postponedAt: events.postponedAt,
   isPast: sql<boolean>`${events.startsAt} < now()`,
   publicToken: events.publicToken,
   costMode: events.costMode,
@@ -549,11 +560,14 @@ const myEventColumns = {
   firstAttendees: firstAttendeesSql,
 } as const;
 
-type MyEventRow = { closedAt: Date | null } & Omit<MyEventCore, "isClosed">;
+type MyEventRow = { closedAt: Date | null; postponedAt: Date | null } & Omit<
+  MyEventCore,
+  "isClosed" | "isPostponed"
+>;
 
 function toCore(row: MyEventRow): MyEventCore {
-  const { closedAt, ...rest } = row;
-  return { ...rest, isClosed: closedAt !== null };
+  const { closedAt, postponedAt, ...rest } = row;
+  return { ...rest, isClosed: closedAt !== null, isPostponed: postponedAt !== null };
 }
 
 /**
@@ -630,6 +644,7 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
       createdAt: events.createdAt,
       location: events.location,
       closedAt: events.closedAt,
+      postponedAt: events.postponedAt,
       isPast: sql<boolean>`${events.startsAt} < now()`,
       publicToken: events.publicToken,
       organizerToken: events.organizerToken,
@@ -654,6 +669,7 @@ export async function loadOrganizerEvents(organizerId: string): Promise<Organize
     createdAt: row.createdAt,
     location: row.location,
     isClosed: row.closedAt !== null,
+    isPostponed: row.postponedAt !== null,
     isPast: row.isPast,
     publicToken: row.publicToken,
     organizerToken: row.organizerToken,

@@ -12,7 +12,7 @@ import { useCopy } from "@/components/copy-provider";
 
 import { useRouter } from "@tanstack/react-router";
 
-import { cancelEventFn, setEventClosedFn } from "./-fns";
+import { cancelEventFn, setEventClosedFn, setEventPostponedFn } from "./-fns";
 
 /**
  * Closing and reopening the convocation.
@@ -93,6 +93,88 @@ export function CloseEventControl({
       />
       <Text variant="small" color="muted">
         {copy.manage.closeEventHelp}
+      </Text>
+    </Stack>
+  );
+}
+
+/**
+ * Moving the event off its date, without calling it off.
+ *
+ * Sits between closing and cancelling on purpose, because that is where it
+ * belongs in severity: closing freezes answers for an event that happens,
+ * this says the day is wrong, cancelling says the plan is over. Outline
+ * rather than destructive — postponing is a plan surviving, not a plan
+ * dying, and dressing it in red would make an organizer hesitate over the
+ * gentler of the two exits.
+ *
+ * Only postponing announces; resuming does not. The dialog says so, because
+ * an organizer needs to know which of these clicks writes to eight inboxes.
+ */
+export function PostponeEventControl({
+  publicToken,
+  organizerToken,
+  isPostponed,
+}: {
+  publicToken: string;
+  organizerToken: string;
+  isPostponed: boolean;
+}) {
+  const { copy } = useCopy();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function toggle() {
+    startTransition(async () => {
+      const result = await setEventPostponedFn({
+        data: { publicToken, organizerToken, postponed: !isPostponed },
+      });
+      setOpen(false);
+
+      if (result.errors._form) {
+        toast.error(result.errors._form);
+        return;
+      }
+
+      toast.success(isPostponed ? copy.manage.resumedDone : copy.manage.postponedDone);
+      await router.invalidate();
+    });
+  }
+
+  return (
+    <Stack gap="2">
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        trigger={
+          <Button type="button" variant="outline" size="md" fullWidth>
+            {isPostponed ? copy.manage.resumeEvent : copy.manage.postponeEvent}
+          </Button>
+        }
+        title={isPostponed ? copy.manage.resumeConfirmTitle : copy.manage.postponeConfirmTitle}
+        description={isPostponed ? copy.manage.resumeConfirmBody : copy.manage.postponeConfirmBody}
+        confirm={
+          <Button type="button" size="md" variant="primary" loading={pending}>
+            {pending
+              ? isPostponed
+                ? copy.manage.resuming
+                : copy.manage.postponing
+              : isPostponed
+                ? copy.manage.resumeEvent
+                : copy.manage.postponeEvent}
+          </Button>
+        }
+        cancel={
+          <Button type="button" size="md" variant="secondary" disabled={pending}>
+            {copy.common.cancel}
+          </Button>
+        }
+        pending={pending}
+        onConfirm={toggle}
+      />
+      <Text variant="small" color="muted">
+        {copy.manage.postponeEventHelp}
       </Text>
     </Stack>
   );

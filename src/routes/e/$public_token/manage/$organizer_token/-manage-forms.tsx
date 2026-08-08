@@ -148,6 +148,7 @@ export function EditEventForm({
       locale: event.locale,
       location: event.location ?? "",
       capacity: event.capacity === null ? "" : String(event.capacity),
+      minAttendees: event.minAttendees === null ? "" : String(event.minAttendees),
       /* The lead this deadline was chosen from, so the picker shows back what
          the organizer picked. Null when it matches none of the options — a row
          whose start time moved under an older build — and the field then reads
@@ -290,6 +291,28 @@ export function EditEventForm({
                 label={copy.createEvent.fields.capacity}
                 description={copy.createEvent.fields.capacityHelp}
                 error={error ?? serverState.errors.capacity}
+                htmlFor={fieldProps.id}
+              >
+                <Input
+                  {...fieldProps}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  step={1}
+                  fullWidth
+                  size="lg"
+                  status={error ? "error" : "default"}
+                />
+              </ControlledField>
+            )}
+          </FormField>
+
+          <FormField name="minAttendees">
+            {({ fieldProps, error }) => (
+              <ControlledField
+                label={copy.createEvent.fields.minAttendees}
+                description={copy.createEvent.fields.minAttendeesHelp}
+                error={error ?? serverState.errors.minAttendees}
                 htmlFor={fieldProps.id}
               >
                 <Input

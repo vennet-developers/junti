@@ -257,6 +257,26 @@ export const events = pgTable(
 
     /** Null means unlimited. */
     capacity: integer("capacity"),
+
+    /**
+     * The quorum: how many people have to be coming for this to be worth
+     * doing, or NULL for "the organizer never said".
+     *
+     * The floor to `capacity`'s ceiling, and it exists because the failure it
+     * prevents is worse than a full event: four people show up to a cancha
+     * booked for ten and somebody pays for the empty seats. Ivan's rule is
+     * that the ORGANIZER judges — "el organizador define si hay quorum... y
+     * continúa o lo cancela o lo aplaza" — so nothing here ever cancels or
+     * postpones by itself. The number turns "nadie se apuntó" from a feeling
+     * into a fact both sides can see: the panel says whether the floor is
+     * met, the event page says how many are still missing.
+     *
+     * NULL is not zero, for the same reason as `refundNoticeHours`: zero
+     * would be a stated policy ("it happens no matter what"), NULL means no
+     * threshold was ever declared and nothing may judge the turnout against
+     * a bar that was never on screen.
+     */
+    minAttendees: integer("min_attendees"),
     notes: text("notes"),
 
     /**
@@ -339,6 +359,30 @@ export const events = pgTable(
      * paid what is the opposite of helpful.
      */
     cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+
+    /**
+     * When set, the event is looking for a new date.
+     *
+     * **The third answer, between happening and cancelled.** Cancelling is
+     * final and says "this is off"; postponing says "not on that day" and
+     * keeps everything — the roster, the money already collected, the
+     * requirements — because the plan survives its date. It exists for the
+     * case Ivan named: an organizer who sees the turnout is short and would
+     * rather move the day than call it off, and whose people must hear about
+     * it before they travel to an empty field.
+     *
+     * Reversible, unlike `cancelled_at`: the way out is to set a new date,
+     * and `editEvent` clears this the moment `starts_at` changes — an
+     * organizer who has picked a new day has resumed by definition, and a
+     * "postponed" banner over a fresh date would be the app contradicting
+     * itself. There is also an explicit toggle for changing one's mind
+     * without touching the date.
+     *
+     * The calendar is told the same way a cancellation tells it: the entry
+     * for a date that will not happen has to leave people's calendars, and
+     * the new date arrives as its own update when it is chosen.
+     */
+    postponedAt: timestamp("postponed_at", { withTimezone: true }),
 
     /**
      * How many times this event has changed, for calendar clients.

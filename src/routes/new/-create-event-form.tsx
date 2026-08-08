@@ -227,6 +227,7 @@ function CreateEventFormBody({
       locale: defaultLocale,
       location: "",
       capacity: "",
+      minAttendees: "",
       rsvpLead: "",
       notes: "",
       costMode: "none",
@@ -501,6 +502,39 @@ function CreateEventFormBody({
                   fullWidth
                   size="lg"
                   placeholder={copy.createEvent.fields.capacityPlaceholder}
+                  status={error ? "error" : "default"}
+                />
+              </ControlledField>
+            )}
+          </FormField>
+
+          {/* The floor, right under the ceiling: they are the same question
+              asked from both ends, and reading them together is what makes
+              "10 cupos, mínimo 8" land as one decision. */}
+          <FormField name="minAttendees">
+            {({ fieldProps, error }) => (
+              <ControlledField
+                label={
+                  <>
+                    {copy.createEvent.fields.minAttendees}{" "}
+                    <Text as="span" variant="small" color="muted">
+                      ({copy.common.optional})
+                    </Text>
+                  </>
+                }
+                description={copy.createEvent.fields.minAttendeesHelp}
+                error={error ?? serverState.errors.minAttendees}
+                htmlFor={fieldProps.id}
+              >
+                <Input
+                  {...fieldProps}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  step={1}
+                  fullWidth
+                  size="lg"
+                  placeholder={copy.createEvent.fields.minAttendeesPlaceholder}
                   status={error ? "error" : "default"}
                 />
               </ControlledField>

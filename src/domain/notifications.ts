@@ -36,6 +36,7 @@ export const NOTIFICATION_TYPES = [
   "approval_pending",
   "payment_recorded",
   "event_updated",
+  "event_postponed",
   "event_cancelled",
 ] as const;
 
@@ -59,6 +60,7 @@ export const RECIPIENT_ROLE: Record<NotificationType, "organizer" | "participant
   approval_pending: "organizer",
   payment_recorded: "participant",
   event_updated: "participant",
+  event_postponed: "participant",
   event_cancelled: "participant",
 };
 
@@ -143,6 +145,9 @@ export function sentenceFor(
         new Intl.ListFormat(copy.intlLocale, { style: "long", type: "conjunction" }).format(labels),
       );
     }
+
+    case "event_postponed":
+      return strings.eventPostponed;
 
     case "event_cancelled":
       return strings.eventCancelled;

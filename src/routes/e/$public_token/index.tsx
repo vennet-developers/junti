@@ -12,6 +12,7 @@ import { EventHeader } from "@/components/event-header";
 import { LiveEvent } from "@/components/live-event";
 import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { QuorumNote } from "@/components/quorum-note";
 import { RsvpCountdown, useConvocation } from "@/components/rsvp-countdown";
 import { RosterGroup } from "@/components/roster-list";
 import { TimeZoneSync } from "@/components/time-zone-sync";
@@ -434,6 +435,17 @@ function ParticipantPage() {
           </Badge>
         </Flex>
 
+        {/* What the organizer said this needs, and how far off it is — the
+            reason somebody might bring a friend instead of just showing up. */}
+        <QuorumNote
+          attendingUnits={roster.attending.reduce(
+            (seats, member) => seats + 1 + member.guests.length,
+            0,
+          )}
+          minAttendees={event.minAttendees}
+          copy={copy}
+        />
+
         {roster.members.length === 0 ? (
           <Text color="muted">{copy.roster.empty}</Text>
         ) : (
@@ -559,6 +571,20 @@ function ParticipantPage() {
             title={copy.manage.cancelledNotice}
           >
             {copy.manage.cancelledNoticeBody}
+          </Banner>
+        ) : null}
+
+        {/* The same rank as a cancellation, and for the same reason: somebody
+            opening this link needs to know the day is off before they read
+            what day it was. Warning, not error — the plan is alive. */}
+        {event.isPostponed && !event.isCancelled ? (
+          <Banner
+            variant="warning"
+            live="off"
+            icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
+            title={copy.manage.postponedNotice}
+          >
+            {copy.manage.postponedNoticeBody}
           </Banner>
         ) : null}
 

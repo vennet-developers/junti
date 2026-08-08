@@ -38,6 +38,7 @@ describe("every field has exactly one home", () => {
       "timeZone",
       "location",
       "capacity",
+      "minAttendees",
       "rsvpLead",
       "notes",
       "costMode",

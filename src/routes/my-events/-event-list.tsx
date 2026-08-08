@@ -38,6 +38,8 @@ export interface EventListItem {
   cost: string;
   costPerPerson: boolean;
   isClosed: boolean;
+  /** Looking for a new date — said on the card, so nobody plans around it. */
+  isPostponed: boolean;
   /** 0–5, hashed from the event type so a kind of event keeps its colour. */
   colorIndex: number;
   attendingCount: number;
@@ -314,7 +316,11 @@ function EventRow({ event }: { event: EventListItem }) {
             <Badge variant={event.role === "organizer" ? "default" : "outline"} size="sm" soft>
               {copy.auth.roles[event.role]}
             </Badge>
-            {event.isClosed ? (
+            {event.isPostponed ? (
+              <Badge variant="warning" size="sm" soft>
+                {copy.event.postponedBadge}
+              </Badge>
+            ) : event.isClosed ? (
               <Badge variant="error" size="sm" soft>
                 {copy.event.closedBadge}
               </Badge>
@@ -468,7 +474,14 @@ function EventCard({ event }: { event: EventListItem }) {
                 {copy.auth.roles[event.role]}
               </Badge>
 
-              {event.isClosed ? (
+              {/* Postponed outranks "próximo": the date on this card is the
+                  one thing that is no longer true, and saying "próximo"
+                  over it would be the card arguing with itself. */}
+              {event.isPostponed ? (
+                <Badge variant="warning" size="sm" soft>
+                  {copy.event.postponedBadge}
+                </Badge>
+              ) : event.isClosed ? (
                 <Badge variant="error" size="sm" soft>
                   {copy.event.closedBadge}
                 </Badge>

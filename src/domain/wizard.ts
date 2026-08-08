@@ -41,6 +41,7 @@ export const STEP_FIELDS = {
   2: [
     "groupId",
     "capacity",
+    "minAttendees",
     "rsvpLead",
     "policies",
     "costMode",

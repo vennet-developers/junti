@@ -3,7 +3,7 @@ import { Button } from "@stackmyth/button";
 import { Box, Container, Divider, Flex, Grid, Stack } from "@stackmyth/layout";
 import { Text } from "@stackmyth/text";
 import { Banner } from "@stackmyth/banner";
-import { InfoIcon } from "@stackmyth/icons";
+import { InfoIcon, TriangleAlertIcon } from "@stackmyth/icons";
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 
@@ -15,6 +15,7 @@ import { LiveEvent } from "@/components/live-event";
 import { LinkPanel } from "@/components/link-panel";
 import { MoneySummary } from "@/components/money-summary";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { QuorumNote } from "@/components/quorum-note";
 import { RosterGroup } from "@/components/roster-list";
 import { getCopy } from "@/config/copy";
 import { refundVerdict } from "@/domain/refund-policy";
@@ -25,7 +26,11 @@ import { managePath, participantPath, whatsAppContactUrl, whatsAppShareUrl } fro
 import type { ParticipantRosterMember, RosterView } from "@/lib/roster";
 
 import { CommitmentNote } from "../../-commitment-note";
-import { CancelEventControl, CloseEventControl } from "./-close-event-control";
+import {
+  CancelEventControl,
+  CloseEventControl,
+  PostponeEventControl,
+} from "./-close-event-control";
 import { InviteForm, InvitedList } from "./-invite-panel";
 import { EditEventForm } from "./-manage-forms";
 import { SettlementCard } from "./-settlement-card";
@@ -353,6 +358,20 @@ function ManagePage() {
             arriving lands in the queue and the roster without a refresh. */}
         <LiveEvent publicToken={publicToken} />
 
+{/* The same rank as a cancellation, and for the same reason: somebody
+            opening this link needs to know the day is off before they read
+            what day it was. Warning, not error — the plan is alive. */}
+        {event.isPostponed && !event.isCancelled ? (
+          <Banner
+            variant="warning"
+            live="off"
+            icon={<TriangleAlertIcon size={18} aria-hidden="true" />}
+            title={copy.manage.postponedNotice}
+          >
+            {copy.manage.postponedNoticeBody}
+          </Banner>
+        ) : null}
+
         <PageBreadcrumb
           label={copy.nav.breadcrumbLabel}
           items={[
@@ -495,7 +514,15 @@ function ManagePage() {
             {showMoney ? <Divider /> : null}
 
             <Stack gap="5">
-              <RosterHeading copy={copy} count={roster.confirmed.length} />
+              <RosterHeading
+                copy={copy}
+                count={roster.confirmed.length}
+                attendingUnits={roster.attending.reduce(
+                  (seats, member) => seats + 1 + member.guests.length,
+                  0,
+                )}
+                minAttendees={event.minAttendees}
+              />
 
               {roster.members.length === 0 ? (
                 <Banner variant="info" live="off" icon={<InfoIcon size={18} aria-hidden="true" />} title={copy.manage.noParticipants}>
@@ -729,6 +756,16 @@ function ManagePage() {
               isClosed={event.isClosed}
             />
 
+            {/* Between freezing the answers and calling it off, in severity
+                order — the same order the column already reads in. */}
+            {event.isCancelled ? null : (
+              <PostponeEventControl
+                publicToken={publicToken}
+                organizerToken={organizerToken}
+                isPostponed={event.isPostponed}
+              />
+            )}
+
             {event.isCancelled ? null : (
               <Stack gap="2">
                 <Text variant="small" weight="semibold">
@@ -752,15 +789,31 @@ function ManagePage() {
 }
 
 /** "Vienen" + the count in a pill — same rank as "Cuentas" beside it. */
-function RosterHeading({ copy, count }: { copy: ReturnType<typeof getCopy>; count: number }) {
+function RosterHeading({
+  copy,
+  count,
+  attendingUnits,
+  minAttendees,
+}: {
+  copy: ReturnType<typeof getCopy>;
+  count: number;
+  attendingUnits: number;
+  minAttendees: number | null;
+}) {
   return (
-    <Flex justify="between" align="center" gap="3">
-      <Text variant="h3" fontFamily="var(--junti-display)">
-        {copy.roster.inTitle}
-      </Text>
-      <Badge variant="secondary" size="md" soft>
-        {count}
-      </Badge>
-    </Flex>
+    <Stack gap="2">
+      <Flex justify="between" align="center" gap="3">
+        <Text variant="h3" fontFamily="var(--junti-display)">
+          {copy.roster.inTitle}
+        </Text>
+        <Badge variant="secondary" size="md" soft>
+          {count}
+        </Badge>
+      </Flex>
+      {/* The floor, right under the count it is measured against — this is
+          the number the decision to go ahead, postpone or call it off is
+          made on. */}
+      <QuorumNote attendingUnits={attendingUnits} minAttendees={minAttendees} copy={copy} />
+    </Stack>
   );
 }

@@ -283,6 +283,9 @@ const eventFieldsSchema = (copy: Copy) =>
     locale: localeSchema,
     location: optionalText(LOCATION_MAX),
     capacity: capacitySchema(copy),
+    /* The floor, parsed exactly like the ceiling — empty is "no minimum
+       stated", never zero. See the column's note in the schema. */
+    minAttendees: capacitySchema(copy),
     rsvpLead: rsvpLeadSchema,
     notes: optionalText(NOTES_MAX),
     costMode: costModeSchema,

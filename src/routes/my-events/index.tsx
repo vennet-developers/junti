@@ -125,6 +125,7 @@ const getAgenda = createServerFn({ method: "GET" }).handler(async () => {
     /** True only when that amount is per head, which the card says out loud. */
     costPerPerson: event.costMode === "per_person",
     isClosed: event.isClosed,
+    isPostponed: event.isPostponed,
     colorIndex: paletteIndexFor(event.eventTypeId),
     attendingCount: event.attendingCount,
     firstAttendees: event.firstAttendees,

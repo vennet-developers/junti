@@ -21,6 +21,11 @@ import {
   type EventCancelledValues,
 } from "./templates/event-cancelled";
 import {
+  EventPostponedEmail,
+  eventPostponedSubject,
+  type EventPostponedValues,
+} from "./templates/event-postponed";
+import {
   EventInvitationEmail,
   eventInvitationSubject,
   type EventInvitationValues,
@@ -159,6 +164,19 @@ async function compose(
 
       return {
         subject: eventCancelledSubject(values, message.locale),
+        html: await render(element),
+        text: await render(element, { plainText: true }),
+      };
+    }
+
+    case "event-postponed": {
+      const values = message.values as unknown as EventPostponedValues;
+      const element = (
+        <EventPostponedEmail values={values} locale={message.locale} origin={origin} />
+      );
+
+      return {
+        subject: eventPostponedSubject(values, message.locale),
         html: await render(element),
         text: await render(element, { plainText: true }),
       };

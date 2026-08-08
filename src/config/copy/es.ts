@@ -282,6 +282,10 @@ export const es = {
       capacityPlaceholder: "10",
       capacityHelp:
         "Déjalo vacío si no hay límite. Al llenarse, los demás entran en lista de espera.",
+      minAttendees: "Mínimo para que se haga",
+      minAttendeesPlaceholder: "8",
+      minAttendeesHelp:
+        "Déjalo vacío si se hace con los que lleguen. Te avisamos si no se alcanza; tú decides si se hace, se aplaza o se cancela.",
       rsvpLead: "Cierre de la convocatoria",
       rsvpLeadHelp:
         "Hasta cuándo pueden confirmar. Se calcula desde la hora del evento, así que si lo mueves, el cierre se mueve con él.",
@@ -342,6 +346,7 @@ export const es = {
 
   event: {
     closedBadge: "Cerrado",
+    postponedBadge: "Aplazado",
     closedNotice:
       "Este evento está cerrado. Ya nadie puede decir si viene ni cambiar su respuesta.",
     notFoundTitle: "No encontramos este evento",
@@ -895,6 +900,33 @@ export const es = {
       n === 1
         ? "Hay 1 cupo libre y alguien esperando. Súbelo tú para que se entere."
         : `Hay ${n} cupos libres y gente esperando. Súbelos tú para que se enteren.`,
+    /* Aplazar: la tercera respuesta, entre hacerlo y cancelarlo. Se conserva
+       todo — lista, plata, requisitos — y solo se pierde la fecha. */
+    postponeEvent: "Aplazar el evento",
+    postponeEventHelp:
+      "Avisa que no se hace ese día, sin cancelarlo. Se mantiene la lista y lo que ya se pagó; al poner nueva fecha se retoma solo.",
+    resumeEvent: "Retomar el evento",
+    postponeConfirmTitle: "¿Aplazar el evento?",
+    postponeConfirmBody:
+      "Le avisamos a quienes dijeron que vienen y le quitamos la fecha a sus calendarios. La lista y los pagos quedan como están. Cuando pongas una fecha nueva, el evento se retoma solo.",
+    resumeConfirmTitle: "¿Retomar el evento?",
+    resumeConfirmBody: "Vuelve a quedar en pie con la fecha que tiene ahora.",
+    postponing: "Aplazando…",
+    resuming: "Retomando…",
+    postponedDone: "Evento aplazado. Ya les avisamos.",
+    resumedDone: "Evento retomado.",
+    postponedNotice: "Este evento está aplazado.",
+    postponedNoticeBody:
+      "El organizador está buscando nueva fecha. Tu confirmación y lo que hayas pagado siguen en pie.",
+    /* Quórum: el piso que el organizador declara. La app informa, nunca
+       decide — igual que nunca sube a nadie de la lista de espera sola. */
+    quorumLabel: "Mínimo para que se haga",
+    quorumPlaceholder: "Ej: 8",
+    quorumHelp:
+      "Cuántos tienen que venir para que valga la pena. Te avisamos si no se llega; tú decides si se hace, se aplaza o se cancela.",
+    quorumMet: (n: number) => `Hay quórum: ${n} o más confirmados.`,
+    quorumShort: (n: number) =>
+      n === 1 ? "Falta 1 persona para el mínimo." : `Faltan ${n} personas para el mínimo.`,
     closeEvent: "Cerrar convocatoria al evento",
     closeEventHelp: "Congela las confirmaciones. Puedes reabrirla después.",
     reopenEvent: "Reabrir convocatoria al evento",
@@ -969,6 +1001,18 @@ export const es = {
 
   /** Lo que sale por correo. Cada plantilla, junto a su asunto. */
   emails: {
+  eventPostponed: {
+    subject: (title: string) => `Se aplazó: ${title}`,
+    preview: (title: string) => `${title} cambia de fecha`,
+    heading: "El evento se aplazó",
+    body: (title: string) =>
+      `${title} no se hace en la fecha que tenía. El organizador está buscando una nueva y te avisamos apenas la ponga.`,
+    calendarNote:
+      "Lo quitamos de tu calendario para que no te quede la fecha vieja. Cuando haya nueva, te llega otra vez.",
+    moneyNote:
+      "Lo que ya pagaste sigue contando para este evento: no hay que volver a pagar cuando se ponga la nueva fecha.",
+    cta: "Ver el evento",
+  },
   eventCancelled: {
     subject: (title: string) => `Se canceló: ${title}`,
     preview: (title: string) => `Se canceló ${title}`,
@@ -1425,6 +1469,7 @@ export const es = {
       paymentConfirmed: "Tu pago quedó registrado",
       paymentWaived: "El organizador te eximió del pago",
       eventUpdated: (fields: string) => `El organizador cambió ${fields}`,
+      eventPostponed: "El evento se aplazó",
       eventCancelled: "Se canceló el evento",
     },
 
