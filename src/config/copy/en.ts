@@ -1383,7 +1383,7 @@ export const en: Copy = {
 
   auth: {
     signInTitle: "Sign in",
-    signInHeading: "Sign in to Junti",
+    signInHeading: "Sign in or create your account",
     signInSubheading: "No password: use Google, or a link we email you.",
     google: "Continue with Google",
     emailLabel: "Your email",

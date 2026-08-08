@@ -1550,7 +1550,11 @@ export const es = {
 
   auth: {
     signInTitle: "Entrar",
-    signInHeading: "Entra a Junti",
+    /* Una sola puerta, dicha en voz alta. La página siempre hizo las dos
+       cosas — con Google y con el link, si no hay cuenta se crea sola — pero
+       decía solo «Entra», así que quien no tenía cuenta se quedaba buscando
+       un «Registrarse» que no existe porque no hace falta. */
+    signInHeading: "Entra o crea tu cuenta",
     signInSubheading: "Sin contraseña: con Google, o con un link que te mandamos al correo.",
     google: "Continuar con Google",
     emailLabel: "Tu correo",
