@@ -211,6 +211,13 @@
       "when": 1786132793178,
       "tag": "0029_smooth_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1786132793179,
+      "tag": "0030_lock_the_data_api",
+      "breakpoints": true
     }
   ]
 }
